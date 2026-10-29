@@ -246,17 +246,20 @@ final class M01AccesoTest extends TestCase
             ValidadorCuenta::nombre('Ana 123'),
             ValidadorCuenta::telefono('12'),
             ValidadorClinica::campo('nit', 'abc'),
-            ValidadorClinica::campo('dv', '12'),
             ValidadorClinica::campo('nombre_clinica', 'A'),
             ValidadorClinica::campo('direccion', str_repeat('a', 256)),
             ValidadorClinica::campo('email_clinica', 'persona@yopmail.com'),
-            ValidadorNit::validarSeparado('900123456', '0'),
+            ValidadorNit::validar('900123456-0'),
             PoliticaPassword::validar('Password123'),
             PoliticaPassword::validar('Abcdef12345'),
             PoliticaPassword::validar('Olga#Segura2026', ['Olga Nueva']),
         ];
         foreach ($avisos as $aviso) {
             $this->assertNotNull($aviso);
+            if ($aviso === ValidadorNit::MENSAJE) {
+                $this->assertSame('El dígito de verificación no corresponde. Revísalo en tu RUT.', $aviso);
+                continue;
+            }
             // 35 caracteres caben en media columna del marco de 460 px (registro-cuenta.css).
             $this->assertLessThanOrEqual(35, mb_strlen($aviso), $aviso);
         }

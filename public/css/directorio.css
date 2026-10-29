@@ -1,0 +1,409 @@
+/* RNF-16: componente de Usuarios/Pacientes; los detalles y las hojas conservan sus estilos. */
+:is(#usuariosModulo, .pacientes-modulo).directorio-unificado [data-fuera-pagina] {
+    display: none !important;
+}
+:is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles[hidden] {
+    display: none;
+}
+.directorio-paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    color: var(--z-text-muted);
+    font-size: 13px;
+}
+.directorio-paginacion[hidden] {
+    display: none;
+}
+.directorio-paginacion nav {
+    display: flex;
+    gap: 8px;
+}
+.directorio-paginacion button {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-primary);
+    font: inherit;
+    font-weight: 600;
+}
+.directorio-paginacion button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+.directorio-paginacion button:not(:disabled):hover {
+    background: var(--z-primary-soft);
+}
+.directorio-paginacion button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+.directorio-controles-cabecera,
+.directorio-resumen {
+    display: none;
+}
+@media (min-width: 768px) {
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado.pacientes-modulo {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0 12px;
+        min-width: 0;
+        padding: 0 20px;
+        margin: 0 0 24px;
+        border: 0;
+        border-radius: 22px;
+        background: var(--z-surface);
+        box-shadow: var(--z-shadow-sm);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera {
+        display: flex;
+        grid-column: 1 / -1;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        min-height: 58px;
+        margin: 0 -20px 12px;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--z-border);
+        border-radius: 22px 22px 0 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .tabs-wrapper {
+        display: flex;
+        align-self: stretch;
+        align-items: stretch;
+        gap: 24px;
+        padding: 0;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .tab-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 58px;
+        padding: 0;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        color: var(--z-text-muted);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .tab-btn.active {
+        border-bottom-color: var(--z-primary);
+        color: var(--z-primary);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .tab-btn > i {
+        display: none;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera :is(.usuarios-tab-conteo, .pacientes-conteo) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        background: var(--z-bg-light);
+        color: var(--z-text-secondary);
+        font-size: 12px;
+        order: 1;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .command-center-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        padding: 8px 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles-cabecera .btn-create {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .users-controls-bar__filters.is-active {
+        display: flex;
+        grid-column: 1;
+        grid-row: 2;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .users-controls-bar__filters:not(.is-active) {
+        display: none;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .head-search {
+        flex: 1;
+        min-width: 160px;
+        max-width: none;
+        width: auto;
+        margin: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .search-input {
+        width: 100%;
+        height: 40px;
+        background: var(--z-bg-suave);
+        border: 1px solid var(--z-border);
+        border-radius: 12px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .head-status-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .filter-select {
+        width: 170px;
+        height: 40px;
+        border: 1px solid var(--z-border);
+        border-radius: 12px;
+        background: var(--z-bg-suave);
+        color: var(--z-text);
+        font-size: 14px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-controles .head-view-toggle {
+        display: flex;
+        grid-column: 2;
+        grid-row: 2;
+        align-self: center;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-resumen,
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .pacientes-resumen {
+        display: block;
+        grid-column: 1 / -1;
+        margin: 0;
+        padding: 8px 0 12px;
+        color: var(--z-text-muted);
+        font-size: 13px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .view-grid,
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #ownersGrid,
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #petsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-auto-rows: 1fr;
+        align-items: stretch;
+        gap: 18px;
+        padding: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta {
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: auto;
+        min-width: 0;
+        padding: 20px 20px 16px;
+        border: 0;
+        border-radius: 22px;
+        background: var(--z-surface);
+        box-shadow: var(--z-shadow-sm);
+        animation: none;
+        overflow: visible;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta:hover {
+        transform: none;
+        box-shadow: var(--z-shadow);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-header-mini {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        min-height: 48px;
+        margin: 0 0 6px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .avatar-mini {
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--z-primary);
+        color: var(--z-surface);
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: none;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .avatar-mini img {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 50%;
+        transform: none;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-body-mini {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-title-mini {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-tags-mini,
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-contact-mini {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-contact-mini {
+        flex-direction: column;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .tag-mini {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        max-width: 100%;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: var(--z-bg-light);
+        color: var(--z-text-secondary);
+        font-size: 12px;
+        line-height: 1.3;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .contact-text-mini {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        color: var(--z-text-muted);
+        font-size: 13px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .card-footer-mini {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--z-border);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .action-btn-mini {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--z-border);
+        border-radius: 9px;
+        background: var(--z-surface);
+        color: var(--z-text-secondary);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .action-btn-mini:hover {
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .propietario-mascotas {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        order: -1;
+        color: var(--z-text-muted);
+        font-size: 12px;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta :is(.propietario-cantidad, .propietario-nota, .propietario-ir, .paciente-hc, .paciente-edad, .paciente-toggle-on, .paciente-toggle-off, .action-btn-mini > span),
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #ownersGrid .card-tags-mini .tag-mini:has(.bi-phone),
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #ownersGrid button[aria-label^="Ver a "],
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #petsGrid [data-c3-click="evento40"],
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado #petsGrid .tag-mini:has(.fa-venus-mars) {
+        display: none !important;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .paciente-foto-respaldo {
+        display: none !important;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta[data-foto-respaldo="true"] .avatar-mini img {
+        display: none !important;
+    }
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta[data-foto-respaldo="true"] .paciente-foto-respaldo {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--z-primary);
+        color: var(--z-surface);
+    }
+}
+
+@media (min-width: 1024px) {
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado :is(.view-grid, #ownersGrid, #petsGrid) {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+@media (min-width: 1280px) {
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado :is(.view-grid, #ownersGrid, #petsGrid) {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .directorio-paginacion {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+    .directorio-paginacion > span {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        text-align: center;
+    }
+    .directorio-paginacion nav {
+        display: contents;
+    }
+    .directorio-paginacion button:first-child {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .directorio-paginacion button:last-child {
+        grid-column: 3;
+        grid-row: 1;
+    }
+}

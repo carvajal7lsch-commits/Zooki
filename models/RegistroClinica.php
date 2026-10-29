@@ -55,13 +55,9 @@ final class RegistroClinica
     }
 
     /** RE-0.1.2: el NIT es público; no devuelve identidad ni contacto. */
-    public function nitExiste(string $numero, string $dv): bool
+    public function nitExiste(string $valor): bool
     {
-        $error = ValidadorNit::validarSeparado($numero, $dv);
-        if ($error !== null) {
-            throw new InvalidArgumentException($error);
-        }
-        return $this->porNit(ValidadorNit::normalizar($numero . '-' . $dv)) !== null;
+        return $this->porNit(ValidadorNit::normalizarEntrada($valor)) !== null;
     }
 
     public function registrar(array $entrada, string $ip): array
@@ -193,22 +189,21 @@ final class RegistroClinica
 
     public function reportarNit(array $entrada): void
     {
-        $numero = trim((string) ($entrada['nit'] ?? ''));
-        $dv = trim((string) ($entrada['dv'] ?? ''));
-        $nit = ValidadorNit::normalizar($numero . '-' . $dv);
+        $valorNit = (string) ($entrada['nit'] ?? '');
+        $nit = ValidadorNit::normalizarEntrada($valorNit);
         $email = ValidadorCuenta::normalizar('email', (string) ($entrada['email'] ?? ''));
-        if (ValidadorNit::validarSeparado($numero, $dv) !== null || ValidadorCuenta::correo($email) !== null) {
+        if (ValidadorCuenta::correo($email) !== null) {
             throw new InvalidArgumentException('Revisa el NIT y el correo de contacto.');
         }
-        $clinica = $this->porNit(ValidadorNit::normalizar($nit));
+        $clinica = $this->porNit($nit);
         if ($clinica === null) {
             throw new InvalidArgumentException('No se pudo registrar el reporte. Revisa el NIT.');
         }
         // RN-010: solo se abre el caso; la resolución pertenece al panel de la etapa E.
         Transaccion::ejecutar($this->db, function () use ($clinica, $nit, $email): void {
             $this->contarRegistro(Auditoria::ipCliente(), 'reporte-nit', self::REPORTES_DIARIOS);
-            $this->db->prepare("INSERT INTO casos_soporte (tipo, id_clinica, descripcion) VALUES ('clinica_duplicada', ?, ?)")
-                ->execute([$clinica['id_clinica'], 'Reporte público de NIT ' . $nit . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente()]);
+            require_once __DIR__ . '/CasoSoporte.php';
+            (new CasoSoporte($this->db))->clinicaDuplicada((int) $clinica['id_clinica'], 'Reporte público de NIT ' . $nit . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente());
         });
     }
 

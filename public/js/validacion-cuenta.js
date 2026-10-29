@@ -22,9 +22,9 @@
         confirmar_password: 'confirm_password', password_confirmation: 'confirm_password',
         perfilPwdConfirmar: 'confirm_password', portal_confirm_password: 'confirm_password'
     };
-    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password', 'nit', 'dv', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
+    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     // El servidor comprueba formato y política completa; nunca informa si existe la cuenta.
-    const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'dv', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
+    const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     const UNICOS = new Set(['documento', 'email']);
 
     // Mismos mensajes que helpers/ValidadorCuenta.php, ValidadorClinica y ValidadorTelefono (M0.1: una línea).
@@ -34,8 +34,7 @@
         nombre_completo: 'Nombre de 3 a 100 caracteres.',
         nombre_caracteres: "Nombre: letras, espacios, ' y -.",
         telefono: 'Teléfono de 7 a 20 caracteres.',
-        nit: 'NIT de 1 a 14 dígitos, sin el DV.',
-        dv: 'El DV es un solo dígito.',
+        nit: 'El dígito de verificación no corresponde. Revísalo en tu RUT.',
     };
 
     function tipo(campo) {
@@ -133,8 +132,11 @@
         if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
             return { error: MENSAJES.nombre_completo };
         }
-        if (clave === 'nit' && !/^[0-9]{1,14}$/.test(valor.trim())) return { error: MENSAJES.nit };
-        if (clave === 'dv' && !/^[0-9]$/.test(valor.trim())) return { error: MENSAJES.dv };
+        if (clave === 'nit') {
+            const limite = Number(campo.dataset.nitNumeroMax) || 14;
+            const patron = '^(?:[0-9]{2,' + limite + '}|[0-9]{1,' + limite + '}-[0-9])$';
+            if (!(new RegExp(patron)).test(valor.trim())) return { error: MENSAJES.nit };
+        }
         if (clave === 'nombre_completo' && !/^[\p{L}\p{M} '’\-]+$/u.test(valor.trim())) {
             return { error: MENSAJES.nombre_caracteres };
         }
@@ -189,11 +191,12 @@
         const estado = formularios.get(form);
         const clave = tipo(campo);
         const valor = campo.value;
+        estado.limitados.delete(campo);
         const numero = (estado.secuencias.get(campo) || 0) + 1;
         estado.secuencias.set(campo, numero);
         if (!mostrarLocal(form, campo, final)) return false;
         if (valor === '' || clave === 'confirm_password' || sinUnicidad(form, clave)) return true;
-        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo', 'nit', 'dv'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value]);
+        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo', 'nit'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value]);
         if (estado.cache.get(campo)?.firma === firma) {
             return estado.cache.get(campo).valido;
         }
@@ -212,6 +215,16 @@
             const resultado = await respuesta.json();
             // Una respuesta antigua nunca valida ni pisa el texto que el usuario ya reemplazó.
             if (estado.secuencias.get(campo) !== numero || campo.value !== valor) return false;
+            if (respuesta.status === 429 && form.id === 'registroClinicaForm') {
+                // RE-T.13.2: un freno temporal no invalida lo que la persona escribió.
+                aviso(campo, '', false);
+                estado.origen.set(campo, 'local');
+                estado.cache.delete(campo);
+                estado.limitados.add(campo);
+                form.dispatchEvent(new CustomEvent('cuenta:limitada', { detail: {} }));
+                return false;
+            }
+            estado.limitados.delete(campo);
             if (!respuesta.ok || !resultado.success) throw new Error(resultado.message || 'No se pudo comprobar el campo.');
             let error = resultado.error;
             let mensaje = error || '';
@@ -252,14 +265,6 @@
             const confirmacion = campoDe(form, 'confirm_password');
             if (confirmacion && confirmacion.value) mostrarLocal(form, confirmacion);
         }
-        if (clave === 'nit') {
-            const dv = campoDe(form, 'dv');
-            if (dv && dv.value) {
-                estado.cache.delete(dv);
-                estado.secuencias.set(dv, (estado.secuencias.get(dv) || 0) + 1);
-                programar(form, dv);
-            }
-        }
         // El documento y el correo forman parte de la política completa de la contraseña.
         if (['documento', 'email', 'email_administrador', 'nombre_completo'].includes(clave)) {
             const password = campoDe(form, 'password');
@@ -288,7 +293,7 @@
         if (formularios.has(form)) return;
         const estado = {
             cache: new WeakMap(), secuencias: new WeakMap(), temporizadores: new Map(), origen: new WeakMap(),
-            listo: false, enviando: false,
+            listo: false, enviando: false, limitados: new Set(),
         };
         formularios.set(form, estado);
         campos(form).forEach((campo, indice) => {
@@ -303,6 +308,7 @@
         form.addEventListener('reset', () => {
             estado.cache = new WeakMap();
             estado.origen = new WeakMap();
+            estado.limitados.clear();
             campos(form).forEach(campo => aviso(campo, '', false));
         });
         form.addEventListener('submit', async evento => {
@@ -321,11 +327,12 @@
             if (form.dataset.cuentaVincular === 'correo') orden.sort((a, b) => Number(tipo(b) === 'email') - Number(tipo(a) === 'email'));
             for (const campo of orden) resultados.push(await comprobar(form, campo, true));
             estado.enviando = false;
-            if (!avisarInvalidos(form, orden.filter((campo, indice) => !resultados[indice]))) {
+            if (!avisarInvalidos(form, orden.filter((campo, indice) => !resultados[indice] && !estado.limitados.has(campo)))) {
                 // Después del evento: un formulario por pasos ya mostró el paso del campo.
                 form.reportValidity();
                 return;
             }
+            if (orden.some(campo => estado.limitados.has(campo))) return;
             estado.listo = true;
             // Revisión D2.1: el navegador ignora requestSubmit mientras dispara el submit
             // original (pasaba con las comprobaciones ya en caché): se envía en otra tarea.

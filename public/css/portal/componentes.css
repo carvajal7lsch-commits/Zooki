@@ -580,3 +580,69 @@
         padding: 1rem 1.5rem 1.25rem;
     }
 }
+
+/* HU-5.1: las piezas nuevas se limitan al celular del portal. */
+.portal-solo-movil {
+    display: none;
+}
+@media (max-width: 767px) {
+    .portal-solo-movil {
+        display: inline-flex;
+    }
+    .portal-texto-completo {
+        display: none;
+    }
+    .portal-cita {
+        gap: 6px;
+        padding: 10px;
+    }
+    .portal-cita__avatar img,
+    .portal-cita .avatar-iniciales {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+    .portal-cita__cuando {
+        align-items: center;
+        gap: 2px 5px;
+        min-width: 0;
+        font-size: 14px;
+    }
+    .portal-cita__cuando strong {
+        min-width: 0;
+        max-width: calc(100% - 75px);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .portal-cita__cuando .portal-cita__estado {
+        max-width: 95px;
+        padding: 2px 5px;
+        font-size: 10px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .portal-cita__cuando > span:not(.portal-cita__estado) {
+        flex-basis: 100%;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .portal-cita__donde {
+        font-size: 12px;
+    }
+    .portal-cita__cancelar {
+        flex: 0 0 36px;
+        width: 36px;
+        min-height: 36px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 767px) {
+    /* La hora no se parte; la explicación de reajuste sí debe caber y seguir visible. */
+    .portal-cita__cuando > span:not(.portal-cita__estado):not(.portal-cita__hora) {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}

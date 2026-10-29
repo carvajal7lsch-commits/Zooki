@@ -216,25 +216,49 @@ form:not(.registro-por-pasos) [data-paso-ir] {
 }
 
 /* ── Giro de la tarjeta entre el login y el registro de clínica (acceso-giro.js) ── */
+html,
+body.login-page {
+    background-color: var(--bg-main, #E9ECF5);
+}
+
+[data-acceso-giro-tarjeta] {
+    backface-visibility: hidden;
+    transform-origin: center;
+}
+
+html.acceso-giro-preparado [data-acceso-giro-tarjeta] {
+    transform: perspective(1400px) rotateY(-90deg);
+}
+
+/* El fundido inicial del login no debe superponerse al giro entre páginas. */
+html.acceso-giro-llegada .login-form-area.animate__fadeIn,
+html.acceso-giro-llegada .form-wrapper.animate__fadeIn {
+    animation: none;
+    opacity: 1;
+}
+
 .acceso-giro-salida {
-    animation: acceso-giro-salida 0.38s cubic-bezier(0.4, 0, 1, 1) forwards;
+    animation: acceso-giro-salida 0.22s cubic-bezier(0.55, 0, 1, 0.45) forwards;
 }
 
 .acceso-giro-entrada {
-    animation: acceso-giro-entrada 0.38s cubic-bezier(0, 0, 0.2, 1);
+    animation: acceso-giro-entrada 0.22s cubic-bezier(0, 0.55, 0.45, 1) both;
 }
 
 @keyframes acceso-giro-salida {
-    from { transform: perspective(1500px) rotateY(0deg); }
-    to { transform: perspective(1500px) rotateY(90deg); }
+    from { transform: perspective(1400px) rotateY(0deg); }
+    to { transform: perspective(1400px) rotateY(90deg); }
 }
 
 @keyframes acceso-giro-entrada {
-    from { transform: perspective(1500px) rotateY(-90deg); }
-    to { transform: perspective(1500px) rotateY(0deg); }
+    from { transform: perspective(1400px) rotateY(-90deg); }
+    to { transform: perspective(1400px) rotateY(0deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    html.acceso-giro-preparado [data-acceso-giro-tarjeta] {
+        transform: none;
+    }
     .acceso-giro-salida,
     .acceso-giro-entrada {
         animation: none;

@@ -1,0 +1,76 @@
+/*
+ * Encabezado de pantallas internas (views/partials/encabezado_pagina.php), rediseño 2026-10-26:
+ * Volver discreto y título con la clase habitual top-header-title (pulido del dueño, 2026-10-26).
+ * Solo variables --z-*; esta pieza la usa actualmente Suscripción.
+ */
+.encabezado-pagina {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.encabezado-pagina__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-primary);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: none;
+}
+
+.encabezado-pagina__volver:hover {
+    background: var(--z-primary-soft);
+}
+
+.encabezado-pagina__volver:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.encabezado-pagina__separador {
+    display: none;
+}
+
+.encabezado-pagina__textos {
+    min-width: 0;
+}
+
+.encabezado-pagina__subtitulo {
+    margin: 2px 0 0;
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--z-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+    .encabezado-pagina {
+        gap: 12px;
+    }
+
+    .encabezado-pagina__volver {
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .encabezado-pagina__volver-texto {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+}

@@ -84,8 +84,12 @@ final class RecuperacionPagoTest extends TestCase
         (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->retorno();
         $html = ob_get_clean();
         $this->assertSame(1, $this->contar('suscripcion_periodos'));
-        $this->assertStringContainsString('24/11/2026', $html);
-        $this->assertStringNotContainsString('prv_test_', $html);
+        $this->assertSame('', $html, 'El retorno redirige a la sección de Ajustes.');
+        parse_str(parse_url(EnlaceAjustes::suscripcion($_GET), PHP_URL_QUERY), $_GET);
+        $datos = (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->datosVista();
+        $this->assertSame('24/11/2026', VigenciaSuscripcion::fechaIncluida($datos['estadoSuscripcion']['periodo_fin']));
+        $this->assertStringContainsString('Consulta completada', $datos['mensajePago']);
+        $this->assertStringNotContainsString('prv_test_', json_encode($datos));
         $this->assertSame('transaction.consultada', $this->db->query('SELECT tipo FROM wompi_eventos')->fetchColumn());
         $this->conciliador()->recuperar($this->tx['id'], 1);
         $this->evento();
@@ -112,6 +116,8 @@ final class RecuperacionPagoTest extends TestCase
         $this->assertSame(0, $this->contar('suscripcion_periodos'));
         $this->assertSame(0, $this->contar('wompi_eventos'));
         $this->assertStringNotContainsString($this->orden['checkout']['reference'], $ajenoHtml);
+        $datos = (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->datosVista();
+        $this->assertStringNotContainsString($this->orden['checkout']['reference'], json_encode($datos));
     }
 
     public function testIdAjenoNoModificaNingunaClinicaNiGuardaEvidencia(): void

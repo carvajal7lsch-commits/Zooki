@@ -22,6 +22,7 @@ function paginaUsuarios(almacen) {
     const form = { elements: { documento: campo, email: campo }, addEventListener() {} };
     const modulo = {
         dataset: {},
+        querySelector: () => null,
         addEventListener() {},
         querySelectorAll(selector) {
             if (selector === '[data-vista-usuarios]') return botones;

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio · Agenda en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cont{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px}
+.saludo{margin-right:auto}
+.fecha{font-size:11px;font-weight:700;letter-spacing:.06em;color:#64748B;text-transform:uppercase}
+h1{margin:2px 0 0;font-size:20px;font-weight:800}
+.ib{width:44px;height:44px;border-radius:14px;background:#fff;border:0;color:#475569;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.ib i{position:absolute;top:10px;right:11px;width:8px;height:8px;border-radius:50%;background:#EF4444}
+.av{width:44px;height:44px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:0}
+.hoy{background:#0052FF;color:#fff;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.hoy-top{display:flex;align-items:center;justify-content:space-between}
+.hoy-et{font-size:11px;font-weight:700;letter-spacing:.08em;opacity:.9}
+.hoy-sub{font-size:12px;opacity:.85;margin-top:2px}
+.hoy a{color:#fff;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.stats div{display:flex;flex-direction:column;gap:1px}
+.stats b{font-size:22px;font-weight:800;line-height:1.1}
+.stats span{font-size:11px;opacity:.85}
+.stats .urg b{color:#FECACA}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border-radius:14px;overflow:hidden}
+.tabs a{height:42px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#475569;text-decoration:none;border-bottom:3px solid transparent}
+.tabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.num{min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.hoja{background:#fff;border-radius:16px;overflow:hidden}
+.semana{display:flex;align-items:center;gap:4px;padding:8px 8px 8px 12px;border-bottom:1px solid #F1F5F9}
+.mes{font-size:13px;font-weight:700;display:flex;align-items:center;gap:4px;text-decoration:none;color:#0F172A;height:32px;margin-right:auto}
+.flecha{width:32px;height:32px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#475569;display:flex;align-items:center;justify-content:center}
+.dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding:4px 6px 8px}
+.dia{display:flex;flex-direction:column;align-items:center;gap:2px;height:52px;justify-content:center;border-radius:12px;border:0;background:transparent;font-family:inherit;color:#0F172A}
+.dia small{font-size:10px;font-weight:600;color:#94A3B8}
+.dia b{font-size:15px;font-weight:600}
+.dia i{width:4px;height:4px;border-radius:50%;background:#0052FF}
+.dia.sel{background:#0052FF;color:#fff}
+.dia.sel small{color:rgba(255,255,255,.8)}
+.dia.sel i{background:#fff}
+.vets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:10px 12px 6px}
+.vet{display:flex;align-items:center;gap:8px;height:48px;padding:0 10px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font-family:inherit;text-align:left;color:#0F172A}
+.vet.sel{border-color:rgba(0,82,255,.35);background:rgba(0,82,255,.06)}
+.vav{width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.vet strong{display:block;font-size:13px}
+.vet span{font-size:11px;color:#64748B}
+.ocup{height:4px;margin:4px 12px 8px;border-radius:2px;background:#EEF2F7;overflow:hidden}
+.ocup i{display:block;height:100%;width:42%;background:#0052FF;border-radius:2px}
+.lin{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;align-items:center;padding:3px 12px}
+.h{font-size:12px;font-weight:600;color:#475569;font-variant-numeric:tabular-nums;text-align:right}
+.p{height:32px;border-radius:9px;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;background:#F8FAFC;white-space:nowrap;overflow:hidden}
+.p b{font-weight:700}
+.p span{color:#64748B}
+.p em{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#94A3B8;flex:none}
+.p.hecha{background:#ECFDF5}
+.p.hecha em{background:#10B981}
+.p.libre{background:#fff;border:1px dashed #CBD5E1;color:#64748B}
+.p.pausa{background:repeating-linear-gradient(135deg,#F1F5F9 0 6px,#F8FAFC 6px 12px);color:#64748B}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cont">
+    <header class="top">
+      <div class="saludo"><div class="fecha">Viernes 23 de octubre</div><h1>Buenas tardes, Ana</h1></div>
+      <button class="ib" type="button" aria-label="Notificaciones"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><i></i></button>
+      <button class="av" type="button" aria-label="Mi cuenta">AN</button>
+    </header>
+
+    <section class="hoy" aria-label="Hoy en la clínica">
+      <div class="hoy-top">
+        <div><div class="hoy-et">HOY EN LA CLÍNICA</div><div class="hoy-sub">2 veterinarios · abierta hasta las 6:00 p. m.</div></div>
+        <a href="#">Citas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="stats">
+        <div><b>8</b><span>citas hoy</span></div>
+        <div><b>4</b><span>atendidas</span></div>
+        <div><b>2</b><span>en espera</span></div>
+        <div class="urg"><b>1</b><span>urgencia</span></div>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Secciones del Inicio">
+      <a class="on" href="#" aria-current="page">Agenda</a>
+      <a href="Pendientes.dc.html">Pendientes <span class="num">5</span></a>
+      <a href="Mes.dc.html">Este mes</a>
+    </nav>
+
+    <section class="hoja" aria-label="Agenda por veterinario">
+      <div class="semana">
+        <a class="mes" href="Calendario.dc.html">Octubre 2026<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+        <button class="flecha" type="button" aria-label="Semana anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="flecha" type="button" aria-label="Semana siguiente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="dias" role="group" aria-label="Días de la semana">
+        <button class="dia" type="button"><small>L</small><b>19</b></button>
+        <button class="dia" type="button"><small>M</small><b>20</b></button>
+        <button class="dia" type="button"><small>M</small><b>21</b></button>
+        <button class="dia" type="button"><small>J</small><b>22</b><i></i></button>
+        <button class="dia sel" type="button" aria-pressed="true"><small>V</small><b>23</b><i></i></button>
+        <button class="dia" type="button"><small>S</small><b>24</b></button>
+        <button class="dia" type="button"><small>D</small><b>25</b></button>
+      </div>
+      <div style="border-top: 1px solid #F1F5F9">
+        <div class="vets" role="group" aria-label="Veterinario">
+          <button class="vet sel" type="button" aria-pressed="true"><span class="vav" style="background: #DCFCE7; color: #15803D">BN</span><span><strong>Beto Norte</strong><span>5 citas · 42 % ocupado</span></span></button>
+          <button class="vet" type="button"><span class="vav" style="background: #FCE7F3; color: #BE185D">ED</span><span><strong>Elena Doble</strong><span>3 citas · 22 % ocupado</span></span></button>
+        </div>
+        <div class="ocup" aria-hidden="true"><i></i></div>
+        <sc-for list="{{lineas}}" as="l" hint-placeholder-count="8">
+          <div class="lin"><span class="h">{{l.hora}}</span><span class="p {{l.clase}}"><b>{{l.titulo}}</b><span>{{l.detalle}}</span><em></em></span></div>
+        </sc-for>
+        <div style="height: 8px"></div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="barra" aria-label="Menú principal">
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Inicio</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.2.6 3.5 2.6 3.5 5.5"/></svg></span>Usuarios</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Citas</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Auditoría</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.6 2.3 2.8-.6.6 2.8 2.3 1.6-1.3 2.5 1.3 2.5-2.3 1.6-.6 2.8-2.8-.6L12 21.2l-1.6-2.3-2.8.6-.6-2.8-2.3-1.6 1.3-2.5-1.3-2.5 2.3-1.6.6-2.8 2.8.6z"/></svg></span>Ajustes</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      lineas: [
+        { hora: '8:30 a. m.', titulo: 'Toby', detalle: '· Vacunación', clase: 'hecha' },
+        { hora: '9:30 a. m.', titulo: 'Mia', detalle: '· Control', clase: 'hecha' },
+        { hora: '12:00 p. m.', titulo: 'Almuerzo', detalle: '· hasta las 2:00 p. m.', clase: 'pausa' },
+        { hora: '2:00 p. m.', titulo: 'Luna', detalle: '· Vómito', clase: '' },
+        { hora: '3:00 p. m.', titulo: 'Max', detalle: '· Primera visita', clase: '' },
+        { hora: '3:40 p. m.', titulo: 'Libre', detalle: '· 50 min', clase: 'libre' },
+        { hora: '4:30 p. m.', titulo: 'Kira', detalle: '· Desparasitación', clase: '' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

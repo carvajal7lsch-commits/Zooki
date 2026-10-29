@@ -8,9 +8,9 @@ final class ValidadorClinicaTest extends TestCase
     {
         $this->assertSame(8, ValidadorNit::digito('900123456'));
         $this->assertSame(1, ValidadorNit::digito('4'));
-        foreach (['900123456-8', '900.123.456-8', '9001234568', '0900123456-8'] as $nit) {
+        foreach (['900123456-8', '900.123.456-8', '900123456', '0900123456-8'] as $nit) {
             $this->assertNull(ValidadorNit::validar($nit));
-            $this->assertSame('9001234568', ValidadorNit::normalizar($nit));
+            $this->assertSame('9001234568', ValidadorNit::normalizarEntrada($nit));
         }
         foreach (['900123456-2', 'abc', '', '900123456-11', '900123456--1'] as $nit) {
             $this->assertNotNull(ValidadorNit::validar($nit));

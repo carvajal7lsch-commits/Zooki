@@ -54,6 +54,7 @@ for (const rol of ['vet', 'config']) {
                 window.zookiAviso=mensaje=>{throw Error(mensaje);};
             `);
             await nav.evaluar(fs.readFileSync('public/js/dialogos-zooki.js','utf8'));
+            await nav.evaluar(fs.readFileSync('public/js/logo-clinica.js','utf8'));
             await nav.evaluar(fs.readFileSync('public/js/configuracion-clinica.js','utf8'));
             await nav.evaluar(fs.readFileSync('public/js/time-picker.js','utf8'));
             if(rol==='config') await nav.evaluar(fs.readFileSync('public/js/horarios.js','utf8'));
@@ -233,7 +234,10 @@ test('C2 integra formularios sin código en línea y pinta el resultado durable 
     const vista = fs.readFileSync(path.join(raiz,'views/partials/coordinacion_horarios.php'),'utf8');
     const codigo = fs.readFileSync(path.join(raiz,'public/js/coordinacion-horarios.js'),'utf8');
     assert.doesNotMatch(vista,/\s(?:onclick|style)=|<script(?![^>]*src=)[^>]*>/i);
-    assert.match(vista,/maxlength="255"/);
+    const motivo = fs.readFileSync(path.join(raiz,'views/partials/motivo_agenda.php'),'utf8');
+    assert.match(vista,/motivo_agenda\.php/);
+    assert.match(motivo,/maxlength="<\?= ValidadorAgendaClinica::MOTIVO_MAX \?>"/);
+    assert.doesNotMatch(motivo,/\s(?:onclick|style)=|<script(?![^>]*src=)[^>]*>/i);
     assert.match(codigo,/lista.addEventListener\('input', validar\)/);
     assert.match(codigo,/pintar\(canonico.vista\)/);
     assert.match(codigo,/version !== lectura/);
@@ -258,6 +262,7 @@ test('C2 Chrome: formulario real bloquea lecturas/doble envío y conserva error,
               (opciones ? __escrituras : __lecturas).push({resolve,body:opciones?.body});
             });
             window.zookiToast=()=>__avisos.push(document.querySelector('[data-afectadas]').textContent);`);
+        await navegador.evaluar(fs.readFileSync(path.join(__dirname,'../../public/js/logo-clinica.js'),'utf8'));
         await navegador.evaluar(fs.readFileSync(path.join(__dirname,'../../public/js/configuracion-clinica.js'),'utf8'));
         await navegador.evaluar(fs.readFileSync('public/js/time-picker.js','utf8'));
         await navegador.evaluar(fs.readFileSync('public/js/horario-trabajo.js','utf8'));

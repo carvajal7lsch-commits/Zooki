@@ -16,14 +16,16 @@
 
     const UTILIDADES = 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js';
 
-    function opciones() {
+    function opciones(campo) {
         return {
             initialCountry: 'co',
             preferredCountries: ['co', 'us', 'mx', 'es'],
             nationalMode: false,
             autoInsertDialCode: true,
             strictMode: true,
-            dropdownContainer: document.body,
+            separateDialCode: campo.dataset?.telefonoPrefijoSeparado === '1',
+            // Un diálogo nativo deja inerte el body: su lista de países debe vivir en la misma ventana.
+            dropdownContainer: campo.closest?.('dialog') || document.body,
             utilsScript: UTILIDADES,
         };
     }
@@ -32,7 +34,7 @@
     function zookiTelefono(campo) {
         if (!campo || !window.intlTelInput) return null;
         if (campo.zookiTelefono) return campo.zookiTelefono;
-        const iti = window.intlTelInput(campo, opciones());
+        const iti = window.intlTelInput(campo, opciones(campo));
         campo.zookiTelefono = iti;
         return iti;
     }

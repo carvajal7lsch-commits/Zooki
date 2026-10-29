@@ -29,11 +29,12 @@ final class MascotaPropietario extends ModeloPropietario
      * M5 C2: las clínicas donde se atiende cada mascota (vínculo activo), para
      * mostrarlas como etiquetas. Una sola consulta; por id_mascota.
      *
-     * @return array<int, list<array{id_clinica: int, nombre: string}>>
+     * RN-G02: los HC se obtienen con el mismo filtro de propietario, nunca por petición de clínica.
+     * @return array<int, list<array{id_clinica: int, nombre: string, numero_historia_clinica: ?string}>>
      */
     public function clinicasDeSusMascotas(): array
     {
-        $consulta = $this->conn->prepare("SELECT mc.id_mascota, c.id_clinica, c.nombre
+        $consulta = $this->conn->prepare("SELECT mc.id_mascota, c.id_clinica, c.nombre, mc.numero_historia_clinica
             FROM mascota_clinica mc
             JOIN mascotas m ON m.id_mascota = mc.id_mascota
             JOIN clinicas c ON c.id_clinica = mc.id_clinica
@@ -42,7 +43,11 @@ final class MascotaPropietario extends ModeloPropietario
         $consulta->execute([$this->propietario()]);
         $porMascota = [];
         foreach ($consulta->fetchAll(PDO::FETCH_ASSOC) as $fila) {
-            $porMascota[(int) $fila['id_mascota']][] = ['id_clinica' => (int) $fila['id_clinica'], 'nombre' => (string) $fila['nombre']];
+            $porMascota[(int) $fila['id_mascota']][] = [
+                'id_clinica' => (int) $fila['id_clinica'],
+                'nombre' => (string) $fila['nombre'],
+                'numero_historia_clinica' => $fila['numero_historia_clinica'],
+            ];
         }
         return $porMascota;
     }

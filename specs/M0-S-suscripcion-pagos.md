@@ -888,3 +888,49 @@ Despliegue aparte en Dokploy (`zooki-pruebas.secarvajal.com`, compose `docker-co
   - «Recuperar un pago de Wompi» aparece dentro del modal de una clínica, aunque la clínica la decide la referencia de Wompi. Conviene una acción general en el panel para no confundir.
   - El recibo sale con el Schedule: hasta 5 minutos después del pago.
 - **Antes de dinero real:** D8 (condiciones del comercio productivo) y D10 (conservación de datos financieros) siguen pendientes, como dice §10. Las pruebas del dueño de §12.1 se hacen en la copia de pruebas tras desplegar esta rama.
+
+
+### Corrección de consulta tras abandonar Wompi — Codex (2026-10-26)
+
+- **Reporte del dueño en producción:** abrió Wompi, salió y volvió unas dos horas después; la reserva impedía abrir otro intento y «Consultar estado» mostraba solo «Plan al día». Cotización de 15 minutos (PolíticaSuscripcion); sin confirmación de pago, no implica cancelación.
+- **Corrección dentro de RE-0.5.9/15/17/24:** consulta sin referencia recupera la última orden y su último intento de la clínica/entorno; distingue plan y orden, con cotización vencida explícita. Al volver con la caché de Atrás, el navegador restaura los controles y consulta; no repite un POST. Sin esquema ni rutas nuevas; versión 2.2.0 aún sin publicar. Escribe Codex; revisión de Claude pendiente.
+- **Límite de esta primera corrección:** no liberaba un intento de resultado desconocido. La rectificación del dueño y la búsqueda privada documentada más abajo amplían RE-0.5.15 para recuperar el checkout abandonado; nunca se libera por tiempo solamente.
+- **Verificación de Codex:** 24 pruebas PHP/204 aserciones y 15 JS correctas. Reloj +2 h, recarga sin referencia y plan al día; dos clínicas/entornos, intento más reciente, consulta sin escrituras, plan disponible sin pasarela configurada y reserva incierta sin duplicación; vuelta por Atrás emite solo GET y muestra plan/orden/intento por separado. Sintaxis/diff correctos. Sin red de pago, .env ni bases de trabajo.
+
+
+#### Propuesta manual de recuperación de checkout abandonado — descartada por el dueño
+
+El dueño confirma que no aparece una transacción en el panel de Wompi para el intento reportado. El flujo actual no permite liberar una reserva sin resultado terminal: queda un hueco funcional cuando se abre y abandona el checkout antes de pagar. La consulta corregida no resuelve esa reserva de producción.
+
+Propuesta concreta, sin HU ni esquema nuevos, dentro de HU-0.5/HU-0.3: en plataforma, permitir al super-administrador descartar una reserva manual vencida tras verificar en Wompi que no existe transacción para su referencia y entorno. Motivo y constancia de esa comprobación obligatorios; confirmación con modal Zooki porque cierra una reserva financiera. El servidor bloquea la clínica y vuelve a comprobar: orden pendiente, cotización vencida, origen botón, sin fuente automática ni ID de transacción/resultado remoto pendiente, confirmado o evidencia incompatible. Conserva la orden y todos los intentos; cambia su estado y libera sus claves lógicas mediante el patrón de cotización cerrada existente, con auditoría. No modifica la vigencia ni concede beneficios. Un evento tardío de la orden cerrada conserva la evidencia y genera incidencia para revisión, sin conceder automáticamente otro periodo. Probar concurrencia con pago/conciliación, dos clínicas, permisos/CSRF, rechazo de automático/PENDING y auditoría atómica.
+
+Esta propuesta no se implementa: el dueño pide recuperación automática en la rectificación siguiente. Escribió la propuesta Codex; revisa Claude. No crear un botón para que el titular descarte por sí mismo un cobro incierto ni liberar por tiempo solamente.
+
+#### Rectificación del dueño: recuperación automática (2026-10-26)
+
+El dueño requiere recuperar un checkout abandonado sin intervención rutinaria de plataforma; la propuesta exclusivamente manual anterior queda descartada. Codex encontró en la referencia OpenAPI oficial enlazada por Wompi (https://api.swaggerhub.com/apis/waybox/wompi/1.2.0, GET /transactions, consulta 26/10/2026) la búsqueda por reference con LLAVE PRIVADA, sin filtro de estado ni fechas/paginación cuando se usa referencia. Corrige la limitación histórica anotada en el plan: la guía general solo mostraba consulta por ID, pero la referencia completa sí permite buscar por referencia. No corresponde al API de dispersiones/Pagos a terceros.
+
+Criterio de RE-0.5.15: vencer la cotización no basta para cancelar. Para la reserva manual cuyo último intento no tiene ID y sigue creado/incierto, consultar su referencia fuera del candado; solo una respuesta 200 con lista completa válida y vacía permite cerrar automáticamente la reserva local. Todos los intentos previos deben ser manuales y terminales negativos. Red caída, 404, respuesta inválida/paginada, referencia distinta, resultado en curso o automático incierto no liberan nada. Si aparecen transacciones, recuperar sus IDs mediante el conciliador existente; no emitir otro cargo. Con ID conocido, consultar/conciliar automáticamente.
+
+Después del HTTP, tomar el candado de clínica, comparar la orden y todos los intentos con la instantánea consultada, revalidar cotización/estado/entorno y cerrar solo si nada cambió. Conservar orden e intentos, cambiar estado y claves mediante el patrón de cotización cerrada existente y auditar la ausencia confirmada, sin conceder periodos ni cambiar clínica. Un aprobado tardío de una orden cerrada pasa a incidencia conservando la evidencia, sin conceder beneficios automáticamente. Se invoca antes de reservar al pulsar Pagar y desde el Schedule existente de cinco minutos, sin cron nuevo; --revisar no consulta red ni escribe. Superadministrador solo para discrepancias reales.
+
+Sin HU, esquema ni ruta nueva; versión 2.2.0 sin publicar. Escribe Codex; revisa Claude. Pruebas: abandono +2 h y reintento; PENDING/APROBADO/fallos/404/datos incompletos nunca duplican; dos clínicas/entornos, HTTP sin transacción, cambio concurrente, auditoría/rollback, evento tardío y Schedule simulado sin red.
+
+#### Resultado — recuperación automática de checkout (2026-10-26)
+
+**Escribió Codex; entregada, pendiente de revisión de Claude.** `RecuperadorCheckout` usa GET privado por referencia (OpenAPI oficial), o el conciliador por ID conocido, fuera del candado. Solo cierra órdenes manuales pendientes y vencidas con último intento creado/incierto sin ID, anteriores terminales negativos y ausencia confirmada por lista completa vacía. HTTP 404, caída, JSON/forma/paginación dudosos, otro entorno, automático o resultado en curso conservan la reserva. Revalida orden y todos sus intentos bajo el candado de clínica; cierre, claves y auditoría atómicos, sin tocar vigencia. Conservar un aprobado tardío de una orden cerrada como incidencia sin acreditar periodo.
+
+Integrado antes de reservar en el POST existente, con rol/CSRF/ciclo válidos, y en el Schedule existente aun sin webhook; `--revisar` solo consulta candidatos locales. GET de estado distingue plan, orden e intento tras recarga; Atrás restaura controles y solo consulta. Sin cambios de distribución, HU, esquema, rutas ni versión (2.2.0 sin publicar).
+
+| RE | Evidencia |
+|---|---|
+| RE-0.5.15 | `BusquedaWompiTest`: GET privado exacto sin filtros/POST; listas completas y rechazo de objeto, 404, JSON inválido, paginación y referencias/estados discordantes. |
+| RE-0.5.8/14/15 | `RecuperadorCheckoutTest`: abandono +2 h, reintento del controlador, ausencia/pendiente/aprobado/rechazo, fallo, dos clínicas/entornos, automático excluido, HTTP fuera de transacción, cambio concurrente, rollback de auditoría, aprobado tardío y Schedule sin webhook/solo revisión. |
+| RE-0.5.14/15 | `BaseV2MysqlTest::testCheckoutCierreYConciliacionCompartenCandado`: dos trabajadores, evento primero y cierre primero; candado real InnoDB, un cierre o periodo, evidencia tardía conservada. |
+| RE-0.5.17/24 | `PagoSuscripcionTest` y `Suscripcion.test.cjs`: recuperar último intento, plan al día separado de orden vencida, Atrás sin segundo POST. |
+
+**Verificación:** PHP completo sin host: 1198 pruebas/9545 aserciones, 94 omitidas de motor; JS completo 363/363. Recuperación/API/NIT y concurrencia: 22/171; incluye tres carreras InnoDB (28 aserciones), solo zooki_test_base_v2. Dos expectativas de `D31SaneamientoTest` ajustadas al NIT único ya aprobado (puntos al pegar y máximo 16), sin cambio funcional. Logs locales `scratch/checkout-php-completo.log`, `scratch/checkout-js-completo.log`, `scratch/checkout-motor.log`. No API/SMTP real, `.env`, base de trabajo, commit ni push.
+
+**Documentación:** HU/RE y Modelos A/A.1/B alineados; tres diagramas renderizados en Chrome aislado. PDF y Word de HU/RE/Historial regenerados, índices actualizados por Word y huellas al día; texto nuevo verificado en los seis archivos y muestra visual de los tres PDF correcta. Word comprobado como ZIP/XML; su presentación visual queda para el dueño. Evidencia en `scratch/checkout-mermaid/` y `scratch/checkout-documentos/`. El marcador de cierre se reconoce por la clave lógica ya existente, incluso si una incidencia intermedia cambió el estado a revisión; su prueba evita que una aprobación posterior a VOIDED conceda vigencia de una orden cerrada.
+
+**Pruebas del dueño tras revisión y despliegue:** (1) abandonar checkout, esperar vencimiento y reintentar: permite pagar si Wompi no tiene transacción; (2) con transacción pendiente, consultar muestra intento pendiente y no abre otro cargo; (3) regresar con Atrás y recargar conserva controles y muestra plan/última orden por separado. La reserva de producción no se modificó desde esta sesión. D8/D10 y validación comercial real siguen pendientes; esta entrega usa exclusivamente transportes simulados.

@@ -71,14 +71,14 @@ test('H11: fila plegada con clínica, motivo, diagnóstico y chips; detalle cons
     const documento = crearDocumento();
     const contexto = { document: documento, window: {}, console };
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     const consulta = { fecha_hora: '2026-10-01 10:00:00', clinica_nombre: '<Sur>', motivo_consulta: 'Control', diagnostico: 'Gastritis', peso: null, id_cita: null, frecuencia_respiratoria: 24, sintomas: [{ etiqueta: '<Vómito>' }], tratamientos: [{ medicamento: 'Medicamento de prueba', dosis: 'Registrada', duracion: 'Registrada', via_administracion: 'Oral' }], archivos: [{ id_archivo: 3, nombre_original: '<informe>.pdf', extension: 'pdf' }] };
     const html = contexto.filaHistorialCompacto(consulta, 'consulta');
     assert.match(html, /^<details class="historia-fila">/);
     assert.doesNotMatch(html, /<details[^>]* open/);
     const resumen = html.split('</summary>')[0];
     // C8.2: el resumen muestra fecha y diagnóstico arriba, clínica y chips abajo; el motivo queda en el detalle.
-    assert.match(resumen, /Gastritis[\s\S]*&lt;Sur&gt;[\s\S]*Sin cita[\s\S]*Sin peso registrado[\s\S]*1 tratamientos/);
+    assert.match(resumen, /Gastritis[\s\S]*&lt;Sur&gt;[\s\S]*Sin cita[\s\S]*Sin peso registrado[\s\S]*1 tratamiento/);
     assert.match(html.split('</summary>')[1], /Motivo:<\/strong> Control/);
     assert.match(html, /F.R.[\s\S]*24 rpm/);
     assert.match(html, /&lt;Vómito&gt;/);

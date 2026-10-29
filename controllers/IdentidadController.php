@@ -183,22 +183,21 @@ final class IdentidadController
             'nombre_completo' => ValidadorCuenta::nombre($valor),
             'password' => PoliticaPassword::validar($valor, $datosPersonales),
             'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador' => ValidadorClinica::campo($campo, $valor),
-            'dv' => ValidadorNit::validarSeparado((string) ($_POST['nit'] ?? ''), $valor),
             default => 'Campo no válido.',
         };
         // RE-T.13.2: nunca se consulta la existencia de la identidad al escribir.
-        if ($error === null && in_array($campo, ['documento', 'email', 'email_administrador', 'email_clinica', 'dv'], true)
-            && !Security::checkVerificationLimit($campo === 'dv' ? null : Contexto::idUsuario())) {
+        if ($error === null && in_array($campo, ['documento', 'email', 'email_administrador', 'email_clinica', 'nit'], true)
+            && !Security::checkVerificationLimit($campo === 'nit' ? null : Contexto::idUsuario())) {
             http_response_code(429);
             echo json_encode(['success' => false, 'message' => 'Espera un momento antes de seguir comprobando.']);
             return;
         }
-        $duplicado = $campo === 'dv' && $error === null && (new RegistroClinica($this->db))->nitExiste((string) $_POST['nit'], $valor);
+        $duplicado = $campo === 'nit' && $error === null && (new RegistroClinica($this->db))->nitExiste($valor);
         if ($duplicado) {
             $error = 'Este NIT ya está registrado en Zooki.';
         }
         $respuesta = ['success' => true, 'error' => $error];
-        if ($campo === 'dv') {
+        if ($campo === 'nit') {
             $respuesta['nit_duplicado'] = $duplicado;
         }
         echo json_encode($respuesta);

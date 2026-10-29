@@ -34,7 +34,8 @@ final class D31SaneamientoTest extends TestCase
         $this->assertNotNull(ValidadorClinica::campo('nombre_clinica', str_repeat('A', 151)));
         $this->assertNotNull(ValidadorClinica::campo('direccion', str_repeat('A', 256)));
         $this->assertNull(ValidadorClinica::campo('nit', ' 900123456 '));
-        foreach (['900123456a8', '900123456--8', '90012345-68', '900.123.456-8', '900123456-88', str_repeat('9', 26)] as $nit) {
+        $this->assertNull(ValidadorClinica::campo('nit', '900.123.456-8'), 'RE-0.1.3: pegar limpia puntos y espacios.');
+        foreach (['900123456a8', '900123456--8', '90012345-68', '900123456-88', str_repeat('9', 26)] as $nit) {
             $this->assertNotNull(ValidadorClinica::campo('nit', $nit), $nit);
         }
     }
@@ -46,7 +47,8 @@ final class D31SaneamientoTest extends TestCase
         $this->assertStringContainsString('maxlength="100"', ValidadorCuenta::atributosHtml('nombre_completo'));
         $this->assertStringContainsString('maxlength="255"', ValidadorCuenta::atributosHtml('email'));
         $this->assertStringContainsString('data-max-bytes="72"', ValidadorCuenta::atributosHtml('password'));
-        $this->assertStringContainsString('maxlength="14"', ValidadorClinica::atributosHtml('nit'));
+        $this->assertStringContainsString('maxlength="' . ValidadorNit::PRESENTACION_MAX . '"', ValidadorClinica::atributosHtml('nit'));
+        $this->assertStringContainsString('data-nit-numero-max="' . ValidadorNit::NUMERO_MAX . '"', ValidadorClinica::atributosHtml('nit'));
         $this->assertStringContainsString('maxlength="150"', ValidadorClinica::atributosHtml('nombre_clinica'));
         $this->assertStringContainsString('maxlength="255"', ValidadorClinica::atributosHtml('direccion'));
         $this->assertStringContainsString('maxlength="20"', ValidadorTelefono::atributosHtml());

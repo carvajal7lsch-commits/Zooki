@@ -5,6 +5,8 @@ require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/PagoSuscripcion.php';
 require_once __DIR__ . '/../models/FuentePago.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../models/RecuperadorCheckout.php';
+require_once __DIR__ . '/../helpers/EnlaceAjustes.php';
 
 final class SuscripcionController
 {
@@ -23,6 +25,14 @@ final class SuscripcionController
             http_response_code(405);
             return;
         }
+        // Los enlaces antiguos conservan su entrada, pero la pantalla vive dentro de Ajustes.
+        header('Location: ' . EnlaceAjustes::suscripcion($_GET));
+    }
+
+    /** Datos de presentación compartidos por Ajustes; sin enviar correos ni consultar la pasarela. */
+    public function datosVista(): array
+    {
+        Security::autorizar('admin_suscripcion');
         $servicio = new Suscripcion($this->db, (int) Contexto::clinicaActiva(), $this->reloj);
         $estadoSuscripcion = $servicio->estado();
         $profesionalSuscripcion = $servicio->profesional();
@@ -38,6 +48,11 @@ final class SuscripcionController
         }
         if (isset($this->mensajeRetorno)) {
             $mensajePago = $this->mensajeRetorno;
+        }
+        $avisoRetorno = $_SESSION['suscripcion_aviso_retorno'] ?? null;
+        unset($_SESSION['suscripcion_aviso_retorno']);
+        if (is_array($avisoRetorno) && ($avisoRetorno['clinica'] ?? null) === Contexto::clinicaActiva() && is_string($avisoRetorno['mensaje'] ?? null)) {
+            $mensajePago = $avisoRetorno['mensaje'];
         }
         $historialPagos = $this->pagos()->historial($this->pagina());
         $fuentePago = $this->fuentes()->actual();
@@ -57,8 +72,9 @@ final class SuscripcionController
         if ($this->mensajeRetorno === null && isset($_GET['referencia'])) {
             $retornoPago = $this->pagos()->estadoLocal($this->referencia());
         }
-        $content_view = __DIR__ . '/../views/admin/suscripcion.php';
-        require __DIR__ . '/../views/admin/layout.php';
+        $origenSuscripcion = ($_GET['desde'] ?? '') === 'inicio' ? 'inicio' : 'configuracion';
+        return compact('estadoSuscripcion', 'profesionalSuscripcion', 'pagoDisponible', 'mensajePago', 'historialPagos',
+            'fuentePago', 'automaticoDisponible', 'mensajeAutomatico', 'requiereAceptacion', 'retornoPago', 'origenSuscripcion');
     }
 
     private function pagos(): PagoSuscripcion
@@ -184,10 +200,17 @@ final class SuscripcionController
         try {
             $version = filter_var($_POST['version'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
             $ciclo = $_POST['ciclo'] ?? null;
-            if ($version === false || !is_string($ciclo)) {
+            if ($version === false || !in_array($ciclo, ['mensual', 'anual'], true)) {
                 throw new InvalidArgumentException('Revisa el ciclo y la vigencia.');
             }
-            $this->json(['ok' => true, 'pago' => $this->pagos()->reservar($ciclo, $version, (int) Contexto::idUsuario())]);
+            $this->configuracion->validar();
+            (new RecuperadorCheckout($this->db, $this->cliente ?? new ClienteWompiHttp($this->configuracion), $this->configuracion, $this->reloj))
+                ->ejecutar(false, (int) Contexto::clinicaActiva(), (int) Contexto::idUsuario());
+            $pago = $this->pagos()->reservar($ciclo, $version, (int) Contexto::idUsuario());
+            if (isset($pago['checkout']) && ($_POST['desde'] ?? null) === 'inicio') {
+                $pago['checkout']['redirectUrl'] .= '&desde=inicio';
+            }
+            $this->json(['ok' => true, 'pago' => $pago]);
         } catch (InvalidArgumentException | RuntimeException $error) {
             if ($error instanceof AccesoDenegado) {
                 throw $error;
@@ -236,6 +259,7 @@ final class SuscripcionController
                 $this->mensajeRetorno = 'No se pudo confirmar el pago. Sigue pendiente; vuelve a consultar más tarde.';
             }
         }
+        $_SESSION['suscripcion_aviso_retorno'] = ['clinica' => Contexto::clinicaActiva(), 'mensaje' => $this->mensajeRetorno];
         $this->vista();
     }
 

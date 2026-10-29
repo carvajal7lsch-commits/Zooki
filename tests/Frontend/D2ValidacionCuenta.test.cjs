@@ -65,6 +65,73 @@ function pagina(nombres, responder, ayudas = {}) {
 
 const respuesta = (datos = {}) => ({ ok: true, json: async () => ({ success: true, error: null, exists: false, ...datos }) });
 
+test('RE-0.1.3: DV erróneo aparece mientras se escribe; un dígito solo no se consulta ni se admite', async () => {
+    const mensaje = 'El dígito de verificación no corresponde. Revísalo en tu RUT.';
+    for (const valor of ['900123456-7', '1075001234-3']) {
+        const p = pagina(['nit'], () => respuesta({ error: mensaje, nit_duplicado: false }));
+        p.campos[0].value = valor;
+        p.eventos.input({ target: p.campos[0] });
+        await p.temporizadores.at(-1)();
+        assert.equal(p.llamadas[0].get('valor'), valor);
+        assert.equal(p.campos[0].error, mensaje);
+        assert.equal(p.campos[0].salidas[0].textContent, mensaje);
+    }
+    const p = pagina(['nit'], () => respuesta());
+    p.campos[0].value = '1';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, mensaje);
+    assert.equal(p.llamadas.length, 0);
+});
+
+test('RE-0.1.3: el NIT o cédula sin guion se consulta completo, sin exigir DV escrito', async () => {
+    for (const valor of ['1075001234', '900123456', '9001234567']) {
+        const p = pagina(['nit'], () => respuesta({ nit_duplicado: false }));
+        p.campos[0].value = valor;
+        assert.equal(await p.api.comprobar(p.form, p.campos[0]), true);
+        assert.equal(p.llamadas[0].get('valor'), valor);
+        assert.equal(p.campos[0].value, valor);
+        assert.equal(p.campos[0].error, '');
+    }
+});
+
+test('P1: el freno avisa sin invalidar el campo y se vuelve a consultar al enviar', async () => {
+    const p = pagina(['email'], (_, numero) => numero === 1
+        ? { ok: false, status: 429, json: async () => ({ success: false, message: 'Espera un momento.' }) }
+        : respuesta());
+    p.form.id = 'registroClinicaForm';
+    const avisos = [];
+    p.form.dispatchEvent = evento => avisos.push(evento.tipo);
+    p.campos[0].value = 'correo@zooki.test';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, '');
+    assert.equal(p.campos[0].atributos['aria-invalid'], 'false');
+    assert.deepEqual(avisos, ['cuenta:limitada']);
+    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    assert.equal(p.llamadas.length, 2);
+    for (const ejecutar of p.temporizadores) ejecutar();
+    assert.equal(p.form.enviado, true);
+    assert.equal(avisos.includes('cuenta:invalida'), false);
+});
+
+test('P1: si el freno continúa al enviar, no hay resumen de campos ni envío', async () => {
+    const p = pagina(['email'], () => ({ ok: false, status: 429, json: async () => ({ success: false }) }));
+    p.form.id = 'registroClinicaForm';
+    const avisos = [];
+    p.form.dispatchEvent = evento => avisos.push(evento.tipo);
+    p.campos[0].value = 'correo@zooki.test';
+    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    assert.deepEqual(avisos, ['cuenta:limitada']);
+    assert.equal(p.campos[0].error, '');
+    assert.equal(p.form.enviado, undefined);
+});
+
+test('P1: otros formularios conservan su aviso previo si no cargan el resumen del registro de clínica', async () => {
+    const p = pagina(['email'], () => ({ ok: false, status: 429, json: async () => ({ success: false, message: 'Espera un momento antes de seguir comprobando.' }) }));
+    p.campos[0].value = 'correo@zooki.test';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, 'Espera un momento antes de seguir comprobando.');
+});
+
 test('el rechazo de la política del servidor aparece junto al campo mientras se escribe', async () => {
     const p = pagina(['password'], () => respuesta({ error: 'La contraseña contiene tu nombre.' }));
     p.campos[0].value = 'Fabio#Seguro2026';
@@ -76,8 +143,8 @@ test('el rechazo de la política del servidor aparece junto al campo mientras se
     assert.equal(p.llamadas[0].has('csrf_token'), false, 'el interceptor global no reemplaza el token de esta ayuda');
 });
 
-test('E2: completar NIT y DV muestra duplicado junto al campo y habilita Reportar a soporte', async () => {
-    const p = pagina(['nit', 'dv'], () => respuesta({ error: 'Este NIT ya está registrado en Zooki. Puedes reportarlo a soporte.', nit_duplicado: true }));
+test('E2: completar el NIT único muestra duplicado junto al campo y habilita Reportar a soporte', async () => {
+    const p = pagina(['nit'], () => respuesta({ error: 'Este NIT ya está registrado en Zooki. Puedes reportarlo a soporte.', nit_duplicado: true }));
     const reporte = { hidden: true, addEventListener() {} };
     const salida = {};
     const registros = {};
@@ -87,13 +154,12 @@ test('E2: completar NIT y DV muestra duplicado junto al campo y habilita Reporta
         document: { addEventListener(tipo, callback) { callback(); }, getElementById: id => id === 'registroClinicaForm' ? p.form : (id === 'reportarNit' ? reporte : salida) },
         window: {},
     });
-    p.campos[0].value = '900123456';
-    p.campos[1].value = '8';
-    p.eventos.input({ target: p.campos[1] });
+    p.campos[0].value = '900123456-8';
+    p.eventos.input({ target: p.campos[0] });
     await p.temporizadores.at(-1)();
-    assert.equal(p.llamadas[0].get('nit'), '900123456');
-    assert.equal(p.llamadas[0].get('campo'), 'dv');
-    assert.match(p.campos[1].salidas[0].textContent, /ya está registrado/);
+    assert.equal(p.llamadas[0].get('nit'), '900123456-8');
+    assert.equal(p.llamadas[0].get('campo'), 'nit');
+    assert.match(p.campos[0].salidas[0].textContent, /ya está registrado/);
     assert.equal(reporte.hidden, false);
     p.campos[0].value = '900123457';
     registros.input({ target: p.campos[0] });
@@ -235,7 +301,7 @@ test('las pantallas de contraseña y el portal no conservan validación en líne
     ['views/auth/reset_password.php', 'views/auth/cambiar_password.php'].forEach(archivo => {
         assert.doesNotMatch(fs.readFileSync(path.join(raiz, archivo), 'utf8'), /<script>\s*\S|<style>|\son(?:submit|input)=/);
     });
-    ['views/auth/login.php', 'views/auth/completar_perfil.php', 'views/perfil/index.php', 'views/portal/index.php', 'views/admin/usuarios.php', 'views/vet/pacientes.php'].forEach(archivo => {
+    ['views/auth/login.php', 'views/auth/completar_perfil.php', 'views/perfil/paneles_cuenta.php', 'views/portal/index.php', 'views/admin/usuarios.php', 'views/vet/pacientes.php'].forEach(archivo => {
         assert.match(fs.readFileSync(path.join(raiz, archivo), 'utf8'), /data-validacion-cuenta/);
     });
 });

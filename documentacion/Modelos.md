@@ -789,7 +789,7 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT numerico y DV en casillas separadas"]
+  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT o cedula: sin guion calcula DV;<br/>con guion comprueba el DV escrito"]
   P1 --> P1V{"Campos del paso validos?"}
   P1V -- No --> P1
   P1V -- Si --> P2["Paso 2, administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña"]
@@ -799,14 +799,14 @@ flowchart TD
   P2V -- Si --> B["Paso 3: aceptar politica y Registrar clinica; sin Google<br/>(sin JavaScript se ven los tres pasos y se envia todo junto)"]
   B -. Atras sin perder lo escrito .-> P2
   B --> C{"CAPTCHA valido en servidor?"}
-  P1 -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
+  P1 -. NIT valido al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
   C -- No --> ERR[Corregir verificacion]
   ERR --> B
   C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
   V -- No --> E[Corregir campos]
   E --> B
   V -- Si --> N{"NIT duplicado?"}
-  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>NIT numerico y DV separado; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
+  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>Misma entrada: calcula DV sin guion o valida el escrito; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
   N -- No --> R{"Menos de 3 altas hoy por IP real?"}
   R -- No --> LIM[Intentalo mañana]
   R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]
@@ -857,7 +857,7 @@ flowchart TD
   M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
   M -- Si --> TX["Transaccion: bloquear clinica; delegar plan/suscripcion al servicio de vigencia<br/>Concesion con fecha y motivo, sin fabricar pagos ni cambiar suspension<br/>Cambiar estado administrativo solo por su accion; auditar y rollback si falla"]
   TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
-  CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  CAS["Detalle del caso: tipo, fecha, solicitante por id_usuario<br/>y cuenta actual del documento cuando los datos existentes permiten obtenerla<br/>Resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos ni codigos internos"]
   IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
   IP --> DES["Desbloquear directo: POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
   IP --> AV["Elegir administrador asociado, ver y editar texto<br/>Enviar solo al pulsar el boton, sin segunda confirmacion"]
@@ -1090,9 +1090,11 @@ flowchart TD
   C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
-  D -- Si --> D1[/"Mensaje: no se pudo completar el perfil; revisa datos o contacta soporte"/]
-  D1 --> D2["Crear el caso para el super-administrador: posible cuenta duplicada<br/>(uno abierto por titular y documento; no se repite)"]
-  D2 --> ZF([Fin: el perfil sigue incompleto])
+  D -- Si --> D2["Crear y confirmar el caso para el super-administrador<br/>(uno abierto por titular y documento; no se repite)"]
+  D2 --> D1[/"Responder: no se pudo completar el perfil; revisa datos o contacta soporte"/]
+  D1 --> ZF([Fin: el perfil sigue incompleto])
+  D1 --> N["Despues de responder y del commit: correo individual a cada super-administrador activo/verificado<br/>solo tipo, fecha y enlace al panel con sesion; sin identidad del titular"]
+  N --> NF["Si falla, registrar en log; el caso sigue abierto y la respuesta no cambia"]
   D -- No --> E[Guardar documento y telefono]
   E --> F[Marcar el perfil como completo]
   F --> G[Registrar en auditoria]
@@ -1142,6 +1144,7 @@ flowchart TD
   D6 -- Si --> D7["No se aplica; crear el caso para el super-administrador<br/>(posible cuenta duplicada)"]
   D7 --> DG[/"Mensaje generico: no se pudo aplicar el cambio; revisa datos o contacta soporte"/]
   DG --> ZF
+  DG --> NS["Despues de responder y del commit: aviso privado de soporte como en 13.1<br/>si falla, log sin cambiar el caso ni la respuesta"]
   D6 -- No --> D8[Aplicar el documento nuevo]
   D8 --> D9[Avisar por correo al titular]
   D9 --> AUD
@@ -1251,7 +1254,7 @@ La escritura del conocimiento ocurre solo desde el cargador por consola, despué
 
 ## 15. Configuración de marca y tipos de cita — M4 C1 (HU-7.4)
 
-RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
+RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Desde la decisión del dueño del 2026-10-26: duración de 1 a 720 minutos, margen de 0 a 120 y logo por elección/arrastre con vista previa (JPG/PNG/WebP reales de hasta 5 MB). Correo de contacto validado por formato, sin unicidad de cuenta. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
 
 ```mermaid
 flowchart TD
@@ -1269,17 +1272,23 @@ flowchart TD
   H --> UI
   G -- Sí --> I{"Clínica del formulario coincide con contexto autorizado?"}
   I -- No --> J["403 e intento auditado; sin cambios"]
-  I -- Sí --> T["Iniciar transacción exterior; bloquear clínica, usuario y vínculo en ese orden B1"]
+  I -- Sí --> LO{"Logo nuevo en la marca?"}
+  LO -- No --> T
+  LO -- Sí --> LV{"Peso y contenido real de imagen validos?"}
+  LV -- No --> H
+  LV -- Sí --> LG["Guardar logo con nombre generado por clinica; sin borrar el anterior"]
+  LG --> T["Iniciar transacción exterior; bloquear clínica, usuario y vínculo en ese orden B1"]
   T --> V{"Clínica/usuario/vínculo administrador siguen activos?"}
-  V -- No --> R["Rollback; 403 e intento auditado fuera de la transacción"]
+  V -- No --> R["Rollback; retirar solo logo nuevo si existe; 403 e intento auditado fuera de la transacción"]
   V -- Sí --> K{"Marca propia, tipo nuevo o tipo existente propio bloqueado?"}
   K -- No --> R
   K -- Sí --> W["Guardar marca o tipo; desactivar/reactivar sin borrar ni alterar snapshots de citas"]
   W --> AU["Registrar antes/después y actor/clínica en auditoría de la misma transacción"]
   AU --> OK{"Escritura y auditoría correctas?"}
-  OK -- No --> ERR["Rollback completo; error sin éxito aparente; permitir reintento"]
+  OK -- No --> ERR["Rollback completo y retirar solo logo nuevo; error sin exito aparente; permitir reintento"]
   OK -- Sí --> COM["Commit; devolver registro canónico; actualizar nombre de contexto si cambió"]
-  COM --> U["Actualizar formulario/lista/preview inmediatamente y luego aviso breve; rehabilitar controles"]
+  COM --> LC["Confirmar logo nuevo; persistir ruta en url_logo sin esquema nuevo"]
+  LC --> U["Actualizar formulario/lista/preview inmediatamente y luego aviso breve; rehabilitar controles"]
   ERR --> UI
   U --> UI
   L --> OUT["Consumidores autorizados: marca de la clínica del contexto o del acto; global conserva Zooki"]
@@ -1408,21 +1417,50 @@ El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunqu
 
 S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; S3 añade fuente hospedada y autorización mensual separada. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
 
-**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
+**Navegación (decisión del dueño, 2026-10-26):** Suscripción es una sección de Ajustes, con su menú y un único encabezado «Ajustes», sin subtítulo. El atajo del Inicio abre esa sección y conserva «← Inicio»; la entrada desde Ajustes vuelve a su lista en el celular. Mi plan e Historial son pestañas interiores; la paginación conserva sección, pestaña y origen. Los enlaces anteriores y el retorno de Wompi redirigen aquí. El retorno conserva su comprobación privada previa y pasa un aviso de una sola lectura limitado a la clínica activa.
+
+**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Desde 2.2.0 el pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados (decisión del dueño, 2026-10-26); guardar la tarjeta o Nequi sigue con el widget hospedado. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. La cotización vencida se cierra tras rechazo/error confirmado o ausencia confirmada por búsqueda privada completa de un checkout manual abandonado, según A.1; conserva la evidencia y vuelve a cotizar con tarifa vigente. Las concesiones legadas sin fin requieren regularización previa.
 
 ```mermaid
 flowchart TD
-  A["Administrador: Pagar o Renovar"] --> B{"Contexto, CSRF y ciclo validos?"}
+  IN["Inicio: acceso a Suscripcion, con regreso a Inicio"] --> AJ["Ajustes: seccion Suscripcion dentro de la misma hoja"]
+  MENU["Menu de Ajustes: Suscripcion"] --> AJ
+  AJ --> A["Administrador: Pagar o Renovar"]
+  A --> B{"Contexto, CSRF y ciclo validos?"}
   B -- No --> X["Rechazar sin crear cargo"]
-  B -- Si --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
-  C --> D["Firmar configuracion; JS externo abre Widget Wompi"]
+  B -- Si --> R["Comprobar checkout vencido sin emitir cargos: flujo A.1"]
+  R --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
+  C --> D["Firmar configuracion; el navegador abre el checkout web de Wompi a pantalla completa"]
   D --> E["Tarjeta, PSE o Nequi en Wompi"]
   E --> F["Retorno con id: GET privado y referencia de clinica propia; cierre: estado local"]
   E -. "Evento independiente" .-> G["Flujo B: verificar y conciliar"]
   G --> F
+  F --> V["Ajustes: Suscripcion; aviso local de una lectura y origen conservado"]
 ```
 
-**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno con ID válido también puede recuperarlo por GET privado, solo si su referencia pertenece a la clínica activa. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
+**A.1 — Recuperación automática de checkout abandonado (RE-0.5.15, decisión del dueño, 2026-10-26).** Se ejecuta antes de reservar al pulsar Pagar y desde el Schedule existente de cinco minutos, también sin webhook. `--revisar` solo enumera candidatos, sin HTTP ni escrituras. Solo considera órdenes pendientes vencidas de la clínica/entorno: todos sus intentos manuales, anteriores terminales negativos y último creado/incierto sin ID; si tiene ID se consulta mediante el conciliador. GET privado `/transactions?reference=...` sin filtros de estado ni fechas; solo 200 con lista válida completa vacía prueba ausencia. Errores, 404, objetos en lugar de listas o paginación desconocida conservan la reserva. Sin credenciales reales en las pruebas.
+
+```mermaid
+flowchart TD
+  A["Pagar con rol y CSRF / Schedule"] --> C{"Orden manual pendiente y vencida del entorno?"}
+  C -- No --> FIN["Conservar estado; no emitir cargos"]
+  C -- Si --> ID{"Ultimo intento tiene ID?"}
+  ID -- Si --> REC["GET por ID; conciliador comun fuera del candado"]
+  ID -- No --> EL{"Ultimo creado o incierto y anteriores terminales negativos?"}
+  EL -- No --> FIN
+  EL -- Si --> GET["GET privado por referencia fuera del candado"]
+  GET --> R{"Respuesta valida completa?"}
+  R -- No --> FIN
+  R -- "Con transacciones" --> REC
+  R -- "Lista vacia" --> LOCK["Bloquear clinica; comparar orden y todos los intentos con instantanea"]
+  LOCK --> CAM{"Todo sigue igual y cotizacion vencida?"}
+  CAM -- No --> FIN
+  CAM -- Si --> TX["Cerrar orden y liberar claves logicas; conservar intentos; auditar en misma transaccion"]
+  TX --> OK["Commit; permite nueva cotizacion sin conceder vigencia"]
+  TX -- "Auditoria falla" --> RB["Rollback; reserva sigue protegida"]
+```
+
+**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno con ID válido también puede recuperarlo por GET privado, solo si su referencia pertenece a la clínica activa. Anulación, discrepancia, segundo cargo real o aprobado tardío de una orden cerrada generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente; el aprobado tardío de la orden cerrada conserva su evidencia sin conceder periodo automáticamente.
 
 ```mermaid
 flowchart TD
@@ -1440,6 +1478,7 @@ flowchart TD
   V -- "Discrepancia o VOIDED" --> REV["Incidencia financiera para S4"]
   V -- Si --> LOCK["Bloquear clinica; revalidar orden, version y lease"]
   LOCK --> P{"Ya hay periodo o cargo aprobado?"}
+  LOCK -- "Orden cerrada: aprobado tardio" --> REV
   P -- "Mismo pago" --> DUP["No-op; evento procesado"]
   P -- "Otro cargo" --> REV
   P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nReservar recibo por pago y destinatario; auditar; commit"]

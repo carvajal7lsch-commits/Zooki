@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Citas · Agenda en escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B;border:0;background:transparent}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;gap:22px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+h1{margin:0;font-size:20px;font-weight:700;line-height:1.2}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.tabs{display:flex;background:#fff;border-radius:14px;padding:4px;gap:2px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.tabs a{text-decoration:none;font-weight:600;font-size:14px;color:#475569;height:38px;padding:0 16px;border-radius:10px;display:flex;align-items:center;gap:8px}
+.tabs a.on{background:#0052FF;color:#fff}
+.cnt{min-width:22px;height:22px;border-radius:11px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.on .cnt{background:rgba(255,255,255,.22);color:#fff}
+.cnt.amb{background:#FEF3C7;color:#92400E}
+.cnt.roj{background:#FEE2E2;color:#B91C1C}
+.right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.box{background:#fff;border-radius:14px;height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;box-shadow:0 2px 8px rgba(15,23,42,.06);border:0;font-family:inherit;color:#0F172A}
+.cn{width:32px;height:32px;border-radius:10px;background:rgba(0,82,255,.08);color:#0052FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.av{width:32px;height:32px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.bell{width:48px;justify-content:center;padding:0;position:relative;color:#475569}
+.bell i{position:absolute;top:12px;right:13px;width:8px;height:8px;border-radius:50%;background:#EF4444}
+.sheet{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;flex-direction:column;overflow:hidden}
+.tools{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.dseg{display:flex;background:#F1F5F9;border-radius:12px;padding:4px;gap:2px;flex:none}
+.dseg button{height:36px;padding:0 13px;border:0;border-radius:9px;background:transparent;font:600 13px Inter,sans-serif;color:#475569}
+.dseg button.on{background:#fff;color:#0052FF;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.ibtn{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;color:#475569;display:flex;align-items:center;justify-content:center}
+.search{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:10px;padding:0 14px;color:#94A3B8;font-size:14px}
+.sel{height:44px;flex:none;width:168px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 0 14px;font:500 14px Inter,sans-serif;color:#0F172A}
+.btn2{height:44px;flex:none;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:600 14px Inter,sans-serif;color:#0F172A;padding:0 16px;display:flex;gap:8px;align-items:center}
+.sum{display:flex;align-items:center;gap:8px;padding:0 16px 14px;font-size:13px;color:#475569}
+.sum b{color:#0F172A;font-weight:700;margin-right:6px}
+.chip{height:28px;border-radius:14px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid #E2E8F0;color:#475569;background:#fff}
+.dot{width:8px;height:8px;border-radius:50%}
+.limpiar{margin-left:auto;font-size:13px;font-weight:600;color:#0052FF;background:none;border:0;font-family:inherit}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #E2E8F0}
+.col{border-left:1px solid #E2E8F0;min-width:0}
+.col:first-child{border-left:0}
+.colh{display:flex;align-items:center;gap:12px;padding:12px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;height:62px}
+.av2{width:36px;height:36px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.nm{font-weight:700;font-size:15px}
+.meta{font-size:12px;color:#64748B;margin-top:1px}
+.rows{max-height:410px;overflow:auto}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid #F1F5F9;min-height:62px}
+.hr{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.pet{font-weight:700;font-size:14px}
+.own{font-size:13px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.st{height:26px;border-radius:13px;padding:0 10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;white-space:nowrap}
+.st-pendiente{background:#FEF3C7;color:#92400E}
+.st-confirmada{background:#DBEAFE;color:#1E40AF}
+.st-en_curso{background:#E0E7FF;color:#3730A3}
+.st-completada{background:#D1FAE5;color:#065F46}
+.st-cancelada{background:#FEE2E2;color:#991B1B}
+.st-no_asistio{background:#F1F5F9;color:#475569}
+.st-sin_cerrar{background:#FFE4E6;color:#9F1239}
+.apagada .pet,.apagada .hr{color:#94A3B8}
+.empty{padding:16px 20px;font-size:13px;color:#94A3B8}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú principal">
+    <img class="logo" src="/_blob/3d98388c38a31b12d924aec7a2562b74" alt="Zooki">
+    <a class="nav" href="#" aria-label="Inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a>
+    <a class="nav" href="#" aria-label="Usuarios"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.2.6 3.5 2.6 3.5 5.5"/></svg></a>
+    <a class="nav on" href="#" aria-label="Citas" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2.5a1 1 0 0 1 1 1V4h8v-.5a1 1 0 1 1 2 0V4h.5A2.5 2.5 0 0 1 21 6.5V9H3V6.5A2.5 2.5 0 0 1 5.5 4H6v-.5a1 1 0 0 1 1-1zM3 10.5h18v8A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5z"/></svg></a>
+    <a class="nav" href="#" aria-label="Auditoría"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></a>
+    <a class="nav" href="#" aria-label="Ajustes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.6 2.3 2.8-.6.6 2.8 2.3 1.6-1.3 2.5 1.3 2.5-2.3 1.6-.6 2.8-2.8-.6L12 21.2l-1.6-2.3-2.8.6-.6-2.8-2.3-1.6 1.3-2.5-1.3-2.5 2.3-1.6.6-2.8 2.8.6z"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+
+  <main class="main">
+    <header class="top">
+      <div class="ttl">
+        <span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>
+        <div><h1>Citas</h1><div class="sub">Agenda de la clínica por veterinario</div></div>
+      </div>
+      <nav class="tabs" aria-label="Secciones de Citas">
+        <a class="on" href="#" aria-current="page">Agenda <span class="cnt">9</span></a>
+        <a href="Triage.dc.html">Triage <span class="cnt amb">2</span></a>
+        <a href="Urgencias.dc.html">Urgencias <span class="cnt roj">2</span></a>
+      </nav>
+      <div class="right">
+        <button class="box" type="button"><span class="cn">CN</span><span style="text-align: left"><strong style="display: block; font-size: 14px">Clínica Norte (prueba)</strong><span style="font-size: 12px; color: #64748B">Administrador</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="box bell" type="button" aria-label="Notificaciones"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><i></i></button>
+        <button class="box" type="button" aria-label="Mi cuenta"><span class="av">AN</span><strong style="font-size: 14px">Ana</strong><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+    </header>
+
+    <section class="sheet" aria-label="Agenda">
+      <div class="tools">
+        <div class="dseg" role="group" aria-label="Periodo">
+          <button class="on" type="button">Hoy</button><button type="button">Ayer</button><button type="button">Semana</button><button type="button">Mes</button><button type="button">Todas</button>
+        </div>
+        <button class="ibtn" type="button" aria-label="Elegir una fecha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 14h3M13.5 17h3"/></svg></button>
+        <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Buscar paciente, propietario o motivo</span></label>
+        <button class="sel" type="button">Todos los tipos<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="sel" type="button">Todos los estados<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="sel" type="button">Todo el equipo<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="btn2" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exportar</button>
+      </div>
+      <div class="sum">
+        <b>Martes 27/10/2026</b>
+        <span class="chip">9 citas</span>
+        <span class="chip"><span class="dot" style="background: #F59E0B"></span>3 pendientes</span>
+        <span class="chip"><span class="dot" style="background: #10B981"></span>2 completadas</span>
+        <span class="chip"><span class="dot" style="background: #EF4444"></span>1 cancelada</span>
+        <button class="limpiar" type="button">Limpiar filtros</button>
+      </div>
+      <div class="board">
+        <sc-for list="{{vets}}" as="v" hint-placeholder-count="3">
+          <div class="col">
+            <div class="colh">
+              <span class="av2">{{v.ini}}</span>
+              <div><div class="nm">{{v.nombre}}</div><div class="meta">{{v.resumen}}</div></div>
+            </div>
+            <div class="rows">
+              <sc-for list="{{v.citas}}" as="c" hint-placeholder-count="3">
+                <a class="row {{c.extra}}" href="Detalle.dc.html" style="text-decoration: none; color: inherit">
+                  <span class="hr">{{c.hora}}</span>
+                  <span style="min-width: 0"><div class="pet">{{c.mascota}}</div><div class="own">{{c.propietario}} · {{c.tipo}}</div></span>
+                  <span class="st st-{{c.estado}}">{{c.etiqueta}}</span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const E = { pendiente: 'Pendiente', confirmada: 'Confirmada', en_curso: 'En curso', completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió', sin_cerrar: 'Sin cerrar' };
+    const c = (hora, mascota, propietario, tipo, estado) => ({ hora, mascota, propietario, tipo, estado, etiqueta: E[estado], extra: estado === 'cancelada' || estado === 'no_asistio' ? 'apagada' : '' });
+    return {
+      vets: [
+        { ini: 'BN', nombre: 'Beto Norte', resumen: '4 citas · 1 pendiente', citas: [
+          c('08:00', 'Luna', 'Fabio Propietario', 'Consulta general', 'completada'),
+          c('09:30', 'Kira', 'Fabio Propietario', 'Vacunación', 'en_curso'),
+          c('11:00', 'Max', 'Laura Gómez', 'Control', 'confirmada'),
+          c('15:00', 'Rocky', 'Andrés Pérez', 'Consulta general', 'pendiente')
+        ] },
+        { ini: 'ED', nombre: 'Elena Doble', resumen: '3 citas · 1 pendiente', citas: [
+          c('08:30', 'Toby', 'Marta Ríos', 'Desparasitación', 'completada'),
+          c('10:00', 'Nala', 'Camilo Vargas', 'Consulta general', 'no_asistio'),
+          c('14:00', 'Simba', 'Paula León', 'Control', 'pendiente')
+        ] },
+        { ini: 'VR', nombre: 'Valeria Ruiz', resumen: '2 citas · 1 pendiente', citas: [
+          c('09:00', 'Coco', 'Diana Mora', 'Consulta general', 'pendiente'),
+          c('16:30', 'Bruno', 'Jorge Díaz', 'Vacunación', 'cancelada')
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

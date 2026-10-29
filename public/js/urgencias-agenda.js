@@ -201,11 +201,17 @@
                     texto(tarjeta, 'p', 'Identidad resuelta; el contacto se conserva solo mientras haga falta.').className = 'ah-item__meta';
                     return;
                 }
-                const plegable = texto(tarjeta, 'details', '');
-                plegable.className = 'ah-mini';
-                texto(plegable, 'summary', 'Conciliar identidad');
-                const f = formulario(plegable, 'Conciliar identidad verificada', 'conciliar_rojo_ajax', {});
-                f.classList.add('ah-item__form--columna');
+                const abrir = texto(tarjeta, 'button', 'Conciliar identidad');
+                abrir.type = 'button';
+                abrir.className = 'zk-btn zk-btn--sec zk-btn--mini';
+                abrir.dataset.conciliarIdentidad = String(i.id_ingreso);
+                const dialogo = texto(tarjeta, 'dialog', '');
+                dialogo.className = 'zk-dialogo urgencia-conciliacion';
+                dialogo.id = 'conciliarIdentidad-' + i.id_ingreso;
+                dialogo.setAttribute('aria-labelledby', dialogo.id + '-titulo');
+                abrir.addEventListener('click', () => global.zookiAbrirDialogo(dialogo.id));
+                const f = formulario(dialogo, 'Conciliar identidad verificada', 'conciliar_rojo_ajax', {});
+                f.className = 'zk-dialogo__form';
                 const modo = campo(f, 'modo', 'Resolver', true, 'select');
                 opciones(modo, [{ id: 'consolidar', nombre: 'Consolidar sobre ficha existente' }, { id: 'completar', nombre: 'Completar esta ficha' }], 'id', 'nombre');
                 modo.value = 'consolidar';
@@ -236,6 +242,27 @@
                 modo.addEventListener('change', ajustar);
                 titular.addEventListener('change', ajustar);
                 ajustar();
+                const contenido = Array.from(f.children);
+                const cabecera = texto(f, 'header', '');
+                cabecera.className = 'zk-dialogo__head';
+                const titulo = texto(cabecera, 'h3', 'Conciliar identidad');
+                titulo.id = dialogo.id + '-titulo';
+                const cerrar = texto(cabecera, 'button', '×');
+                cerrar.type = 'button';
+                cerrar.className = 'zk-dialogo__cerrar';
+                cerrar.setAttribute('data-cerrar-dialogo', '');
+                cerrar.setAttribute('aria-label', 'Cerrar conciliación');
+                const cuerpo = texto(f, 'div', '');
+                cuerpo.className = 'zk-dialogo__cuerpo';
+                const guardar = f.querySelector('[type="submit"]');
+                contenido.filter(n => n !== guardar).forEach(n => cuerpo.append(n));
+                const pie = texto(f, 'footer', '');
+                pie.className = 'zk-dialogo__pie';
+                const cancelar = texto(pie, 'button', 'Cancelar');
+                cancelar.type = 'button';
+                cancelar.className = 'zk-btn zk-btn--sec';
+                cancelar.setAttribute('data-cerrar-dialogo', '');
+                pie.append(guardar);
             });
         }
 

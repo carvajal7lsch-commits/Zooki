@@ -10,29 +10,13 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-    --z-primary: #0052FF;
-    --z-primary-dark: #0044d6;
-    --z-primary-soft: rgba(0, 82, 255, 0.08);
     --z-purple-light: #F3EEFF;
     --z-purple: #8B5CF6;
     --z-success: #10B981;
     --z-success-soft: #ECFDF5;
-    --z-warning: #F59E0B;
-    --z-warning-soft: #FFFBEB;
-    --z-danger: #EF4444;
-    --z-danger-soft: #FEF2F2;
     --z-bg: #FAF9FF;
     /* Se usaban sin estar definidas: los fondos quedaban transparentes. */
-    --z-bg-light: #F1F5F9;
-    --z-text-main: #0F172A;
-    --z-surface: #FFFFFF;
-    --z-text: #0F172A;
-    --z-text-muted: #64748B;
-    --z-border: #E2E8F0;
-    --z-radius-lg: 24px;
-    --z-radius: 16px;
-    --z-radius-sm: 12px;
-    --z-shadow: 0 10px 25px -5px rgba(0, 82, 255, 0.08), 0 8px 10px -6px rgba(0, 82, 255, 0.05);
+    --z-text-main: var(--z-text);
     --z-shadow-lg: 0 20px 40px -4px rgba(15, 23, 42, 0.1);
 
     --nav-h: 76px;
@@ -45,7 +29,7 @@
     --primary-hover: var(--z-primary-dark);
     --primary-soft: var(--z-primary-soft);
     --text-primary: var(--z-text);
-    --text-secondary: #475569;
+    --text-secondary: var(--z-text-secondary);
     --text-muted: var(--z-text-muted);
     --border-color: var(--z-border);
     --bg-surface: var(--z-surface);

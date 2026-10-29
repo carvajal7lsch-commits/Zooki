@@ -1,6 +1,6 @@
 /**
  * M2 C6, HU-2.12 — Mapa del conocimiento: funciones puras de grafo-conocimiento.js y la
- * pantalla con un DOM mínimo (conjunto vacío, fallo del CDN con lista, mapa con filtros).
+ * pantalla con un DOM mínimo (conjunto vacío, respaldo a lista y mapa 3D con filtros).
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -70,6 +70,11 @@ test('C6: cada tipo tiene color y forma propios y la alarma universal se disting
     const api = cargarApi();
     const tipos = ['sintoma', 'diagnostico', 'farmaco', 'sustancia', 'especie', 'raza', 'condicion'];
     const estilos = tipos.map(tipo => api.estiloNodo({ tipo }));
+    const esperados = { diagnostico: '#0052FF', sintoma: '#8FB0FF', farmaco: '#1E3A8A', especie: '#475569', raza: '#CBD5E1', condicion: '#94A3B8', sustancia: '#E11D48' };
+    for (const tipo of tipos) assert.equal(api.estiloNodo({ tipo }).color, esperados[tipo]);
+    assert.equal(api.estiloArista({ efecto: 'bloqueo' }).color, esperados.sustancia);
+    assert.equal(api.estiloArista({ efecto: 'advertencia' }).color, esperados.especie);
+    assert.ok(api.estiloNodo({ tipo: 'diagnostico' }).tamano > api.estiloNodo({ tipo: 'especie' }).tamano);
     assert.equal(new Set(estilos.map(e => e.color)).size, tipos.length);
     assert.equal(new Set(estilos.map(e => e.forma)).size, tipos.length);
     const normal = api.estiloNodo({ tipo: 'sintoma' });
@@ -160,9 +165,14 @@ test('C6: condiciones y resultados legibles, sin JSON (RE-2.12.4)', () => {
 
 // ── Pantalla con un DOM mínimo ────────────────────────────────────────────
 
-function pagina({ respuesta, cytoscape }) {
+function pagina({ respuesta, ForceGraph3D, webgl = true, reducido = false, animaciones = false }) {
     const documento = { escuchas: {} };
-    documento.createElement = etiqueta => crearNodo(etiqueta, documento);
+    documento.createElement = etiqueta => {
+        const elemento = crearNodo(etiqueta, documento);
+        Object.defineProperty(elemento, 'children', { get: () => elemento.hijos.filter(hijo => hijo.tagName) });
+        if (etiqueta === 'canvas') elemento.getContext = () => webgl ? {} : null;
+        return elemento;
+    };
     documento.createTextNode = textoNodo;
     documento.addEventListener = (tipo, fn) => { (documento.escuchas[tipo] = documento.escuchas[tipo] || []).push(fn); };
     const raiz = crearNodo('main', documento);
@@ -183,6 +193,11 @@ function pagina({ respuesta, cytoscape }) {
     con('div', { grafoTiposOpciones: '' }, tipos);
     con('button', { vistaBoton: 'mapa' });
     con('button', { vistaBoton: 'lista' });
+    con('button', { vistaBoton: 'plano' });
+    con('button', { grafoGirar: '' });
+    con('button', { grafoTodo: '' });
+    con('div', { grafoFoco: '' }, raiz, { hidden:true });
+    con('span', { grafoFocoTexto: '' });
     con('section', { grafoFranja: '' }, raiz, { hidden: true });
     con('div', { grafoEstado: '' });
     con('p', { grafoAvisoCdn: '' }, raiz, { hidden: true });
@@ -199,9 +214,10 @@ function pagina({ respuesta, cytoscape }) {
     documento.querySelector = selector => (selector === '[data-grafo]' ? raiz : raiz.querySelector(selector));
     const peticiones = [];
     const ventana = {};
-    if (cytoscape) {
-        ventana.cytoscape = cytoscape;
-    }
+    if (ForceGraph3D) ventana.ForceGraph3D = ForceGraph3D;
+    ventana.matchMedia = () => ({ matches: reducido });
+    const cuadros = [];
+    if (animaciones) ventana.requestAnimationFrame = fn => cuadros.push(fn);
     const contexto = {
         window: ventana,
         fetch: async (url, opciones) => {
@@ -211,7 +227,7 @@ function pagina({ respuesta, cytoscape }) {
     };
     ventana.document = documento;
     vm.runInNewContext(codigo, contexto);
-    return { raiz, documento, peticiones, q: selector => raiz.querySelector(selector) };
+    return { raiz, documento, peticiones, animar: () => cuadros.shift()?.(), q: selector => raiz.querySelector(selector) };
 }
 
 async function iniciar(p) {
@@ -231,7 +247,7 @@ test('C6: conocimiento vacío da un estado explícito, sin franja ni cobertura (
     assert.equal(p.q('[data-grafo-area]').hidden, true);
 });
 
-test('C6: si el CDN no carga Cytoscape, los mismos datos se ven en lista con la franja y el detalle', async () => {
+test('C6: sin biblioteca 3D, los mismos datos se ven en lista con la franja y el detalle', async () => {
     const p = pagina({ respuesta: { success: true, datos: datosDePrueba() } });
     await iniciar(p);
     assert.equal(p.q('[data-grafo-aviso-cdn]').hidden, false);
@@ -243,8 +259,8 @@ test('C6: si el CDN no carga Cytoscape, los mismos datos se ven en lista con la 
     assert.match(franja, /aaaaaaaaaaaa/);
     assert.match(franja, /Pendiente de validación veterinaria/);
     assert.match(franja, /Todo pendiente de validación veterinaria\./);
-    assert.match(franja, /Perro: Parcial/);
-    assert.match(franja, /Gato: Sin cobertura/);
+    assert.match(franja, /Perro – Parcial/);
+    assert.match(franja, /Gato – Sin cobertura/);
     p.q('[data-nodo="sintoma.vomito"]').click();
     const detalle = p.q('[data-grafo-detalle]');
     assert.equal(detalle.hidden, false);
@@ -265,67 +281,114 @@ test('C6: si el CDN no carga Cytoscape, los mismos datos se ven en lista con la 
     assert.equal(p.q('[data-nodo="sintoma.colapso"]').hidden, false);
 });
 
-test('C6: con Cytoscape el mapa recibe estilos, filtra con clases y la búsqueda selecciona el nodo', async () => {
-    let opciones = null;
-    const elementos = new Map();
-    const coleccion = lista => ({
-        forEach: fn => lista.forEach(fn),
-        filter: fn => coleccion(lista.filter(fn)),
-        addClass: c => { lista.forEach(e => e.clases.add(c)); return coleccion(lista); },
-        removeClass: c => { lista.forEach(e => e.clases.delete(c)); return coleccion(lista); },
-        unselect: () => coleccion(lista),
-        closedNeighborhood: () => coleccion(lista),
-    });
-    const falso = config => {
-        opciones = config;
-        for (const elemento of config.elements) {
-            const clases = new Set(String(elemento.classes || '').split(' ').filter(Boolean));
-            const e = {
-                datos: elemento.data, grupo: elemento.group, clases, seleccionado: false,
-                id: () => elemento.data.id, toggleClass: (c, si) => (si ? clases.add(c) : clases.delete(c)), hasClass: c => clases.has(c),
-                select: () => { e.seleccionado = true; }, closedNeighborhood: () => coleccion([e]),
-                source: () => elementos.get(elemento.data.source), target: () => elementos.get(elemento.data.target),
-            };
-            elementos.set(elemento.data.id, e);
-        }
-        const todos = () => [...elementos.values()];
-        return {
-            on: () => {}, batch: fn => fn(), resize: () => {}, animate: () => {},
-            nodes: () => coleccion(todos().filter(e => e.grupo === 'nodes')),
-            edges: () => coleccion(todos().filter(e => e.grupo === 'edges')),
-            elements: () => coleccion(todos()),
-            getElementById: id => elementos.get(id),
+function forceGraphFalso() {
+    const valores = new Map();
+    const controles = {};
+    let escena;
+    escena = new Proxy({}, { get: (_, clave) => {
+        if (clave === 'controls') return () => controles;
+        if (clave === 'd3Force') return () => ({ strength:() => {} });
+        if (clave === 'graph2ScreenCoords') return () => ({ x: 80, y: 80 });
+        return (...args) => {
+            if (!args.length) return valores.get(clave);
+            valores.set(clave, args[0]);
+            if (clave === 'graphData') args[0].nodes.forEach((n,i) => { n.x=i+1; n.y=i+2; n.z=i+3; });
+            return escena;
         };
-    };
-    const p = pagina({ respuesta: { success: true, datos: datosDePrueba() }, cytoscape: falso });
+    } });
+    return { valores, controles, ForceGraph3D:() => () => escena };
+}
+
+test('C6 3D: colores, tipos/especie, foco/cámara, relaciones/fuentes, Ver todo y Plano/Lista', async () => {
+    const g = forceGraphFalso();
+    const p = pagina({ respuesta:{success:true,datos:datosDePrueba()}, ForceGraph3D:g.ForceGraph3D });
     await iniciar(p);
     assert.equal(p.q('[data-grafo-aviso-cdn]').hidden, true);
-    assert.equal(opciones.layout.name, 'cose');
-    assert.equal(elementos.get('sintoma.colapso').datos.borde, '#dc2626');
-    assert.ok(elementos.get('sintoma.colapso').clases.has('alarma'));
-    assert.equal(elementos.get('a.lirio').datos.flecha, 'tee');
-    assert.equal(elementos.get('a.lirio').datos.source, 'especie.felino');
-    assert.ok(elementos.get('a.parvo').datos.grosor > elementos.get('a.panleuco').datos.grosor);
+    assert.equal(g.valores.get('backgroundColor'), '#FFFFFF');
+    const nodos = g.valores.get('graphData').nodes;
+    const aristas = g.valores.get('graphData').links;
+    const vomito = nodos.find(n => n.codigo === 'sintoma.vomito');
+    const parvo = nodos.find(n => n.codigo === 'diagnostico.parvovirosis');
+    const lirio = nodos.find(n => n.codigo === 'sustancia.lilium');
+    assert.equal(g.valores.get('nodeColor')(vomito),'#8FB0FF');
+    assert.equal(g.valores.get('nodeColor')(parvo),'#0052FF');
+    assert.equal(g.valores.get('nodeColor')(lirio),'#E11D48');
+    assert.ok(g.valores.get('nodeVal')({ ...vomito, grado: 10 }) > g.valores.get('nodeVal')({ ...vomito, grado: 0 }));
+    assert.ok(g.valores.get('nodeVal')({ ...parvo, grado: 0 }) > g.valores.get('nodeVal')({ ...vomito, grado: 1000 }));
+    assert.equal(g.valores.get('linkDirectionalParticleColor')(aristas.find(l => l.codigo === 'a.lirio')), '#E11D48');
+    assert.equal(g.valores.get('linkDirectionalParticleColor')(aristas.find(l => l.codigo === 'a.parvo')), '#0052FF');
     const especie = p.q('[data-grafo-especie]');
     especie.value = 'especie.felino';
     especie.disparar('change');
-    assert.ok(elementos.get('a.parvo').clases.has('oculto'));
-    assert.ok(elementos.get('raza.gran_danes').clases.has('oculto'));
-    assert.ok(!elementos.get('sintoma.colapso').clases.has('oculto'));
-    assert.match(p.q('[data-grafo-visibles]').textContent, /de 11 nodos visibles/);
+    assert.equal(g.valores.get('linkVisibility')(aristas.find(l=>l.codigo==='a.parvo')),false);
+    assert.equal(g.valores.get('nodeVisibility')(nodos.find(n=>n.codigo==='raza.gran_danes')),false);
+    assert.equal(g.valores.get('nodeVisibility')(nodos.find(n=>n.codigo==='sintoma.colapso')),true);
+    const tipo = p.q('[data-grafo-tipo="farmaco"]');
+    tipo.checked = false;
+    p.q('[data-grafo-tipos]').disparar('change');
+    assert.equal(g.valores.get('nodeVisibility')(nodos.find(n=>n.codigo==='farmaco.meloxicam')),false);
     const buscador = p.q('[data-grafo-buscar]');
     buscador.value = 'bomita';
     buscador.disparar('input');
-    const sugerencias = p.raiz.querySelectorAll('[data-sugerencia]');
-    assert.equal(sugerencias[0].dataset.sugerencia, 'sintoma.vomito');
-    sugerencias[0].click();
-    assert.equal(elementos.get('sintoma.vomito').seleccionado, true);
-    assert.ok(elementos.get('sustancia.lilium').clases.has('atenuado'), 'Lo que no es vecino se atenúa');
-    assert.ok(!elementos.get('diagnostico.parvovirosis').clases.has('atenuado'));
-    assert.match(p.q('[data-grafo-detalle-titulo]').textContent, /Vómito/);
-    p.q('[data-grafo-cerrar-detalle]').click();
-    assert.equal(p.q('[data-grafo-detalle]').hidden, true);
-    assert.ok(!elementos.get('sustancia.lilium').clases.has('atenuado'));
+    p.raiz.querySelectorAll('[data-sugerencia]')[0].click();
+    assert.ok(g.valores.get('cameraPosition'));
+    assert.equal(g.valores.get('nodeColor')(lirio),'rgba(148,163,184,0.18)');
+    assert.equal(g.valores.get('nodeColor')(parvo),'#0052FF');
+    assert.ok(g.valores.get('linkWidth')(aristas[0])>g.valores.get('linkWidth')(aristas[2]));
+    assert.equal(g.valores.get('linkDirectionalParticles')(aristas[0]),3);
+    assert.match(p.q('[data-grafo-detalle]').textContent,/Sugiere/);
+    assert.match(p.q('[data-grafo-detalle]').textContent,/Fuentes/);
+    assert.match(p.q('[data-grafo-detalle]').textContent,/decide el veterinario/);
+    p.q('[data-vista-boton="plano"]').click();
+    assert.equal(g.valores.get('numDimensions'),2);
+    p.q('[data-vista-boton="lista"]').click();
+    assert.equal(p.q('[data-vista-grafo="lista"]').hidden,false);
+    p.q('[data-grafo-todo]').click();
+    assert.equal(p.q('[data-grafo-detalle]').hidden,true);
+    assert.equal(g.valores.get('nodeColor')(lirio),'#E11D48');
+    assert.ok(g.valores.has('zoomToFit'));
+    buscador.value = 'Meloxicam';
+    buscador.disparar('input');
+    p.raiz.querySelectorAll('[data-sugerencia]')[0].click();
+    assert.equal(tipo.checked, true, 'Buscar muestra el tipo que estaba desmarcado');
+    assert.equal(g.valores.get('nodeVisibility')(nodos.find(n => n.codigo === 'farmaco.meloxicam')), true);
+});
+
+test('C6 3D: sin WebGL conserva lista, filtros y ficha; las etiquetas usan texto escapado', async () => {
+    const g = forceGraphFalso();
+    const datos = datosDePrueba();
+    datos.nodes[0].etiqueta = '<img src=x onerror=alert(1)>';
+    const p = pagina({respuesta:{success:true,datos}, ForceGraph3D:g.ForceGraph3D, webgl:false});
+    await iniciar(p);
+    assert.equal(p.q('[data-vista-grafo="lista"]').hidden,false);
+    assert.equal(p.q('[data-grafo-aviso-cdn]').hidden,false);
+    assert.equal(g.valores.has('graphData'),false);
+    p.q('[data-nodo="especie.canino"]').click();
+    assert.equal(p.q('[data-grafo-detalle-titulo]').textContent,datos.nodes[0].etiqueta);
+    assert.equal(p.q('[data-grafo-detalle-titulo]').hijos.length,0);
+});
+
+test('C6 3D: etiquetas HTML como texto y movimiento reducido sin giro ni partículas', async () => {
+    const g = forceGraphFalso();
+    const datos = datosDePrueba();
+    const etiqueta = '<img src=x onerror=alert(1)>';
+    datos.nodes[0].etiqueta = etiqueta;
+    const p = pagina({ respuesta: { success: true, datos }, ForceGraph3D: g.ForceGraph3D, reducido: true, animaciones: true });
+    await iniciar(p);
+    p.q('[data-grafo-mapa]').clientWidth = 600;
+    p.q('[data-grafo-mapa]').clientHeight = 500;
+    p.animar();
+    p.animar();
+    p.animar();
+    const rotulo = p.raiz.todos().find(n => n.className?.includes('grafo-etiqueta') && n.textContent === etiqueta);
+    assert.ok(rotulo);
+    assert.equal(rotulo.hijos.length, 0);
+    assert.equal(g.controles.autoRotate, false);
+    assert.equal(g.valores.get('linkDirectionalParticles')(g.valores.get('graphData').links[0]), 0);
+    p.q('[data-grafo-girar]').click();
+    assert.equal(g.controles.autoRotate, false);
+    g.valores.get('onNodeClick')(g.valores.get('graphData').nodes[0]);
+    assert.match(p.q('[data-grafo-detalle]').textContent, /Fuentes/);
 });
 
 test('C6: si el servidor falla, estado de error con reintento y sin cobertura', async () => {
@@ -337,4 +400,45 @@ test('C6: si el servidor falla, estado de error con reintento y sin cobertura', 
     estado.todos().find(n => n.tagName === 'BUTTON').click();
     await new Promise(resolver => setImmediate(resolver));
     assert.equal(p.peticiones.length, 2);
+});
+
+
+test('R comodidad: seis relaciones, fuentes con Ver todas y reglas cerradas', async () => {
+    const datos = datosDePrueba();
+    const elegido = datos.nodes.find(n => n.codigo === 'sintoma.vomito');
+    elegido.fuentes = Array.from({ length: 5 }, (_, i) => ({ ...FUENTE, titulo: 'Fuente ' + i }));
+    for (let i = 0; i < 6; i++) {
+        datos.edges.push(arista('extra.' + i, elegido.codigo, 'diagnostico.parvovirosis'));
+    }
+    const p = pagina({ respuesta: { success: true, datos } });
+    await iniciar(p);
+    p.q('[data-nodo="sintoma.vomito"]').click();
+    const detalle = p.q('[data-grafo-detalle]');
+    const mas = detalle.todos().filter(n => n.className === 'grafo-mas');
+    assert.equal(mas.length, 2);
+    assert.equal(mas[0].textContent, 'Ver 2 más');
+    assert.equal(mas[1].textContent, 'Ver todas');
+    mas.forEach(boton => boton.click());
+    assert.ok(mas.every(boton => boton.hidden));
+    assert.ok(detalle.todos().some(n => n.classList?.contains('grafo-expandida')));
+    const reglas = detalle.todos().find(n => n.className === 'grafo-reglas-desplegable');
+    assert.equal(reglas.open, false);
+});
+
+
+test('R-5b: chips, lista, leyenda y puntos de ficha usan la misma paleta del mapa', async () => {
+    const p = pagina({ respuesta: { success: true, datos: datosDePrueba() } });
+    await iniciar(p);
+    const casilla = p.q('[data-grafo-tipo="diagnostico"]');
+    const chip = p.raiz.todos().find(n => n.hijos?.includes(casilla));
+    const puntoChip = chip.hijos.find(n => n.className?.includes('grafo-muestra'));
+    assert.equal(puntoChip.propiedades['--grafo-color'], '#0052FF');
+    const fila = p.q('[data-nodo="diagnostico.parvovirosis"]');
+    assert.equal(fila.hijos[0].propiedades['--grafo-color'], '#0052FF');
+    assert.equal(p.raiz.propiedades['--grafo-peligro'], '#E11D48');
+    const leyenda = p.q('[data-grafo-leyenda]').todos().filter(n => n.className === 'grafo-muestra');
+    assert.deepEqual(leyenda.map(n => n.propiedades['--grafo-color']), ['#475569', '#0052FF', '#E11D48', '#E11D48']);
+    p.q('[data-nodo="sintoma.vomito"]').click();
+    const puntoFicha = p.q('[data-grafo-detalle]').todos().find(n => n.tagName === 'BUTTON' && n.title?.startsWith('Parvovirosis canina'));
+    assert.equal(puntoFicha.propiedades['--grafo-color'], '#0052FF');
 });

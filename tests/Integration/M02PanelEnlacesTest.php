@@ -69,7 +69,7 @@ final class M02PanelEnlacesTest extends TestCase
         // Revisión del usuario (2026-10-12): sin franja de cifras; los contadores van en las pestañas.
         $this->assertStringNotContainsString('data-indicador', $html);
         $this->assertStringContainsString('data-contador-soporte>2<', $html);
-        $this->assertStringContainsString('data-contador-seguridad>1<', $html);
+        $this->assertStringContainsString('data-contador-seguridad data-alerta="1">1<', $html);
         foreach (['data-pestana="clinicas"', 'data-pestana="soporte"', 'data-pestana="seguridad"', 'data-panel="soporte" hidden', 'data-panel="seguridad" hidden'] as $parte) {
             $this->assertStringContainsString($parte, $html);
         }
@@ -87,7 +87,7 @@ final class M02PanelEnlacesTest extends TestCase
         $this->assertStringNotContainsString('2026-10-11 18:35:45', $html);
         $this->assertStringNotContainsString('<i class="bi bi-credit-card" aria-hidden="true"></i> Sin suscripción', $html, 'La tarjeta no dice «Sin suscripción» de un gratuito.');
         $this->assertMatchesRegularExpression('/<progress class="plataforma-uso__barra" max="2" value="\d">/', $html);
-        // S4 añade finanzas sin mover el aviso de Seguridad ni rediseñar el modal.
+        // RE-0.3.7: R conserva las tres secciones y las acciones financieras.
         $this->assertSame(3, substr_count($html, 'data-modal-pestana='));
         $this->assertStringContainsString('data-modal-pestana="pagos"', $html);
         $this->assertStringNotContainsString('Aviso al administrador', $html);
@@ -97,8 +97,9 @@ final class M02PanelEnlacesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/action=(vet_pacientes|ver_consulta|portal_propietario|admin_citas|admin_usuarios)/', $html);
         $this->assertDoesNotMatchRegularExpression('/\sstyle=|\son[a-z]+=|<script(?![^>]*src=)/', $html);
         // Cabecera con los componentes del sistema, no enlaces sueltos.
-        $this->assertStringContainsString('class="contexto-actual"', $html);
-        $this->assertStringContainsString('header-user__role">Super-administrador<', $html);
+        $this->assertStringContainsString('class="plataforma-rol"', $html);
+        $this->assertStringContainsString('aria-label="Pendientes de plataforma"', $html);
+        $this->assertStringContainsString('Super-administrador', $html);
         $this->assertStringNotContainsString('>Cerrar sesión</a> ', $html);
     }
 
@@ -109,10 +110,10 @@ final class M02PanelEnlacesTest extends TestCase
         // Una clínica pendiente aún no tiene plan (se asigna al verificar, HU-0.2).
         $this->db->exec('UPDATE clinicas SET id_plan = NULL WHERE id_clinica = 4');
         $porNit = $this->panel(['buscar' => '901234567-7']);
-        $this->assertSame(1, substr_count($porNit, '<article class="person-card plataforma-tarjeta" data-clinica-fila'));
+        $this->assertSame(1, preg_match_all('/<article\b[^>]*class="person-card plataforma-tarjeta"[^>]*data-clinica-fila/', $porNit));
         $this->assertStringContainsString('Clínica Norte', $porNit);
         $porPlan = $this->panel(['plan' => '2']);
-        $this->assertSame(1, substr_count($porPlan, '<article class="person-card plataforma-tarjeta" data-clinica-fila'));
+        $this->assertSame(1, preg_match_all('/<article\b[^>]*class="person-card plataforma-tarjeta"[^>]*data-clinica-fila/', $porPlan));
         $this->assertStringContainsString('Clínica Sur', $porPlan);
         $vacio = $this->panel(['estado' => 'baja']);
         $this->assertMatchesRegularExpression('/data-sin-resultados >/', $vacio, 'El estado vacío se ve.');

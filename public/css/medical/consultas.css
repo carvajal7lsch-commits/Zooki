@@ -1,43 +1,8 @@
 /* â”€â”€ RediseÃ±o Consultas MÃ©dicas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.stat-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: #f8fafc;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    height: 46px;
-}
 
-.stat-pill-icon {
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.stat-pill-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
 
-.stat-pill-label {
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    line-height: 1;
-    margin-bottom: 0.15rem;
-}
 
-.stat-pill-value {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--text-main);
-    line-height: 1;
-}
 
 .drawer-overlay {
     position: fixed;
@@ -57,7 +22,7 @@
     display: flex;
     flex-direction: column;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    border-left: 1px solid #e2e8f0;
+    border-left: 1px solid var(--z-border);
 }
 
 .drawer-panel.drawer-md {
@@ -80,7 +45,7 @@
 
 .drawer-header {
     padding: 1.5rem 1.75rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--z-bg-light);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -122,7 +87,7 @@
     height: 32px;
     border-radius: 50%;
     border: none;
-    background: #f1f5f9;
+    background: var(--z-bg-light);
     color: var(--text-muted);
     cursor: pointer;
     font-size: 1rem;
@@ -151,10 +116,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f8fafc;
+    background: var(--z-bg-suave);
     padding: 1.25rem;
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
 }
 
 .clinical-summary-patient {
@@ -236,7 +201,7 @@
 
 .vital-sign-card {
     background: white;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
     padding: 0.9rem;
     border-radius: 14px;
     display: flex;
@@ -254,9 +219,9 @@
     flex-shrink: 0;
 }
 
-.vital-sign-icon.weight { background: #fffbeb; color: #f59e0b; }
-.vital-sign-icon.temp { background: #fef2f2; color: #ef4444; }
-.vital-sign-icon.heart { background: #f0fdf4; color: #10b981; }
+.vital-sign-icon.weight { background: var(--z-primary-soft); color: var(--z-primary); }
+.vital-sign-icon.temp { background: var(--z-primary-soft); color: var(--z-primary); }
+.vital-sign-icon.heart { background: var(--z-primary-soft); color: var(--z-primary); }
 
 .vital-sign-info {
     display: flex;
@@ -297,39 +262,39 @@
 
 .report-box.default {
     background: white;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
 }
 .report-box.default .report-box-header {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--z-bg-suave);
+    border-bottom: 1px solid var(--z-border);
     color: var(--text-main);
 }
 .report-box.default .report-box-header i { color: var(--primary); }
 .report-box.default .report-box-body { color: var(--text-secondary); }
 
 .report-box.info {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: var(--z-primary-soft);
+    border: 1px solid var(--z-primary-borde);
 }
 .report-box.info .report-box-header {
     background: rgba(255,255,255,0.6);
-    border-bottom: 1px solid #bfdbfe;
-    color: #1e3a8a;
+    border-bottom: 1px solid var(--z-primary-borde);
+    color: var(--z-primary-dark);
 }
-.report-box.info .report-box-header i { color: #3b82f6; }
-.report-box.info .report-box-body { color: #1e40af; font-weight: 500; }
+.report-box.info .report-box-header i { color: var(--z-primary); }
+.report-box.info .report-box-body { color: var(--z-primary-dark); font-weight: 500; }
 
 .report-box.success {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: var(--z-primary-soft);
+    border: 1px solid var(--z-primary-borde);
 }
 .report-box.success .report-box-header {
     background: rgba(255,255,255,0.6);
-    border-bottom: 1px solid #bbf7d0;
-    color: #14532d;
+    border-bottom: 1px solid var(--z-primary-borde);
+    color: var(--z-primary-dark);
 }
-.report-box.success .report-box-header i { color: #10b981; }
-.report-box.success .report-box-body { color: #166534; font-weight: 500; }
+.report-box.success .report-box-header i { color: var(--z-primary); }
+.report-box.success .report-box-body { color: var(--z-primary-dark); font-weight: 500; }
 
 /* Table specific classes */
 .consultation-date-col {
@@ -363,14 +328,14 @@
     justify-content: center;
     font-size: 1.1rem;
 }
-.pet-avatar-box.felino { background: #fffbeb; color: #f59e0b; }
-.pet-avatar-box.canino { background: #eff6ff; color: #3b82f6; }
+.pet-avatar-box.felino { background: var(--z-primary-soft); color: var(--z-primary); }
+.pet-avatar-box.canino { background: var(--z-primary-soft); color: var(--z-primary); }
 
 .text-truncate-box {
-    background: #f8fafc;
+    background: var(--z-bg-suave);
     padding: 0.4rem 0.8rem;
     border-radius: 8px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--z-bg-light);
     display: inline-block;
     max-width: 200px;
     white-space: nowrap;
@@ -381,9 +346,9 @@
     color: var(--text-main);
 }
 .text-truncate-box.success {
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #dcfce7;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    border: 1px solid var(--z-primary-borde);
 }
 .doctor-badge {
     display: inline-flex;
@@ -398,49 +363,9 @@
 }
 
 /* Premium Layout Classes - OPTIMIZED FOR SPACE */
-.compact-hero {
-    background: white;
-    border-radius: 16px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-    border: 1px solid #e2e8f0;
-}
 
-.compact-hero-title { 
-    margin: 0; 
-    font-size: 1.2rem; 
-    font-weight: 800; 
-    color: var(--text-main); 
-    display: flex; 
-    align-items: center; 
-    gap: 0.5rem; 
-}
-.compact-hero-title i { color: var(--primary); }
 
-.compact-hero-stats { 
-    display: flex; 
-    gap: 1rem; 
-    align-items: center; 
-}
 
-.compact-stat-badge {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 0.4rem 0.8rem;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-main);
-}
-.compact-stat-badge.today { color: #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
-.compact-stat-badge.total { color: #10b981; background: #f0fdf4; border-color: #bbf7d0; }
 
 .btn-compact-primary {
     background: var(--primary);
@@ -456,7 +381,7 @@
     align-items: center;
     gap: 0.4rem;
 }
-.btn-compact-primary:hover { background: #002299; }
+.btn-compact-primary:hover { background: var(--z-primary-dark); }
 
 
 .hero-stats-wrapper { display: flex; gap: 1rem; position: relative; z-index: 1; }
@@ -515,26 +440,14 @@
 
 .empty-state-box { text-align: center; padding: 4rem; background: white; border-radius: 20px; }
 
-.data-row-card {
-    background: white;
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #e2e8f0;
-}
-.data-row-card:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(0,0,0,0.04); }
 
 .data-col { display: flex; flex-direction: column; }
-.data-col-title { font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 0.1rem; }
+.data-col-title { font-size: 0.7rem; color: var(--z-text-tenue); font-weight: 700; text-transform: uppercase; margin-bottom: 0.1rem; }
 .data-col-text { color: var(--text-main); font-size: 0.9rem; font-weight: 700; }
 
 .btn-icon.premium { width: 34px; height: 34px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.btn-icon.premium.history { background: #eff6ff; color: #3b82f6; }
-.btn-icon.premium.medical { background: #f0fdf4; color: #10b981; }
+.btn-icon.premium.history { background: var(--z-primary-soft); color: var(--z-primary); }
+.btn-icon.premium.medical { background: var(--z-primary-soft); color: var(--z-primary); }
 .btn-icon.premium:hover { transform: scale(1.05); }
 
 /* Vitals and Modal Classes */
@@ -561,7 +474,7 @@
 
 .vital-card {
     background: white;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
     border-radius: 14px;
     padding: 1rem;
     display: flex;
@@ -580,7 +493,7 @@
 }
 .vital-input-col input {
     border: none;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--z-border);
     font-size: 1rem;
     font-weight: 800;
     outline: none;
@@ -601,7 +514,7 @@
     left: 1rem !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    color: #94a3b8 !important;
+    color: var(--z-text-tenue) !important;
 }
 /* Resultados del buscador de "Atención sin cita". El contenedor lleva la
    clase genérica .suggestions-list, que es un desplegable absoluto y oculto
@@ -653,7 +566,7 @@
 .premium-search-input-modal {
     width: 100% !important;
     padding: 0.75rem 1rem 0.75rem 2.75rem !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid var(--z-border) !important;
     border-radius: 12px !important;
     outline: none !important;
 }
@@ -670,7 +583,7 @@
     margin-bottom: 0.5rem;
     opacity: 0.3;
 }
-.text-success { color: #10b981 !important; }
+.text-success { color: var(--z-primary) !important; }
 .text-primary { color: var(--primary) !important; }
 
 /* Estilos extraÃ­dos de Citas Admin para Consultas */
@@ -708,19 +621,19 @@
     align-items: center;
     position: relative;
     z-index: 1;
-    text-shadow: 0 0 6px #f8fafc, 0 0 3px #ffffff;
+    text-shadow: 0 0 6px var(--z-bg-suave), 0 0 3px #ffffff;
 }
 
 .mini-kpi-value {
     font-size: 1.4rem;
     font-weight: 800;
     line-height: 1;
-    color: #0052FF;
+    color: var(--z-primary);
 }
 
 .mini-kpi-label {
     font-size: 0.65rem;
-    color: #334155;
+    color: var(--z-text-secondary);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -730,7 +643,7 @@
 .kpi-divider {
     width: 1px;
     height: 30px;
-    background: #e2e8f0;
+    background: var(--z-border);
 }
 
 /* Filtros Avanzados Card */
@@ -767,11 +680,11 @@
 
 .filter-group select {
     padding: 0.35rem 1.8rem 0.35rem 0.8rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
     border-radius: 8px;
     font-size: 0.85rem;
     color: var(--text-primary);
-    background-color: #f8fafc;
+    background-color: var(--z-bg-suave);
     transition: all 0.2s;
     outline: none;
     cursor: pointer;
@@ -783,11 +696,11 @@
 }
 
 .filter-group select:hover {
-    border-color: #cbd5e1;
+    border-color: var(--z-border-fuerte);
 }
 
 .filter-group select:focus {
-    border-color: #0052FF;
+    border-color: var(--z-primary);
     box-shadow: 0 0 0 3px rgba(0,82,255,0.1);
     background-color: white;
 }
@@ -804,23 +717,23 @@
 .filter-search i {
     position: absolute;
     left: 1rem;
-    color: #94a3b8;
+    color: var(--z-text-tenue);
     font-size: 0.9rem;
 }
 
 .filter-search input {
     padding: 0.45rem 1rem 0.45rem 2.2rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
     border-radius: 8px;
     font-size: 0.85rem;
     width: 100%;
     outline: none;
     transition: all 0.2s;
-    background: #f8fafc;
+    background: var(--z-bg-suave);
 }
 
 .filter-search input:focus {
-    border-color: #0052FF;
+    border-color: var(--z-primary);
     box-shadow: 0 0 0 3px rgba(0,82,255,0.1);
     background: white;
 }
@@ -832,7 +745,7 @@
     font-weight: 600;
     color: var(--text-secondary);
     background: white;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--z-border);
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -843,7 +756,7 @@
 }
 
 .btn-clean:hover {
-    background: #f1f5f9;
+    background: var(--z-bg-light);
     color: var(--text-primary);
 }
 
@@ -873,14 +786,14 @@
 .consultation-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-    border-color: #cbd5e1;
+    border-color: var(--z-border-fuerte);
 }
 
 .consultation-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--z-bg-light);
     padding-bottom: 0.5rem;
     margin-bottom: 0.2rem;
 }
@@ -888,7 +801,7 @@
 .consultation-time {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--z-text);
     display: flex;
     align-items: center;
     gap: 0.35rem;
@@ -896,7 +809,7 @@
 
 .consultation-date {
     font-weight: normal;
-    color: #64748b;
+    color: var(--z-text-muted);
     font-size: 0.75rem;
 }
 
@@ -911,22 +824,22 @@
 
 .consultation-species-badge.canino {
     background: rgba(0, 82, 255, 0.1);
-    color: #0052FF;
+    color: var(--z-primary);
 }
 
 .consultation-species-badge.felino {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10B981;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-species-badge.ave {
-    background: rgba(245, 158, 11, 0.1);
-    color: #F59E0B;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-species-badge.roedor {
-    background: rgba(139, 92, 246, 0.1);
-    color: #8B5CF6;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-patient-info {
@@ -948,22 +861,22 @@
 
 .consultation-avatar.canino {
     background: rgba(0, 82, 255, 0.08);
-    color: #0052FF;
+    color: var(--z-primary);
 }
 
 .consultation-avatar.felino {
-    background: rgba(16, 185, 129, 0.08);
-    color: #10B981;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-avatar.ave {
-    background: rgba(245, 158, 11, 0.08);
-    color: #F59E0B;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-avatar.roedor {
-    background: rgba(139, 92, 246, 0.08);
-    color: #8B5CF6;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .consultation-names {
@@ -974,13 +887,13 @@
 .consultation-pet-name {
     font-size: 1rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--z-text);
     line-height: 1.2;
 }
 
 .consultation-owner-name {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--z-text-muted);
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -988,11 +901,11 @@
 
 .consultation-diag {
     font-size: 0.8rem;
-    color: #475569;
-    background: #f8fafc;
+    color: var(--z-text-secondary);
+    background: var(--z-bg-suave);
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--z-bg-light);
     margin-top: 0.25rem;
     line-height: 1.4;
     overflow: hidden;
@@ -1008,7 +921,7 @@
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.5rem;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid var(--z-bg-light);
     padding-top: 0.75rem;
 }
 
@@ -1018,58 +931,20 @@
     padding: 3rem;
     color: var(--text-muted);
     font-size: 0.9rem;
-    background: #f8fafc;
+    background: var(--z-bg-suave);
     border-radius: 12px;
-    border: 1px dashed #cbd5e1;
+    border: 1px dashed var(--z-border-fuerte);
 }
 
 
 /* ── Consultas Médicas (C4): estilos que antes iban en línea en la vista ── */
-.consultas-filtros {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-}
 
-.consultas-busqueda {
-    flex: 0 1 350px;
-    min-width: 250px;
-}
 
-.consultas-filtros-grupo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
 
-.consultas-fecha-personalizada {
-    padding: 0.35rem 0.5rem;
-}
 
-.consultas-limpiar {
-    margin: 0;
-    padding: 0.4rem 0.75rem;
-}
 
-.consultas-vacio-icono {
-    display: block;
-    font-size: 2.5rem;
-    color: #cbd5e1;
-    margin-bottom: 0.75rem;
-}
 
-.consultas-reporte-titulo {
-    margin-top: 1.5rem;
-}
 
-.consultas-reporte {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-}
 
 .drawer-icon-consulta {
     background: var(--primary-soft);
@@ -1077,8 +952,8 @@
 }
 
 .drawer-icon-historial {
-    background: #f0fdf4;
-    color: #10b981;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .historial-paciente {
@@ -1090,8 +965,8 @@
     flex-shrink: 0;
     gap: 1.5rem;
     padding: 1rem 1.75rem;
-    background: #f8fafc;
-    border-bottom: 1px solid #f1f5f9;
+    background: var(--z-bg-suave);
+    border-bottom: 1px solid var(--z-bg-light);
 }
 
 .historial-dato {
@@ -1121,7 +996,7 @@
 
 .historial-separador {
     width: 1px;
-    background: #e2e8f0;
+    background: var(--z-border);
 }
 
 /* RE-2.5.4 / RE-2.10.1: un registro de otra clínica lleva su clínica y es de solo lectura. */

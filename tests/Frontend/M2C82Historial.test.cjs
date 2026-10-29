@@ -16,7 +16,7 @@ function modulo() {
     const documento = crearDocumento();
     const contexto = { document: documento, window: {}, console };
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     return contexto;
 }
 
@@ -58,7 +58,7 @@ test('C8.2: todas las fechas de las filas usan la misma función (consulta, trat
     assert.match(c.filaHistorialCompacto({ producto: 'X', fecha_aplicacion: '2026-08-01' }, 'desparasitacion'), /Próxima aplicación:<\/strong> Sin programar/);
     const medical = leer('public/js/medical-module.js');
     const tabla = medical.slice(medical.indexOf('function tablaTratamientos'), medical.indexOf('function listaAdjuntos'));
-    const renderer = medical.slice(medical.indexOf('function fechaHistorial'), medical.indexOf('// M2 C5a: el historial abierto'));
+    const renderer = medical.slice(medical.indexOf('// fechaHistorial se comparte'), medical.indexOf('// M2 C5a: el historial abierto'));
     for (const parte of [tabla, renderer]) assert.doesNotMatch(parte, /toLocaleDateString|new Date\(/, 'Las filas no dependen del formato regional del navegador');
     assert.match(leer('views/vet/atencion.php'), /\$fechaCorta = fn\(\$fecha\) => empty\(\$fecha\) \? '—' : date\('d\/m\/Y'/, 'Las filas del servidor usan el mismo formato');
 });
@@ -70,7 +70,7 @@ test('C8.2: línea 1 lleva fecha y diagnóstico (o el motivo si no hay); línea 
     const contexto = linea(fila, 'contexto');
     assert.match(principal, /01\/10\/2026[\s\S]*historia-fila__titulo">Gastritis</);
     assert.doesNotMatch(principal, /Clínica Norte|Sin cita|Kg/);
-    assert.match(contexto, /Clínica Norte[\s\S]*Sin cita[\s\S]*9.00 Kg[\s\S]*1 tratamientos/);
+    assert.match(contexto, /Clínica Norte[\s\S]*Sin cita[\s\S]*9.00 Kg[\s\S]*1 tratamiento/);
     const sinDiagnostico = c.filaHistorialCompacto({ ...consulta, diagnostico: '' }, 'consulta');
     assert.match(linea(sinDiagnostico, 'principal'), /historia-fila__titulo">Control por vómitos después de comer</);
     const filaVacuna = c.filaHistorialCompacto(vacuna, 'vacuna');

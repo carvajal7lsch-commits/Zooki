@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Citas · Urgencias en escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;gap:22px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+h1{margin:0;font-size:20px;font-weight:700;line-height:1.2}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.tabs{display:flex;background:#fff;border-radius:14px;padding:4px;gap:2px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.tabs a{text-decoration:none;font-weight:600;font-size:14px;color:#475569;height:38px;padding:0 16px;border-radius:10px;display:flex;align-items:center;gap:8px}
+.tabs a.on{background:#0052FF;color:#fff}
+.cnt{min-width:22px;height:22px;border-radius:11px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.on .cnt{background:rgba(255,255,255,.22);color:#fff}
+.cnt.amb{background:#FEF3C7;color:#92400E}
+.cnt.roj{background:#FEE2E2;color:#B91C1C}
+.right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.box{background:#fff;border-radius:14px;height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;box-shadow:0 2px 8px rgba(15,23,42,.06);border:0;font-family:inherit;color:#0F172A}
+.cn{width:32px;height:32px;border-radius:10px;background:rgba(0,82,255,.08);color:#0052FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.av{width:32px;height:32px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.bell{width:48px;justify-content:center;padding:0;position:relative;color:#475569}
+.bell i{position:absolute;top:12px;right:13px;width:8px;height:8px;border-radius:50%;background:#EF4444}
+.sheet{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;flex-direction:column;overflow:hidden}
+.tools{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #E2E8F0;min-height:72px}
+.ibtn{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;color:#475569;display:flex;align-items:center;justify-content:center;margin-left:auto}
+.ayuda{font-size:13px;color:#64748B;display:flex;align-items:center;gap:8px}
+.grupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.grupo{min-width:0}
+.grupo + .grupo{border-left:1px solid #E2E8F0}
+.gh{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;height:56px}
+.gh h2{margin:0;font-size:15px;font-weight:700}
+.gh small{font-size:12px;color:#64748B;margin-left:auto}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 20px;border-bottom:1px solid #F1F5F9;min-height:72px}
+.pet{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px}
+.meta{font-size:13px;color:#64748B;margin-top:4px}
+.niv{height:24px;border-radius:12px;padding:0 10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#FEE2E2;color:#B91C1C}
+.niv i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.prov{height:24px;border-radius:12px;padding:0 10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A}
+.btn2{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:600 14px Inter,sans-serif;color:#0F172A;padding:0 14px;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.btnr{height:40px;border-radius:12px;border:1px solid #FECACA;background:#FEF2F2;font:600 14px Inter,sans-serif;color:#B91C1C;padding:0 14px;display:flex;gap:8px;align-items:center;white-space:nowrap}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú principal">
+    <img class="logo" src="/_blob/3d98388c38a31b12d924aec7a2562b74" alt="Zooki">
+    <a class="nav" href="#" aria-label="Inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a>
+    <a class="nav" href="#" aria-label="Usuarios"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.2.6 3.5 2.6 3.5 5.5"/></svg></a>
+    <a class="nav on" href="Main.dc.html" aria-label="Citas" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2.5a1 1 0 0 1 1 1V4h8v-.5a1 1 0 1 1 2 0V4h.5A2.5 2.5 0 0 1 21 6.5V9H3V6.5A2.5 2.5 0 0 1 5.5 4H6v-.5a1 1 0 0 1 1-1zM3 10.5h18v8A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5z"/></svg></a>
+    <a class="nav" href="#" aria-label="Auditoría"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></a>
+    <a class="nav" href="#" aria-label="Ajustes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.6 2.3 2.8-.6.6 2.8 2.3 1.6-1.3 2.5 1.3 2.5-2.3 1.6-.6 2.8-2.8-.6L12 21.2l-1.6-2.3-2.8.6-.6-2.8-2.3-1.6 1.3-2.5-1.3-2.5 2.3-1.6.6-2.8 2.8.6z"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+
+  <main class="main">
+    <header class="top">
+      <div class="ttl">
+        <span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>
+        <div><h1>Citas</h1><div class="sub">Agenda de la clínica por veterinario</div></div>
+      </div>
+      <nav class="tabs" aria-label="Secciones de Citas">
+        <a href="Main.dc.html">Agenda <span class="cnt">9</span></a>
+        <a href="Triage.dc.html">Triage <span class="cnt amb">2</span></a>
+        <a class="on" href="#" aria-current="page">Urgencias <span class="cnt">2</span></a>
+      </nav>
+      <div class="right">
+        <button class="box" type="button"><span class="cn">CN</span><span style="text-align: left"><strong style="display: block; font-size: 14px">Clínica Norte (prueba)</strong><span style="font-size: 12px; color: #64748B">Administrador</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="box bell" type="button" aria-label="Notificaciones"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><i></i></button>
+        <button class="box" type="button" aria-label="Mi cuenta"><span class="av">AN</span><strong style="font-size: 14px">Ana</strong><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+    </header>
+
+    <section class="sheet" aria-label="Urgencias">
+      <div class="tools">
+        <span class="ayuda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>El aviso remoto no acredita la llegada. La prioridad y la interrupción las decide el veterinario.</span>
+        <button class="ibtn" type="button" aria-label="Actualizar urgencias"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg></button>
+      </div>
+      <div class="grupos">
+        <section class="grupo" aria-label="Rojos activos">
+          <div class="gh"><h2>Rojos activos</h2><span class="cnt roj">2</span></div>
+          <article class="row">
+            <div style="min-width: 0"><div class="pet">Thor <span class="niv"><i></i>Rojo</span></div><div class="meta">Llegó 10:42 · en espera</div></div>
+          </article>
+          <article class="row">
+            <div style="min-width: 0"><div class="pet">Lola <span class="niv"><i></i>Rojo</span></div><div class="meta">Aviso remoto: aún no se acredita la llegada</div></div>
+            <button class="btnr" type="button">Acreditar llegada</button>
+          </article>
+        </section>
+        <section class="grupo" aria-label="Identidad pendiente">
+          <div class="gh"><h2>Identidad pendiente</h2><span class="cnt amb">1</span><small>Solo cuenta, vínculo o confirmación del titular acreditan propiedad.</small></div>
+          <article class="row">
+            <div style="min-width: 0"><div class="pet">Ficha provisional <span class="prov">Sin titular</span></div><div class="meta">Ingreso 14 · Carlos Mejía · 310 456 7890</div></div>
+            <button class="btn2" type="button">Conciliar identidad</button>
+          </article>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

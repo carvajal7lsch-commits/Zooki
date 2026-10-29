@@ -1,0 +1,470 @@
+<title>Mapa clínico 3D de Zooki</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Una sola escena oscura a pantalla completa: barra arriba, espacio 3D al centro, ficha del nodo a la derecha (hoja inferior en el celular). */
+:root{
+  --fondo:#FFFFFF;
+  --panel:rgba(255,255,255,.92);
+  --linea:#E2E8F0;
+  --texto:#0F172A;
+  --suave:#64748B;
+  --marca:#0052FF;
+  --alarma:#DC2626;
+  --sintoma:#2F6BFF;--diagnostico:#7C3AED;--farmaco:#0D9488;--sustancia:#DB2777;--especie:#334155;--raza:#94A3B8;--condicion:#0891B2;
+  --letra:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--fondo);color:var(--texto);font-family:var(--letra);overflow:hidden}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--marca);outline-offset:2px}
+#escena{position:fixed;inset:0}
+.barra{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding-block:calc(14px + env(safe-area-inset-top,0px)) 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:linear-gradient(var(--fondo) 55%,rgba(255,255,255,0));pointer-events:none}
+.barra>*{pointer-events:auto}
+.marca{display:flex;flex-direction:column;margin-right:auto;min-width:0}
+.marca h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.marca p{margin:2px 0 0;font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums}
+.buscar{position:relative;width:min(300px,100%)}
+.buscar input{width:100%;height:40px;border-radius:12px;border:1px solid var(--linea);background:#F8FAFC;padding:0 12px 0 36px;font-size:14px}
+.buscar input::placeholder{color:var(--suave)}
+.buscar svg{position:absolute;left:12px;top:12px;color:var(--suave)}
+.sug{position:absolute;top:44px;left:0;right:0;background:#fff;border:1px solid var(--linea);border-radius:12px;overflow:hidden;box-shadow:0 18px 40px rgba(15,23,42,.14)}
+.sug button{display:flex;align-items:center;gap:10px;width:100%;height:38px;border:0;background:none;text-align:left;padding:0 12px;font-size:13px;cursor:pointer}
+.sug button:hover,.sug button:focus-visible{background:rgba(0,82,255,.07)}
+.punto{width:9px;height:9px;border-radius:50%;flex:none}
+.controles{display:flex;gap:6px}
+.ctl{height:40px;border-radius:12px;border:1px solid var(--linea);background:#fff;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.ctl[aria-pressed="true"]{background:rgba(0,82,255,.08);border-color:rgba(0,82,255,.4);color:#0052FF}
+.tipos{flex-basis:100%;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tipos::-webkit-scrollbar{display:none}
+.tipo{flex:none;height:32px;border-radius:16px;border:1px solid var(--linea);background:#fff;padding:0 12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;cursor:pointer;font-variant-numeric:tabular-nums}
+.tipo[aria-pressed="false"]{opacity:.45}
+.tipo b{font-weight:600;color:var(--suave)}
+.etiquetas{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.et{position:absolute;transform:translate(-50%,10px);white-space:nowrap;font-size:12px;font-weight:600;color:var(--texto);text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px #fff;opacity:.95}
+.et.tenue{font-size:11px;font-weight:500;color:var(--suave)}
+.et.foco{font-size:14px;font-weight:700}
+.et.alarma::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--alarma);margin-right:5px;vertical-align:1px}
+.ficha{position:fixed;z-index:6;top:calc(130px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));width:340px;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--linea);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 40px rgba(15,23,42,.10)}
+.fc{padding:18px 18px 14px;border-bottom:1px solid var(--linea);display:flex;flex-direction:column;gap:6px;position:relative}
+.ojo{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.fc h2{margin:0;font-size:20px;font-weight:700;line-height:1.25;padding-right:40px;text-wrap:balance}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:24px;border-radius:12px;padding:0 9px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;background:#F1F5F9;color:#475569}
+.chip.rojo{background:#FEF2F2;color:#B91C1C}
+.cerrar{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--linea);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fb{flex:1;overflow:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:18px}
+.tit{margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--suave)}
+.rel{display:flex;flex-direction:column;gap:2px}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 64px 30px;gap:10px;align-items:center;font-size:13px;border:0;background:none;text-align:left;padding:7px 8px;margin:0 -8px;border-radius:10px;cursor:pointer}
+.r:hover{background:#F5F8FF}
+.r span{display:flex;align-items:center;gap:8px;min-width:0}
+.r span em{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peso{height:5px;border-radius:3px;background:#EEF2F7;overflow:hidden}
+.peso i{display:block;height:100%;border-radius:3px;background:var(--marca)}
+.peso.bloqueo i{background:var(--alarma)}
+.r small{font-size:11px;color:var(--suave);text-align:right;font-variant-numeric:tabular-nums}
+.fuente{font-size:12px;color:var(--suave);line-height:1.45;border:1px solid var(--linea);border-radius:12px;padding:9px 11px}
+.fuente b{display:block;color:var(--texto);font-weight:600;font-size:12.5px}
+.nota{font-size:12px;color:var(--suave);line-height:1.5;margin:0}
+.ayuda{position:fixed;z-index:4;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));font-size:12px;color:var(--suave);background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:9px 12px;max-width:calc(100% - 32px)}
+.ayuda b{color:var(--texto);font-weight:600}
+.ficha[hidden],.sug[hidden],.et[hidden]{display:none}
+.fallo{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--suave);font-size:14px}
+@media (max-width:760px){
+  .controles .txt{display:none}
+  .ficha{top:auto;left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:auto;max-height:56%;border-radius:20px}
+  .ayuda{display:none}
+}
+@media (prefers-reduced-motion:reduce){.sug,.ficha{transition:none}}
+</style>
+
+<div id="escena" aria-label="Mapa 3D del conocimiento clínico de Zooki. Usa el buscador para abrir la ficha de un nodo." role="img"></div>
+<div class="etiquetas" id="etiquetas" aria-hidden="true"></div>
+
+<header class="barra">
+  <div class="marca">
+    <h1>Mapa clínico</h1>
+    <p id="resumen">Cargando…</p>
+  </div>
+  <div class="buscar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="buscar" type="search" placeholder="Buscar síntoma, fármaco, raza…" autocomplete="off" aria-label="Buscar un nodo" aria-controls="sugerencias">
+    <div class="sug" id="sugerencias" role="listbox" hidden></div>
+  </div>
+  <div class="controles">
+    <button class="ctl" id="dim" type="button" aria-pressed="true" title="Cambiar entre 3D y plano"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span class="txt">3D</span></button>
+    <button class="ctl" id="girar" type="button" aria-pressed="true" title="Girar la escena"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg><span class="txt">Girar</span></button>
+    <button class="ctl" id="todo" type="button" aria-pressed="false" title="Ver todo el mapa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="txt">Ver todo</span></button>
+    <button class="ctl" id="grande" type="button" aria-pressed="false" aria-label="Pantalla completa" title="Pantalla completa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+  </div>
+  <nav class="tipos" id="tipos" aria-label="Mostrar u ocultar tipos"></nav>
+</header>
+
+<aside class="ficha" id="ficha" aria-labelledby="fichaTitulo" hidden>
+  <div class="fc">
+    <span class="ojo" id="fichaTipo"></span>
+    <h2 id="fichaTitulo"></h2>
+    <div class="chips" id="fichaChips"></div>
+    <button class="cerrar" id="cerrar" type="button" aria-label="Cerrar la ficha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="fb" id="fichaCuerpo"></div>
+</aside>
+
+<p class="ayuda" id="ayuda">Arrastra para girar · rueda para acercar · <b>toca un nodo</b> para ver sus relaciones</p>
+
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js"></script>
+<script>
+const DATOS = {"nodes":[{"id":"especie.canino","t":"especie","l":"Perro"},{"id":"especie.felino","t":"especie","l":"Gato"},{"id":"especie.roedor","t":"especie","l":"Roedor (categoría heredada del catálogo)"},{"id":"especie.ave","t":"especie","l":"Ave"},{"id":"especie.reptil","t":"especie","l":"Reptil"},{"id":"especie.exotico","t":"especie","l":"Exótico"},{"id":"raza.gran_danes","t":"raza","l":"Gran danés"},{"id":"raza.labrador","t":"raza","l":"Labrador Retriever"},{"id":"raza.golden","t":"raza","l":"Golden Retriever"},{"id":"raza.pastor_aleman","t":"raza","l":"Pastor Alemán"},{"id":"raza.bulldog_frances","t":"raza","l":"Bulldog Francés"},{"id":"raza.bulldog_ingles","t":"raza","l":"Bulldog Inglés"},{"id":"raza.pug","t":"raza","l":"Pug"},{"id":"raza.shih_tzu","t":"raza","l":"Shih Tzu"},{"id":"raza.boxer","t":"raza","l":"Boxer"},{"id":"raza.persa","t":"raza","l":"Persa"},{"id":"sintoma.dificultad_respiratoria","t":"sintoma","l":"Dificultad para respirar","a":1},{"id":"sintoma.encias_azuladas","t":"sintoma","l":"Encías o lengua azuladas o moradas","a":1},{"id":"sintoma.encias_palidas","t":"sintoma","l":"Encías pálidas o blancas","a":1},{"id":"sintoma.convulsion_en_curso","t":"sintoma","l":"Convulsión en curso (está convulsionando ahora)","a":1},{"id":"sintoma.colapso","t":"sintoma","l":"Colapso, desmayo o no responde","a":1},{"id":"sintoma.hemorragia_incontrolable","t":"sintoma","l":"Sangrado que no se detiene","a":1},{"id":"sintoma.imposibilidad_orinar","t":"sintoma","l":"No puede orinar (no sale orina)","a":1},{"id":"sintoma.golpe_calor","t":"sintoma","l":"Golpe de calor (piel caliente, jadeo intenso, tambaleo o colapso)","a":1},{"id":"sintoma.parto_esfuerzo_sin_cria","t":"sintoma","l":"Parto con esfuerzo sin cría: más de 30 minutos o no sé","a":1},{"id":"sintoma.traumatismo","t":"sintoma","l":"Atropello, golpe fuerte o caída (traumatismo)"},{"id":"sintoma.intentos_orinar_minimo","t":"sintoma","l":"Intenta orinar muchas veces y sale poco o nada"},{"id":"sintoma.dolor_orinar","t":"sintoma","l":"Dolor o quejido al orinar"},{"id":"sintoma.arcadas_improductivas","t":"sintoma","l":"Arcadas: intenta vomitar y no sale nada"},{"id":"sintoma.abdomen_distendido","t":"sintoma","l":"Barriga hinchada o distendida"},{"id":"sintoma.inquietud","t":"sintoma","l":"Inquietud, no encuentra posición"},{"id":"sintoma.sed_aumentada","t":"sintoma","l":"Toma mucha más agua de lo normal"},{"id":"sintoma.decaimiento","t":"sintoma","l":"Decaído, débil o sin ánimo"},{"id":"sintoma.secrecion_genital","t":"sintoma","l":"Flujo o secreción por la vulva"},{"id":"sintoma.respiracion_ruidosa_ejercicio","t":"sintoma","l":"Respira muy ruidoso después de ejercicio o esfuerzo"},{"id":"sintoma.cansancio_ejercicio","t":"sintoma","l":"Muy cansado después de ejercicio (se recupera al descansar)"},{"id":"sintoma.exposicion_calor","t":"sintoma","l":"Estuvo expuesto a calor fuerte (sol, carro cerrado, día caluroso)"},{"id":"sintoma.vomito","t":"sintoma","l":"Vómito"},{"id":"sintoma.vomito_repetido","t":"sintoma","l":"Vómito repetido (varias veces el mismo día)"},{"id":"sintoma.vomito_sangre","t":"sintoma","l":"Vómito con sangre"},{"id":"sintoma.diarrea","t":"sintoma","l":"Diarrea"},{"id":"sintoma.diarrea_sangre","t":"sintoma","l":"Diarrea con sangre"},{"id":"sintoma.no_come","t":"sintoma","l":"No come o casi no come"},{"id":"sintoma.no_bebe","t":"sintoma","l":"No toma agua"},{"id":"sintoma.encias_secas","t":"sintoma","l":"Encías secas o pegajosas (posible deshidratación)"},{"id":"sintoma.se_esconde","t":"sintoma","l":"Se esconde o se aísla"},{"id":"sintoma.fiebre","t":"sintoma","l":"Fiebre referida (se siente caliente)"},{"id":"sintoma.primera_convulsion_resuelta","t":"sintoma","l":"Convulsión que ya pasó, primera vez"},{"id":"sintoma.convulsion_habitual_resuelta","t":"sintoma","l":"Convulsión que ya pasó, corta y como las de siempre"},{"id":"sintoma.no_defeca","t":"sintoma","l":"No hace popó (no defeca)"},{"id":"sintoma.plumaje_erizado","t":"sintoma","l":"Plumas erizadas o esponjadas (ave)"},{"id":"sintoma.otro_no_se","t":"sintoma","l":"Otro / no sé"},{"id":"sintoma.control_preventivo","t":"sintoma","l":"Control preventivo o vacunación, sin síntomas"},{"id":"sintoma.picor_oidos_leve_estable","t":"sintoma","l":"Se rasca las orejas, leve, y come y juega normal"},{"id":"sintoma.cojera_leve_estable","t":"sintoma","l":"Cojea un poco, estable, y mantiene su actividad"},{"id":"sintoma.orina_mucho","t":"sintoma","l":"Orina mucho más de lo normal"},{"id":"sintoma.perdida_peso","t":"sintoma","l":"Pérdida de peso"},{"id":"sintoma.hambre_aumentada","t":"sintoma","l":"Come mucho más de lo normal"},{"id":"sintoma.tos","t":"sintoma","l":"Tos"},{"id":"sintoma.sacude_cabeza","t":"sintoma","l":"Sacude la cabeza"},{"id":"sintoma.mal_olor_oidos","t":"sintoma","l":"Mal olor o secreción en los oídos"},{"id":"sintoma.sangre_orina","t":"sintoma","l":"Sangre en la orina"},{"id":"sintoma.orina_fuera_caja","t":"sintoma","l":"Orina fuera de la caja de arena"},{"id":"sintoma.rigidez","t":"sintoma","l":"Rigidez o le cuesta levantarse"},{"id":"sintoma.ictericia","t":"sintoma","l":"Piel, encías u ojos amarillos (ictericia)"},{"id":"sintoma.dolor_abdominal","t":"sintoma","l":"Dolor de barriga"},{"id":"condicion.epilepsia","t":"condicion","l":"Epilepsia diagnosticada"},{"id":"sustancia.lilium","t":"sustancia","l":"Lirio verdadero (Lilium): planta o flor"},{"id":"sustancia.chocolate","t":"sustancia","l":"Chocolate"},{"id":"sustancia.xilitol","t":"sustancia","l":"Xilitol (endulzante)"},{"id":"sustancia.posible_xilitol","t":"sustancia","l":"Chicle, dulce o producto sin azúcar (posible xilitol)"},{"id":"sustancia.uvas_pasas","t":"sustancia","l":"Uvas o uvas pasas"},{"id":"sustancia.cebolla_ajo","t":"sustancia","l":"Cebolla, ajo o cebollín (Allium)"},{"id":"sustancia.macadamia","t":"sustancia","l":"Nueces de macadamia"},{"id":"sustancia.etilenglicol","t":"sustancia","l":"Anticongelante (etilenglicol)"},{"id":"farmaco.paracetamol","t":"farmaco","l":"Paracetamol (acetaminofén)"},{"id":"farmaco.ibuprofeno","t":"farmaco","l":"Ibuprofeno"},{"id":"farmaco.aspirina","t":"farmaco","l":"Ácido acetilsalicílico (aspirina)"},{"id":"farmaco.meloxicam","t":"farmaco","l":"Meloxicam"},{"id":"farmaco.carprofeno","t":"farmaco","l":"Carprofeno"},{"id":"farmaco.prednisona","t":"farmaco","l":"Prednisona"},{"id":"farmaco.permetrina","t":"farmaco","l":"Permetrina"},{"id":"farmaco.amitraz","t":"farmaco","l":"Amitraz"},{"id":"farmaco.tramadol","t":"farmaco","l":"Tramadol"},{"id":"farmaco.selegilina","t":"farmaco","l":"Selegilina"},{"id":"farmaco.fluoxetina","t":"farmaco","l":"Fluoxetina"},{"id":"farmaco.loperamida","t":"farmaco","l":"Loperamida"},{"id":"diagnostico.gastritis_aguda","t":"diagnostico","l":"Gastritis aguda"},{"id":"diagnostico.gastroenteritis_hemorragica","t":"diagnostico","l":"Gastroenteritis hemorrágica"},{"id":"diagnostico.parvovirosis_canina","t":"diagnostico","l":"Parvovirosis canina"},{"id":"diagnostico.panleucopenia_felina","t":"diagnostico","l":"Panleucopenia felina"},{"id":"diagnostico.dilatacion_torsion_gastrica","t":"diagnostico","l":"Dilatación y torsión gástrica"},{"id":"diagnostico.obstruccion_uretral_felina","t":"diagnostico","l":"Obstrucción uretral felina"},{"id":"diagnostico.cistitis_idiopatica_felina","t":"diagnostico","l":"Cistitis idiopática felina"},{"id":"diagnostico.piometra","t":"diagnostico","l":"Piometra"},{"id":"diagnostico.lipidosis_hepatica_felina","t":"diagnostico","l":"Lipidosis hepática felina"},{"id":"diagnostico.epilepsia_idiopatica","t":"diagnostico","l":"Epilepsia idiopática"},{"id":"diagnostico.sindrome_braquicefalico","t":"diagnostico","l":"Síndrome obstructivo de las vías respiratorias del braquicéfalo"},{"id":"diagnostico.golpe_de_calor","t":"diagnostico","l":"Golpe de calor"},{"id":"diagnostico.otitis_externa","t":"diagnostico","l":"Otitis externa"},{"id":"diagnostico.osteoartritis","t":"diagnostico","l":"Osteoartritis"},{"id":"diagnostico.enfermedad_renal_cronica","t":"diagnostico","l":"Enfermedad renal crónica"},{"id":"diagnostico.diabetes_mellitus","t":"diagnostico","l":"Diabetes mellitus"},{"id":"diagnostico.tos_perreras","t":"diagnostico","l":"Traqueobronquitis infecciosa canina (tos de las perreras)"},{"id":"sintoma.parto_esfuerzo_menos_30","t":"sintoma","l":"Parto con esfuerzo sin cría: menos de 30 minutos"}],"links":[{"source":"sintoma.vomito","target":"diagnostico.gastritis_aguda","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.gastritis"]},{"source":"sintoma.vomito_repetido","target":"diagnostico.gastritis_aguda","r":"sugiere","w":0.7,"e":"evidencia","f":["msd.gastritis"]},{"source":"sintoma.vomito_sangre","target":"diagnostico.gastritis_aguda","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.gastritis"]},{"source":"sintoma.dolor_abdominal","target":"diagnostico.gastritis_aguda","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.gastritis"]},{"source":"sintoma.no_come","target":"diagnostico.gastritis_aguda","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.gastritis"]},{"source":"sintoma.diarrea_sangre","target":"diagnostico.gastroenteritis_hemorragica","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.trastornos_digestivos_perros"]},{"source":"sintoma.vomito","target":"diagnostico.gastroenteritis_hemorragica","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.trastornos_digestivos_perros"]},{"source":"sintoma.dolor_abdominal","target":"diagnostico.gastroenteritis_hemorragica","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.trastornos_digestivos_perros"]},{"source":"sintoma.no_come","target":"diagnostico.gastroenteritis_hemorragica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.trastornos_digestivos_perros"]},{"source":"sintoma.decaimiento","target":"diagnostico.gastroenteritis_hemorragica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.trastornos_digestivos_perros"]},{"source":"sintoma.diarrea_sangre","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.vomito","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.diarrea","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.no_come","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.decaimiento","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.fiebre","target":"diagnostico.parvovirosis_canina","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.parvovirus"]},{"source":"sintoma.vomito","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.diarrea","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.fiebre","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.5,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.no_come","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.4,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.decaimiento","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.4,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.encias_secas","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.3,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.dolor_abdominal","target":"diagnostico.panleucopenia_felina","r":"sugiere","w":0.4,"e":"evidencia","f":["cornell.panleucopenia"]},{"source":"sintoma.arcadas_improductivas","target":"diagnostico.dilatacion_torsion_gastrica","r":"sugiere","w":0.9,"e":"evidencia","f":["msd.dtg"]},{"source":"sintoma.abdomen_distendido","target":"diagnostico.dilatacion_torsion_gastrica","r":"sugiere","w":0.9,"e":"evidencia","f":["msd.dtg"]},{"source":"sintoma.inquietud","target":"diagnostico.dilatacion_torsion_gastrica","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.dtg"]},{"source":"sintoma.decaimiento","target":"diagnostico.dilatacion_torsion_gastrica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.dtg"]},{"source":"sintoma.intentos_orinar_minimo","target":"diagnostico.obstruccion_uretral_felina","r":"sugiere","w":0.9,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.imposibilidad_orinar","target":"diagnostico.obstruccion_uretral_felina","r":"sugiere","w":0.9,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.dolor_orinar","target":"diagnostico.obstruccion_uretral_felina","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.sangre_orina","target":"diagnostico.cistitis_idiopatica_felina","r":"sugiere","w":0.7,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.orina_fuera_caja","target":"diagnostico.cistitis_idiopatica_felina","r":"sugiere","w":0.7,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.intentos_orinar_minimo","target":"diagnostico.cistitis_idiopatica_felina","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.dolor_orinar","target":"diagnostico.cistitis_idiopatica_felina","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.flutd"]},{"source":"sintoma.secrecion_genital","target":"diagnostico.piometra","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.sed_aumentada","target":"diagnostico.piometra","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.orina_mucho","target":"diagnostico.piometra","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.decaimiento","target":"diagnostico.piometra","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.no_come","target":"diagnostico.piometra","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.vomito","target":"diagnostico.piometra","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.fiebre","target":"diagnostico.piometra","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.abdomen_distendido","target":"diagnostico.piometra","r":"sugiere","w":0.2,"e":"evidencia","f":["msd.piometra"]},{"source":"sintoma.no_come","target":"diagnostico.lipidosis_hepatica_felina","r":"sugiere","w":0.8,"e":"evidencia","f":["cornell.lipidosis"]},{"source":"sintoma.ictericia","target":"diagnostico.lipidosis_hepatica_felina","r":"sugiere","w":0.7,"e":"evidencia","f":["cornell.lipidosis"]},{"source":"sintoma.se_esconde","target":"diagnostico.lipidosis_hepatica_felina","r":"sugiere","w":0.4,"e":"evidencia","f":["cornell.lipidosis"]},{"source":"sintoma.convulsion_habitual_resuelta","target":"diagnostico.epilepsia_idiopatica","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.epilepsia"]},{"source":"sintoma.primera_convulsion_resuelta","target":"diagnostico.epilepsia_idiopatica","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.epilepsia"]},{"source":"sintoma.convulsion_en_curso","target":"diagnostico.epilepsia_idiopatica","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.epilepsia"]},{"source":"sintoma.respiracion_ruidosa_ejercicio","target":"diagnostico.sindrome_braquicefalico","r":"sugiere","w":0.8,"e":"evidencia","f":["cornell.boas"]},{"source":"sintoma.cansancio_ejercicio","target":"diagnostico.sindrome_braquicefalico","r":"sugiere","w":0.6,"e":"evidencia","f":["cornell.boas"]},{"source":"sintoma.dificultad_respiratoria","target":"diagnostico.sindrome_braquicefalico","r":"sugiere","w":0.5,"e":"evidencia","f":["cornell.boas"]},{"source":"sintoma.encias_azuladas","target":"diagnostico.sindrome_braquicefalico","r":"sugiere","w":0.3,"e":"evidencia","f":["cornell.boas"]},{"source":"sintoma.colapso","target":"diagnostico.sindrome_braquicefalico","r":"sugiere","w":0.3,"e":"evidencia","f":["cornell.boas"]},{"source":"sintoma.golpe_calor","target":"diagnostico.golpe_de_calor","r":"sugiere","w":0.9,"e":"evidencia","f":["msd.emergencias_propietarios"]},{"source":"sintoma.exposicion_calor","target":"diagnostico.golpe_de_calor","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.emergencias_propietarios"]},{"source":"sintoma.colapso","target":"diagnostico.golpe_de_calor","r":"sugiere","w":0.4,"e":"evidencia","f":["msd.emergencias_propietarios"]},{"source":"sintoma.vomito","target":"diagnostico.golpe_de_calor","r":"sugiere","w":0.2,"e":"evidencia","f":["msd.emergencias_propietarios"]},{"source":"sintoma.picor_oidos_leve_estable","target":"diagnostico.otitis_externa","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.otitis_externa"]},{"source":"sintoma.sacude_cabeza","target":"diagnostico.otitis_externa","r":"sugiere","w":0.7,"e":"evidencia","f":["msd.otitis_externa"]},{"source":"sintoma.mal_olor_oidos","target":"diagnostico.otitis_externa","r":"sugiere","w":0.7,"e":"evidencia","f":["msd.otitis_externa"]},{"source":"sintoma.cojera_leve_estable","target":"diagnostico.osteoartritis","r":"sugiere","w":0.7,"e":"evidencia","f":["msd.osteoartritis"]},{"source":"sintoma.rigidez","target":"diagnostico.osteoartritis","r":"sugiere","w":0.7,"e":"evidencia","f":["msd.osteoartritis"]},{"source":"sintoma.sed_aumentada","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.orina_mucho","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.perdida_peso","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.no_come","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.vomito","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.decaimiento","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.3,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.encias_secas","target":"diagnostico.enfermedad_renal_cronica","r":"sugiere","w":0.2,"e":"evidencia","f":["msd.renal"]},{"source":"sintoma.sed_aumentada","target":"diagnostico.diabetes_mellitus","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.diabetes"]},{"source":"sintoma.orina_mucho","target":"diagnostico.diabetes_mellitus","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.diabetes"]},{"source":"sintoma.hambre_aumentada","target":"diagnostico.diabetes_mellitus","r":"sugiere","w":0.6,"e":"evidencia","f":["msd.diabetes"]},{"source":"sintoma.perdida_peso","target":"diagnostico.diabetes_mellitus","r":"sugiere","w":0.5,"e":"evidencia","f":["msd.diabetes"]},{"source":"sintoma.decaimiento","target":"diagnostico.diabetes_mellitus","r":"sugiere","w":0.2,"e":"evidencia","f":["msd.diabetes"]},{"source":"sintoma.tos","target":"diagnostico.tos_perreras","r":"sugiere","w":0.8,"e":"evidencia","f":["msd.tos_perreras"]},{"source":"especie.felino","target":"sustancia.lilium","r":"toxico_para","w":1.0,"e":"bloqueo","f":["aspca.lirio"]},{"source":"especie.canino","target":"sustancia.chocolate","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.chocolate"]},{"source":"especie.canino","target":"sustancia.xilitol","r":"toxico_para","w":1.0,"e":"bloqueo","f":["fda.xilitol","msd.xilitol"]},{"source":"especie.canino","target":"sustancia.uvas_pasas","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.uvas"]},{"source":"especie.felino","target":"sustancia.cebolla_ajo","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.allium"]},{"source":"especie.canino","target":"sustancia.cebolla_ajo","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.allium"]},{"source":"especie.canino","target":"sustancia.macadamia","r":"toxico_para","w":1.0,"e":"bloqueo","f":["aspca.alimentos"]},{"source":"especie.canino","target":"sustancia.etilenglicol","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.etilenglicol"]},{"source":"especie.felino","target":"sustancia.etilenglicol","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.etilenglicol"]},{"source":"especie.felino","target":"farmaco.paracetamol","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.aine","fda.analgesicos","msd.analgesicos_humanos"]},{"source":"especie.canino","target":"farmaco.paracetamol","r":"toxico_para","w":1.0,"e":"advertencia","f":["msd.analgesicos_humanos"]},{"source":"especie.felino","target":"farmaco.permetrina","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.ectoparasiticidas"]},{"source":"especie.felino","target":"farmaco.amitraz","r":"toxico_para","w":1.0,"e":"bloqueo","f":["msd.ectoparasiticidas"]},{"source":"especie.canino","target":"farmaco.ibuprofeno","r":"toxico_para","w":1.0,"e":"advertencia","f":["msd.analgesicos_humanos"]},{"source":"especie.felino","target":"farmaco.ibuprofeno","r":"toxico_para","w":1.0,"e":"advertencia","f":["msd.analgesicos_humanos"]},{"source":"especie.felino","target":"farmaco.aspirina","r":"toxico_para","w":1.0,"e":"advertencia","f":["msd.analgesicos_humanos"]},{"source":"especie.felino","target":"farmaco.meloxicam","r":"toxico_para","w":1.0,"e":"advertencia","f":["msd.aine"]},{"source":"raza.pastor_aleman","target":"farmaco.loperamida","r":"toxico_para","w":1.0,"e":"advertencia","f":["wsu.mdr1"]},{"source":"farmaco.meloxicam","target":"farmaco.prednisona","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.ulceras_gi","msd.analgesicos_uso","fda.analgesicos","msd.corticoides"]},{"source":"farmaco.carprofeno","target":"farmaco.prednisona","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.ulceras_gi","msd.analgesicos_uso","fda.analgesicos","msd.corticoides"]},{"source":"farmaco.aspirina","target":"farmaco.prednisona","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.ulceras_gi","msd.analgesicos_uso","fda.analgesicos","msd.corticoides"]},{"source":"farmaco.ibuprofeno","target":"farmaco.prednisona","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.ulceras_gi","msd.analgesicos_uso","fda.analgesicos","msd.corticoides"]},{"source":"farmaco.carprofeno","target":"farmaco.meloxicam","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.aspirina","target":"farmaco.meloxicam","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.aspirina","target":"farmaco.carprofeno","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.ibuprofeno","target":"farmaco.meloxicam","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.carprofeno","target":"farmaco.ibuprofeno","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.aspirina","target":"farmaco.ibuprofeno","r":"interactua_con","w":1.0,"e":"advertencia","f":["fda.analgesicos"]},{"source":"farmaco.selegilina","target":"farmaco.tramadol","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.analgesicos_uso"]},{"source":"farmaco.fluoxetina","target":"farmaco.tramadol","r":"interactua_con","w":1.0,"e":"advertencia","f":["msd.analgesicos_uso","msd.psicotropicos"]}],"fuentes":{"zooki.reglas_negocio":{"e":"Zooki (repositorio público del proyecto)","t":"Reglas de Negocio de Zooki"},"zooki.casos_triage":{"e":"Zooki (repositorio público del proyecto)","t":"Batería de casos de triage"},"msd.triage_emergencias":{"e":"MSD Veterinary Manual","t":"Initial Triage and Resuscitation of Small Animal Emergency Patients"},"msd.emergencias_propietarios":{"e":"MSD Veterinary Manual","t":"What to Do in a Dog or Cat Emergency"},"msd.epilepsia":{"e":"MSD Veterinary Manual","t":"Epilepsy in Small Animals"},"msd.distocia":{"e":"MSD Veterinary Manual","t":"Dystocia in Small Animals"},"msd.dtg":{"e":"MSD Veterinary Manual","t":"Gastric Dilation and Volvulus in Small Animals"},"msd.piometra":{"e":"MSD Veterinary Manual","t":"Cystic Endometrial Hyperplasia–Pyometra Complex in Small Animals"},"msd.piometra_propietarios":{"e":"MSD Veterinary Manual","t":"Reproductive Disorders of Female Dogs"},"msd.parvovirus":{"e":"MSD Veterinary Manual","t":"Canine Parvovirus Infection (Parvoviral Enteritis in Dogs)"},"msd.trastornos_digestivos_perros":{"e":"MSD Veterinary Manual","t":"Disorders of the Stomach and Intestines in Dogs"},"msd.gastritis":{"e":"MSD Veterinary Manual","t":"Gastritis in Small Animals"},"cornell.panleucopenia":{"e":"Cornell Feline Health Center","t":"Feline Panleukopenia Virus"},"cornell.anorexia":{"e":"Cornell Feline Health Center","t":"Anorexia"},"cornell.lipidosis":{"e":"Cornell Feline Health Center","t":"Hepatic Lipidosis"},"cornell.flutd":{"e":"Cornell Feline Health Center","t":"Feline Lower Urinary Tract Disease"},"cornell.boas":{"e":"Cornell Richard P. Riney Canine Health Center","t":"Brachycephalic Obstructive Airway Syndrome (BOAS)"},"cornell.aspergilosis":{"e":"Cornell Feline Health Center","t":"Aspergillosis"},"cam.boas":{"e":"University of Cambridge, Department of Veterinary Medicine","t":"About BOAS"},"msd.braquicefalos":{"e":"MSD Veterinary Manual","t":"Table: What Is a Brachycephalic Dog Breed?"},"rvc.braquicefalia_2020":{"e":"O'Neill et al., Royal Veterinary College (PubMed Central)","t":"Unravelling the health status of brachycephalic dogs in the UK using multivariable analysis"},"msd.descripcion_perros":{"e":"MSD Veterinary Manual","t":"Description of Dogs"},"msd.chocolate":{"e":"MSD Veterinary Manual","t":"Chocolate Toxicosis in Animals"},"msd.xilitol":{"e":"MSD Veterinary Manual","t":"Xylitol Toxicosis in Dogs"},"fda.xilitol":{"e":"U.S. Food and Drug Administration","t":"Paws Off Xylitol; It’s Dangerous for Dogs"},"aspca.lirio":{"e":"ASPCA Animal Poison Control Center","t":"Lily"},"aspca.alimentos":{"e":"ASPCA Animal Poison Control Center","t":"People Foods to Avoid Feeding Your Pets"},"msd.uvas":{"e":"MSD Veterinary Manual","t":"Grape, Raisin, and Tamarind (Vitis spp, Tamarindus spp) Toxicosis in Dogs"},"msd.allium":{"e":"MSD Veterinary Manual","t":"Garlic and Onion (Allium spp) Toxicosis in Animals"},"msd.etilenglicol":{"e":"MSD Veterinary Manual","t":"Ethylene Glycol Toxicosis in Animals"},"msd.analgesicos_humanos":{"e":"MSD Veterinary Manual","t":"Toxicoses From Human Analgesics in Animals"},"msd.aine":{"e":"MSD Veterinary Manual","t":"Nonsteroidal Anti-inflammatory Drugs in Animals"},"msd.ectoparasiticidas":{"e":"MSD Veterinary Manual","t":"Ectoparasiticides Used in Small Animals"},"fda.analgesicos":{"e":"U.S. Food and Drug Administration, Center for Veterinary Medicine","t":"Get the Facts about Pain Relievers for Pets"},"msd.ulceras_gi":{"e":"MSD Veterinary Manual","t":"Gastrointestinal Ulcers in Small Animals"},"msd.corticoides":{"e":"MSD Veterinary Manual","t":"Corticosteroids in Animals"},"msd.analgesicos_uso":{"e":"MSD Veterinary Manual","t":"Analgesics Used in Animals"},"msd.psicotropicos":{"e":"MSD Veterinary Manual","t":"Psychotropic Agents for Treatment of Animals"},"wsu.mdr1":{"e":"Washington State University, Washington Animal Disease Diagnostic Laboratory","t":"MDR1 in Dogs"},"msd.otitis_externa":{"e":"MSD Veterinary Manual","t":"Otitis Externa in Animals"},"msd.osteoartritis":{"e":"MSD Veterinary Manual","t":"Osteoarthritis in Dogs and Cats"},"msd.renal":{"e":"MSD Veterinary Manual","t":"Renal Dysfunction in Dogs and Cats"},"msd.diabetes":{"e":"MSD Veterinary Manual","t":"Diabetes Mellitus in Dogs and Cats"},"msd.tos_perreras":{"e":"MSD Veterinary Manual","t":"Kennel Cough"},"msd.aves_enfermedad":{"e":"MSD Veterinary Manual","t":"Illness in Pet Birds"},"msd.conejos_no_infecciosas":{"e":"MSD Veterinary Manual","t":"Noninfectious Diseases of Rabbits"},"zooki.decisiones_b21":{"e":"Zooki (decisiones del dueño del producto)","t":"Plan M2: decisiones del usuario en la revisión de B2"}}};
+(function () {
+  'use strict';
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const TIPOS = {
+    diagnostico: { n: 'Diagnóstico', p: 'Diagnósticos', c: css('--diagnostico') },
+    sintoma: { n: 'Síntoma', p: 'Síntomas', c: css('--sintoma') },
+    farmaco: { n: 'Fármaco', p: 'Fármacos', c: css('--farmaco') },
+    sustancia: { n: 'Sustancia tóxica', p: 'Tóxicos', c: css('--sustancia') },
+    especie: { n: 'Especie', p: 'Especies', c: css('--especie') },
+    raza: { n: 'Raza', p: 'Razas', c: css('--raza') },
+    condicion: { n: 'Condición', p: 'Condiciones', c: css('--condicion') },
+  };
+  const VERBO = { sugiere: ['Lo sugieren', 'Sugiere'], toxico_para: ['Tóxico para él', 'Es tóxico para'], interactua_con: ['Interactúa con', 'Interactúa con'] };
+  const escena = document.getElementById('escena');
+  const capa = document.getElementById('etiquetas');
+  const $ = id => document.getElementById(id);
+
+  if (typeof ForceGraph3D !== 'function') {
+    escena.innerHTML = '<p class="fallo">No se pudo cargar la librería 3D. Revisa la conexión y vuelve a abrir la página.</p>';
+    $('resumen').textContent = 'Sin mapa';
+    return;
+  }
+
+  const nodos = DATOS.nodes;
+  const enlaces = DATOS.links;
+  const porId = new Map(nodos.map(n => [n.id, n]));
+  nodos.forEach(n => { n.vecinos = new Set(); n.enl = []; });
+  enlaces.forEach(l => {
+    const a = porId.get(l.source), b = porId.get(l.target);
+    a.vecinos.add(b); b.vecinos.add(a); a.enl.push(l); b.enl.push(l);
+  });
+  nodos.forEach(n => { n.grado = n.enl.length; });
+  $('resumen').textContent = nodos.length + ' nodos · ' + enlaces.length + ' relaciones · pendiente de validación veterinaria';
+
+  const visibles = new Set(Object.keys(TIPOS));
+  let foco = null;
+  let resaltados = new Set();
+  let enlResaltados = new Set();
+  let hover = null;
+
+  const ancho = () => escena.clientWidth;
+  const alto = () => escena.clientHeight;
+  const g = ForceGraph3D({ controlType: 'orbit' })(escena)
+    .width(ancho()).height(alto())
+    .backgroundColor(css('--fondo'))
+    .showNavInfo(false)
+    .graphData({ nodes: nodos, links: enlaces })
+    .nodeId('id')
+    .nodeLabel(() => '')
+    .nodeVal(n => (n.t === 'diagnostico' ? 6 : n.t === 'especie' ? 7 : 2) + n.grado * 0.6)
+    .nodeRelSize(3.2)
+    .nodeResolution(18)
+    .nodeOpacity(0.95)
+    .nodeColor(n => {
+      const c = TIPOS[n.t]?.c || '#94A3B8';
+      if (!foco) return c;
+      return resaltados.has(n) ? c : 'rgba(148,163,184,0.18)';
+    })
+    .nodeVisibility(n => visibles.has(n.t))
+    .linkVisibility(l => visibles.has(l.source.t ?? porId.get(l.source).t) && visibles.has(l.target.t ?? porId.get(l.target).t))
+    .linkColor(l => {
+      const base = l.e === 'bloqueo' ? 'rgba(220,38,38,' : 'rgba(71,85,105,';
+      if (!foco) return base + '0.30)';
+      return enlResaltados.has(l) ? (l.e === 'bloqueo' ? css('--alarma') : 'rgba(0,82,255,0.55)') : base + '0.06)';
+    })
+    .linkWidth(l => (foco && enlResaltados.has(l)) ? 0.6 + (l.w || 0.5) * 2.2 : 0)
+    .linkOpacity(1)
+    .linkDirectionalParticles(l => (foco && enlResaltados.has(l)) ? 3 : 1)
+    .linkDirectionalParticleWidth(l => (foco && enlResaltados.has(l)) ? 2.2 : 1.1)
+    .linkDirectionalParticleSpeed(l => 0.003 + (l.w || 0.4) * 0.006)
+    .linkDirectionalParticleColor(l => l.e === 'bloqueo' ? css('--alarma') : '#0052FF')
+    .onNodeHover(n => { hover = n || null; escena.style.cursor = n ? 'pointer' : 'grab'; })
+    .onNodeClick(n => enfocar(n, true))
+    .onBackgroundClick(() => soltar());
+  g.d3Force('charge').strength(-60);
+
+  /* Etiquetas en HTML sobre el lienzo: diagnósticos y especies siempre; con foco, el nodo y sus vecinos. */
+  const marcas = new Map();
+  function etiquetaDe(n) {
+    let el = marcas.get(n);
+    if (!el) {
+      el = document.createElement('span');
+      el.className = 'et' + (n.a ? ' alarma' : '');
+      el.textContent = n.l;
+      capa.appendChild(el);
+      marcas.set(n, el);
+    }
+    return el;
+  }
+  function conEtiqueta(n) {
+    if (!visibles.has(n.t)) return false;
+    if (foco) return resaltados.has(n);
+    return n === hover || n.t === 'diagnostico' || n.t === 'especie';
+  }
+  function pintarEtiquetas() {
+    const w = ancho(), h = alto();
+    nodos.forEach(n => {
+      const quiere = conEtiqueta(n) && n.x !== undefined;
+      const el = quiere ? etiquetaDe(n) : marcas.get(n);
+      if (!el) return;
+      if (!quiere) { el.hidden = true; return; }
+      const p = g.graph2ScreenCoords(n.x, n.y, n.z || 0);
+      const fuera = p.x < -50 || p.y < -20 || p.x > w + 50 || p.y > h + 20;
+      el.hidden = fuera;
+      if (fuera) return;
+      el.style.left = p.x + 'px';
+      el.style.top = p.y + 'px';
+      el.classList.toggle('foco', n === foco);
+      el.classList.toggle('tenue', !foco && n !== hover && n.t !== 'diagnostico');
+    });
+    requestAnimationFrame(pintarEtiquetas);
+  }
+  requestAnimationFrame(pintarEtiquetas);
+
+  /* Giro lento de la cámara mientras nadie toca la escena. */
+  let girando = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let angulo = 0;
+  let radio = 360;
+  let altura = 40;
+  let encuadrado = false;
+  /* Al terminar de acomodarse, encuadra todo el mapa y gira desde ese punto. */
+  g.onEngineStop(() => {
+    if (encuadrado) return;
+    encuadrado = true;
+    g.zoomToFit(700, 40);
+    setTimeout(() => {
+      const c = g.camera().position;
+      radio = Math.hypot(c.x, c.z) || radio;
+      altura = c.y;
+      angulo = Math.atan2(c.x, c.z);
+    }, 750);
+  });
+  setInterval(() => {
+    if (!girando || foco || !encuadrado) return;
+    angulo += 0.0025;
+    g.cameraPosition({ x: radio * Math.sin(angulo), y: altura, z: radio * Math.cos(angulo) }, { x: 0, y: 0, z: 0 });
+  }, 16);
+  $('girar').setAttribute('aria-pressed', String(girando));
+  escena.addEventListener('pointerdown', () => { if (girando) { girando = false; $('girar').setAttribute('aria-pressed', 'false'); } });
+
+  function refrescar() {
+    g.nodeColor(g.nodeColor()).linkColor(g.linkColor()).linkWidth(g.linkWidth())
+      .linkDirectionalParticles(g.linkDirectionalParticles()).linkDirectionalParticleWidth(g.linkDirectionalParticleWidth());
+  }
+
+  function enfocar(n, volar) {
+    if (!n) return;
+    foco = n;
+    resaltados = new Set([n, ...n.vecinos]);
+    enlResaltados = new Set(n.enl);
+    girando = false;
+    $('girar').setAttribute('aria-pressed', 'false');
+    refrescar();
+    if (volar && n.x !== undefined) {
+      const dist = 175;
+      const r = Math.hypot(n.x, n.y, n.z || 0) || 1;
+      const k = 1 + dist / r;
+      g.cameraPosition({ x: n.x * k + 60, y: n.y * k + 80, z: (n.z || 0) * k + (g.numDimensions() === 2 ? dist : 0) }, n, 1100);
+    }
+    abrirFicha(n);
+    $('todo').setAttribute('aria-pressed', 'false');
+  }
+
+  function soltar() {
+    foco = null;
+    resaltados = new Set();
+    enlResaltados = new Set();
+    refrescar();
+    $('ficha').hidden = true;
+  }
+
+  function fila(otro, l, papel) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'r';
+    const s = document.createElement('span');
+    const p = document.createElement('i');
+    p.className = 'punto';
+    p.style.background = TIPOS[otro.t]?.c || '#94A3B8';
+    const em = document.createElement('em');
+    em.textContent = otro.l;
+    s.append(p, em);
+    const peso = document.createElement('span');
+    peso.className = 'peso' + (l.e === 'bloqueo' ? ' bloqueo' : '');
+    const barra = document.createElement('i');
+    barra.style.width = Math.round((l.w ?? (l.e === 'bloqueo' ? 1 : 0.5)) * 100) + '%';
+    peso.append(barra);
+    const v = document.createElement('small');
+    v.textContent = l.w != null ? String(l.w).replace('.', ',') : (l.e === 'bloqueo' ? 'bloquea' : '—');
+    b.append(s, peso, v);
+    b.title = papel;
+    b.addEventListener('click', () => enfocar(otro, true));
+    return b;
+  }
+
+  function abrirFicha(n) {
+    const tipo = TIPOS[n.t] || { n: n.t, c: '#94A3B8' };
+    const ojo = $('fichaTipo');
+    ojo.textContent = '';
+    const pt = document.createElement('i');
+    pt.className = 'punto';
+    pt.style.background = tipo.c;
+    ojo.append(pt, document.createTextNode(tipo.n));
+    ojo.style.color = tipo.c;
+    $('fichaTitulo').textContent = n.l;
+    const chips = $('fichaChips');
+    chips.textContent = '';
+    const c1 = document.createElement('span');
+    c1.className = 'chip';
+    c1.textContent = n.grado + (n.grado === 1 ? ' relación' : ' relaciones');
+    chips.append(c1);
+    if (n.a) {
+      const c2 = document.createElement('span');
+      c2.className = 'chip rojo';
+      c2.textContent = 'Señal de alarma · sube el triage';
+      chips.append(c2);
+    }
+    const cuerpo = $('fichaCuerpo');
+    cuerpo.textContent = '';
+    const grupos = new Map();
+    n.enl.forEach(l => {
+      const src = typeof l.source === 'object' ? l.source : porId.get(l.source);
+      const dst = typeof l.target === 'object' ? l.target : porId.get(l.target);
+      const entrante = dst === n;
+      const otro = entrante ? src : dst;
+      const titulo = (VERBO[l.r] || [l.r, l.r])[entrante ? 0 : 1];
+      if (!grupos.has(titulo)) grupos.set(titulo, []);
+      grupos.get(titulo).push({ otro, l });
+    });
+    grupos.forEach((lista, titulo) => {
+      lista.sort((x, y) => (y.l.w ?? 1) - (x.l.w ?? 1));
+      const sec = document.createElement('section');
+      const h = document.createElement('p');
+      h.className = 'tit';
+      h.textContent = titulo + ' · ' + lista.length;
+      const rel = document.createElement('div');
+      rel.className = 'rel';
+      lista.forEach(({ otro, l }) => rel.append(fila(otro, l, titulo)));
+      sec.append(h, rel);
+      cuerpo.append(sec);
+    });
+    const codigos = new Set();
+    n.enl.forEach(l => (l.f || []).forEach(c => codigos.add(c)));
+    if (codigos.size) {
+      const sec = document.createElement('section');
+      const h = document.createElement('p');
+      h.className = 'tit';
+      h.textContent = 'Fuentes';
+      sec.append(h);
+      const caja = document.createElement('div');
+      caja.style.display = 'flex';
+      caja.style.flexDirection = 'column';
+      caja.style.gap = '8px';
+      [...codigos].slice(0, 4).forEach(c => {
+        const f = DATOS.fuentes[c] || { e: c, t: '' };
+        const d = document.createElement('div');
+        d.className = 'fuente';
+        const b = document.createElement('b');
+        b.textContent = f.e;
+        d.append(b, document.createTextNode(f.t));
+        caja.append(d);
+      });
+      sec.append(caja);
+      cuerpo.append(sec);
+    }
+    const nota = document.createElement('p');
+    nota.className = 'nota';
+    nota.textContent = 'Pendiente de validación veterinaria. Es apoyo a la decisión: ordena posibilidades, decide el veterinario.';
+    cuerpo.append(nota);
+    $('ficha').hidden = false;
+  }
+  $('cerrar').addEventListener('click', soltar);
+
+  /* Tipos: mostrar u ocultar. */
+  const conteo = {};
+  nodos.forEach(n => { conteo[n.t] = (conteo[n.t] || 0) + 1; });
+  Object.entries(TIPOS).forEach(([clave, t]) => {
+    if (!conteo[clave]) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tipo';
+    b.setAttribute('aria-pressed', 'true');
+    const p = document.createElement('i');
+    p.className = 'punto';
+    p.style.background = t.c;
+    const num = document.createElement('b');
+    num.textContent = conteo[clave];
+    b.append(p, document.createTextNode(t.p + ' '), num);
+    b.addEventListener('click', () => {
+      const on = visibles.has(clave);
+      if (on) visibles.delete(clave); else visibles.add(clave);
+      b.setAttribute('aria-pressed', String(!on));
+      g.nodeVisibility(g.nodeVisibility()).linkVisibility(g.linkVisibility());
+    });
+    $('tipos').append(b);
+  });
+
+  /* Buscador con sugerencias. */
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/\p{Mn}/gu, '');
+  const entrada = $('buscar');
+  const sug = $('sugerencias');
+  entrada.addEventListener('input', () => {
+    const q = norm(entrada.value.trim());
+    sug.textContent = '';
+    if (q.length < 2) { sug.hidden = true; return; }
+    const hallados = nodos.filter(n => norm(n.l).includes(q)).slice(0, 7);
+    hallados.forEach(n => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'option');
+      const p = document.createElement('i');
+      p.className = 'punto';
+      p.style.background = TIPOS[n.t]?.c;
+      b.append(p, document.createTextNode(n.l));
+      b.addEventListener('click', () => { sug.hidden = true; entrada.value = n.l; enfocar(n, true); });
+      sug.append(b);
+    });
+    sug.hidden = hallados.length === 0;
+  });
+  entrada.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const b = sug.querySelector('button'); if (b) b.click(); }
+    if (e.key === 'Escape') { sug.hidden = true; }
+  });
+
+  $('dim').addEventListener('click', () => {
+    const tres = g.numDimensions() !== 3;
+    g.numDimensions(tres ? 3 : 2);
+    $('dim').setAttribute('aria-pressed', String(tres));
+    $('dim').querySelector('.txt').textContent = tres ? '3D' : 'Plano';
+    if (!tres) { girando = false; $('girar').setAttribute('aria-pressed', 'false'); g.cameraPosition({ x: 0, y: 0, z: 420 }, { x: 0, y: 0, z: 0 }, 900); }
+  });
+  $('girar').addEventListener('click', () => {
+    girando = !girando;
+    if (girando) soltar();
+    $('girar').setAttribute('aria-pressed', String(girando));
+  });
+  $('todo').addEventListener('click', () => { soltar(); g.zoomToFit(900, 60); });
+
+  /* Pantalla completa: solo responde a un clic; si el navegador no la permite, no pasa nada. */
+  $('grande').addEventListener('click', () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(() => {});
+    } catch (e) { /* sin pantalla completa en este navegador */ }
+  });
+  document.addEventListener('fullscreenchange', () => $('grande').setAttribute('aria-pressed', String(Boolean(document.fullscreenElement))));
+  addEventListener('resize', () => g.width(ancho()).height(alto()));
+})();
+</script>

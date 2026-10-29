@@ -22,6 +22,39 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public static function carrerasCheckout(): array
+    {
+        return [['checkout_workers', 0, 'cancelado'], ['checkout_evento_primero', 1, 'confirmado'], ['checkout_cierre_primero', 0, 'revision']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('carrerasCheckout')]
+    public function testCheckoutCierreYConciliacionCompartenCandado(string $fase, int $periodos, string $estado): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        require_once __DIR__ . '/../../models/PagoSuscripcion.php';
+        require_once __DIR__ . '/../../models/EventoWompi.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            $orden = (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv('APP_URL');
+        }
+        if ($fase !== 'checkout_workers') {
+            $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+            (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso'));
+        }
+        $resultados = $this->competirS2($fase);
+        $this->assertSame($periodos, $this->contar('suscripcion_periodos'));
+        $this->assertSame($estado, $this->db->query('SELECT estado FROM pagos_suscripcion')->fetchColumn());
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        if ($fase === 'checkout_workers') {
+            $this->assertSame(1, array_sum(array_column(array_column($resultados, 'resultado'), 'cerradas')));
+        }
+    }
+
     public function testS4ArranqueDockerSqlCompletoSeguidoDeMigrador(): void
     {
         $this->cargar('01_schema.sql');
@@ -1146,7 +1179,7 @@ class BaseV2MysqlTest extends TestCase
             $registro = new RegistroClinica($this->db);
             $_SERVER['REMOTE_ADDR'] = '192.0.2.50';
             Auditoria::definirProxiesConfiables([]);
-            $reporte = ['nit' => '900123456', 'dv' => '8', 'email' => 'titular@zooki.test'];
+            $reporte = ['nit' => '900123456-8', 'email' => 'titular@zooki.test'];
             for ($i = 0; $i < 5; $i++) {
                 $registro->reportarNit($reporte);
             }

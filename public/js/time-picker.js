@@ -404,7 +404,9 @@ class BlockPicker {
 
     _refreshDisplay() {
         if (this.options.compactDisplay) {
-            this.display.textContent = 'de ' + this.startInput.value + ' a ' + this.endInput.value;
+            this.display.textContent = this.options.compactDisplay === 'rango'
+                ? this.startInput.value + '–' + this.endInput.value
+                : 'de ' + this.startInput.value + ' a ' + this.endInput.value;
             return;
         }
         const s = this._fmt(this.startInput.value || this._defaultStart());

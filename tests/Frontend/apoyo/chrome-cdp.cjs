@@ -24,6 +24,10 @@ async function abrirChrome(ruta) {
     const argumentos = ['--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + perfil, '--no-first-run', '--no-default-browser-check'];
     // En contenedores Linux corriendo como root Chrome exige desactivar su sandbox.
     if (process.platform === 'linux' && process.getuid && process.getuid() === 0) argumentos.push('--no-sandbox');
+    // Pruebas herméticas: sin red externa. En el CI sí hay internet y las páginas cargaban
+    // fuentes y librerías del CDN (Inter, FontAwesome, SweetAlert), con medidas distintas
+    // a las de una máquina sin red; así las dos ven lo mismo.
+    argumentos.push('--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1');
     const proceso = spawn(ruta, [...argumentos, 'about:blank']);
     const direccion = await new Promise((resolver, rechazar) => {
         let salida = '';

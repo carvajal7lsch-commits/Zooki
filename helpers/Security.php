@@ -67,7 +67,7 @@ class Security {
      */
     private const MAX_INTENTOS_IP     = 20;
     private const MAX_INTENTOS_IDENTIFICADOR = 5;
-    private const MAX_VERIFICACIONES  = 20;
+    private const MAX_VERIFICACIONES  = 40;
     private const MAX_VERIFICACIONES_USUARIO = 120;
     public const VENTANA              = 900;  // 15 minutos
     private const BLOQUEO             = 900;  // 15 minutos

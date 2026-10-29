@@ -62,6 +62,9 @@ function nodo(etiqueta = 'div') {
         querySelector(selector) {
             return todos(n).find(h => selector.includes('aviso-solo-lectura') && h.classList.contains('aviso-solo-lectura')) || null;
         },
+        querySelectorAll(selector) {
+            return todos(n).filter(h => selector === '[data-reenviar-activacion]' && h.dataset?.reenviarActivacion !== undefined);
+        },
         get texto() { return [n.textContent, ...n.hijos.map(h => h.texto)].join(' ').trim(); },
     };
     return n;

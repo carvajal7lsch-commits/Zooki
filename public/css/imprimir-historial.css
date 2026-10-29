@@ -1,174 +1,287 @@
+/* RE-5.5.1–3 / RN-114: documento independiente, legible en pantalla y en A4. */
+* {
+    box-sizing: border-box;
+}
 body {
-            font-family: 'Inter', sans-serif;
-            color: #1e293b;
-            background: #ffffff;
-            margin: 0;
-            padding: 2rem;
-            box-sizing: border-box;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .logo-wrap h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #5560ff;
-        }
-
-        .logo-wrap p {
-            margin: 4px 0 0;
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .report-meta {
-            text-align: right;
-            font-size: 0.82rem;
-            color: #64748b;
-        }
-
-        .report-meta h2 {
-            margin: 0 0 4px;
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .pet-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 1.25rem;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .pet-info-item {
-            font-size: 0.85rem;
-        }
-
-        .pet-info-item span {
-            display: block;
-            font-weight: 700;
-            font-size: 0.72rem;
-            color: #64748b;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .pet-info-item strong {
-            color: #0f172a;
-            font-size: 0.95rem;
-        }
-
-        .section-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #0f172a;
-            border-bottom: 2px solid #5560ff;
-            padding-bottom: 6px;
-            margin: 2.5rem 0 1rem;
-            text-transform: uppercase;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
-            font-size: 0.82rem;
-        }
-
-        th {
-            background: #f1f5f9;
-            color: #475569;
-            text-align: left;
-            font-weight: 700;
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-        }
-
-        td {
-            padding: 10px 12px;
-            border: 1px solid #e2e8f0;
-            color: #334155;
-            vertical-align: top;
-            line-height: 1.4;
-        }
-
-        tr:nth-child(even) td {
-            background: #f8fafc;
-        }
-
-        .floating-actions {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            display: flex;
-            gap: 0.5rem;
-            z-index: 1000;
-        }
-
-        .btn {
-            background: #5560ff;
-            color: #ffffff;
-            border: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(85, 96, 255, 0.3);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            text-decoration: none;
-        }
-
-        .btn-secondary {
-            background: #64748b;
-            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
-        }
-
-        /* Ocultar elementos al imprimir */
-        @media print {
-            body {
-                padding: 0;
-            }
-            .floating-actions {
-                display: none !important;
-            }
-        }
-.historial-vacio {
-    font-size:0.85rem;
-    color:#64748b;
-    font-style:italic;
+    margin: 0;
+    padding: 24px;
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+    font: 14px/1.5 Inter, Arial, sans-serif;
 }
-
-.historial-columna-fecha {
-    width: 15%;
+.historial-documento {
+    max-width: 900px;
+    margin: 16px auto;
+    padding: 36px;
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: 16px;
 }
-
-.historial-columna-motivo {
-    width: 25%;
+h1, h2, p, dl, dd {
+    margin: 0;
 }
-
-.historial-columna-diagnostico {
-    width: 35%;
+.historial-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--z-primary);
 }
-
-.historial-tratamiento {
-    font-size: 0.75rem;
-    color: #475569;
+.historial-marca {
+    color: var(--z-primary);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+h1 {
+    font-size: 22px;
+}
+.historial-cabecera p, .historial-etiqueta, dt, small, .historial-pie, .historial-vacio {
+    color: var(--z-text-muted);
+    font-size: 12px;
+}
+.historial-paciente {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--z-border);
+}
+.historial-identidad {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.historial-identidad h2 {
+    font-size: 22px;
+}
+.historial-avatar {
+    display: grid;
+    place-items: center;
+    position: relative;
+    flex: none;
+    width: 60px;
+    height: 60px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 26px;
+    font-weight: 700;
+}
+.historial-avatar img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.historial-datos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+dd {
+    overflow-wrap: anywhere;
+}
+.historial-datos dd {
+    font-weight: 600;
+}
+.historial-hc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 16px;
+}
+.historial-hc dd {
+    color: var(--z-primary);
+    font-weight: 600;
+}
+.section-title, .historial-alertas h2 {
+    margin: 22px 0 10px;
+    font-size: 16px;
+    break-after: avoid;
+}
+.section-title {
+    color: var(--z-primary);
+}
+.historial-alerta {
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--z-danger-borde);
+    border-left: 3px solid var(--z-danger);
+    border-radius: 8px;
+    background: var(--z-danger-soft);
+}
+.historial-alerta strong {
+    color: var(--z-danger-dark);
+}
+table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+th, td {
+    padding: 8px;
+    border-bottom: 1px solid var(--z-border);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+th {
+    background: var(--z-bg-suave);
+    color: var(--z-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+}
+small {
     display: block;
-    margin-top: 4px;
+}
+.historial-consulta {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+}
+.historial-consulta header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+    margin-bottom: 10px;
+    color: var(--z-text-secondary);
+    font-size: 12px;
+}
+.historial-consulta dl > div {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+}
+.historial-consulta dd {
+    white-space: pre-line;
+}
+.historial-marcas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.marca-clinica {
+    display: grid;
+    gap: 2px;
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+}
+.marca-clinica span {
+    color: var(--z-text-muted);
+    font-size: 10px;
+}
+.marca-clinica-logo {
+    width: auto;
+    max-width: 60px;
+    max-height: 28px;
+    object-fit: contain;
+}
+.historial-pie {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--z-border);
+}
+.floating-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--z-primary);
+    border-radius: 12px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-secondary {
+    background: var(--z-surface);
+    color: var(--z-primary);
+}
+.btn:hover {
+    background: var(--z-primary-dark);
+    color: var(--z-surface);
+}
+.btn:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 3px;
+}
+@media screen and (max-width: 767px) {
+    body {
+        padding: 12px;
+    }
+    .historial-documento {
+        padding: 16px;
+    }
+    .historial-cabecera {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .historial-datos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    th, td {
+        padding: 6px 4px;
+    }
+    .historial-consulta dl > div {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+}
+@page {
+    size: A4;
+    margin: 16mm 14mm 18mm;
+    @bottom-left {
+        content: "Generado por Zooki";
+        font: 9pt Arial, sans-serif;
+        color: var(--z-text-muted);
+    }
+    @bottom-right {
+        content: "Página " counter(page) " de " counter(pages);
+        font: 9pt Arial, sans-serif;
+        color: var(--z-text-muted);
+    }
+}
+@media print {
+    body {
+        padding: 0;
+        background: var(--z-surface);
+        font-size: 10pt;
+        print-color-adjust: exact;
+    }
+    .floating-actions {
+        display: none;
+    }
+    .historial-documento {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+    }
+    .historial-paciente, .historial-alerta, .historial-consulta, .marca-clinica, tr {
+        break-inside: avoid;
+    }
+    thead {
+        display: table-header-group;
+    }
+    .historial-pie {
+        display: none;
+    }
 }

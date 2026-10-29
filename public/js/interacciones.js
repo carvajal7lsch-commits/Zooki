@@ -78,7 +78,10 @@ function sanearEntrada(valor, opciones, maximo) {
     if (opciones.formato === 'decimal') limpio = sanearDecimal(limpio, opciones);
     if (opciones.formato === 'nit') {
         const partes = limpio.split('-');
-        limpio = partes[0] + (partes[0] && partes.length > 1 ? '-' + partes.slice(1).join('').slice(0, 1) : partes.slice(1).join(''));
+        const numeroMax = Number(opciones.nitNumeroMax) || 14;
+        const conGuion = partes[0] && partes.length > 1;
+        const numero = partes[0] || partes.slice(1).join('');
+        limpio = numero.slice(0, numeroMax) + (conGuion ? '-' + partes.slice(1).join('').slice(0, 1) : '');
     }
     if (opciones.espacios === 'normalizar') limpio = limpio.replace(/\s+/gu, ' ').trimStart();
     if (maximo > 0) limpio = limpio.slice(0, maximo);

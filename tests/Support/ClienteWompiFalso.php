@@ -8,6 +8,8 @@ final class ClienteWompiFalso implements ClienteWompi
 {
     public array $respuestas = [];
     public array $consultas = [];
+    public array $porReferencia = [];
+    public array $referenciasConsultadas = [];
     public mixed $antesDeConsultar = null;
     public array $datosComercio = ['id' => 123];
     public array $fuente = ['id' => 321, 'type' => 'CARD', 'status' => 'AVAILABLE', 'public_data' => ['brand' => 'VISA', 'last_four' => '4242']];
@@ -40,6 +42,19 @@ final class ClienteWompiFalso implements ClienteWompi
             ($this->antesDeConsultar)();
         }
         return $this->datosComercio;
+    }
+
+    public function transaccionesPorReferencia(string $referencia): array
+    {
+        $this->referenciasConsultadas[] = $referencia;
+        if ($this->antesDeConsultar !== null) {
+            ($this->antesDeConsultar)();
+        }
+        $respuesta = $this->porReferencia[$referencia] ?? new RuntimeException('Búsqueda no simulada');
+        if ($respuesta instanceof Throwable) {
+            throw $respuesta;
+        }
+        return $respuesta;
     }
 
     public function tokenNequi(string $token): array

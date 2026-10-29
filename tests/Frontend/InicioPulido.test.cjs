@@ -57,7 +57,7 @@ test('Inicio real: agenda corta centrada, lista larga accesible y contexto móvi
                     const primero=filas[0]?.getBoundingClientRect();
                     const ultimo=filas.at(-1)?.getBoundingClientRect();
                     const vacio=document.querySelector('.inicio-recientes__vacio');
-                    return {horizontal:document.documentElement.scrollWidth<=innerWidth,pagina:document.documentElement.scrollHeight<=innerHeight,centrado:r?Math.abs((primero.top+ultimo.bottom)/2-(r.top+r.bottom)/2)<2:true,primerAccesible:r?primero.top>=r.top-1:true,scroll:r?lista.scrollHeight>lista.clientHeight:false,contexto:getComputedStyle(document.querySelector('.contexto-actual')).display,vacioIlustrado:!!vacio?.querySelector('img'),vacioCabe:vacio.scrollWidth<=vacio.clientWidth};
+                    return {horizontal:document.documentElement.scrollWidth<=innerWidth,pagina:document.documentElement.scrollHeight<=innerHeight,centrado:r?Math.abs((primero.top+ultimo.bottom)/2-(r.top+r.bottom)/2)<2:true,primerAccesible:r?primero.top>=r.top-1:true,scroll:r?lista.scrollHeight>lista.clientHeight:false,contexto:getComputedStyle(document.querySelector('.cabecera-cuenta [data-clinica-escritorio]')).display,vacioIlustrado:!!vacio?.querySelector('img'),vacioCabe:vacio.scrollWidth<=vacio.clientWidth};
                 })()`);
                 assert.equal(estado.horizontal,true,JSON.stringify({caso,width,estado}));
                 assert.equal(estado.primerAccesible,true);
@@ -77,7 +77,7 @@ test('Inicio real: agenda corta centrada, lista larga accesible y contexto móvi
         }
         const arbol = await nav.enviar('Page.getFrameTree');
         await nav.enviar('Page.setDocumentContent', {frameId:arbol.frameTree.frame.id,html:pagina(vista('breve','varios'))});
-        assert.equal(await nav.evaluar(`getComputedStyle(document.querySelector('.contexto-actual')).display!=='none'&&document.querySelector('.contexto-actual__cambiar').textContent==='Cambiar'`),true);
+        assert.equal(await nav.evaluar(`document.querySelector('a.cabecera-clinica[href*="seleccionar_contexto"] .cabecera-clinica__cambiar')?.textContent==='Cambiar'`),true);
         assert.deepEqual(nav.errores,[]);
     } finally {
         await nav.cerrar();

@@ -136,6 +136,8 @@ test('la confirmación de Zooki: Escape y el fondo cancelan, el foco no sale y v
     assert.equal(panel.getAttribute('aria-modal'), 'true');
     assert.equal(document.activeElement.textContent, 'Cancelar cita', 'El foco entra a la ventana.');
     document.tecla('Tab');
+    assert.equal(document.activeElement.getAttribute('aria-label'), 'Cerrar');
+    document.tecla('Tab');
     assert.equal(document.activeElement.textContent, 'Volver');
     document.tecla('Tab');
     assert.equal(document.activeElement.textContent, 'Cancelar cita', 'Tab no sale de la ventana.');
@@ -149,6 +151,14 @@ test('la confirmación de Zooki: Escape y el fondo cancelan, el foco no sale y v
     const segunda = contexto.zookiConfirmarCorto('¿Agendar esta cita?', 'Agendar');
     document.body.hijos[0].click();
     assert.equal(await segunda, false, 'Tocar el fondo cancela.');
+
+    const tercera = contexto.zookiConfirmarCorto('¿Restablecer contraseña?', 'Restablecer', [], 'Cancelar', 'Se cerrarán las sesiones de <Beto>.');
+    const fondo = document.body.hijos[0];
+    assert.equal(fondo.buscar('zooki-confirmacion__descripcion').textContent, 'Se cerrarán las sesiones de <Beto>.');
+    assert.equal(fondo.hijos[0].getAttribute('aria-describedby'), 'zookiConfirmacionDescripcion');
+    fondo.buscar('zooki-confirmacion__cerrar').click();
+    assert.equal(await tercera, false, 'La X cancela sin ejecutar la acción.');
+    assert.equal(document.activeElement, origen);
 });
 
 test('los modales del Perfil abren con su botón y se cierran al guardar, con el aviso breve', () => {
@@ -189,12 +199,13 @@ test('el portal no usa SweetAlert para confirmar ni para formularios', () => {
 });
 
 /** telefono-internacional.js con una biblioteca falsa que guarda cómo se la llama. */
-function telefono(numeroValido) {
+function telefono(numeroValido, dentroDeDialogo = false) {
     const llamadas = [];
     let alCargar = () => {};
     const envio = [];
     const form = { addEventListener(tipo, callback, captura) { envio.push({ tipo, callback, captura }); } };
-    const campo = { value: '300 123 4567', form };
+    const dialogo = {};
+    const campo = { value: '300 123 4567', form, dataset: { telefonoPrefijoSeparado: dentroDeDialogo ? '1' : '0' }, closest: () => dentroDeDialogo ? dialogo : null };
     const contexto = {
         console,
         document: {
@@ -308,4 +319,11 @@ test('las pantallas tocadas no tienen JS ni CSS en línea', () => {
     for (const archivo of ['views/portal/index.php', 'views/portal/layout.php', 'views/auth/completar_perfil.php', 'views/partials/cambios_identidad.php']) {
         assert.doesNotMatch(codigo(archivo), /\sstyle="|\son[a-z]+="|<script>\s*\S/, archivo);
     }
+});
+
+// La lista del país debe permanecer en el diálogo nativo, que deja inerte el body.
+test('el selector de teléfono de Ajustes conserva la lista en el diálogo y muestra el prefijo', () => {
+    const { llamadas, campo } = telefono(true, true);
+    assert.equal(llamadas[0].dropdownContainer, campo.closest('dialog'));
+    assert.equal(llamadas[0].separateDialCode, true);
 });

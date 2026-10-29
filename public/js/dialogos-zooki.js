@@ -15,7 +15,7 @@
         if (!dialogo || dialogo.open) return dialogo;
         if (typeof dialogo.showModal === 'function') dialogo.showModal();
         else dialogo.setAttribute('open', '');
-        const primero = dialogo.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea');
+        const primero = dialogo.querySelector('[autofocus]') || dialogo.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea');
         if (primero) primero.focus();
         return dialogo;
     }
@@ -43,7 +43,18 @@
         // Varias vistas pueden cargar este archivo; los oyentes se registran una sola vez.
         if (global.__zookiDialogos) return;
         global.__zookiDialogos = true;
+        let fondoPulsado = null;
+        document.addEventListener('pointerdown', evento => {
+            fondoPulsado = null;
+            const dialogo = evento.target;
+            if (dialogo.tagName !== 'DIALOG' || !dialogo.classList.contains('zk-dialogo')) return;
+            const rect = dialogo.getBoundingClientRect();
+            const fuera = evento.clientX < rect.left || evento.clientX > rect.right || evento.clientY < rect.top || evento.clientY > rect.bottom;
+            if (fuera) fondoPulsado = dialogo;
+        });
         document.addEventListener('click', evento => {
+            const fondo = fondoPulsado;
+            fondoPulsado = null;
             const abrir = evento.target.closest('[data-abrir-dialogo]');
             if (abrir) {
                 abrirDialogo(abrir.dataset.abrirDialogo);
@@ -54,8 +65,13 @@
                 cerrarDialogo(cerrar);
                 return;
             }
-            // Clic en el fondo: el objetivo es el propio <dialog>, no su contenido.
-            if (evento.target.tagName === 'DIALOG' && evento.target.classList.contains('zk-dialogo')) evento.target.close();
+            // Abrir un calendario entre la pulsación y la suelta puede redirigir el clic al diálogo.
+            // Solo se cierra si el gesto empezó y terminó en el fondo exterior.
+            if (evento.target === fondo) {
+                const rect = fondo.getBoundingClientRect();
+                const fuera = evento.clientX < rect.left || evento.clientX > rect.right || evento.clientY < rect.top || evento.clientY > rect.bottom;
+                if (fuera) fondo.close();
+            }
         });
         const tabs = document.querySelector('[data-config-tabs]');
         if (!tabs) return;

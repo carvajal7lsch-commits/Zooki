@@ -1,0 +1,56 @@
+/* R / RNF-16 (2026-10-29): transición nativa; conserva enlaces, historial y beforeunload. */
+@view-transition {
+    navigation: auto;
+}
+.pill-sidebar {
+    view-transition-name: zooki-barra;
+}
+.pill-sidebar .pill-nav-item.active {
+    view-transition-name: zooki-destino;
+}
+::view-transition-group(zooki-destino) {
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+}
+.navegacion-respaldo .dashboard-layout > .main-content {
+    animation: barra-contenido-entra 160ms ease-out;
+}
+::view-transition-group(zooki-barra) {
+    animation: none;
+}
+::view-transition-old(zooki-barra),
+::view-transition-new(zooki-barra) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+    animation: barra-contenido-sale 180ms ease-in-out both;
+    mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+    animation: barra-contenido-entra 180ms ease-in-out both;
+    mix-blend-mode: normal;
+}
+@keyframes barra-contenido-sale {
+    to {
+        opacity: 0;
+    }
+}
+@keyframes barra-contenido-entra {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .navegacion-respaldo .dashboard-layout > .main-content {
+        animation: none;
+    }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}

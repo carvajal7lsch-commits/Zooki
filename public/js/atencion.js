@@ -274,7 +274,7 @@
         const mensaje = consultaRegistrada
             ? 'La cita quedará marcada como completada.'
             : 'Se guardará la consulta en la historia clínica y la cita quedará completada. Después no se puede editar.';
-        if (!(await zookiConfirmar(mensaje, '¿Finalizar la atención?', 'Sí, finalizar'))) return;
+        if (!(await zookiConfirmarCorto(mensaje, 'Sí, finalizar'))) return;
 
         finalizando = true;
         textoBotonFinalizar(true);
@@ -310,21 +310,7 @@
                 }
             }
 
-            const resultado = await Swal.fire({
-                icon: 'success',
-                title: 'Atención finalizada',
-                text: 'La consulta quedó en la historia clínica y la cita se marcó como completada.',
-                showCancelButton: true,
-                confirmButtonText: 'Volver a la agenda',
-                cancelButtonText: 'Ver resumen',
-                confirmButtonColor: ZOOKI_COLOR_OK,
-                cancelButtonColor: '#94A3B8',
-            });
-            if (resultado.isConfirmed) {
-                window.location.href = 'index.php?action=vet_agenda';
-            } else {
-                window.location.reload();
-            }
+            zookiRecargarConAviso('Atención finalizada. La consulta quedó en la historia clínica.', 'success');
         } catch (e) {
             console.error('finalizarAtencion', e);
             finalizando = false;

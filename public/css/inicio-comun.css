@@ -61,6 +61,11 @@
 }
 
 /* ── Piezas comunes ── */
+.inicio-movil,
+.inicio-solo-movil {
+    display: none;
+}
+
 .inicio .visualmente-oculto {
     position: absolute;
     width: 1px;
@@ -709,11 +714,6 @@
         min-height: 640px;
     }
 
-    .main-content--inicio .top-header {
-        padding-top: 14px;
-        padding-bottom: 12px;
-    }
-
     .main-content--inicio .content-body {
         display: flex;
         flex: 1;
@@ -869,3 +869,150 @@
 
 /* HU-6.1, RE-6.1.9: las agendas cortas se centran en su espacio. */
 .inicio-lineas--breve { justify-content: safe center; }
+/* RNF-16: pestañas, semana y hoja optativas para los Inicios. */
+@media (max-width: 767px) {
+    .inicio-movil {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+    }
+    .inicio-movil [hidden] {
+        display: none !important;
+    }
+    .inicio-movil__tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        overflow: hidden;
+        border-radius: 14px;
+        background: var(--in-blanco);
+    }
+    .inicio-movil__tabs button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0 4px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: var(--in-texto-3);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .inicio-movil__tabs [aria-selected="true"] {
+        border-bottom-color: var(--in-azul);
+        color: var(--in-azul);
+    }
+    .inicio-movil__conteo {
+        display: inline-grid;
+        place-items: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: var(--z-warning-soft);
+        color: var(--z-warning-dark);
+        font-size: 12px;
+    }
+    .inicio-movil__panel {
+        min-width: 0;
+    }
+    .inicio-movil__panel--agenda, .inicio-movil__panel--mes {
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--in-blanco);
+    }
+    .inicio-selector-vet {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--in-borde-suave);
+    }
+    .inicio-selector-vet__opcion {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        min-height: 58px;
+        padding: 8px;
+        border: 1px solid var(--in-borde);
+        border-radius: 12px;
+        background: var(--in-blanco);
+        color: var(--in-texto);
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+    }
+    .inicio-selector-vet__opcion[aria-pressed="true"] {
+        border-color: var(--in-azul);
+        background: var(--in-azul-suave);
+    }
+    .inicio-selector-vet__opcion .inicio-ava {
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    .inicio-selector-vet__opcion .inicio-agenda__quien strong {
+        font-size: 13px;
+    }
+    .inicio-selector-vet__opcion .inicio-meta {
+        font-size: 11px;
+        white-space: normal;
+    }
+    .inicio-movil__calendario[open] {
+        padding: 0;
+        width: 100%;
+        max-height: calc(100dvh - 24px);
+        margin: auto 0 0;
+        inset: auto 0 0;
+        border-radius: 24px 24px 0 0;
+    }
+    .inicio-movil__calendario-interior {
+        padding: 0 16px 20px;
+    }
+    .inicio-movil__calendario .inicio-cal {
+        width: 100%;
+        min-height: 0;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+    .inicio-movil__calendario .inicio-cal__contenido {
+        padding: 0;
+    }
+    .inicio-movil__calendario .inicio-titulo {
+        font-size: 18px;
+    }
+    .inicio-movil__calendario .inicio-cal__flecha {
+        width: 40px;
+        height: 40px;
+    }
+    .inicio-movil__calendario .inicio-cal__dia {
+        min-height: 40px;
+        font-size: 14px;
+    }
+    .inicio-movil__leyenda {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 14px 0 0;
+        color: var(--in-meta);
+        font-size: 12px;
+    }
+    .inicio-movil__leyenda .inicio-cal__marca {
+        position: static;
+        display: block;
+        flex: 0 0 5px;
+        width: 5px;
+        height: 5px;
+        margin: 0;
+        background: var(--in-azul);
+    }
+}

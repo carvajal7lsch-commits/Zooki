@@ -151,7 +151,7 @@ test('registrar o editar una mascota y desactivar un cliente ya no recargan la p
     const desactivar = usuarios.slice(usuarios.indexOf('async function cambiarEstadoCliente'), usuarios.indexOf("modulo.addEventListener('change'"));
     assert.doesNotMatch(desactivar, /zookiRecargarConAviso\('Vínculo desactivado/);
     assert.match(desactivar, /refrescarClientes\(\)/);
-    assert.match(usuarios, /querySelector\('\[data-panel="clientes"\]'\)[\s\S]*cambiarVista\(modulo\.dataset\.vista\)[\s\S]*filtrar\('clientes'\)/);
+    assert.match(usuarios, /querySelector\('\[data-panel="clientes"\]'\)[\s\S]*cambiarVista\(preferenciaVista\)[\s\S]*filtrar\('clientes'\)/);
 });
 
 test('el panel de Clientes se repinta en su sitio con la vista y el filtro elegidos', async () => {

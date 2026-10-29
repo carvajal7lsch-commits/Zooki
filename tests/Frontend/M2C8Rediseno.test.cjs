@@ -75,7 +75,7 @@ function pacientes() {
     };
     contexto.window.document = documento;
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     vm.runInContext(leer('public/js/propietario-mascota.js'), contexto);
     // El expediente se pinta con su función de siempre; aquí solo se observa qué mascotas recibe.
     const expedientes = [];
@@ -104,7 +104,7 @@ test('H3: vincular pone al día Pacientes sin recargar: la lista de mascotas, el
     assert.ok(acciones.includes('listar_propietarios_ajax'), 'Antes de C8 la tarjeta del propietario no se pedía: su contador se quedaba viejo');
     assert.ok(acciones.includes('listar_mascotas_propietario_ajax'), 'Ni el expediente abierto');
     assert.equal(p.documento.getElementById('petsGrid').innerHTML, '<div class="pet-card" data-id="21">Doki</div>');
-    assert.match(p.documento.getElementById('ownersGrid').textContent, /Fabio Propietario.*2 mascota\(s\)/);
+    assert.match(p.documento.getElementById('ownersGrid').textContent, /Fabio Propietario.*2 mascotas/);
     assert.deepEqual(plano(p.expedientes.at(-1)), ['Luna', 'Doki'], 'El expediente ya muestra a Doki');
     assert.match(panel.textContent, /Doki.*Vinculada/);
     assert.deepEqual(plano(p.estado.avisos), ['Doki quedó vinculada a la clínica.'], 'Un aviso breve y ningún error');

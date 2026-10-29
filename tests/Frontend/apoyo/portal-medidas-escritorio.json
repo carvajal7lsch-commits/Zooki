@@ -1,0 +1,428 @@
+[
+  {
+    "vista": "home",
+    "ancho": 820,
+    "documento": 820,
+    "pantalla": {
+      "x": 32,
+      "y": 32,
+      "ancho": 756,
+      "alto": 1023.921875
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera home-cabecera home-bienvenida",
+        "x": 32,
+        "y": 32,
+        "ancho": 756,
+        "alto": 54
+      },
+      {
+        "clase": "portal-cita",
+        "x": 32,
+        "y": 162,
+        "ancho": 756,
+        "alto": 65.3125
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 32,
+        "y": 307.3125,
+        "ancho": 180,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 224,
+        "y": 307.3125,
+        "ancho": 180,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 416,
+        "y": 307.3125,
+        "ancho": 180,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 608,
+        "y": 307.3125,
+        "ancho": 180,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 32,
+        "y": 534.734375,
+        "ancho": 180,
+        "alto": 200.859375
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 224,
+        "y": 534.734375,
+        "ancho": 180,
+        "alto": 200.859375
+      }
+    ]
+  },
+  {
+    "vista": "citas",
+    "ancho": 820,
+    "documento": 820,
+    "pantalla": {
+      "x": 32,
+      "y": 32,
+      "ancho": 756,
+      "alto": 557.421875
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 32,
+        "y": 32,
+        "ancho": 756,
+        "alto": 54
+      },
+      {
+        "clase": "portal-cita",
+        "x": 32,
+        "y": 234,
+        "ancho": 442,
+        "alto": 107.53125
+      },
+      {
+        "clase": "portal-cita",
+        "x": 32,
+        "y": 349.53125,
+        "ancho": 442,
+        "alto": 128.640625
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      }
+    ]
+  },
+  {
+    "vista": "clinicas",
+    "ancho": 820,
+    "documento": 820,
+    "pantalla": {
+      "x": 32,
+      "y": 32,
+      "ancho": 756,
+      "alto": 647.703125
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 32,
+        "y": 32,
+        "ancho": 756,
+        "alto": 54
+      },
+      {
+        "clase": "portal-clinica clinica-fila",
+        "x": 32,
+        "y": 183,
+        "ancho": 756,
+        "alto": 136.390625
+      },
+      {
+        "clase": "portal-clinica clinica-fila",
+        "x": 32,
+        "y": 319.390625,
+        "ancho": 756,
+        "alto": 137.390625
+      },
+      {
+        "clase": "portal-clinica clinica-fila clinica-fila--otra",
+        "x": 32,
+        "y": 525.140625,
+        "ancho": 756,
+        "alto": 76.78125
+      },
+      {
+        "clase": "portal-clinica clinica-fila clinica-fila--otra",
+        "x": 32,
+        "y": 601.921875,
+        "ancho": 756,
+        "alto": 77.78125
+      }
+    ]
+  },
+  {
+    "vista": "account",
+    "ancho": 820,
+    "documento": 820,
+    "pantalla": {
+      "x": 32,
+      "y": 32,
+      "ancho": 756,
+      "alto": 679.5
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 32,
+        "y": 32,
+        "ancho": 756,
+        "alto": 54
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--datos",
+        "x": 32,
+        "y": 106,
+        "ancho": 756,
+        "alto": 161.6875
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--contacto",
+        "x": 32,
+        "y": 283.6875,
+        "ancho": 756,
+        "alto": 229.578125
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--seguridad",
+        "x": 32,
+        "y": 529.265625,
+        "ancho": 756,
+        "alto": 182.234375
+      }
+    ]
+  },
+  {
+    "vista": "home",
+    "ancho": 1366,
+    "documento": 1351,
+    "pantalla": {
+      "x": 288,
+      "y": 36,
+      "ancho": 1023,
+      "alto": 761.59375
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera home-cabecera home-bienvenida",
+        "x": 288,
+        "y": 36,
+        "ancho": 651,
+        "alto": 112
+      },
+      {
+        "clase": "portal-cita",
+        "x": 288,
+        "y": 224,
+        "ancho": 651,
+        "alto": 65.3125
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 288,
+        "y": 369.3125,
+        "ancho": 209,
+        "alto": 200.859375
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 509,
+        "y": 369.3125,
+        "ancho": 209,
+        "alto": 200.859375
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 730,
+        "y": 369.3125,
+        "ancho": 209,
+        "alto": 200.859375
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 288,
+        "y": 582.171875,
+        "ancho": 209,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 509,
+        "y": 582.171875,
+        "ancho": 209,
+        "alto": 215.421875
+      },
+      {
+        "clase": "mascota-mini portal-mascota",
+        "x": 730,
+        "y": 582.171875,
+        "ancho": 209,
+        "alto": 215.421875
+      }
+    ]
+  },
+  {
+    "vista": "citas",
+    "ancho": 1366,
+    "documento": 1366,
+    "pantalla": {
+      "x": 288,
+      "y": 36,
+      "ancho": 1038,
+      "alto": 562.203125
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 288,
+        "y": 36,
+        "ancho": 1038,
+        "alto": 58.78125
+      },
+      {
+        "clase": "portal-cita",
+        "x": 288,
+        "y": 242.78125,
+        "ancho": 666,
+        "alto": 65.3125
+      },
+      {
+        "clase": "portal-cita",
+        "x": 288,
+        "y": 316.09375,
+        "ancho": 666,
+        "alto": 65.3125
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      },
+      {
+        "clase": "portal-cita",
+        "x": 0,
+        "y": 0,
+        "ancho": 0,
+        "alto": 0
+      }
+    ]
+  },
+  {
+    "vista": "clinicas",
+    "ancho": 1366,
+    "documento": 1366,
+    "pantalla": {
+      "x": 288,
+      "y": 36,
+      "ancho": 1038,
+      "alto": 429.5625
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 288,
+        "y": 36,
+        "ancho": 1038,
+        "alto": 58.78125
+      },
+      {
+        "clase": "portal-clinica clinica-fila",
+        "x": 288,
+        "y": 191.78125,
+        "ancho": 503,
+        "alto": 136.390625
+      },
+      {
+        "clase": "portal-clinica clinica-fila",
+        "x": 288,
+        "y": 328.171875,
+        "ancho": 503,
+        "alto": 137.390625
+      },
+      {
+        "clase": "portal-clinica clinica-fila clinica-fila--otra",
+        "x": 823,
+        "y": 159.140625,
+        "ancho": 503,
+        "alto": 76.78125
+      },
+      {
+        "clase": "portal-clinica clinica-fila clinica-fila--otra",
+        "x": 823,
+        "y": 235.921875,
+        "ancho": 503,
+        "alto": 77.78125
+      }
+    ]
+  },
+  {
+    "vista": "account",
+    "ancho": 1366,
+    "documento": 1366,
+    "pantalla": {
+      "x": 288,
+      "y": 36,
+      "ancho": 1038,
+      "alto": 438.703125
+    },
+    "piezas": [
+      {
+        "clase": "portal-cabecera",
+        "x": 288,
+        "y": 36,
+        "ancho": 1038,
+        "alto": 58.78125
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--datos",
+        "x": 288,
+        "y": 114.78125,
+        "ancho": 511,
+        "alto": 161.6875
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--contacto",
+        "x": 815,
+        "y": 114.78125,
+        "ancho": 511,
+        "alto": 229.578125
+      },
+      {
+        "clase": "profile-card perfil-tarjeta perfil-tarjeta--seguridad",
+        "x": 288,
+        "y": 292.46875,
+        "ancho": 511,
+        "alto": 182.234375
+      }
+    ]
+  }
+]

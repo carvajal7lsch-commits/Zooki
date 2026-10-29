@@ -102,20 +102,24 @@ final class PagoSuscripcionTest extends TestCase
         $_SESSION = ['id_usuario' => 1, 'csrf_default' => str_repeat('c', 64)];
         Contexto::activar($contexto, 1);
         Security::definirFuenteDeContextos(static fn () => [$contexto]);
-        $_POST = ['csrf_token' => str_repeat('c', 64), 'version' => '0', 'ciclo' => 'anual', 'monto' => '1', 'id_plan' => '1', 'firma' => 'falsa'];
+        $_POST = ['csrf_token' => str_repeat('c', 64), 'version' => '0', 'ciclo' => 'anual', 'monto' => '1', 'id_plan' => '1', 'firma' => 'falsa', 'desde' => 'inicio'];
         ob_start();
         (new SuscripcionController($this->db, fn () => $this->ahora, $this->config))->pagar();
         $respuesta = json_decode(ob_get_clean(), true, 64, JSON_THROW_ON_ERROR);
         $this->assertSame(89990000, $respuesta['pago']['total_centavos']);
         $this->assertSame('anual', $respuesta['pago']['ciclo']);
+        $this->assertStringEndsWith('&desde=inicio', $respuesta['pago']['checkout']['redirectUrl']);
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_GET = ['action' => 'suscripcion_retorno', 'referencia' => $respuesta['pago']['checkout']['reference'], 'id' => 'id_falso', 'status' => 'APPROVED'];
         ob_start();
         (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->retorno();
         $html = ob_get_clean();
+        $this->assertSame('', $html, 'El retorno redirige a Ajustes sin una segunda pantalla.');
+        $datos = (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->datosVista();
+        $this->assertArrayNotHasKey('suscripcion_aviso_retorno', $_SESSION, 'El aviso solo se muestra una vez.');
+        $html = $datos['mensajePago'] . json_encode($datos['estadoSuscripcion']);
         $this->assertStringContainsString('El pago sigue pendiente de confirmación', $html);
-        $this->assertStringContainsString('24/10/2026', $html);
-        $this->assertStringContainsString('27/10/2026', $html);
+        $this->assertSame('2026-10-25 00:00:00', $datos['estadoSuscripcion']['periodo_fin']);
         $this->assertStringNotContainsString('evento verificado, nunca por el retorno', $html);
         $this->assertStringNotContainsString('prv_test_falsa', $html);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
@@ -268,6 +272,51 @@ final class PagoSuscripcionTest extends TestCase
         $this->ahora = $this->ahora->modify('+16 minutes');
         $this->assertFalse($this->reservar()['abrir']);
         $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM pagos_suscripcion')->fetchColumn());
+    }
+
+    public function testVolverDosHorasDespuesSinReferenciaDistinguePlanAlDiaYOrdenSinConfirmar(): void
+    {
+        $this->db->exec("UPDATE suscripciones SET periodo_fin='2026-11-25 00:00:00' WHERE id_clinica=1");
+        $orden = $this->reservar();
+        $this->ahora = $this->ahora->modify('+2 hours');
+        $antes = $this->db->query('SELECT * FROM intentos_pago')->fetchAll(PDO::FETCH_ASSOC);
+        $consulta = $this->pagos()->estadoLocal();
+        $this->assertSame('al_dia', $consulta['situacion']);
+        $this->assertSame(['estado' => 'pendiente', 'intento' => 'creado', 'cotizacion_vencida' => true], $consulta['pago']);
+        $this->assertSame($antes, $this->db->query('SELECT * FROM intentos_pago')->fetchAll(PDO::FETCH_ASSOC), 'Consultar no cambia el resultado financiero.');
+        $this->assertSame($consulta['pago'], $this->pagos()->estadoLocal($orden['checkout']['reference'])['pago']);
+        $this->assertArrayNotHasKey('pago', $this->pagos(2)->estadoLocal());
+        $reapertura = $this->reservar();
+        $this->assertFalse($reapertura['abrir']);
+        $this->assertSame($orden['orden'], $reapertura['orden']);
+        $this->assertSame('incierto', $this->pagos()->estadoLocal()['pago']['intento']);
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM pagos_suscripcion')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM intentos_pago')->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
+    }
+
+    public function testConsultaSinReferenciaUsaUltimoIntentoYSuEntorno(): void
+    {
+        $orden = $this->reservar();
+        $tx = $this->remoto($orden, 'rechazo_estado', 'DECLINED');
+        $this->cliente->respuestas['rechazo_estado'] = $tx;
+        $this->conciliar($this->evento($tx));
+        $this->assertSame('declinado', $this->pagos()->estadoLocal()['pago']['intento']);
+        $this->reservar();
+        $this->assertSame('creado', $this->pagos()->estadoLocal()['pago']['intento']);
+        $otroEntorno = new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion('prod'), fn () => $this->ahora);
+        $this->assertArrayNotHasKey('pago', $otroEntorno->estadoLocal());
+        $this->expectException(AccesoDenegado::class);
+        $otroEntorno->estadoLocal($orden['checkout']['reference']);
+    }
+
+    public function testSinPasarelaConfiguradaSigueDisponibleElPlanSinExponerOrdenesDeOtroEntorno(): void
+    {
+        $this->reservar();
+        $sinPasarela = new PagoSuscripcion($this->db, 1, new ConfiguracionWompi([]), fn () => $this->ahora);
+        $estado = $sinPasarela->estadoLocal();
+        $this->assertSame('Profesional', $estado['plan']);
+        $this->assertArrayNotHasKey('pago', $estado);
     }
 
     public function testOtroCargoRealMismaReferenciaConservaEvidenciaSinSegundoPeriodo(): void

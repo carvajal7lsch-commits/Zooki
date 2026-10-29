@@ -59,7 +59,7 @@ final class UsuariosVistaTest extends TestCase
     {
         $vista = $this->renderizar();
         $this->assertSame(['personal', 'clientes'], array_map(fn ($b) => $b->getAttribute('data-tab'), iterator_to_array($vista->query('//button[contains(@class,"tab-btn")]'))));
-        $this->assertStringContainsString('Nuevo Usuario', $vista->query('//button[@data-accion="nuevo"]')->item(0)->textContent);
+        $this->assertStringContainsString('Invitar personal', $vista->query('//button[@data-accion="nuevo"]')->item(0)->textContent);
         $this->assertSame(2, $vista->query('//input[@data-filtro-texto]')->length);
         $roles = array_map(fn ($o) => $o->getAttribute('value'), iterator_to_array($vista->query('//*[@data-filtros="personal"]//select[@data-filtro-rol]/option')));
         $this->assertSame(['', (string) Roles::ADMIN, (string) Roles::VETERINARIO], $roles);

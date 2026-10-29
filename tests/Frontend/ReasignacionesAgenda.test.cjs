@@ -10,6 +10,8 @@ class Elemento {
         this.eventos = {};
         this.textContent = '';
     }
+    get textContent() { return this.texto + this.hijos.map(h => h.textContent).join(''); }
+    set textContent(valor) { this.texto = valor; this.hijos = []; }
     append(...elementos) { this.hijos.push(...elementos); }
     replaceChildren() { this.hijos = []; }
     addEventListener(nombre, accion) { this.eventos[nombre] = accion; }

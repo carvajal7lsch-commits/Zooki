@@ -14,6 +14,7 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
 <html lang="es">
 <head>
 <?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
+    <link rel="stylesheet" href="css/identidad.css?v=<?= $versionAcceso ?>">
     <link rel="stylesheet" href="css/registro-clinica.css?v=<?= $versionAcceso ?>">
     <script src="js/turnstile-formularios.js?v=<?= $versionAcceso ?>"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo&render=explicit" async defer></script>
@@ -53,13 +54,9 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                         <div class="registro-clinica-nit registro-ancho">
                             <div class="input-group">
                                 <label for="nit">NIT</label>
-                                <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nit') ?> id="nit" name="nit" type="text" placeholder="900123456" required></div>
+                                <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nit') ?> id="nit" name="nit" type="text" placeholder="900123456" required aria-describedby="nitAyuda" data-cuenta-ayuda="nitUnicidad"></div>
                             </div>
-                            <div class="input-group">
-                                <label for="dv">DV</label>
-                                <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('dv') ?> id="dv" name="dv" type="text" required aria-describedby="dvAyuda" data-cuenta-ayuda="nitUnicidad"></div>
-                            </div>
-                            <small id="dvAyuda" class="registro-nota">El DV está en tu RUT, después del guion.</small>
+                            <small id="nitAyuda" class="registro-nota">Escribe tu NIT o cédula sin DV; lo calculamos. Si incluyes el DV, usa guion. Ej.: 900123456-8.</small>
                             <div class="registro-nit-aviso">
                                 <small id="nitUnicidad" role="status"></small>
                                 <button id="reportarNit" type="button" class="registro-reportar" hidden>Reportar a soporte</button>

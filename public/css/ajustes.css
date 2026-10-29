@@ -1,0 +1,463 @@
+/*
+ * Rediseño (2026-10-26): «Ajustes» del administrador, Configuración y Mi perfil en una sola hoja.
+ * Se apoya en la hoja de Mi perfil (perfil.css) con el menú lateral en blanco: el dueño no quiso
+ * el panel azul. En el celular el menú es una lista agrupada y la sección se abre aparte (ajustes.js).
+ */
+.ajustes {
+    grid-template-columns: 270px minmax(0, 1fr);
+    border-color: var(--z-border);
+    border-radius: var(--z-radius-lg);
+    box-shadow: var(--z-shadow-sm);
+}
+
+.ajustes *,
+.ajustes *::before,
+.ajustes *::after {
+    box-sizing: border-box;
+}
+
+.ajustes [hidden] {
+    display: none !important;
+}
+
+.ajustes .ajustes-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 22px 16px 18px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    background: var(--z-surface);
+    color: var(--z-text);
+    border-right: 1px solid var(--z-border);
+}
+
+.ajustes-identidad {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px 16px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--z-border);
+}
+
+.ajustes-identidad__avatar {
+    flex: 0 0 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-weight: 800;
+}
+
+.ajustes-identidad__texto {
+    min-width: 0;
+}
+
+.ajustes-identidad__nombre {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.ajustes-identidad__rol {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.ajustes-menu,
+.ajustes-menu__caja,
+.ajustes-menu__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ajustes-menu__grupo {
+    margin: 12px 12px 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--z-text-muted);
+}
+
+.ajustes-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--z-radius-sm);
+    background: transparent;
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: 0.87rem;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ajustes-menu__item > i:first-child {
+    width: 18px;
+    text-align: center;
+    color: var(--z-text-muted);
+}
+
+.ajustes-menu__item > span:first-of-type {
+    flex: 1;
+    min-width: 0;
+}
+
+.ajustes-menu__item:hover {
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+}
+
+.ajustes-menu__item[aria-selected="true"],
+.ajustes-menu__item[aria-selected="true"] > i:first-child {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.ajustes-menu__item:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: -2px;
+}
+
+.ajustes-menu__plan {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.ajustes-menu__flecha {
+    font-size: 0.7rem;
+    color: var(--z-text-tenue);
+}
+
+/* En escritorio la selección activa identifica la sección; las flechas quedan para el celular. */
+.ajustes-menu__lista .ajustes-menu__flecha {
+    display: none;
+}
+
+.ajustes-salir {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    margin-top: auto;
+    border: 1px solid var(--z-danger-borde);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+    color: var(--z-danger-dark);
+    font-size: 0.87rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ajustes-salir:hover {
+    background: var(--z-danger-soft);
+}
+
+.ajustes-seccion {
+    display: none;
+}
+
+/* La sección vive en la hoja: sus bloques no son tarjetas sueltas dentro de otra tarjeta. */
+.ajustes .ajustes-contenido {
+    padding: 24px 28px;
+}
+
+.ajustes .ajustes-cuenta {
+    display: contents;
+}
+.ajustes--vet .perfil-hero {
+    padding: 0 8px 16px;
+    margin-bottom: 4px;
+    align-items: flex-start;
+}
+.ajustes--vet .perfil-hero__avatar {
+    flex: 0 0 48px;
+    height: 48px;
+    width: 48px;
+    font-size: 18px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    box-shadow: none;
+}
+.ajustes--vet .perfil-hero__nombre {
+    font-size: 16px;
+    color: var(--z-text);
+}
+.ajustes--vet .perfil-hero__datos,
+.ajustes--vet .perfil-hero__rol {
+    color: var(--z-text-secondary);
+}
+.ajustes--vet .perfil-hero__datos {
+    font-size: 14px;
+}
+.ajustes--vet .perfil-menu {
+    flex-direction: column;
+    overflow: visible;
+}
+.ajustes--vet .perfil-menu button {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: var(--z-text-secondary);
+    font-size: 14px;
+}
+.ajustes--vet .perfil-menu button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+/* HU-0.5: Suscripción comparte la hoja de Ajustes y conserva sus ventanas de pago. */
+.ajustes .suscripcion__tarjeta {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.ajustes .suscripcion__plan {
+    padding: 0 0 18px;
+}
+
+.ajustes .suscripcion__accion {
+    padding: 16px;
+}
+
+.ajustes .suscripcion__historial {
+    padding: 0;
+    overflow-x: auto;
+}
+
+.ajustes .suscripcion__pie {
+    padding: 0;
+}
+
+/* La sección ya se desplaza dentro de la hoja: la agenda no abre un segundo scroll. */
+.ajustes .config-agenda-hoja {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+}
+
+/* perfil.css apila la coordinación del veterinario; la de la clínica conserva sus dos columnas. */
+.ajustes .coordinacion {
+    display: grid;
+    margin-top: 20px;
+}
+
+.ajustes #config-horarios[hidden] ~ .coordinacion {
+    margin-top: 0;
+}
+
+/* Con el menú al lado, la tabla semanal necesita todo el ancho: el resumen pasa debajo. */
+.ajustes .ajustes-contenido {
+    container-type: inline-size;
+}
+
+@container (max-width: 1000px) {
+    .ajustes .horarios {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 1023px) {
+    .ajustes {
+        display: block;
+        height: auto;
+        overflow: visible;
+        background: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .ajustes[data-ajustes-vista="menu"] .ajustes-contenido,
+    .ajustes[data-ajustes-vista="seccion"] .ajustes-lateral {
+        display: none;
+    }
+
+    body[data-ajustes-vista="seccion"] .encabezado-pagina {
+        display: none;
+    }
+
+    .ajustes .ajustes-lateral {
+        position: static;
+        gap: 6px;
+        padding: 0;
+        overflow: visible;
+        background: none;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .ajustes-identidad {
+        padding: 14px 16px;
+        margin-bottom: 4px;
+        border: 0;
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+
+    .ajustes-menu {
+        gap: 6px;
+    }
+
+    .ajustes-menu__grupo {
+        margin: 8px 6px 0;
+    }
+
+    .ajustes-menu__caja,
+    .ajustes-menu__lista {
+        gap: 0;
+    }
+
+    .ajustes-menu__caja {
+        overflow: hidden;
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+
+    .ajustes-menu__item,
+    .ajustes-menu__item[aria-selected="true"] {
+        min-height: 54px;
+        padding: 0 16px;
+        border-radius: 0;
+        border-bottom: 1px solid var(--z-bg-light);
+        background: transparent;
+        color: var(--z-text);
+        font-size: 0.94rem;
+    }
+
+    .ajustes-menu__caja > :last-child,
+    .ajustes-menu__caja > :last-child > :last-child {
+        border-bottom: 0;
+    }
+
+    .ajustes-menu__item > i:first-child,
+    .ajustes-menu__item[aria-selected="true"] > i:first-child {
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--z-radius-xs);
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+    }
+
+    .ajustes-menu__lista .ajustes-menu__flecha {
+        display: inline;
+    }
+
+    .ajustes-salir {
+        min-height: 48px;
+        margin-top: 10px;
+        border-color: transparent;
+        background: var(--z-danger-soft);
+        font-weight: 700;
+    }
+
+    .ajustes-seccion {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .ajustes:not([data-ajustes-vista]) .ajustes-seccion__volver {
+        display: none;
+    }
+
+    .ajustes-seccion__volver {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 14px 0 10px;
+        border: 1px solid var(--z-primary-borde);
+        border-radius: var(--z-radius-sm);
+        background: var(--z-surface);
+        color: var(--z-primary);
+        font: inherit;
+        font-size: 0.87rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .ajustes-seccion__titulo {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+    }
+
+    .ajustes .ajustes-contenido {
+        height: auto;
+        padding: 0;
+        overflow: visible;
+    }
+
+    .ajustes .perfil-panel {
+        padding: 16px;
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+    .ajustes .config-agenda-hoja:has([data-config-panel]:not([hidden])),
+    .ajustes #config-suscripcion:not([hidden]) {
+        padding: 16px;
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+    .ajustes .coordinacion {
+        margin-top: 0;
+    }
+    .ajustes--vet .perfil-menu button {
+        min-height: 54px;
+        padding: 0 16px;
+        border-radius: 0;
+        border-bottom: 1px solid var(--z-bg-light);
+        background: transparent;
+        color: var(--z-text);
+        font-size: 16px;
+    }
+    .ajustes--vet .perfil-menu i {
+        display: inline-block;
+    }
+    .ajustes--vet .perfil-hero__rol {
+        display: none;
+    }
+}
+@media (max-width: 767px) {
+    .ajustes-seccion__volver {
+        flex: 0 0 44px;
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+    }
+    .ajustes-seccion__volver > span {
+        display: none;
+    }
+    .ajustes-seccion__titulo {
+        flex: 1;
+        min-width: 0;
+        font-size: 18px;
+        overflow-wrap: anywhere;
+    }
+}

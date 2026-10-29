@@ -274,3 +274,113 @@
 .flatpickr-day.nextMonthDay:nth-child(36) ~ .flatpickr-day {
     display: none !important;
 }
+
+/* Fecha/hora en diálogos: capa flotante propia, sin cambiar la altura del modal. */
+.flatpickr-calendar.selector-fechas-flotante {
+    position: fixed !important;
+    left: var(--selector-fecha-x, 12px) !important;
+    top: var(--selector-fecha-y, 12px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    width: min(320px, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    transform: none !important;
+}
+.flatpickr-calendar.selector-fechas-flotante::backdrop {
+    background: transparent;
+}
+.selector-fechas-flotante[data-paso="fecha"] .flatpickr-time,
+.selector-fechas-flotante[data-paso="fecha"] .selector-fechas-dia,
+.selector-fechas-flotante[data-paso="hora"] .flatpickr-months,
+.selector-fechas-flotante[data-paso="hora"] .flatpickr-innerContainer,
+.selector-fechas-flotante[data-paso="hora"] .fp-win11-nav {
+    display: none !important;
+}
+.flatpickr-calendar.selector-fechas-flotante[data-paso="hora"] {
+    width: min(280px, calc(100vw - 24px)) !important;
+}
+.selector-fechas-flotante .selector-fechas-dia {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--z-text);
+    font-size: 14px;
+}
+.selector-fechas-flotante .selector-fechas-cambiar {
+    min-height: 40px;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: var(--z-primary);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+.selector-fechas-flotante .flatpickr-months {
+    margin-bottom: 8px !important;
+}
+.selector-fechas-flotante .flatpickr-weekdaycontainer {
+    margin-bottom: 8px !important;
+}
+.selector-fechas-flotante .flatpickr-time {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    height: auto !important;
+    max-height: none;
+    padding: 10px 2px 0;
+    margin-top: 8px;
+    overflow: visible;
+    line-height: normal;
+}
+.selector-fechas-flotante .selector-fechas-hora {
+    grid-column: 1 / -1;
+    color: var(--z-text-secondary);
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+}
+.selector-fechas-flotante .flatpickr-time::after {
+    content: none;
+}
+.selector-fechas-flotante .flatpickr-time .numInputWrapper {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-bg-suave);
+}
+.selector-fechas-flotante .flatpickr-time input {
+    height: 40px;
+    padding: 0;
+    font-size: 16px;
+    color: var(--z-text);
+}
+.selector-fechas-flotante .flatpickr-time-separator {
+    width: auto;
+    height: auto;
+    line-height: normal;
+}
+.selector-fechas-flotante .selector-fechas-segundos {
+    display: none;
+}
+.selector-fechas-flotante .selector-fechas-listo {
+    min-height: 42px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--z-radius-sm);
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.selector-fechas-flotante .selector-fechas-listo:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}

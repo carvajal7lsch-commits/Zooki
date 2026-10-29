@@ -74,6 +74,7 @@ function panel(memoriaInicial = {}) {
     };
     const contexto = {
         TextEncoder,
+        location: { hash: '' },
         document: {
             addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
             querySelectorAll: selector => selectores[selector] || [],
@@ -171,11 +172,13 @@ test('M0.2: el aviso de cada campo vive en un espacio reservado y no mueve el fo
 function giro({ marca = null, reducido = false } = {}) {
     const almacen = new Map(marca ? [['zooki-acceso-giro', marca]] : []);
     const tarjeta = elemento();
+    const raiz = elemento();
     const eventos = {};
     const temporizadores = [];
     const ubicacion = { href: 'index.php?action=login' };
     const contexto = {
         document: {
+            documentElement: raiz,
             querySelector: selector => (selector === '[data-acceso-giro-tarjeta]' ? tarjeta : null),
             addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
         },
@@ -189,8 +192,9 @@ function giro({ marca = null, reducido = false } = {}) {
         location: ubicacion,
     };
     contexto.window = contexto;
+    vm.runInNewContext(codigo('public/js/acceso-giro-inicio.js'), contexto);
     vm.runInNewContext(codigo('public/js/acceso-giro.js'), contexto);
-    return { contexto, tarjeta, eventos, temporizadores, ubicacion, almacen };
+    return { contexto, raiz, tarjeta, eventos, temporizadores, ubicacion, almacen };
 }
 
 test('M0.2: ir al registro de clínica gira la tarjeta antes de navegar y la página nueva termina el giro', () => {
@@ -202,13 +206,15 @@ test('M0.2: ir al registro de clínica gira la tarjeta antes de navegar y la pá
     assert.equal(clic.prevenido, true);
     assert.equal(salida.tarjeta.classList.contains('acceso-giro-salida'), true);
     assert.equal(salida.ubicacion.href, 'index.php?action=login', 'Todavía no navega: primero gira.');
-    assert.equal(salida.temporizadores[0].ms, 380);
+    assert.equal(salida.temporizadores[0].ms, 220);
     salida.temporizadores[0].callback();
     assert.equal(salida.ubicacion.href, 'index.php?action=registro_clinica');
     assert.equal(salida.almacen.get('zooki-acceso-giro'), '1');
 
     const llegada = giro({ marca: '1' });
+    assert.equal(llegada.raiz.classList.contains('acceso-giro-preparado'), true, 'De canto antes de DOMContentLoaded.');
     llegada.eventos.DOMContentLoaded();
+    assert.equal(llegada.raiz.classList.contains('acceso-giro-preparado'), false);
     assert.equal(llegada.tarjeta.classList.contains('acceso-giro-entrada'), true);
     assert.equal(llegada.almacen.has('zooki-acceso-giro'), false, 'La marca vale para un solo salto.');
     const sinMarca = giro();
@@ -217,6 +223,11 @@ test('M0.2: ir al registro de clínica gira la tarjeta antes de navegar y la pá
 });
 
 test('M0.2: sin movimiento o con la navegación ya cancelada no hay giro', () => {
+    const llegadaReducida = giro({ marca: '1', reducido: true });
+    llegadaReducida.eventos.DOMContentLoaded();
+    assert.equal(llegadaReducida.raiz.classList.contains('acceso-giro-preparado'), false);
+    assert.equal(llegadaReducida.tarjeta.classList.contains('acceso-giro-entrada'), false);
+    assert.equal(llegadaReducida.almacen.size, 0);
     const reducido = giro({ reducido: true });
     const enlace = elemento({ getAttribute: () => 'index.php?action=login' });
     enlace.closest = () => enlace;

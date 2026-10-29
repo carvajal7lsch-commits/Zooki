@@ -1,12 +1,28 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.1.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.2.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.1.0 (Actual)
+### Versión 2.2.0 (Actual)
+
+* **Portal, retoques antes de publicar (2026-10-29, HU-5.1/5.3/5.5/5.6):** foto de mascota por elección o arrastre, triage con campos completos y Agendar móvil a todo el ancho. Inicio conserva su identidad con tarjetas compactas y botón de patita; ficha con raza junto al nombre, acceso al PDF y HC de la clínica elegida. La respuesta existente aporta el número por clínica solo al propietario de la mascota (RN-G02). Historial clínico A4 con paciente, HC, alertas, vacunas, desparasitación y consultas identificadas por clínica/veterinario (RN-114), numeración y regreso a la ficha o a Vacunas. Sin esquema ni endpoints nuevos; versión aún sin publicar.
+
+Pulido final P1, preparado el 26 de octubre de 2026; pendiente de revisión e integración. El dueño renombra la rama y realiza el despliegue.
+
+* **Registro de clínica:** 40 comprobaciones por IP en 15 minutos; el freno temporal se avisa de forma general, sin invalidar el campo, y se vuelve a comprobar al enviar (RE-T.13.2, RN-G15).
+* **Soporte de plataforma:** correo individual a super-administradores activos y verificados después del commit y de responder, sin identidad del titular; un fallo se registra y conserva el caso abierto. Detalle privado con solicitante y cuenta actual del documento cuando los datos existentes permiten identificarla; resolución o descarte con nota y toast (RE-0.3.4, RE-T.18.3, RN-G24). Sin esquema nuevo.
+* **Interfaz:** minigráfica en cero con línea base y meses, fechas del historial dd/mm/aaaa, tratamiento en singular, identidad compartida y confirmaciones graves con el modal de Zooki. Las acciones reversibles y sus actualizaciones no esperan al aviso.
+* **Etapa C, primera pantalla — Suscripción (HU-0.5):** rediseño aprobado por el dueño en mockups (26/10/2026). Pestañas «Mi plan» e «Historial de pagos» en todos los anchos, una tarjeta por vista y sin scroll en 1366×768; «Pagar o renovar» y el medio de pago (aceptaciones de Wompi en tres pasos) en ventanas, que en el celular son hojas inferiores. Suscripción vive como sección dentro de la misma hoja de Ajustes; el atajo del Inicio abre esa sección conservando el regreso, también al volver de Wompi o paginar el historial. El pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados; guardar un medio sigue con el widget. Los enlaces anteriores redirigen a Ajustes; sin cambios de reglas de cobro, permisos ni esquema.
+* **Recuperación al abandonar Wompi (HU-0.5):** consulta la última orden/intento de clínica y entorno aunque se haya perdido la referencia; distingue plan al día de pago sin confirmar y restaura controles al volver con Atrás sin repetir el POST. Al reintentar y en el Schedule existente, una búsqueda privada completa y vacía permite cerrar un checkout manual vencido con candado y auditoría; si existe transacción recupera su estado. Errores no liberan reservas, y aprobados tardíos de órdenes cerradas generan incidencia sin conceder otro periodo. Sin esquema nuevo (RE-0.5.15/17/24).
+* **Barra de navegación en el celular:** destinos principales con su nombre y el activo resaltado; lo que no cabe va en «Más». El administrador tiene cinco destinos sin «Más» (Inicio, Usuarios, Citas, Auditoría y Ajustes); el escritorio no cambia (RNF-16).
+* **Ajustes del administrador:** Configuración y Mi perfil en una sola pantalla, con menú lateral blanco agrupado en «La clínica» y «Mi cuenta» y cada sección sin scroll en 1366×768; en el celular, lista agrupada y sección con «← Ajustes», y Cerrar sesión al final. El encabezado muestra solo «Ajustes», sin el párrafo «La clínica y tu cuenta». Mi perfil del administrador lleva a Ajustes › Mi cuenta; el del veterinario no cambia. Sin cambios de reglas, rutas, permisos ni esquema.
+* **Datos de la clínica (HU-7.4):** Marca y contacto con identidad y filas claras; logo por elección o arrastre, vista previa y validación de contenido JPG/PNG/WebP hasta 5 MB. El guardado conserva el logo anterior y retira solo el archivo nuevo si falla. Duración de tipos de cita entre 1 y 720 minutos, margen entre 0 y 120, con regla compartida en formulario/AJAX/servidor. Placeholders, teléfonos con +57, correo de contacto validado por formato y un único aviso por campo; el error sustituye a la ayuda y no se repite en el pie. Sin esquema ni migración.
+* **Alcance:** C (responsive completo) queda fuera de P1 por decisión del dueño del 26/10/2026. No se agregan media queries ni cambios de distribución por ancho; solo se comprueba desborde horizontal de A/B a 1366 y 390 px (RNF-16). D queda pendiente.
+
+### Versión 2.1.0
 
 Entrega preparada el 25 de octubre de 2026; el dueño revisa, integra y despliega.
 No cierra las otras historias pendientes de v2.1.

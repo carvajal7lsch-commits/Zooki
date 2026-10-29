@@ -54,6 +54,43 @@ final class PortalPropietarioTest extends TestCase
 
     // ── RE-5.1.2, RE-5.1.4, RN-G02 ──────────────────────────────────────
 
+    public function testHcPorClinicaSoloEnLasMascotasDelPropietario(): void
+    {
+        $this->db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'N-0001' WHERE id_mascota = 1 AND id_clinica = 1");
+        $this->db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'S-0042' WHERE id_mascota = 1 AND id_clinica = 2");
+        $this->db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'HC-AJENA' WHERE id_mascota = 2");
+        $_GET = ['id_mascota' => self::LUNA];
+        $detalle = $this->ejecutar(fn (PortalController $c) => $c->verDetalleMascotaAjax());
+        $this->assertTrue($detalle['success']);
+        $this->assertSame(['N-0001', 'S-0042'], array_column($detalle['clinicas'], 'numero_historia_clinica'));
+        $this->assertArrayNotHasKey(self::MILO, (new MascotaPropietario($this->db))->clinicasDeSusMascotas());
+        $_GET = ['id_mascota' => self::MILO];
+        $this->assertAccesoDenegado(fn () => $this->ejecutar(fn (PortalController $c) => $c->verDetalleMascotaAjax()));
+    }
+
+    public function testImprimibleConHcClinicasYRetornosAcotados(): void
+    {
+        $this->db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'HC-NORTE' WHERE id_mascota = 1 AND id_clinica = 1");
+        foreach (['mascota' => '#mascota-1', 'salud' => '#salud-1', 'https://ajeno.test' => '', '' => ''] as $origen => $hash) {
+            $_GET = ['id_mascota' => self::LUNA, 'origen' => $origen];
+            ob_start();
+            try {
+                (new PortalController($this->db))->imprimirHistorial();
+                $html = ob_get_contents();
+            } finally {
+                ob_end_clean();
+            }
+            $this->assertStringContainsString('href="index.php?action=portal_propietario' . $hash . '"', $html);
+            $this->assertStringContainsString('HC-NORTE', $html);
+            $this->assertStringContainsString('Beto Norte', $html);
+            $this->assertStringContainsString('Diego Sur', $html);
+            $this->assertStringContainsString('Rabia', $html);
+            $this->assertLessThan(strpos($html, 'Sano'), strpos($html, 'Otitis'));
+        }
+        $_GET = ['id_mascota' => self::MILO, 'origen' => 'mascota'];
+        $this->assertAccesoDenegado(fn () => (new PortalController($this->db))->imprimirHistorial());
+    }
+
     public function testElPropietarioNoVeNiTocaNadaDeOtroPropietario(): void
     {
         $mascotas = new MascotaPropietario($this->db);

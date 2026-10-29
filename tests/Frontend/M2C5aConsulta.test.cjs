@@ -392,7 +392,7 @@ test('el borrador de Atención restaura los síntomas con poner(), respetando el
 test('el historial muestra los síntomas marcados de cada consulta, escapados, y nada si no hay', () => {
     const contexto = { console, window: {}, document: { addEventListener() {}, getElementById: () => null } };
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
 
     assert.equal(contexto.seccionSintomas({}), '');
     assert.equal(contexto.seccionSintomas({ sintomas: [] }), '');

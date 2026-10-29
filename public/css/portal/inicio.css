@@ -10,6 +10,7 @@
 .home-grid__principal,
 .home-grid__lateral {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.75rem;
     align-content: start;
 }
@@ -22,6 +23,14 @@
 
 /* El saludo vive en la columna principal (la lateral sube hasta arriba). */
 .home-cabecera { margin-bottom: 0; }
+
+/* RE-5.1.5 / R: el collage solo sustituye el saludo desde escritorio. */
+.home-bienvenida__fecha,
+.home-bienvenida__franja,
+.home-bienvenida__perro,
+.home-bienvenida__cruz {
+    display: none;
+}
 
 /* ── Mis mascotas: el diseño anterior del portal (antes de d8a62f8), potenciado ──
    Celular: carrusel que se desliza de lado, como las historias; desde tableta, cuadrícula. */
@@ -37,6 +46,61 @@
 }
 
 .mascotas-carrusel::-webkit-scrollbar { display: none; }
+
+.home-agregar-mascota__movil,
+.mascota-mini__clinica-resumen,
+.mascota-mini__estado {
+    display: none;
+}
+
+/* RNF-16: las piezas compactas no sustituyen la presentación de tableta/escritorio. */
+@media (max-width: 767px) {
+    /* Patita en un círculo azul suave y un «+» en insignia: se lee como «agregar mascota» sin texto. */
+    .home-agregar-mascota {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 82, 255, 0.1);
+        color: var(--z-primary);
+        transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .home-agregar-mascota:active {
+        transform: scale(0.94);
+        background: rgba(0, 82, 255, 0.16);
+    }
+    .home-agregar-mascota:focus-visible {
+        outline: 2px solid var(--z-primary);
+        outline-offset: 2px;
+    }
+    .home-agregar-mascota__escritorio {
+        display: none;
+    }
+    .home-agregar-mascota__movil {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+    }
+    .home-agregar-mascota__mas {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--z-bg);
+        border-radius: 50%;
+        background: var(--z-primary);
+        color: var(--z-surface);
+        font-size: 12px;
+        line-height: 1;
+    }
+}
 
 .mascota-mini {
     flex: 0 0 150px;
@@ -157,6 +221,54 @@
     .mascota-mini:hover .mascota-mini__avatar { border-color: var(--z-primary); }
 }
 
+@media (max-width: 767px) {
+    .mascota-mini {
+        flex: 0 0 136px;
+        height: 170px;
+        padding: 10px 8px;
+        gap: 3px;
+    }
+    .mascota-mini__avatar {
+        width: 56px;
+        height: 56px;
+        padding: 2px;
+        margin-bottom: 0;
+    }
+    .mascota-mini__avatar .avatar-mini img,
+    .mascota-mini__avatar .avatar-iniciales {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    .mascota-mini__clinicas {
+        display: block;
+        width: 100%;
+        margin: 0;
+    }
+    .mascota-mini__clinicas > .tag-mini,
+    .mascota-mini__dosis {
+        display: none;
+    }
+    .mascota-mini__clinicas > .mascota-mini__clinica-resumen {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .mascota-mini__estado {
+        display: block;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+        color: var(--z-text-muted);
+        font-size: 11px;
+        line-height: 16px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .mascota-mini__estado.is-pendiente {
+        color: var(--z-primary);
+    }
+}
+
 /* ── Próximo en salud: solo en tableta y escritorio (decisión 1 del usuario) ── */
 .portal-salud { display: none; }
 
@@ -255,6 +367,99 @@
 
 /* ── Escritorio ── */
 @media (min-width: 1024px) {
+    .home-bienvenida {
+        /* El portal no carga styles.css: los dos tonos del collage quedan acotados al banner. */
+        --bento-light: #DBEAFE;
+        --bento-primary: #3B82F6;
+        --z-bienvenida-cruz: #93C5FD;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+        height: 112px;
+    }
+    .home-bienvenida__actual {
+        display: none;
+    }
+    .home-bienvenida__saludo {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        height: 112px;
+        padding: 0 28px;
+        border-radius: 0 0 0 56px;
+        background: var(--bento-light);
+    }
+    .home-bienvenida__fecha {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--z-text-secondary);
+    }
+    .home-bienvenida .portal-cabecera__titulo {
+        display: -webkit-box;
+        overflow: hidden;
+        margin: 4px 0 0;
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -.02em;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .home-bienvenida__franja {
+        display: inline;
+    }
+    .home-bienvenida__nombre {
+        color: var(--z-primary);
+    }
+    .home-bienvenida__perro {
+        display: block;
+        position: relative;
+        flex: none;
+        width: 170px;
+        height: 112px;
+        overflow: visible;
+        border-radius: 0 50% 0 0;
+        background: var(--bento-primary);
+    }
+    .home-bienvenida__perro img {
+        position: absolute;
+        left: -2px;
+        /* Retoque del dueño: compensar el 8,6 % transparente y dejar las patas fuera de la figura. */
+        bottom: -31px;
+        width: 176px;
+        max-width: none;
+        height: auto;
+        filter: drop-shadow(var(--z-shadow-sm));
+    }
+    .home-bienvenida__cruz {
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 112px;
+        height: 112px;
+        border-radius: 50%;
+        background: var(--z-surface);
+        box-shadow: var(--z-shadow-sm);
+    }
+    .home-bienvenida__cruz svg {
+        width: 56px;
+        height: 56px;
+        fill: var(--z-bienvenida-cruz);
+    }
+    .home-bienvenida__cruz line {
+        stroke: var(--z-surface);
+        stroke-width: 8px;
+    }
     .home-grid {
         grid-template-columns: minmax(0, 1fr) 340px;
         gap: 2rem;
@@ -267,6 +472,110 @@
     }
 }
 
+/* Excepción aprobada por el dueño: solo el banner se compacta en escritorio estrecho. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .home-bienvenida {
+        gap: 8px;
+    }
+    .home-bienvenida__saludo {
+        padding: 0 14px;
+    }
+    .home-bienvenida__fecha {
+        font-size: 10px;
+        letter-spacing: .04em;
+    }
+    .home-bienvenida .portal-cabecera__titulo {
+        font-size: 20px;
+        line-height: 1.1;
+        -webkit-line-clamp: 3;
+    }
+    .home-bienvenida__perro {
+        width: 90px;
+        height: 76px;
+    }
+    .home-bienvenida__perro img {
+        left: -15px;
+        bottom: -27.5px;
+        width: 120px;
+    }
+    .home-bienvenida__cruz {
+        width: 64px;
+        height: 64px;
+    }
+    .home-bienvenida__cruz svg {
+        width: 32px;
+        height: 32px;
+    }
+}
+
 @media (min-width: 1440px) {
     .home-grid { grid-template-columns: minmax(0, 1fr) 380px; }
+}
+
+/* RNF-16 / HU-5.1: mismo collage, contenido dentro del ancho del teléfono. */
+@media (max-width: 767px) {
+    .home-bienvenida {
+        --bento-light: #DBEAFE;
+        --bento-primary: #3B82F6;
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+        height: 88px;
+    }
+    .home-bienvenida__actual,
+    .home-bienvenida__cruz {
+        display: none;
+    }
+    .home-bienvenida__saludo {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        height: 88px;
+        padding: 0 12px;
+        border-radius: 0 0 0 40px;
+        background: var(--bento-light);
+    }
+    .home-bienvenida__fecha {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.25;
+        text-transform: uppercase;
+        color: var(--z-text-secondary);
+    }
+    .home-bienvenida .portal-cabecera__titulo {
+        margin: 4px 0 0;
+        font-size: 20px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+    .home-bienvenida__franja {
+        display: inline;
+    }
+    .home-bienvenida__nombre {
+        color: var(--z-primary);
+    }
+    .home-bienvenida__perro {
+        display: block;
+        position: relative;
+        flex: none;
+        width: 104px;
+        height: 88px;
+        border-radius: 0 50% 0 0;
+        background: var(--bento-primary);
+        overflow: visible;
+    }
+    .home-bienvenida__perro img {
+        position: absolute;
+        left: -2px;
+        bottom: -8px;
+        width: 108px;
+        max-width: none;
+        height: auto;
+        filter: drop-shadow(var(--z-shadow-sm));
+    }
 }

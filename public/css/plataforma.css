@@ -56,24 +56,24 @@
     height: 1.25rem;
     padding: 0 0.35rem;
     border-radius: 999px;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
     font-size: 0.7rem;
     font-weight: 700;
 }
 
 .tab-btn.active .plataforma-contador {
-    background: var(--primary);
-    color: #ffffff;
+    background: var(--z-primary);
+    color: var(--z-surface);
 }
 
 .plataforma-alerta {
     margin: 0 0 1rem;
     padding: 0.75rem 1rem;
-    border-left: 4px solid var(--primary);
-    border-radius: var(--radius-md);
-    background: #eff4ff;
-    color: #1e3a8a;
+    border-left: 4px solid var(--z-primary);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
     font-size: 0.85rem;
 }
 
@@ -107,12 +107,12 @@
 
 /* Estado: la etiqueta de Usuarios; la activa en el azul de Zooki. */
 .plataforma-estado--activa {
-    background: #eff4ff;
-    color: var(--primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .plataforma-estado--activa i {
-    color: var(--primary);
+    color: var(--z-primary);
 }
 
 /* ── Uso del plan: cifras y una barra fina azul ── */
@@ -130,14 +130,14 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-uso__valor {
     grid-column: 3;
     grid-row: 1;
     font-weight: 600;
-    color: #334155;
+    color: var(--z-text-secondary);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -150,37 +150,37 @@
     height: 4px;
     border: 0;
     border-radius: 999px;
-    background: #e2e8f0;
+    background: var(--z-border);
     overflow: hidden;
     appearance: none;
     -webkit-appearance: none;
 }
 
 .plataforma-uso__barra::-webkit-progress-bar {
-    background: #e2e8f0;
+    background: var(--z-border);
     border-radius: 999px;
 }
 
 .plataforma-uso__barra::-webkit-progress-value {
-    background: var(--primary);
+    background: var(--z-primary);
     border-radius: 999px;
 }
 
 .plataforma-uso__barra::-moz-progress-bar {
-    background: var(--primary);
+    background: var(--z-primary);
     border-radius: 999px;
 }
 
 /* Cupo lleno: la cifra se marca, sin cambiar de color de marca. */
 .plataforma-uso__fila--lleno .plataforma-uso__valor {
-    color: var(--primary);
+    color: var(--z-primary);
     font-weight: 700;
 }
 
 /* Sin límite: línea punteada en lugar de una barra que no se llena. */
 .plataforma-uso__barra--libre {
     height: 0;
-    border-top: 2px dotted #cbd5e1;
+    border-top: 2px dotted var(--z-border-fuerte);
     border-radius: 0;
     background: none;
 }
@@ -198,7 +198,7 @@
 
 .plataforma-nit {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--z-text-muted);
     font-variant-numeric: tabular-nums;
 }
 
@@ -227,7 +227,7 @@
     overflow: hidden;
     font-size: 0.8rem;
     line-height: 1.45;
-    color: #475569;
+    color: var(--z-text-secondary);
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow-wrap: anywhere;
@@ -237,7 +237,7 @@
     margin: 0.15rem 0 0;
     font-size: 0.72rem;
     line-height: 1.4;
-    color: #94a3b8;
+    color: var(--z-text-tenue);
 }
 
 /* Botón pequeño con texto: el action-btn-mini de Usuarios, a lo ancho de su texto. */
@@ -247,10 +247,10 @@
     gap: 0.35rem;
     height: 32px;
     padding: 0 0.75rem;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--z-border-fuerte);
     border-radius: 8px;
-    background: #ffffff;
-    color: #475569;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
     font-family: inherit;
     font-size: 0.78rem;
     font-weight: 600;
@@ -260,20 +260,20 @@
 }
 
 .plataforma-boton-mini:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: #f5f8ff;
+    border-color: var(--z-primary);
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
 }
 
 .plataforma-boton-mini--principal {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: #ffffff;
+    border-color: var(--z-primary);
+    background: var(--z-primary);
+    color: var(--z-surface);
 }
 
 .plataforma-boton-mini--principal:hover {
-    background: var(--primary-hover);
-    color: #ffffff;
+    background: var(--z-primary-dark);
+    color: var(--z-surface);
 }
 
 .plataforma-pie-accion {
@@ -291,8 +291,8 @@
     max-width: 560px;
     padding: 1rem 1.15rem;
     border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
 }
 
 .plataforma-vacio__icono {
@@ -302,8 +302,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #eff4ff;
-    color: var(--primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
     font-size: 1.1rem;
 }
 
@@ -311,14 +311,14 @@
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--z-text);
 }
 
 .plataforma-vacio p {
     margin: 0.15rem 0 0;
     font-size: 0.8rem;
     line-height: 1.45;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 /* Modales pequeños (cerrar un caso, avisar a una clínica). */
@@ -340,17 +340,17 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-form select,
 .plataforma-form textarea {
     width: 100%;
     padding: 0.65rem 0.85rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--z-border);
     border-radius: 12px;
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--z-bg-suave);
+    color: var(--z-text);
     font: inherit;
     font-size: 0.9rem;
     font-weight: 400;
@@ -366,8 +366,8 @@
 .plataforma-form select:focus,
 .plataforma-form textarea:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-soft);
+    border-color: var(--z-primary);
+    box-shadow: 0 0 0 4px var(--z-primary-soft);
 }
 
 .plataforma-form [data-error-campo] {
@@ -376,7 +376,7 @@
     font-weight: 500;
     letter-spacing: normal;
     text-transform: none;
-    color: #1e3a8a;
+    color: var(--z-primary-dark);
 }
 
 .plataforma-form__fila {
@@ -396,13 +396,13 @@
     flex: 1;
     margin: 0;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-ayuda {
     margin: 0;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 /* ── Modal «Gestionar» (M0.2.1): cabecera compacta, pestañas y un pie por pestaña ── */
@@ -440,20 +440,20 @@
     gap: 0 0.4rem;
     margin: 0;
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--z-text-muted);
     overflow-wrap: anywhere;
 }
 
 .plataforma-modal__separador {
-    color: #cbd5e1;
+    color: var(--z-border-fuerte);
 }
 
 .plataforma-modal__pestanas {
     display: flex;
     gap: 0.25rem;
     padding: 0 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    background: #ffffff;
+    border-bottom: 1px solid var(--z-border);
+    background: var(--z-surface);
     flex-shrink: 0;
 }
 
@@ -462,7 +462,7 @@
     border: 0;
     border-bottom: 2px solid transparent;
     background: none;
-    color: #64748b;
+    color: var(--z-text-muted);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 600;
@@ -470,8 +470,8 @@
 }
 
 .plataforma-modal__pestana.active {
-    border-bottom-color: var(--primary);
-    color: var(--primary);
+    border-bottom-color: var(--z-primary);
+    color: var(--z-primary);
 }
 
 /* Cada pestaña: cuerpo con desplazamiento y su pie fijo abajo, como el modal de Usuarios. */
@@ -496,7 +496,7 @@
 .plataforma-form__resultado {
     margin: 0;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-form__resultado:empty {
@@ -517,15 +517,15 @@
     margin: 0;
     padding: 0.7rem 0.9rem;
     border-radius: 12px;
-    background: #eff4ff;
-    color: #1e3a8a;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
     font-size: 0.82rem;
     line-height: 1.45;
 }
 
 .plataforma-nota i {
     margin-top: 0.1rem;
-    color: var(--primary);
+    color: var(--z-primary);
 }
 
 /* Plan y suscripción: el control segmentado de Usuarios (sin listas nativas). */
@@ -546,7 +546,7 @@
     margin: 0;
     font-size: 0.875rem;
     line-height: 1.5;
-    color: #334155;
+    color: var(--z-text-secondary);
 }
 
 .plataforma-accion:empty {
@@ -568,7 +568,7 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-opciones {
@@ -583,15 +583,15 @@
     align-items: flex-start;
     gap: 0.7rem;
     padding: 0.8rem 0.9rem;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid var(--z-border);
     border-radius: 14px;
-    background: #ffffff;
+    background: var(--z-surface);
     cursor: pointer;
     transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .plataforma-opcion:hover {
-    border-color: #93b4ff;
+    border-color: var(--z-primary-borde);
 }
 
 /* El radio queda accesible con teclado, pero la tarjeta entera es el control. */
@@ -602,12 +602,12 @@
 }
 
 .plataforma-opcion:has(input:focus-visible) {
-    box-shadow: 0 0 0 4px var(--primary-soft);
+    box-shadow: 0 0 0 4px var(--z-primary-soft);
 }
 
 .plataforma-opcion:has(input:checked) {
-    border-color: var(--primary);
-    background: #f5f8ff;
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
 }
 
 .plataforma-opcion:has(input:disabled) {
@@ -622,8 +622,8 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: #eff4ff;
-    color: var(--primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
     font-size: 1.05rem;
 }
 
@@ -633,14 +633,14 @@
     min-width: 0;
     font-size: 0.78rem;
     line-height: 1.4;
-    color: #64748b;
+    color: var(--z-text-muted);
     letter-spacing: normal;
     text-transform: none;
 }
 
 .plataforma-opcion__texto strong {
     font-size: 0.9rem;
-    color: #0f172a;
+    color: var(--z-text);
 }
 
 .plataforma-opcion__marca {
@@ -652,8 +652,8 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--primary);
-    color: #ffffff;
+    background: var(--z-primary);
+    color: var(--z-surface);
     font-size: 0.75rem;
     opacity: 0;
     transform: scale(0.6);
@@ -667,21 +667,21 @@
 
 /* «Dar de baja»: una tarjeta de acción en rojo, no un aviso. */
 .plataforma-opcion--riesgo .plataforma-opcion__icono {
-    background: #fef3f2;
-    color: #d92d20;
+    background: var(--z-danger-soft);
+    color: var(--z-danger);
 }
 
 .plataforma-opcion--riesgo:hover {
-    border-color: #fda29b;
+    border-color: var(--z-danger-borde);
 }
 
 .plataforma-opcion--riesgo:has(input:checked) {
-    border-color: #d92d20;
-    background: #fff5f5;
+    border-color: var(--z-danger);
+    background: var(--z-danger-soft);
 }
 
 .plataforma-opcion--riesgo .plataforma-opcion__marca {
-    background: #d92d20;
+    background: var(--z-danger);
 }
 
 /* Suscripción: el interruptor de Usuarios y, si se apaga, por qué. */
@@ -689,9 +689,9 @@
     display: grid;
     gap: 0.6rem;
     padding: 0.8rem 0.9rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--z-border);
     border-radius: 14px;
-    background: #f8fafc;
+    background: var(--z-bg-suave);
 }
 
 .plataforma-suscripcion__fila {
@@ -705,12 +705,12 @@
     display: grid;
     gap: 0.1rem;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .plataforma-suscripcion__texto strong {
     font-size: 0.875rem;
-    color: #0f172a;
+    color: var(--z-text);
 }
 
 .plataforma-detalle {
@@ -728,10 +728,10 @@
 
 .plataforma-sugerencia {
     padding: 0.3rem 0.7rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--z-border);
     border-radius: 999px;
-    background: #ffffff;
-    color: #475569;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
     font-family: inherit;
     font-size: 0.75rem;
     font-weight: 500;
@@ -741,9 +741,9 @@
 
 .plataforma-sugerencia:hover,
 .plataforma-sugerencia:focus-visible {
-    border-color: var(--primary);
-    background: #f5f8ff;
-    color: var(--primary);
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
     outline: none;
 }
 
@@ -756,8 +756,8 @@
     padding: 0.65rem 1.1rem;
     border: none;
     border-radius: 10px;
-    background: #d92d20;
-    color: #ffffff;
+    background: var(--z-danger);
+    color: var(--z-surface);
     font-family: inherit;
     font-size: 0.875rem;
     font-weight: 600;
@@ -765,11 +765,11 @@
 }
 
 .btn-modal-peligro:hover {
-    background: #b42318;
+    background: var(--z-danger-dark);
 }
 
 .plataforma-modal .btn-modal-primary:disabled {
-    background: #cbd5e1;
+    background: var(--z-border-fuerte);
     box-shadow: none;
     cursor: not-allowed;
 }
@@ -846,7 +846,7 @@
     margin: 0;
 }
 .plataforma-finanzas__resumen dt {
-    color: #64748b;
+    color: var(--z-text-muted);
     font-size: .8rem;
 }
 .plataforma-finanzas__resumen dd {
@@ -854,7 +854,7 @@
     font-weight: 600;
 }
 .plataforma-finanzas__registro {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--z-border);
     padding: .8rem 0;
     font-size: .875rem;
 }
@@ -865,4 +865,696 @@
     justify-content: center;
     flex-wrap: wrap;
     margin-top: .75rem;
+}
+
+/* HU-0.3: contacto legible también con correos largos. */
+.plataforma-caso__datos { overflow-wrap: anywhere; margin-bottom: 1rem; }
+.plataforma-caso__datos dt { font-weight: 600; margin-top: .75rem; }
+.plataforma-caso__datos dd { margin: 0; }
+
+/* Etapa R: hoja de plataforma y detalle, mismos formularios y metadatos. */
+.plataforma-cabecera {
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.plataforma-cabecera__titulo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.plataforma-cabecera__titulo .top-header-title {
+    font-size: 20px;
+    margin: 0;
+}
+.plataforma-cabecera__titulo p {
+    font-size: 13px;
+    color: var(--z-text-muted);
+    margin: 2px 0 0;
+}
+.plataforma-titulo-icono {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+    flex-shrink: 0;
+}
+.plataforma-rol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 12px;
+    background: var(--z-surface);
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--z-text-secondary);
+}
+.plataforma-rol i {
+    color: var(--z-primary);
+    margin-right: 0;
+    line-height: 1;
+}
+.plataforma-menu-cuenta {
+    position: relative;
+}
+.plataforma-circulo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+    cursor: pointer;
+    list-style: none;
+}
+.plataforma-circulo::-webkit-details-marker {
+    display: none;
+}
+.plataforma-avatar {
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-weight: 700;
+    font-size: 14px;
+}
+.plataforma-badge {
+    position: absolute;
+    right: -3px;
+    top: -4px;
+    border-radius: 20px;
+    color: var(--z-surface);
+    background: var(--z-danger);
+    padding: 2px 5px;
+    font-size: 10px;
+}
+.plataforma-menu-cuenta nav {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    width: 260px;
+    max-width: calc(100vw - 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--z-surface);
+    color: var(--z-text);
+    border: 1px solid var(--z-border);
+    border-radius: 16px;
+    box-shadow: var(--z-shadow-lista);
+    z-index: 1200;
+    font-size: 14px;
+}
+.plataforma-menu-cuenta nav a {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    color: var(--z-primary);
+    text-decoration: none;
+}
+.plataforma-cabecera__cuenta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.plataforma-contenido {
+    min-width: 0;
+    padding: 0 28px 28px 36px;
+}
+.plataforma:not(.grafo) {
+    padding: 0;
+    background: var(--z-surface);
+    border-radius: 22px;
+    box-shadow: var(--z-shadow-sm);
+    overflow: hidden;
+}
+.plataforma [hidden] {
+    display: none !important;
+}
+.plataforma .plataforma-encabezado {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: var(--z-surface);
+}
+.plataforma .head-top-right {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 60px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--z-border);
+    gap: 12px;
+}
+.plataforma .tabs-wrapper {
+    align-self: stretch;
+    gap: 20px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+.plataforma .tabs-wrapper .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 60px;
+    padding: 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--z-text-muted);
+    font-size: 14px;
+    box-shadow: none;
+}
+.plataforma .tabs-wrapper .tab-btn.active {
+    color: var(--z-primary);
+    border-bottom-color: var(--z-primary);
+}
+.plataforma .tabs-wrapper .tab-btn > i {
+    display: none;
+}
+.plataforma .plataforma-contador {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    border-radius: 20px;
+    padding: 2px 7px;
+    font-size: 12px;
+}
+.plataforma [data-contador-seguridad][data-alerta="1"] {
+    color: var(--z-danger-dark);
+    background: var(--z-danger-soft);
+}
+.plataforma .plataforma-filtros.is-active {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    padding: 14px 20px 6px;
+    gap: 10px;
+    margin: 0;
+}
+.plataforma .plataforma-filtros .head-search {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+}
+.plataforma .head-search .search-input {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 40px;
+    background: var(--z-bg-suave);
+}
+.plataforma .plataforma-filtros .head-status-filters {
+    flex: 0 0 auto;
+    gap: 10px;
+}
+.plataforma .plataforma-filtros .filter-select {
+    height: 40px;
+    width: 155px;
+    padding: 0 10px;
+    color: var(--z-text-secondary);
+    background: var(--z-bg-suave);
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    font-size: 13px;
+}
+.plataforma .plataforma-filtros .head-view-toggle {
+    border: 0;
+    padding: 0;
+}
+.plataforma-resumen {
+    margin: 4px 20px 10px;
+    color: var(--z-text-muted);
+    font-size: 13px;
+}
+.plataforma-panel {
+    padding: 0 20px 20px;
+}
+.plataforma .plataforma-tarjetas[data-lista-vista] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.plataforma .plataforma-tarjeta {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--z-border);
+    border-radius: 18px;
+    box-shadow: none;
+    background: var(--z-surface);
+}
+.plataforma [data-clinica-fila] {
+    cursor: pointer;
+}
+.plataforma [data-clinica-fila]:focus-visible {
+    outline: 3px solid var(--z-primary);
+    outline-offset: -3px;
+}
+.plataforma .plataforma-tarjeta .avatar-mini {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+    box-shadow: none;
+    font-size: 15px;
+}
+.plataforma .plataforma-tarjeta .card-header-mini {
+    margin-bottom: 10px;
+}
+.plataforma .plataforma-tarjeta .card-title-mini {
+    font-size: 15px;
+    margin: 0 0 6px;
+}
+.plataforma .plataforma-tarjeta .contact-text-mini {
+    font-size: 12px;
+    color: var(--z-text-secondary);
+    overflow-wrap: anywhere;
+}
+.plataforma .plataforma-tarjeta .card-contact-mini {
+    gap: 7px;
+    margin: 10px 0;
+    padding: 0;
+}
+.plataforma [data-clinica-fila] .card-contact-mini .contact-text-mini:nth-child(3),
+.plataforma [data-clinica-fila] .card-contact-mini .contact-text-mini:nth-child(4),
+.plataforma [data-clinica-fila] .card-contact-mini .contact-text-mini:nth-child(5),
+.plataforma [data-clinica-fila] .card-contact-mini .contact-text-mini:nth-child(7) {
+    display: none;
+}
+.plataforma .plataforma-tarjeta .card-footer-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    color: var(--z-text-muted);
+    font-size: 12px;
+}
+.plataforma [data-clinica-fila] .card-footer-mini .plataforma-gestionar {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+}
+.plataforma [data-clinica-fila] .card-footer-mini > .bi-chevron-right {
+    display: none;
+}
+.plataforma .plataforma-uso {
+    font-size: 11px;
+}
+.plataforma .plataforma-uso__barra {
+    accent-color: var(--z-primary);
+}
+.plataforma .plataforma-pago {
+    color: var(--z-text-secondary);
+    background: var(--z-bg-light);
+}
+.plataforma .plataforma-pago[data-situacion="al_dia"] {
+    color: var(--z-success-dark);
+    background: var(--z-success-soft);
+}
+.plataforma .card-tags-mini > .plataforma-estado {
+    display: none;
+}
+.plataforma [data-estado="suspendida"] .plataforma-pago {
+    color: var(--z-danger-dark);
+    background: var(--z-danger-soft);
+}
+.plataforma [data-estado="pendiente_verificacion"] .plataforma-pago {
+    color: var(--z-text-muted);
+    background: var(--z-bg-light);
+}
+.plataforma .plataforma-estado--suspendida, .plataforma .plataforma-estado--baja {
+    color: var(--z-danger-dark);
+    background: var(--z-danger-soft);
+}
+.plataforma .plataforma-estado--pendiente {
+    color: var(--z-text-muted);
+    background: var(--z-bg-light);
+}
+.plataforma .plataforma-tabla {
+    max-width: 100%;
+    overflow-x: auto;
+}
+.plataforma .users-table thead {
+    background: var(--z-bg-suave);
+}
+.plataforma .users-table td {
+    height: 56px;
+}
+.plataforma #panelSoporte > .plataforma-tarjetas,
+.plataforma #panelSeguridad > .plataforma-tarjetas {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.plataforma #panelSoporte .plataforma-tarjeta,
+.plataforma #panelSeguridad .plataforma-tarjeta {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    border: 0;
+    border-bottom: 1px solid var(--z-border);
+    border-radius: 0;
+}
+.plataforma #panelSoporte .card-header-mini, .plataforma #panelSeguridad .card-header-mini {
+    margin: 0;
+}
+.plataforma #panelSoporte .card-footer-mini, .plataforma #panelSeguridad .card-footer-mini {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+.plataforma #panelSoporte .plataforma-tarjeta__texto {
+    margin: 5px 0 0;
+    font-size: 13px;
+    color: var(--z-text-muted);
+}
+#gestionarClinica.users-modal {
+    padding: 0;
+    align-items: stretch;
+    justify-content: flex-end;
+    background: var(--z-velo-modal);
+    backdrop-filter: none;
+}
+#gestionarClinica .plataforma-modal {
+    width: 540px !important;
+    max-width: 100% !important;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    overflow: hidden !important;
+    animation: none;
+}
+#gestionarClinica .modal-header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 20px;
+}
+.plataforma-modal__avatar {
+    flex: 0 0 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+    font-weight: 700;
+}
+#gestionarClinica .plataforma-modal__cabeza {
+    flex: 1;
+    min-width: 0;
+}
+#gestionarClinica .modal-header h3 {
+    font-size: 18px;
+}
+#gestionarClinica .close-modal {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    color: var(--z-text-muted);
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+}
+#gestionarClinica .plataforma-modal__datos {
+    overflow-wrap: anywhere;
+    font-size: 13px;
+}
+#gestionarClinica .plataforma-modal__pestanas {
+    display: flex;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--z-border);
+}
+#gestionarClinica .plataforma-modal__pestana {
+    padding: 12px 0;
+    color: var(--z-text-muted);
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    font-size: 13px;
+    white-space: nowrap;
+}
+#gestionarClinica .plataforma-modal__pestana.active {
+    color: var(--z-primary);
+    border-bottom-color: var(--z-primary);
+}
+#gestionarClinica .plataforma-modal__panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+#gestionarClinica .users-modal__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+}
+#gestionarClinica .users-modal__footer {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 14px 20px max(14px, env(safe-area-inset-bottom));
+    background: var(--z-surface);
+    border-top: 1px solid var(--z-border);
+}
+#gestionarClinica .users-modal__footer .btn-modal-secondary {
+    background: none;
+    border: 0;
+    color: var(--z-text-secondary);
+}
+#gestionarClinica .plataforma-opciones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#gestionarClinica .plataforma-form {
+    grid-template-columns: minmax(0, 1fr);
+}
+#gestionarClinica .plataforma-form > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+#gestionarClinica fieldset {
+    min-inline-size: 0;
+}
+#gestionarClinica .users-modal__footer > button {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+}
+#gestionarClinica .users-modal__footer > .btn-modal-primary {
+    flex: 1;
+}
+@media (min-width: 1024px) {
+    .plataforma .plataforma-tarjetas[data-lista-vista] {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1280px) {
+    .plataforma .plataforma-tarjetas[data-lista-vista] {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+@media (max-width: 767px) {
+    .plataforma-cabecera {
+        flex-wrap: nowrap;
+    }
+    .plataforma-cabecera__titulo .top-header-title {
+        font-size: 18px;
+    }
+    .plataforma-cabecera__titulo p, .plataforma-titulo-icono, .plataforma-rol {
+        display: none;
+    }
+    .plataforma-cabecera__cuenta {
+        gap: 8px;
+        width: auto;
+        margin-left: auto;
+        justify-content: flex-end;
+    }
+    .plataforma-contenido {
+        padding: 12px 12px 100px;
+    }
+    .plataforma .head-top-right {
+        flex-wrap: wrap;
+        padding: 0 12px 10px;
+        gap: 4px;
+    }
+    .plataforma .tabs-wrapper {
+        flex: 1;
+        gap: 12px;
+        justify-content: space-between;
+    }
+    .plataforma .tabs-wrapper .tab-btn {
+        min-height: 48px;
+        font-size: 13px;
+    }
+    .plataforma .plataforma-pagos-global {
+        min-height: 40px;
+        padding: 8px;
+        font-size: 12px;
+    }
+    .plataforma .plataforma-filtros.is-active {
+        flex-wrap: wrap;
+        padding: 12px;
+    }
+    .plataforma .plataforma-filtros .head-search {
+        flex: 1 1 100%;
+    }
+    .plataforma .plataforma-filtros .head-status-filters {
+        flex: 1;
+        min-width: 0;
+        gap: 8px;
+    }
+    .plataforma .plataforma-filtros .filter-select {
+        width: 100%;
+        min-width: 0;
+        flex: 1;
+        font-size: 14px;
+    }
+    .plataforma .head-search input {
+        font-size: 16px;
+    }
+    .plataforma .head-view-toggle {
+        display: none;
+    }
+    .plataforma-resumen {
+        margin: 0 12px 8px;
+        font-size: 12px;
+    }
+    .plataforma-panel {
+        padding: 0 12px 12px;
+    }
+    .plataforma .plataforma-tarjetas[data-lista-vista] {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    .plataforma .plataforma-tarjeta {
+        padding: 12px 0;
+        border: 0;
+        border-bottom: 1px solid var(--z-border);
+        border-radius: 0;
+    }
+    .plataforma [data-clinica-fila].plataforma-tarjeta {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) 28px;
+        gap: 6px 10px;
+    }
+    .plataforma [data-clinica-fila] .card-body-mini {
+        display: contents;
+    }
+    .plataforma [data-clinica-fila] .card-header-mini {
+        grid-row: 1 / span 2;
+        margin: 0;
+    }
+    .plataforma [data-clinica-fila] .avatar-mini {
+        width: 40px;
+        height: 40px;
+        font-size: 13px;
+    }
+    .plataforma [data-clinica-fila] .card-title-mini {
+        grid-column: 2;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .plataforma [data-clinica-fila] .card-tags-mini {
+        grid-column: 2;
+        grid-row: 2;
+        margin: 0;
+        gap: 4px;
+    }
+    .plataforma [data-clinica-fila] .card-contact-mini, .plataforma [data-clinica-fila] .plataforma-uso {
+        display: none;
+    }
+    .plataforma [data-clinica-fila] .card-footer-mini {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        border: 0;
+        padding: 0;
+        margin: 0;
+    }
+    .plataforma [data-clinica-fila] .card-footer-mini > span {
+        display: none;
+    }
+    .plataforma [data-clinica-fila] .plataforma-gestionar {
+        width: 28px;
+        border: 0;
+        background: none;
+    }
+    .plataforma #panelSoporte .plataforma-tarjeta, .plataforma #panelSeguridad .plataforma-tarjeta {
+        grid-template-columns: 32px minmax(0,1fr);
+        padding: 12px 0;
+    }
+    .plataforma #panelSoporte .card-footer-mini, .plataforma #panelSeguridad .card-footer-mini {
+        grid-column: 2;
+    }
+    #gestionarClinica.users-modal {
+        align-items: flex-end;
+    }
+    #gestionarClinica .plataforma-modal {
+        width: 100% !important;
+        height: calc(100dvh - 24px);
+        max-height: calc(100dvh - 24px);
+        border-radius: 22px 22px 0 0;
+    }
+    #gestionarClinica .modal-header, #gestionarClinica .users-modal__body {
+        padding: 16px;
+    }
+    #gestionarClinica :is(input, select, textarea) {
+        min-width: 0;
+        font-size: 16px;
+    }
+}
+
+/* RNF-16: la separación de escritorio la fija layout.css. */
+@media (min-width: 768px) {
+    .plataforma-cabecera {
+        margin-bottom: 0;
+    }
+    /* Retoque del dueño (2026-10-29): acercar los controles al borde superior, sin mover el título. */
+    .plataforma-cabecera__cuenta {
+        align-self: flex-start;
+    }
+}
+
+/* HU-0.3 / HU-2.12: misma respuesta azul en la cabecera, el mapa y los modales compartidos. */
+:is(.plataforma-contenido, #gestionarClinica) :is(button, summary, .grafo-tipo, .plataforma-menu-cuenta nav a):not(:disabled):not(.btn-modal-peligro):not(:is(.btn-modal-primary, .btn-create, .plataforma-boton-mini--principal, .plataforma-avatar)):is(:hover, :focus-visible) {
+    background: var(--z-primary-suave);
+    border-color: var(--z-primary-borde);
+    color: var(--z-primary);
+}
+:is(.plataforma-contenido, #gestionarClinica) :is(.btn-modal-primary, .btn-create, .plataforma-boton-mini--principal, .plataforma-avatar):not(:disabled):is(:hover, :focus-visible) {
+    background: var(--z-primary-dark);
+    border-color: var(--z-primary-dark);
+    color: var(--z-surface);
+}
+:is(.plataforma-contenido, #gestionarClinica) :is(button, summary, .grafo-tipo):not(:disabled):focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
 }

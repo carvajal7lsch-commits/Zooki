@@ -73,18 +73,28 @@ test('documento: las letras no entran al escribir ni al pegar y el máximo es 15
     assert.equal(p.eventos.input[0].captura, true);
 });
 
-test('E1: NIT y DV separados solo aceptan números y su propio máximo', () => {
+test('RE-0.1.3: NIT o cédula sin DV; conserva todas las cifras al escribir y salir, y limpia el pegado', () => {
     const p = pagina();
-    const nit = p.campo({ caracteres: '0-9' }, 14);
-    const dv = p.campo({ caracteres: '0-9' }, 1);
-    p.escribir(nit, 'a-');
-    assert.equal(nit.value, '');
-    p.escribir(nit, 'abc90012345678901234567890', true);
-    assert.equal(nit.value, '90012345678901');
-    p.escribir(dv, 'a-');
-    assert.equal(dv.value, '');
-    p.escribir(dv, '8a9', true);
-    assert.equal(dv.value, '8');
+    const opciones = { caracteres: '0-9\\-', formato: 'nit', nitNumeroMax: '14' };
+    const nit = p.campo(opciones, 16);
+    p.escribir(nit, '1075001234');
+    assert.equal(nit.value, '1075001234');
+    assert.equal(nit.selectionStart, 10);
+    p.emitir('blur', { target: nit });
+    assert.equal(nit.value, '1075001234');
+    const pegado = p.campo(opciones, 16);
+    p.escribir(pegado, ' 900.123.456 - 8 ', true);
+    assert.equal(pegado.value, '900123456-8');
+    p.emitir('blur', { target: pegado });
+    assert.equal(pegado.value, '900123456-8');
+    const largo = p.campo(opciones, 16);
+    p.escribir(largo, '1234567890123456789', true);
+    assert.equal(largo.value, '12345678901234');
+    p.emitir('blur', { target: largo });
+    assert.equal(largo.value, '12345678901234');
+    const incompleto = p.campo(opciones, 16, '1');
+    p.emitir('blur', { target: incompleto });
+    assert.equal(incompleto.value, '1');
 });
 
 test('NIT: sin letras, solo un guion después del número y un dígito después', () => {

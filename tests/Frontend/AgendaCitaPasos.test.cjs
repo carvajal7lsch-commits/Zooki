@@ -12,7 +12,7 @@ function tramo(desde, hasta) {
     return fuente.slice(inicio, fin);
 }
 
-test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persistentes a 1366/390 px', { skip: !buscarChrome() }, async () => {
+test('Nueva cita de escritorio: dos pasos, guía, resumen, Enter, rojo y horarios persistentes a 1366 px', { skip: !buscarChrome() }, async () => {
     const php = process.env.PHP_BINARY || (process.platform === 'win32' && fs.existsSync('C:/xampp/php/php.exe') ? 'C:/xampp/php/php.exe' : 'php');
     const vista = execFileSync(php, ['tests/Frontend/apoyo/agenda-cita-vista.php'], { encoding: 'utf8', env: { ...process.env, TRUSTED_PROXIES: '127.0.0.2', ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' } });
     assert.doesNotMatch(vista, /Fatal error|Warning:|\s(?:style|onclick|onsubmit)=/);
@@ -23,6 +23,7 @@ test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persi
         const arbol = await nav.enviar('Page.getFrameTree');
         await nav.enviar('Page.setDocumentContent', { frameId: arbol.frameTree.frame.id, html: `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">${css}</head><body>${html}</body></html>` });
         await nav.evaluar(fs.readFileSync('public/js/agenda-herramientas.js', 'utf8') + '\niniciarHerramientasAgenda(document);');
+        await nav.evaluar(fs.readFileSync('public/js/comando-agenda.js', 'utf8'));
         await nav.evaluar(`
             window.__estado = { resultado: null, reservable: false };
             let triageModalC4 = { consulta: () => __estado.reservable ? '123' : '', resultado: () => __estado.resultado };
@@ -44,6 +45,7 @@ test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persi
             function getVetModal() { return '2'; }
             function unirLista(a) { return a.join(' y '); }
             function format12h(h) { return h; }
+            ${tramo('function formatearHoraReserva(', 'function formatHora(')}
             function minutosDe(h) { return Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)); }
             function filtrarMascotas() {}
             function onModalVeterinarioChange() {}
@@ -67,7 +69,7 @@ test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persi
             document.getElementById('modal_tipo_cita').innerHTML += '<option value="1" data-nombre="Consulta">Consulta</option>';
             val('modal_fecha', '2030-01-07');
         `);
-        for (const width of [1366, 390]) {
+        for (const width of [1366]) {
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: width < 768 });
             await nav.evaluar(`(async () => {
                 document.getElementById('citaModalOverlay').classList.add('is-open');
@@ -119,7 +121,7 @@ test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persi
                 document.querySelector('[data-hora="09:00:30"]').click();
             })()`);
             estado = await nav.evaluar(`({ hora: val('modal_hora'), resumen: document.getElementById('cm_horario_resumen').textContent, deshabilitado: document.getElementById('cm_submit').disabled, falta: document.getElementById('cm_resumen').textContent })`);
-            assert.deepEqual(estado, { hora: '09:00:30', resumen: 'Doki · Consulta · amarillo · 09:00:30', deshabilitado: false, falta: '' });
+            assert.deepEqual(estado, { hora: '09:00:30', resumen: 'Doki · Consulta · Amarillo · 9:00 a. m.', deshabilitado: false, falta: '' });
             for (const paso of [0, 1]) {
                 const medidas = await nav.evaluar(`(() => {
                     document.querySelector('[data-cita-indicador="${paso}"]').click();

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plataforma en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cont{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px}
+h1{margin:0 auto 0 0;font-size:20px;font-weight:700}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;position:relative}
+.badge{position:absolute;top:-4px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border-radius:14px;overflow:hidden}
+.tabs a{height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#475569;text-decoration:none;border-bottom:3px solid transparent}
+.tabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.cnt{min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:#F1F5F9;color:#475569;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.on .cnt{background:rgba(0,82,255,.1);color:#0052FF}
+.cnt.alerta{background:#FEE2E2;color:#B91C1C}
+.fila-b{display:flex;gap:8px}
+.search{flex:1;height:44px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:10px;padding:0 12px;color:#94A3B8;font-size:14px}
+.filtro{width:44px;height:44px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.sum{font-size:12px;color:#64748B;padding:0 2px}
+.sum b{color:#0F172A}
+.hoja{background:#fff;border-radius:16px;overflow:hidden}
+.fila{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid #F1F5F9;text-decoration:none;color:inherit}
+.fila:first-child{border-top:0}
+.av{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.1);color:#0052FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.nom{flex:1;min-width:0}
+.nom strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nom span{display:block;font-size:12px;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{height:22px;border-radius:11px;padding:0 8px;display:inline-flex;align-items:center;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
+.verde{background:#ECFDF5;color:#047857}
+.gris{background:#F1F5F9;color:#475569}
+.rojo{background:#FEF2F2;color:#B91C1C}
+.go{color:#94A3B8;display:flex;flex:none}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+.barra a.salir{color:#B91C1C}
+.barra a.salir span{background:#FEF2F2}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cont">
+    <header class="top">
+      <h1>Plataforma</h1>
+      <button class="redondo" type="button" aria-label="Notificaciones, 2 sin leer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">2</span></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">SC</button>
+    </header>
+    <nav class="tabs" aria-label="Secciones de la plataforma">
+      <a class="on" href="#">Clínicas <span class="cnt">12</span></a>
+      <a href="#">Soporte <span class="cnt">2</span></a>
+      <a href="#">Seguridad <span class="cnt alerta">1</span></a>
+    </nav>
+    <div class="fila-b">
+      <div class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Nombre o NIT</div>
+      <button class="filtro" type="button" aria-label="Filtrar por estado y plan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
+    </div>
+    <p class="sum" style="margin:0"><b>12 clínicas</b> · 9 al día · 2 en gracia · 1 suspendida</p>
+    <div class="hoja">
+      <a class="fila" href="#"><span class="av">CN</span><div class="nom"><strong>Clínica Norte</strong><span>Profesional · renueva 25 nov</span></div><span class="chip verde">Al día</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">CS</span><div class="nom"><strong>Clínica Sur</strong><span>Gratuito · sin vencimiento</span></div><span class="chip verde">Al día</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">VB</span><div class="nom"><strong>Veterinaria El Bosque</strong><span>Profesional · venció 24 oct</span></div><span class="chip gris">En gracia</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">MF</span><div class="nom"><strong>Mascotas Felices</strong><span>Profesional · falta de pago</span></div><span class="chip rojo">Suspendida</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">CA</span><div class="nom"><strong>Centro Veterinario Andes</strong><span>Profesional · renueva 2 dic</span></div><span class="chip verde">Al día</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">HC</span><div class="nom"><strong>Huellitas del Caquetá</strong><span>Gratuito · registrada hace 2 días</span></div><span class="chip gris">Sin verificar</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+      <a class="fila" href="#"><span class="av">PF</span><div class="nom"><strong>Pet Center Florencia</strong><span>Profesional · renueva 9 nov</span></div><span class="chip verde">Al día</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a>
+    </div>
+  </div>
+  <nav class="barra" aria-label="Menú de la plataforma">
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg></span>Plataforma</a>
+    <a href="GrafoMovil.dc.html"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.2l7.2.2M7.3 8.2l3.6 7.6M16.9 9.2l-3.7 6.6"/></svg></span>Conocimiento</a>
+    <a class="salir" href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Salir</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

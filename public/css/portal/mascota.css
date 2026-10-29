@@ -4,6 +4,11 @@
    Escritorio: ficha fija a la izquierda, pestañas a la derecha.
    ═══════════════════════════════════════════════════════════ */
 
+.pet-detail__raza-movil,
+.pet-detail__pdf {
+    display: none;
+}
+
 .pet-detail__cabecera {
     display: flex;
     align-items: center;
@@ -416,4 +421,97 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--z-primary);
+}
+
+/* La envoltura no altera los chips de tableta/escritorio. */
+.pet-detail__clinicas {
+    display: contents;
+}
+@media (max-width: 767px) {
+    .pet-detail__cabecera {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+    .pet-detail__identidad {
+        display: contents;
+    }
+    .pet-detail__titulo {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0;
+        min-width: 0;
+        font-size: 18px;
+    }
+    .pet-detail__titulo .avatar-mini {
+        flex: none;
+        width: 32px;
+        height: 32px;
+    }
+    .pet-detail__acciones {
+        grid-column: 3;
+        grid-row: 1;
+        gap: 6px;
+    }
+    .pet-detail__acciones .action-btn-mini,
+    .pet-detail__cabecera > .portal-drawer-back {
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+    }
+    #drawerPetTags {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+        min-width: 0;
+    }
+    .pet-detail__especie {
+        display: none;
+    }
+    .pet-detail__nombre {
+        display: block;
+        min-width: 0;
+    }
+    .pet-detail__raza-movil {
+        display: block;
+        overflow: hidden;
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--z-text-muted);
+        text-overflow: ellipsis;
+    }
+    .pet-detail__pdf {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        min-height: 44px;
+        margin-top: 10px;
+        font-size: 14px;
+        text-decoration: none;
+    }
+    .pet-detail__clinicas {
+        display: flex;
+        gap: 6px;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .pet-detail__clinicas > .tag-mini {
+        flex: none;
+        white-space: nowrap;
+    }
+    .portal-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .portal-summary-item {
+        padding: 8px;
+    }
+    .portal-summary-item strong {
+        font-size: 14px;
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
 }

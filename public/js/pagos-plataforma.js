@@ -25,6 +25,13 @@
             if (!respuesta.ok) throw new Error(html || 'No se pudo consultar el historial.');
             // HTML del parcial escapado por PHP; no incluye scripts del proveedor.
             destino.innerHTML = html;
+            if (Number(clinica) === 0) {
+                const contador = document.querySelector('[data-finanzas-conteo]');
+                if (contador && destino.querySelectorAll) {
+                    contador.textContent = destino.querySelectorAll('[data-finanzas-revision]').length;
+                    contador.setAttribute('aria-label', 'Incidencias pendientes sin clínica');
+                }
+            }
         } catch (error) {
             if (solicitudes.get(destino) === solicitud) destino.textContent = error.message || 'No se pudo consultar el historial.';
         }
@@ -79,4 +86,8 @@
         if (evento.target.matches('[data-finanzas-conciliar] input[name="id_transaccion"]')) validarId(evento.target);
     });
     window.ZookiPagosPlataforma = { cargar, revisar };
+    document.addEventListener('DOMContentLoaded', () => {
+        const destino = document.querySelector('#incidenciasSinClinica [data-finanzas-destino]');
+        if (destino && document.querySelector('[data-finanzas-conteo]')) cargar(destino, 0);
+    });
 }());

@@ -179,11 +179,9 @@ body {
   /* clip y no hidden: hidden convierte a .main-content en un contenedor con
      scroll propio, y aparecía una segunda barra junto a la del navegador. */
   overflow-x: clip;
-  /* Sin "forwards": dejaba aplicado para siempre el transform final, y un
-     transform convierte a .main-content en un contexto de apilamiento propio.
-     Ningún modal ni drawer de dentro podía pasar por encima de la barra
-     lateral (z-index 1000), que quedaba sin oscurecer. El final es igual. */
-  animation: pageFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  /* R (2026-10-29): la navegación común anima el cambio entre documentos;
+     volver a desvanecer todo durante medio segundo producía otro destello. */
+  animation: none;
 }
 
 @keyframes pageFadeIn {
@@ -297,6 +295,361 @@ body {
   align-items: center;
   gap: 1.2rem;
   margin-left: auto;
+}
+
+/* HU-T.5/T.17, RNF-16: cabecera minimalista aprobada (2026-10-27): pastilla de la clínica,
+   campana y avatar, las tres de 40 px. El rol se lee en el menú de la cuenta. */
+.cabecera-cuenta {
+    position: relative;
+    margin-left: auto;
+}
+.cabecera-cuenta .header-right {
+    gap: 10px;
+}
+.cabecera-clinica {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    max-width: 280px;
+    padding: 0 12px 0 6px;
+    border: 1px solid var(--z-border);
+    border-radius: 20px;
+    background: var(--z-surface);
+    color: var(--z-text);
+    text-decoration: none;
+}
+a.cabecera-clinica:hover {
+    border-color: var(--z-primary-borde);
+}
+.cabecera-clinica > .bi-chevron-down {
+    color: var(--z-text-muted);
+    font-size: 12px;
+}
+.cabecera-clinica__avatar {
+    flex: 0 0 28px;
+    display: grid;
+    place-items: center;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 11px;
+    font-weight: 800;
+}
+.cabecera-clinica__texto {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+.cabecera-clinica__texto strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+}
+.cabecera-clinica__texto > span {
+    color: var(--z-text-muted);
+    font-size: 12px;
+}
+[data-clinica-escritorio] .cabecera-clinica__texto > span,
+.cabecera-clinica__cambiar, .cabecera-clinica-movil {
+    display: none;
+}
+.cabecera-cuenta .notif-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--z-border);
+    border-radius: 50%;
+    color: var(--z-text-secondary);
+    background: var(--z-surface);
+    box-shadow: none;
+    font-size: 18px;
+}
+.cabecera-cuenta .notif-btn:hover,
+.cabecera-cuenta .notif-btn[aria-expanded="true"] {
+    border-color: var(--z-primary-borde);
+    color: var(--z-primary);
+    background: var(--z-surface);
+}
+.cabecera-cuenta .notifications-wrapper {
+    margin: 0;
+}
+.cabecera-cuenta__boton.header-user {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--z-primary);
+    box-shadow: none;
+    font: inherit;
+}
+.cabecera-cuenta__boton.header-user:hover {
+    background: var(--z-primary-dark);
+}
+.cabecera-cuenta__boton .header-user__avatar {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    font-size: 13px;
+}
+.cabecera-cuenta__boton[aria-expanded="true"] {
+    box-shadow: var(--z-foco);
+}
+.cabecera-cuenta__contexto {
+    font-size: 13px;
+}
+.cabecera-cuenta__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    padding: 8px;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-lista);
+    z-index: 1100;
+}
+.cabecera-cuenta:not([data-abierta]) > .cabecera-cuenta__menu {
+    display: none;
+}
+.cabecera-cuenta__identidad {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--z-bg-light);
+}
+.cabecera-cuenta__identidad > div {
+    min-width: 0;
+}
+.cabecera-cuenta__identidad .header-user__avatar {
+    width: 40px;
+    height: 40px;
+}
+.cabecera-cuenta__identidad h2 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--z-text);
+    overflow-wrap: anywhere;
+}
+.cabecera-cuenta__identidad p {
+    margin: 3px 0 0;
+    font-size: 14px;
+    color: var(--z-text-muted);
+    overflow-wrap: anywhere;
+}
+.cabecera-cuenta__menu nav {
+    display: grid;
+    gap: 2px;
+}
+.cabecera-cuenta__menu nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: var(--z-radius-xs);
+    color: var(--z-text);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.cabecera-cuenta__menu nav a:hover {
+    background: var(--z-bg-suave);
+}
+.cabecera-cuenta__menu nav .bi-chevron-right {
+    margin-left: auto;
+}
+.cabecera-cuenta__menu nav .cabecera-cuenta__salir {
+    color: var(--z-danger-dark);
+    border-top: 1px solid var(--z-bg-light);
+}
+.cabecera-cuenta__menu [data-clinica-movil] {
+    display: none;
+}
+.cabecera-cuenta__dialogo .cabecera-cuenta__menu {
+    display: block;
+    position: static;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    padding: 0 16px 20px;
+}
+.top-header-title--usuarios {
+    visibility: visible;
+}
+.usuarios-nuevo-movil {
+    display: none;
+}
+@media (max-width: 767px) {
+    .dashboard-layout .top-header {
+        flex-wrap: nowrap;
+        gap: 10px;
+        padding: 12px 16px;
+    }
+    .dashboard-layout .top-header .header-left {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
+        order: 0;
+    }
+    .dashboard-layout .top-header-title {
+        min-width: 0;
+        flex-shrink: 1;
+        white-space: normal;
+        line-height: 1.2;
+    }
+    .top-header-title--usuarios {
+        visibility: visible;
+    }
+    body[data-ajustes-vista="seccion"] .dashboard-layout .top-header {
+        display: none;
+    }
+    .dashboard-layout .top-header .users-module-desc,
+    .dashboard-layout .top-header .module-title > p,
+    .dashboard-layout .top-header .encabezado-pagina__subtitulo {
+        display: none;
+    }
+    .cabecera-cuenta {
+        flex: 0 0 auto;
+        z-index: 1001;
+    }
+    .cabecera-cuenta .header-right {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+    .cabecera-cuenta [data-clinica-escritorio] {
+        display: none;
+    }
+    .cabecera-cuenta__contexto {
+        display: none;
+    }
+    .cabecera-cuenta__menu nav a {
+        min-height: 52px;
+        font-size: 15px;
+    }
+    .cabecera-cuenta__menu nav {
+        margin-top: 14px;
+        border: 1px solid var(--z-bg-light);
+        border-radius: var(--z-radius-sm);
+        overflow: hidden;
+    }
+    .cabecera-cuenta__menu [data-clinica-movil] {
+        display: block;
+    }
+    .cabecera-cuenta__menu .cabecera-clinica {
+        gap: 10px;
+        max-width: none;
+        width: 100%;
+        height: auto;
+        padding: 12px;
+        border: 0;
+        border-radius: var(--z-radius-sm);
+        background: var(--z-bg-suave);
+    }
+    .cabecera-cuenta__menu .cabecera-clinica__avatar {
+        flex-basis: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    .cabecera-cuenta__menu .cabecera-clinica__texto strong {
+        font-size: 14px;
+    }
+    .cabecera-cuenta__menu .cabecera-clinica__texto strong {
+        white-space: normal;
+    }
+    .cabecera-cuenta__menu .cabecera-clinica > .bi-chevron-down {
+        display: none;
+    }
+    .cabecera-clinica__cambiar {
+        display: inline;
+        color: var(--z-primary);
+        font-size: 14px;
+        font-weight: 600;
+    }
+    /* Celular: la misma lista en hoja inferior (celular-notificaciones). */
+    .cabecera-notif__dialogo {
+        padding-bottom: 16px;
+    }
+    .cabecera-notif__dialogo .notif-header {
+        padding: 0 12px 12px 16px;
+    }
+    .cabecera-notif__dialogo .notif-header h3 {
+        font-size: 18px;
+    }
+    .cabecera-notif__dialogo .notif-header p {
+        font-size: 13px;
+    }
+    .cabecera-notif__dialogo .notif-mark-all {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--z-radius-sm);
+        font-size: 20px;
+    }
+    .cabecera-notif__dialogo .notif-body {
+        max-height: calc(100dvh - 180px);
+    }
+    .cabecera-notif__dialogo .notif-item {
+        grid-template-columns: 40px minmax(0, 1fr) 10px;
+    }
+    .cabecera-notif__dialogo .notif-item__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--z-radius-sm);
+        font-size: 18px;
+    }
+    .cabecera-notif__dialogo .notif-item__title {
+        font-size: 15px;
+    }
+    .cabecera-notif__dialogo .notif-item__msg {
+        font-size: 14px;
+    }
+    .cabecera-cuenta__identidad {
+        border: 0;
+        padding: 8px 0 16px;
+    }
+    .cabecera-cuenta__identidad h2 {
+        font-size: 17px;
+    }
+    .cabecera-cuenta__identidad .header-user__avatar {
+        width: 48px;
+        height: 48px;
+    }
+    .dashboard-layout .top-header .usuarios-nuevo-movil {
+        display: inline-flex;
+        grid-area: nuevo;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0;
+        font-size: 26px;
+        font-weight: 400;
+        line-height: 1;
+    }
+    .dashboard-layout .top-header:has(.top-header-title--usuarios) .header-left {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'titulo nuevo';
+        gap: 0 6px;
+        align-items: center;
+    }
+    .top-header-title--usuarios {
+        grid-area: titulo;
+        font-size: 18px;
+    }
 }
 
 /* Profile Dropdown */
@@ -482,180 +835,121 @@ body {
   font-weight: 600;
 }
 
-/* Notifications */
+/* Notificaciones — mockup aprobado (2026-10-27). Campana gris; con nuevas, contador rojo
+   con el número (1…9, «9+»). Sin timbre animado ni amarillos: azul de marca y rojo solo
+   para lo grave (cita cancelada, límite del plan). */
 .notifications-wrapper {
   position: relative;
-  margin-right: 0.5rem;
 }
 
 .notif-btn {
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7e8494;
-  font-size: 1.1rem;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--z-border);
+  border-radius: 50%;
+  background: var(--z-surface);
+  color: var(--z-text-secondary);
   cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-}
-
-.notif-btn:hover {
-  background: #f8faff;
-  color: #5560ff;
 }
 
 .notif-badge {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 10px;
-  height: 10px;
-  background: #ef4444;
-  border: 2px solid white;
-  border-radius: 50%;
-  box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
-  animation: badge-ping 1.5s infinite;
+  top: -4px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--z-surface);
+  border-radius: 9px;
+  background: var(--z-danger);
+  color: var(--z-surface);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
 }
 
-@keyframes badge-ping {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  }
-
-  70% {
-    transform: scale(1.2);
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-  }
-
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
-}
-
-/* Animación de la campana cuando hay notificaciones */
-.notif-btn.ringing i {
-  animation: bell-ring 2s infinite;
-  transform-origin: top center;
-  color: #f59e0b;
-  /* Color naranja cuando suena */
-}
-
-@keyframes bell-ring {
-  0% {
-    transform: rotate(0);
-  }
-
-  5% {
-    transform: rotate(15deg);
-  }
-
-  10% {
-    transform: rotate(-15deg);
-  }
-
-  15% {
-    transform: rotate(10deg);
-  }
-
-  20% {
-    transform: rotate(-10deg);
-  }
-
-  25% {
-    transform: rotate(5deg);
-  }
-
-  30% {
-    transform: rotate(-5deg);
-  }
-
-  35% {
-    transform: rotate(0);
-  }
-
-  100% {
-    transform: rotate(0);
-  }
+.notif-badge[hidden] {
+  display: none;
 }
 
 .notif-dropdown {
   position: absolute;
-  top: calc(100% + 15px);
+  top: calc(100% + 12px);
   right: 0;
-  width: 350px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
   z-index: 1000;
   display: none;
   flex-direction: column;
+  width: 380px;
+  max-width: calc(100vw - 32px);
   overflow: hidden;
-  transform-origin: top right;
-  animation: slideInDown 0.3s ease forwards;
+  border: 1px solid var(--z-border);
+  border-radius: 18px;
+  background: var(--z-surface);
+  box-shadow: var(--z-shadow-lista);
 }
 
 .notif-dropdown.active {
   display: flex;
 }
 
-
+.notif-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
 .notif-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f3f4f9;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--z-bg-light);
 }
 
 .notif-header h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
   margin: 0;
+  color: var(--z-text);
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.notif-header span {
-  font-size: 0.75rem;
-  color: #7e8494;
-  font-weight: 600;
-  background: #f3f4f9;
-  padding: 4px 10px;
-  border-radius: 50px;
-}
-
-/* HU-45 — Marcar todas como leidas. El header pasa a envolver porque ahora
-   lleva tres elementos y en pantallas estrechas no caben en una linea. */
-.notif-header {
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.notif-header p {
+  margin: 2px 0 0;
+  color: var(--z-text-muted);
+  font-size: 12px;
 }
 
 .notif-mark-all {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #0052ff;
-  background: transparent;
-  border: 1px solid #bfdbfe;
-  padding: 4px 10px;
-  border-radius: 50px;
-  cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--z-border);
+  border-radius: var(--z-radius-xs);
+  background: var(--z-surface);
+  color: var(--z-primary);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.notif-mark-all[hidden] {
+  display: none;
 }
 
 .notif-mark-all:hover:not(:disabled) {
-  background: #eff6ff;
+  border-color: var(--z-primary-borde);
+  background: var(--z-primary-soft);
 }
 
 .notif-mark-all:disabled {
@@ -663,118 +957,117 @@ body {
   cursor: progress;
 }
 
-.notif-mark-all i {
-  font-size: 0.7rem;
-}
-
 .notif-body {
   max-height: 400px;
   overflow-y: auto;
-  padding: 0.5rem;
 }
 
-/* Items del dropdown de notificaciones. Antes reutilizaban las clases de las
-   alertas de vacunas (.vaccine-alert-item / .v-icon), con fondo amarillo de
-   "vacuna pendiente" detrás de cualquier ícono. */
+/* Cada aviso es un botón (teclado y lector de pantalla) con la forma de la fila del mockup. */
 .notif-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 10px;
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--z-bg-light);
+  background: var(--z-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
-  position: relative;
-  transition: background 0.15s ease;
 }
 
-.notif-item + .notif-item {
-  margin-top: 2px;
+.notif-item:last-child {
+  border-bottom: 0;
 }
 
 .notif-item:hover {
-  background: #f8fafc;
+  background: var(--z-bg-suave);
+}
+
+.notif-item:focus-visible {
+  outline: 2px solid var(--z-primary);
+  outline-offset: -2px;
 }
 
 .notif-item.is-unread {
-  background: #f5f8ff;
+  background: color-mix(in srgb, var(--z-primary) 4%, var(--z-surface));
 }
 
 .notif-item.is-unread:hover {
-  background: #eef3ff;
+  background: var(--z-primary-soft);
 }
 
 .notif-item__icon {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  background: #f1f5f9;
-  color: #64748b;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--z-primary-soft);
+  color: var(--z-primary);
+  font-size: 17px;
 }
 
-.notif-item__icon.tipo-nueva { background: #eaf1ff; color: #0052ff; }
-.notif-item__icon.tipo-reprogramada { background: #fff7e6; color: #d97706; }
-.notif-item__icon.tipo-cancelada { background: #fdecec; color: #dc2626; }
+.notif-item__icon.is-grave {
+  background: var(--z-danger-soft);
+  color: var(--z-danger-dark);
+}
 
 .notif-item__text {
-  flex: 1;
+  display: block;
   min-width: 0;
 }
 
 .notif-item__title {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.notif-item.is-unread .notif-item__title {
+  color: var(--z-text);
+  font-size: 14px;
   font-weight: 700;
 }
 
 .notif-item__msg {
-  margin-top: 2px;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: #475569;
   display: -webkit-box;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--z-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .notif-item__time {
   display: block;
   margin-top: 4px;
-  font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--z-text-muted);
+  font-size: 12px;
 }
 
 .notif-item__dot {
   width: 8px;
   height: 8px;
-  flex-shrink: 0;
   margin-top: 6px;
   border-radius: 50%;
-  background: #0052ff;
+  background: var(--z-primary);
 }
 
 .notif-empty {
-  padding: 2rem 1rem;
+  padding: 32px 16px;
+  color: var(--z-text-muted);
+  font-size: 14px;
   text-align: center;
-  color: #94a3b8;
-  font-size: 0.85rem;
 }
 
 .notif-empty i {
   display: block;
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.5;
+  margin-bottom: 8px;
+  color: var(--z-text-tenue);
+  font-size: 24px;
 }
 
 /* Cards and Tables */
@@ -842,21 +1135,6 @@ body {
   border-radius: 50px;
   font-size: 0.75rem;
   font-weight: 600;
-}
-
-/* Loader */
-#global-loader {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
 }
 
 .spinner {
@@ -1465,4 +1743,89 @@ a.header-user {
 a.header-user:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
+}
+
+/* RNF-16, R-B (2026-10-28): una geometría común; los módulos no suman aire arriba. */
+@media (min-width: 768px) {
+    .dashboard-layout .main-content > .top-header {
+        box-sizing: border-box;
+        min-height: 52px;
+        flex-shrink: 0;
+        padding: 0 40px;
+        margin: 22px 0 18px;
+        align-items: center;
+    }
+    .dashboard-layout .main-content > .content-body {
+        margin-top: 0;
+        padding-top: 0;
+    }
+    .dashboard-layout .main-content > .top-header .header-left {
+        height: 44px;
+        min-width: 0;
+        align-items: center;
+    }
+    .dashboard-layout .main-content > .top-header :is(.top-header-title, .users-page-title, .inicio-encabezado__saludo) {
+        margin: 0;
+        padding: 0;
+        font-size: 20px;
+        line-height: 24px;
+        font-weight: 800;
+    }
+    .dashboard-layout .main-content > .top-header .header-left > :is(h1, h2) {
+        align-self: flex-start;
+    }
+    .dashboard-layout .main-content > .top-header :is(.head-title-desc, .encabezado-pagina__textos, .inicio-encabezado) {
+        height: 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 2px;
+    }
+    .dashboard-layout .main-content > .top-header :is(.users-module-desc, .encabezado-pagina__subtitulo, .inicio-encabezado__fecha, .plataforma-cabecera__titulo p) {
+        margin: 0;
+        font-size: 13px;
+        line-height: 18px;
+    }
+    .dashboard-layout .main-content > .top-header .inicio-encabezado__saludo {
+        order: 0;
+    }
+    .dashboard-layout .main-content > .top-header .inicio-encabezado__fecha {
+        order: 1;
+    }
+    .dashboard-layout .main-content > .top-header .encabezado-pagina {
+        height: 44px;
+    }
+    .dashboard-layout .main-content > .top-header :is(.header-right, .cabecera-cuenta) {
+        align-self: center;
+    }
+    .dashboard-layout .main-content > .top-header :is(.notif-btn, .cabecera-cuenta__boton) {
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0;
+    }
+    .dashboard-layout .main-content > .top-header .cabecera-clinica {
+        height: 40px;
+        min-height: 40px;
+    }
+    .dashboard-layout .plataforma-contenido > .top-header {
+        padding-inline: 0;
+    }
+    .dashboard-layout .plataforma-cabecera__titulo {
+        height: 44px;
+        align-items: flex-start;
+    }
+    .dashboard-layout .plataforma-titulo-icono {
+        align-self: center;
+    }
+}
+@media (min-width: 1024px) {
+    .dashboard-layout .main-content > .top-header {
+        height: 52px;
+    }
+}
+@media (max-width: 767px) {
+    .atencion-titulo-escritorio {
+        display: none;
+    }
 }

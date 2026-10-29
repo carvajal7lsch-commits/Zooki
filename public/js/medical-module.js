@@ -250,6 +250,7 @@ function cambiarCabeceraPacientes(detalle) {
     const barra = document.querySelector('.pacientes-barra');
     if (directorio) directorio.hidden = detalle;
     if (expediente) expediente.hidden = !detalle;
+    expediente?.closest('.top-header--pacientes')?.classList.toggle('pacientes-detalle-abierto', detalle);
     if (barra) barra.hidden = detalle;
 }
 
@@ -288,6 +289,7 @@ function switchModule(module, { recargar = true } = {}) {
 
     document.getElementById('modulePets').classList.toggle('active', module === 'pets');
     document.getElementById('moduleOwners').classList.toggle('active', module === 'owners');
+    window.zookiPaginarPacientes?.(module);
 
     if (module === 'owners' && recargar) {
         loadOwners();
@@ -366,8 +368,10 @@ function estadoDueno(o) {
 /** M5 C4b (captura 06): la tarjeta mini de Usuarios › Clientes. */
 function tarjetaDueno(o) {
     const activo = Number(o.estado) === 1;
-    const tarjeta = nodoDueno('article', 'client-card person-card');
+    const tarjeta = nodoDueno('article', 'client-card person-card directorio-tarjeta');
     tarjeta.dataset.estado = String(o.estado);
+    tarjeta.dataset.pendienteActivacion = String(o.pendiente_activacion || 0);
+    tarjeta.dataset.totalMascotas = String(Number(o.total_mascotas) || 0);
     const cabecera = nodoDueno('div', 'card-header-mini');
     const avatar = nodoDueno('span', 'avatar-mini avatar-iniciales avatar-iniciales--cliente', inicialesDueno(o.nombre_completo));
     avatar.setAttribute('aria-hidden', 'true');
@@ -378,20 +382,33 @@ function tarjetaDueno(o) {
     if (!activo) cabecera.append(etiquetaDueno('Desvinculado', 'bi-link-45deg'));
     const cuerpo = nodoDueno('div', 'card-body-mini');
     cuerpo.append(nodoDueno('h3', 'card-title-mini', o.nombre_completo));
+    cuerpo.append(nodoDueno('span', 'paciente-solo-escritorio propietario-cantidad', Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
     const etiquetas = nodoDueno('div', 'card-tags-mini');
-    etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} mascota(s)`, 'bi-heart'));
+    etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} ${Number(o.total_mascotas) === 1 ? 'mascota' : 'mascotas'}`, 'bi-heart'));
     if (o.telefono) etiquetas.append(etiquetaDueno(o.telefono, 'bi-phone'));
     cuerpo.append(etiquetas);
     const datosContacto = [];
     if (o.documento) datosContacto.push(etiquetaDueno(o.documento, 'bi-person-badge', 'contact-text-mini'));
+    if (o.telefono) datosContacto.push(etiquetaDueno(o.telefono, 'bi-telephone', 'contact-text-mini paciente-solo-escritorio propietario-telefono'));
     if (o.email) datosContacto.push(etiquetaDueno(o.email, 'bi-envelope', 'contact-text-mini'));
     if (datosContacto.length) {
         const contacto = nodoDueno('div', 'card-contact-mini');
         contacto.append(...datosContacto);
         cuerpo.append(contacto);
     }
+    if (!activo) cuerpo.append(nodoDueno('p', 'paciente-solo-escritorio propietario-nota', 'La cuenta ya no está vinculada a esta clínica.'));
     const pie = nodoDueno('div', 'card-footer-mini');
     pie.append(...accionesDueno(o));
+    const resumen = nodoDueno('div', 'paciente-solo-escritorio propietario-mascotas');
+    const nombres = activo && Array.isArray(o.mascotas_resumen) ? o.mascotas_resumen.slice(0, 3) : [];
+    const iniciales = nodoDueno('span', 'propietario-mascotas__iniciales');
+    nombres.forEach(nombre => iniciales.append(nodoDueno('span', '', inicialesDueno(nombre))));
+    const resumenTexto = nombres.length ? nombres.join(', ') : Number(o.total_mascotas) === 0 ? 'Sin mascotas aún' : Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas');
+    resumen.append(iniciales, nodoDueno('span', 'propietario-mascotas__nombres', resumenTexto));
+    pie.append(resumen, nodoDueno('i', 'fas fa-chevron-right paciente-solo-escritorio propietario-ir'));
+    pie.querySelectorAll('[data-reenviar-activacion]').forEach(boton => {
+        boton.append(nodoDueno('span', 'paciente-solo-escritorio', 'Reenviar enlace'));
+    });
     tarjeta.append(cabecera, cuerpo, pie);
     abrirDetalleConLaTarjeta(tarjeta, o);
     return tarjeta;
@@ -428,6 +445,7 @@ function filaDueno(o) {
     const celda = nodoDueno('td', 'acciones-mini');
     celda.append(...accionesDueno(o));
     fila.append(celda);
+    abrirDetalleConLaTarjeta(fila, o);
     return fila;
 }
 
@@ -639,10 +657,13 @@ function renderOwnerDossier(owner, pets) {
         ponerEstado('dossierOwnerEstado' + sufijo);
     });
     ponerTexto('dossierOwnerAvatar', inicialesDueno(owner.nombre_completo));
+    ponerTexto('fichaPropietarioAvatar', inicialesDueno(owner.nombre_completo));
+    ponerTexto('fichaPropietarioNombre', owner.nombre_completo);
     ponerTexto('dossierOwnerTitle', owner.nombre_completo);
     ponerTexto('dossierOwnerRuta', owner.nombre_completo);
     ponerTexto('dossierVolverTexto', dossierOrigen === 'pets' ? 'Mascotas' : 'Propietarios');
     ponerTexto('dossierPetsTotal', String(pets.length));
+    ponerTexto('dossierOwnerPetsCount', String(pets.length));
 
     const petsScroll = document.getElementById('dossierPetsScroll');
     const petsCount = document.getElementById('dossierPetsCount');
@@ -659,7 +680,15 @@ function renderOwnerDossier(owner, pets) {
     pets.forEach(m => {
         const card = document.createElement('div');
         card.className = 'pet-dossier-card';
+        card.dataset.estado = String(m.estado);
+        card.setAttribute('role', 'button');
+        card.tabIndex = 0;
         card.addEventListener('click', () => loadPetDashboard(m.id_mascota));
+        card.addEventListener('keydown', evento => {
+            if (evento.target !== card || !['Enter', ' '].includes(evento.key)) return;
+            evento.preventDefault();
+            loadPetDashboard(m.id_mascota);
+        });
 
         // Solo se muestra lo que se sabe. Antes la etiqueta "VACUNA PENDIENTE"
         // salía de Math.random(): era un dato clínico inventado.
@@ -672,17 +701,19 @@ function renderOwnerDossier(owner, pets) {
                 </span>
                 <div class="pet-dossier-card-info">
                     <h4 class="pet-dossier-card-name">${escaparTexto(m.nombre)}</h4>
-                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}</p>
+                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}<span class="pacientes-texto-movil paciente-sexo-detalle"> · ${SEXOS[m.sexo] || 'Sexo desconocido'}</span></p>
                 </div>
             </div>
             <div class="pet-dossier-card-grid">
                 <span class="tag-mini">${SEXOS[m.sexo] || 'Sexo desconocido'}</span>
                 <span class="tag-mini pet-dossier-card-hc${m.numero_historia_clinica ? ' pet-dossier-card-hc--numero' : ''}">${escaparTexto(m.numero_historia_clinica || 'Sin historia')}</span>
-                ${Number(m.estado) === 0 ? '<span class="tag-mini">Inactiva</span>' : ''}
+                ${Number(m.estado) === 0 ? '<span class="tag-mini pet-dossier-card-inactiva">Inactiva</span>' : ''}
             </div>
             <div class="pet-dossier-card-actions">
                 <button type="button" class="btn-ficha">Ver ficha <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
             </div>
+            <span class="paciente-solo-escritorio propietario-mascota-edad"><small>Edad</small>${escaparTexto(m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Sin dato')}</span>
+            <i class="fas fa-chevron-right pet-dossier-card-flecha" aria-hidden="true"></i>
         `;
         const foto = card.querySelector('.pet-dossier-card-photo');
         foto?.addEventListener('error', () => {
@@ -726,6 +757,8 @@ function mostrarDossier(seccion) {
 
 // 'listado' = pacientes del propietario, 'ficha' = ficha de una mascota.
 function mostrarSeccionDossier(seccion) {
+    const dossier = document.getElementById('dossierView');
+    if (dossier) dossier.dataset.seccion = seccion;
     const listSection = document.getElementById('dossierListSection');
     if (listSection) listSection.style.display = seccion === 'listado' ? 'block' : 'none';
     const dashSection = document.getElementById('dossierPetDashboardSection');
@@ -733,6 +766,8 @@ function mostrarSeccionDossier(seccion) {
     const propietario = document.getElementById('dossierOwnerName')?.innerText || '';
     const mascota = document.getElementById('dashPetName')?.innerText || '';
     const ficha = seccion === 'ficha';
+    const rutaPropietario = document.getElementById('dossierOwnerRuta');
+    if (rutaPropietario) rutaPropietario.textContent = !ficha && window.matchMedia('(min-width: 768px)').matches ? 'Propietarios' : propietario;
     document.querySelector('[data-pacientes-detalle]')?.classList.toggle('pacientes-cabecera--ficha', ficha);
     const titulo = document.getElementById('dossierOwnerTitle');
     if (titulo) titulo.innerText = ficha ? `Ficha de ${mascota}` : propietario;
@@ -744,6 +779,38 @@ function mostrarSeccionDossier(seccion) {
     }
     const volver = document.getElementById('dossierVolverTexto');
     if (volver) volver.innerText = ficha ? `Mascotas de ${propietario.split(' ')[0]}` : (dossierOrigen === 'pets' ? 'Mascotas' : 'Propietarios');
+    const botonVolver = document.querySelector('[data-pacientes-detalle] .propietario-volver');
+    if (botonVolver && volver) botonVolver.setAttribute('aria-label', 'Volver a ' + volver.innerText);
+    ajustarEdicionDossier();
+    if (window.matchMedia('(max-width: 767px)').matches) window.scrollTo({ top: 0 });
+}
+
+/** RNF-16: se trasladan los botones existentes; conservan permisos y listeners al volver a escritorio. */
+function ajustarEdicionDossier() {
+    const destino = document.querySelector('[data-pacientes-editar]');
+    if (!destino) return;
+    if (!destino._piezas) {
+        const propietario = document.querySelector('.owner-details-card [data-c3-click="evento16"]');
+        const mascota = document.getElementById('dashEditPetBtn');
+        destino._piezas = [propietario, mascota].filter(Boolean).map(boton => {
+            const marca = document.createComment('Posición del botón de edición en escritorio');
+            boton.before(marca);
+            return { boton, marca };
+        });
+        window.matchMedia('(max-width: 767px)').addEventListener('change', ajustarEdicionDossier);
+    }
+    const ficha = document.getElementById('dossierView')?.dataset.seccion === 'ficha';
+    const movil = window.matchMedia('(max-width: 767px)').matches;
+    const todasEspecies = document.querySelector('#dossierPetSpeciesFilter option[value=""]');
+    if (todasEspecies) {
+        if (!todasEspecies.dataset.etiquetaCompleta) todasEspecies.dataset.etiquetaCompleta = todasEspecies.textContent;
+        todasEspecies.textContent = movil ? 'Especie' : todasEspecies.dataset.etiquetaCompleta;
+    }
+    destino._piezas.forEach(({ boton, marca }) => {
+        const corresponde = (boton.id === 'dashEditPetBtn') === ficha;
+        if (movil && corresponde) destino.append(boton);
+        else marca.after(boton);
+    });
 }
 
 function hideDossier() {
@@ -1130,6 +1197,7 @@ function filterTable() {
 
         c.style.display = (matchesSearch && matchesStatus && matchesSpecies) ? '' : 'none';
     });
+    window.zookiPaginarPacientes?.('pets');
 }
 
 // --- CONSULTAS ---
@@ -1250,11 +1318,7 @@ function eventosHistorialCompacto(datos) {
  * M2 C8.2: una sola fecha dd/mm/aaaa para todos los historiales. Se lee la cadena
  * del servidor sin pasar por Date para que una fecha sin hora no retroceda un día por UTC.
  */
-function fechaHistorial(fecha) {
-    const partes = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!partes) return 'Sin fecha';
-    return `${partes[3]}/${partes[2]}/${partes[1]}`;
-}
+// fechaHistorial se comparte con el portal en fechas.js.
 
 /**
  * M2 C8.1 (H11) y C8.2: mismo resumen en Atención y en los dos cajones de historial.
@@ -1271,7 +1335,7 @@ function filaHistorialCompacto(registro, tipo) {
     const principal = consulta ? (diagnostico || titulo || 'Sin diagnóstico') : (titulo || 'Sin registro');
     const tratamientos = Array.isArray(registro.tratamientos) ? registro.tratamientos : [];
     const chipDetalle = diagnostico ? `<span class="historia-fila__chip">${escaparTexto(diagnostico)}</span>` : '';
-    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : chipDetalle;
+    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} ${tratamientos.length === 1 ? 'tratamiento' : 'tratamientos'}</span>` : chipDetalle;
     const detalle = consulta ? `
         <p><strong>Veterinario:</strong> ${escaparTexto(registro.veterinario || 'Sin dato')}</p>
         ${etiquetaOrigen(registro)}
@@ -1428,17 +1492,18 @@ function closeHistorialDrawer() {
     setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 400);
 }
 
-function calculateAge(fecha) {
-    const born = new Date(fecha);
-    const now = new Date();
-    let years = now.getFullYear() - born.getFullYear();
-    let months = now.getMonth() - born.getMonth();
-    if (months < 0 || (months === 0 && now.getDate() < born.getDate())) {
-        years--;
-        months = 12 + months;
-    }
-    if (years === 0) return `${months} meses`;
-    return `${years} años, ${months} meses`;
+function calculateAge(fecha, hoy = new Date()) {
+    const partes = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!partes) return '';
+    // La fecha de nacimiento es civil: no se interpreta como UTC, que desplazaría el día en Colombia.
+    const nacimiento = new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]));
+    const mesesTotales = Math.max(0, (hoy.getFullYear() - nacimiento.getFullYear()) * 12 + hoy.getMonth() - nacimiento.getMonth() - (hoy.getDate() < nacimiento.getDate() ? 1 : 0));
+    const anios = Math.floor(mesesTotales / 12);
+    const meses = mesesTotales % 12;
+    const edad = [];
+    if (anios) edad.push(`${anios} ${anios === 1 ? 'año' : 'años'}`);
+    if (meses || !anios) edad.push(`${meses} ${meses === 1 ? 'mes' : 'meses'}`);
+    return edad.join(', ');
 }
 
 // --- DRAWER FUNCTIONS ---
@@ -1769,9 +1834,15 @@ function renderPetDashboard(data, id) {
     document.getElementById('dashPetSexo').innerText = m.sexo || '---';
     document.getElementById('dashPetPeso').innerText = m.peso ? m.peso + ' Kg' : '---';
     document.getElementById('dashPetHC').innerText = m.numero_historia_clinica || 'Sin asignar';
-    document.getElementById('dashPetFechaNac').innerText = m.fecha_nacimiento
-        ? fechaHistorial(m.fecha_nacimiento) + ' · ' + calculateAge(m.fecha_nacimiento)
-        : '---';
+    const fechaNacimiento = document.getElementById('dashPetFechaNac');
+    fechaNacimiento.replaceChildren();
+    const fechaCompleta = document.createElement('span');
+    fechaCompleta.className = 'pacientes-texto-escritorio';
+    fechaCompleta.textContent = m.fecha_nacimiento ? fechaHistorial(m.fecha_nacimiento) + ' · ' + calculateAge(m.fecha_nacimiento) : '---';
+    const fechaCompacta = document.createElement('span');
+    fechaCompacta.className = 'pacientes-texto-movil';
+    fechaCompacta.textContent = m.fecha_nacimiento ? fechaHistorial(m.fecha_nacimiento) : '---';
+    fechaNacimiento.append(fechaCompleta, fechaCompacta);
     document.getElementById('dashPetHCBadge').textContent = m.numero_historia_clinica || 'Sin historia';
     document.getElementById('dashPetResumen').textContent = [m.nombre_especie, razaConIndicada(m.nombre_raza, m.raza_indicada), m.sexo, m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : '', m.peso ? m.peso + ' kg' : ''].filter(Boolean).join(' · ');
     pintarResumenFicha(data);
@@ -1868,7 +1939,7 @@ async function printMedicalHistory(id, nombre) {
             html += `<div class="section"><h2>Consultas Clínicas</h2>`;
             data.consultas.forEach(c => {
                 html += `
-                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
+                    <h3>Fecha: ${fechaHistorial(c.fecha_hora)} - Dr. ${escaparTexto(c.veterinario)}</h3>
                     ${marcaParaImprimir(c)}
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
                     ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
@@ -1889,7 +1960,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.vacunas && data.vacunas.length > 0) {
             html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${fechaHistorial(v.fecha_aplicacion)}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? fechaHistorial(v.fecha_proxima_dosis) : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -1897,7 +1968,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
             html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${fechaHistorial(d.fecha_aplicacion)}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? fechaHistorial(d.fecha_proxima) : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -2368,18 +2439,20 @@ function validarEmail(input) {
 // Search owners directory locally using real-time search
 function filterOwners() {
     const term = document.getElementById('ownerSearch').value.toLowerCase();
+    const estado = document.querySelector('input[name="estado_propietarios"]:checked')?.value || '';
 
     // Filter grid cards
     const cards = document.querySelectorAll('#ownerGridView .client-card');
     cards.forEach(card => {
         const txt = card.innerText.toLowerCase();
-        card.style.display = txt.includes(term) ? '' : 'none';
+        card.style.display = txt.includes(term) && (!estado || card.dataset.estado === estado) ? '' : 'none';
     });
 
     // Filter table rows
     const rows = document.querySelectorAll('#ownersTable tbody tr');
     rows.forEach(row => {
         const txt = row.innerText.toLowerCase();
-        row.style.display = txt.includes(term) ? '' : 'none';
+        row.style.display = txt.includes(term) && (!estado || row.dataset.estado === estado) ? '' : 'none';
     });
+    window.zookiPaginarPacientes?.('owners');
 }

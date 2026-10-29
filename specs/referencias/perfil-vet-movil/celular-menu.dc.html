@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mi perfil del veterinario · menú en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cont{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px;height:44px}
+.top h1{margin:0 auto 0 0;font-size:20px;font-weight:700}
+.ib{width:44px;height:44px;border-radius:14px;background:#fff;border:0;color:#475569;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.badge{position:absolute;top:-5px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5}
+.yo{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:16px}
+.av{width:48px;height:48px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+.yo strong{display:block;font-size:16px}
+.yo span{font-size:13px;color:#64748B}
+.gt{font-size:11px;font-weight:700;color:#64748B;letter-spacing:.06em;text-transform:uppercase;padding:6px 4px 0}
+.grupo{background:#fff;border-radius:16px;overflow:hidden}
+.it{display:flex;align-items:center;gap:12px;height:54px;padding:0 14px;border-top:1px solid #F1F5F9;text-decoration:none;color:inherit}
+.it:first-child{border-top:0}
+.ic{width:34px;height:34px;border-radius:10px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+.it b{font-size:15px;font-weight:600;flex:1}
+.est{font-size:12px;font-weight:600;color:#64748B}
+.est.amb{color:#0052FF;background:rgba(0,82,255,.08);border-radius:10px;padding:2px 8px}
+.salir{height:52px;border-radius:16px;border:0;background:#FEF2F2;color:#B91C1C;font:700 15px Inter,sans-serif;margin-top:4px}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cont">
+    <header class="top">
+      <h1>Mi perfil</h1>
+      <button class="ib" type="button" aria-label="Notificaciones, 2 nuevas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">2</span></button>
+    </header>
+    <div class="yo"><span class="av">BN</span><div><strong>Beto Norte</strong><span>Veterinario · Clínica Norte</span></div></div>
+
+    <div class="gt">Mi cuenta</div>
+    <nav class="grupo" aria-label="Mi cuenta">
+      <a class="it" href="#"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span><b>Datos personales</b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="it" href="#"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><b>Seguridad</b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    </nav>
+
+    <div class="gt">Mi trabajo</div>
+    <nav class="grupo" aria-label="Mi trabajo">
+      <a class="it" href="PerfilHorario.dc.html"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><b>Mi horario</b><span class="est">Lun a vie</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="it" href="#"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M9 15h6"/></svg></span><b>Ausencias</b><span class="est amb">1 por aprobar</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    </nav>
+
+    <button class="salir" type="button">Cerrar sesión</button>
+  </div>
+
+  <nav class="barra" aria-label="Menú principal">
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="2.4"/><path d="M7 20c0-3 2.2-5 5-5s5 2 5 5"/></svg></span>Pacientes</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Agenda</a>
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7z"/></svg></span>Perfil</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

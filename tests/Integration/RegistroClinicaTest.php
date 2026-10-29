@@ -13,17 +13,70 @@ final class RegistroClinicaTest extends TestCase
     private PDO $db;
     private RegistroClinica $registro;
 
+    public static function nitUnicoValido(): array
+    {
+        $numero = '901555123';
+        $dv = (string) ValidadorNit::digito($numero);
+        $cedula = '1075001234';
+        return [
+            'con guion' => [$numero . '-' . $dv, $numero . $dv],
+            'sin DV escrito' => [$numero, $numero . $dv],
+            'pegado con puntos' => [' 901.555.123 - ' . $dv . ' ', $numero . $dv],
+            'cedula sola' => [$cedula, '10750012345'],
+            'cedula con DV' => [$cedula . '-5', '10750012345'],
+            'cedula con puntos sin DV' => ['1.075.001.234', '10750012345'],
+        ];
+    }
+
+    /** @dataProvider nitUnicoValido */
+    public function testNitUnicoEnRegistroComprobacionYReporte(string $nit, string $canonico): void
+    {
+        $this->alta(1, ['nit' => $nit]);
+        $consulta = $this->db->prepare('SELECT COUNT(*) FROM clinicas WHERE nit = ?');
+        $consulta->execute([$canonico]);
+        $this->assertSame(1, (int) $consulta->fetchColumn());
+        $_SESSION = ['csrf_cuenta_validacion' => 'validacion'];
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'nit', 'valor' => $nit];
+        Security::definirAlmacenDeIntentos(new IntentoLogin($this->db));
+        ob_start();
+        (new IdentidadController($this->db))->validar();
+        $respuesta = json_decode(ob_get_clean(), true);
+        $this->assertTrue($respuesta['nit_duplicado']);
+        $this->assertSame('Este NIT ya está registrado en Zooki.', $respuesta['error']);
+        $this->registro->reportarNit(self::datos(1, ['nit' => $nit]));
+        $this->assertSame(1, $this->total('casos_soporte'));
+        Security::definirAlmacenDeIntentos(null);
+    }
+
     public function testE2NitAntiguoConGuionTambienImpideDuplicarLaClinica(): void
     {
         $this->db->exec("UPDATE clinicas SET nit = '900123456-8' WHERE id_clinica = 1");
-        $this->assertTrue($this->registro->nitExiste('900123456', '8'));
+        $this->assertTrue($this->registro->nitExiste('900123456-8'));
         try {
-            $this->registro->registrar(self::datos(1, ['nit' => '900123456', 'dv' => '8']), '192.0.2.123');
+            $this->registro->registrar(self::datos(1, ['nit' => '900123456-8']), '192.0.2.123');
             $this->fail('El guion antiguo no debe permitir una segunda clínica con el mismo NIT.');
         } catch (NitDuplicado $error) {
             $this->assertSame(3, $this->total('clinicas'));
             $this->assertSame('900123456-8', $this->db->query('SELECT nit FROM clinicas WHERE id_clinica = 1')->fetchColumn());
         }
+    }
+
+    public function testCedulaSolaYConDvNoPermitenDuplicarNiCambianElCasoReportado(): void
+    {
+        $this->alta(1, ['nit' => '1075001234']);
+        $this->assertTrue($this->registro->nitExiste('1075001234'));
+        $this->assertTrue($this->registro->nitExiste('1075001234-5'));
+        try {
+            $this->alta(2, ['nit' => '1075001234-5']);
+            $this->fail('Escribir el DV no debe permitir otra clínica con la misma cédula.');
+        } catch (NitDuplicado $error) {
+            $this->assertSame(4, $this->total('clinicas'));
+        }
+        $this->registro->reportarNit(self::datos(1, ['nit' => '1075001234-5']));
+        $this->registro->reportarNit(self::datos(1, ['nit' => '1075001234']));
+        $this->assertSame(2, $this->total('casos_soporte'));
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(DISTINCT id_clinica) FROM casos_soporte')->fetchColumn());
     }
 
     public function testE2NitDuplicadoSeAvisaAlEscribirSinRevelarIdentidadesYConLimiteIp(): void
@@ -32,7 +85,7 @@ final class RegistroClinicaTest extends TestCase
         $_SESSION = ['csrf_cuenta_validacion' => 'validacion'];
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $entrada = self::datos();
-        $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'dv', 'valor' => $entrada['dv'], 'nit' => $entrada['nit']];
+        $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'nit', 'valor' => $entrada['nit']];
         $controller = new IdentidadController($this->db);
         require_once __DIR__ . '/../../models/IntentoLogin.php';
         Security::definirAlmacenDeIntentos(new IntentoLogin($this->db));
@@ -44,8 +97,8 @@ final class RegistroClinicaTest extends TestCase
         $this->assertSame('Este NIT ya está registrado en Zooki.', $respuesta['error']);
         $this->assertArrayNotHasKey('email', $respuesta);
         $this->assertArrayNotHasKey('id_clinica', $respuesta);
-        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM clinicas WHERE nit = '" . ValidadorNit::normalizar($entrada['nit'] . '-' . $entrada['dv']) . "'")->fetchColumn());
-        for ($numero = 1; $numero < 20; $numero++) {
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM clinicas WHERE nit = '" . ValidadorNit::normalizar($entrada['nit']) . "'")->fetchColumn());
+        for ($numero = 1; $numero < 40; $numero++) {
             $_SESSION = ['id_usuario' => 1, 'csrf_cuenta_validacion' => 'validacion'];
             ob_start();
             $controller->validar();
@@ -93,8 +146,7 @@ final class RegistroClinicaTest extends TestCase
         $numeroNit = (string) (900123450 + $numero);
         return $cambios + [
             'nombre_clinica' => 'Clínica Nueva ' . $numero,
-            'nit' => $numeroNit,
-            'dv' => (string) ValidadorNit::digito($numeroNit),
+            'nit' => $numeroNit . '-' . ValidadorNit::digito($numeroNit),
             'direccion' => 'Carrera 10 número 20-30',
             'telefono_clinica' => '3001112233',
             'email_clinica' => 'clinica' . $numero . '@zooki.test',
@@ -281,9 +333,17 @@ final class RegistroClinicaTest extends TestCase
         unset($_SERVER['HTTP_X_FORWARDED_FOR']);
     }
 
-    public function testRegistroYReporteRechazanDvIncorrectoYNoExtraenDelNit(): void
+    public function testRegistroYReporteRechazanDvIncorrectoYUnDigitoSolo(): void
     {
-        foreach ([['nit' => '9001234568', 'dv' => ''], ['nit' => '900123456', 'dv' => '2'], ['nit' => '900123456-8', 'dv' => '8']] as $cambio) {
+        foreach ([['nit' => '900123456-7'], ['nit' => '900123456-88'], ['nit' => '1']] as $cambio) {
+            $_SESSION = ['csrf_cuenta_validacion' => 'validacion'];
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'nit', 'valor' => $cambio['nit']];
+            ob_start();
+            (new IdentidadController($this->db))->validar();
+            $respuesta = json_decode(ob_get_clean(), true);
+            $this->assertFalse($respuesta['nit_duplicado']);
+            $this->assertSame(ValidadorNit::MENSAJE, $respuesta['error']);
             foreach (['registrar', 'reportarNit'] as $metodo) {
                 try {
                     if ($metodo === 'registrar') {
@@ -432,15 +492,17 @@ final class RegistroClinicaTest extends TestCase
         $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-form-area')]")->length);
         $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]")->length);
         $this->assertSame(0, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]//form")->length);
-        foreach (['documento' => '15', 'nombre_completo' => '100', 'email' => '255', 'nit' => '14', 'dv' => '1'] as $campo => $maximo) {
+        foreach (['documento' => '15', 'nombre_completo' => '100', 'email' => '255', 'nit' => '16'] as $campo => $maximo) {
             $input = $xpath->query("//input[@name='$campo']")->item(0);
             $this->assertSame($maximo, $input->getAttribute('maxlength'));
             $this->assertTrue($input->hasAttribute('data-caracteres'));
         }
         $css = file_get_contents(__DIR__ . '/../../public/css/registro-clinica.css');
-        $this->assertStringNotContainsString('.login-container', $css);
-        $this->assertStringNotContainsString('.login-form-area', $css);
-        $this->assertStringContainsString('(max-width: 767px)', $css);
+        $cssEscritorio = explode('/* Etapa R, RNF-16:', $css)[0];
+        $this->assertStringNotContainsString('.login-container', $cssEscritorio);
+        $this->assertStringNotContainsString('.login-form-area', $cssEscritorio);
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr)', $css);
+        $this->assertSame(0, $xpath->query("//input[@name='dv']")->length);
     }
 
     public function testD31SaneamientoSeGuardaYEntradaIlegalNoCreaCuenta(): void

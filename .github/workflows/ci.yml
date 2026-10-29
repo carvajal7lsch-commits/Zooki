@@ -48,10 +48,20 @@ jobs:
       with:
         node-version: '22'
 
-    # C9.1: pruebas del JS del navegador con node:test, sin dependencias.
-    # Desde Node 21 el argumento es un patrón: una carpeta sola no se acepta.
+    # Tope de 20 minutos: una prueba de Chrome colgada dejó el job 6 horas (2026-10-27).
+    # Si algo falla, cada prueba en rojo sale como anotación del job, legible sin
+    # descargar el registro completo.
     - name: Pruebas de JS (node --test)
-      run: node --test "tests/Frontend/**/*.test.cjs"
+      timeout-minutes: 20
+      shell: bash
+      run: |
+        set -o pipefail
+        if node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=tap --test-reporter-destination=js.tap "tests/Frontend/**/*.test.cjs"; then
+          exit 0
+        fi
+        grep -E '^ *not ok ' js.tap | sed -E 's/^ *not ok [0-9]+ - /::error title=Prueba JS en rojo::/' | head -20
+        grep -E -A14 '^ *not ok ' js.tap | grep -E -A1 '^ *error:' | grep -vE '^ *error:|^--$' | sed -E 's/^ */::error title=Detalle::/' | head -20
+        exit 1
 
   # Plan M0, etapa B: la base v2 se crea desde cero en MySQL 8 (producción)
   # y el migrador se puede correr dos veces sin cambiar nada.

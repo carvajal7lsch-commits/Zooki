@@ -2,12 +2,14 @@
 require_once __DIR__ . '/ValidadorClinica.php';
 require_once __DIR__ . '/CampoInvalido.php';
 
-/** HU-7.4: límites del esquema y reglas compartidas de contacto, sin topes de producto nuevos. */
+/** HU-7.4: límites compartidos y topes de minutos aprobados por el dueño el 2026-10-26. */
 final class ValidadorConfiguracionClinica
 {
     public const TIPO_MAX = 100;
     public const LOGO_MAX = 255;
     public const ENTERO_MAX = 2147483647;
+    public const DURACION_MAX = 720;
+    public const MARGEN_MAX = 120;
 
     public static function logoValido(string $valor): bool
     {
@@ -35,13 +37,15 @@ final class ValidadorConfiguracionClinica
             'nombre' => ValidadorClinica::campo('nombre_clinica', $valor),
             'direccion' => $valor === '' ? null : ValidadorClinica::campo('direccion', $valor),
             'telefono', 'telefono_urgencias' => $valor === '' || ValidadorTelefono::esValido($valor) ? null : ValidadorTelefono::MENSAJE,
-            'email_contacto' => $valor === '' ? null : ValidadorCuenta::correoDeCuenta($valor),
+            // Es contacto público de la clínica; no identifica una cuenta ni exige unicidad (RE-7.4.1).
+            'email_contacto' => $valor === '' ? null : ValidadorCuenta::correo($valor),
             'url_logo' => self::logoValido($valor) ? null : 'Usa una URL HTTP/HTTPS o una ruta de imagen, de hasta 255 caracteres.',
             'nombre_tipo' => mb_strlen($valor) >= 1 && mb_strlen($valor) <= self::TIPO_MAX
                 && preg_match('~^[' . ValidadorClinica::TEXTO_CARACTERES . ']+$~uD', $valor) === 1 ? null : 'Escribe el nombre del tipo, de hasta 100 caracteres.',
-            'duracion_minutos', 'margen_minutos' => ctype_digit($valor) && strlen($valor) <= 10
-                && (int) $valor >= ($campo === 'duracion_minutos' ? 1 : 0) && (int) $valor <= self::ENTERO_MAX
-                ? null : ($campo === 'duracion_minutos' ? 'Duración entera positiva.' : 'Margen entero no negativo.'),
+            'duracion_minutos' => ctype_digit($valor) && strlen($valor) <= 3 && (int) $valor >= 1 && (int) $valor <= self::DURACION_MAX
+                ? null : 'La duración debe ser de 1 a ' . self::DURACION_MAX . ' minutos.',
+            'margen_minutos' => ctype_digit($valor) && strlen($valor) <= 3 && (int) $valor <= self::MARGEN_MAX
+                ? null : 'El margen debe ser de 0 a ' . self::MARGEN_MAX . ' minutos.',
             'pausable', 'activo' => in_array($valor, ['0', '1'], true) ? null : 'Elige Sí o No.',
             default => 'Campo no válido.',
         };

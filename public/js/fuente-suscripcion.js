@@ -16,6 +16,9 @@
         let ocupado = false;
         const aviso = texto => {
             buscar('fuente-mensaje').textContent = texto;
+            // Rediseño (2026-10-26): el mensaje también se ve en la tarjeta cuando la ventana está cerrada.
+            const tarjeta = buscar('fuente-mensaje-tarjeta');
+            if (tarjeta) tarjeta.textContent = texto;
         };
         const aceptadas = () => !!buscar('acepta-politica')?.checked && !!buscar('acepta-datos')?.checked;
         function validar() {

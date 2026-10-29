@@ -64,13 +64,13 @@ if ($panel['ausencias_por_aprobar']) {
     $n = count($panel['ausencias_por_aprobar']);
     $pendientes[] = ['clave' => 'ausencia', 'n' => $n, 'texto' => $plural($n, 'Ausencia por aprobar', 'Ausencias por aprobar'),
         'detalle' => ResumenPanel::primerNombre($primera['veterinario']) . ', ' . mb_strtolower($primera['dia']) . ($n > 1 ? ' y ' . ($n - 1) . ' más' : ''),
-        'accion' => 'Revisar', 'etiqueta' => 'Revisar las ausencias en Configuración', 'href' => 'index.php?action=admin_configuracion#ausencias'];
+        'accion' => 'Revisar', 'etiqueta' => 'Revisar las ausencias en Ajustes', 'href' => 'index.php?action=admin_configuracion#ausencias'];
 }
 if ($panel['propuestas_por_aprobar']) {
     $n = count($panel['propuestas_por_aprobar']);
     $pendientes[] = ['clave' => 'horario', 'n' => $n, 'texto' => $plural($n, 'Horario propuesto', 'Horarios propuestos'),
         'detalle' => $nombres(array_map(fn($p) => ResumenPanel::primerNombre($p['veterinario']), $panel['propuestas_por_aprobar'])),
-        'accion' => 'Revisar', 'etiqueta' => 'Revisar los horarios propuestos en Configuración', 'href' => 'index.php?action=admin_configuracion#horarios'];
+        'accion' => 'Revisar', 'etiqueta' => 'Revisar los horarios propuestos en Ajustes', 'href' => 'index.php?action=admin_configuracion#horarios'];
 }
 $totalPendientes = array_sum(array_column($pendientes, 'n'));
 
@@ -81,11 +81,11 @@ $recursosPlan = ['mascotas' => 'Mascotas', 'citas' => 'Citas de ' . $panel['mes_
 $maximoSerie = max(1, ...array_map(fn($m) => (int) $m['atendidas'] + (int) $m['no_asistidas'], $panel['tendencia']));
 $ultimoMes = count($panel['tendencia']) - 1;
 ?>
-<div class="inicio inicio--admin" data-inicio data-inicio-accion="panel_admin_dia_ajax" data-hoy="<?= $e($panel['hoy']) ?>">
+<div class="inicio inicio--admin" data-inicio data-inicio-accion="panel_admin_dia_ajax" data-hoy="<?= $e($panel['hoy']) ?>" data-inicio-movil-habilitado>
 
     <div class="inicio__arriba">
         <!-- Hoy en la clínica (RE-6.2.7) -->
-        <section class="inicio-tile inicio-hero inicio-clinica" aria-labelledby="inicioTituloClinica">
+        <section class="inicio-tile inicio-hero inicio-clinica" aria-labelledby="inicioTituloClinica" data-inicio-bloque="clinica">
             <span class="inicio-hero__circulo" aria-hidden="true"></span>
             <span class="inicio-hero__cuarto" aria-hidden="true"></span>
             <img class="inicio-hero__mascota inicio-clinica__mascota" src="img/golden-retriever.png" alt="" decoding="async">
@@ -104,7 +104,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
                 </ul>
                 <div class="inicio-hero__acciones">
                     <!-- RN-401: el administrador no crea citas; desde aquí las gestiona. -->
-                    <a class="inicio-boton inicio-boton--blanco" href="index.php?action=admin_citas">Gestión de citas</a>
+                    <a class="inicio-boton inicio-boton--blanco" href="index.php?action=admin_citas"><span class="inicio-solo-escritorio">Gestión de citas</span><span class="inicio-solo-movil">Citas ›</span></a>
                 </div>
             </div>
         </section>
@@ -117,7 +117,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
         </section>
 
         <!-- Uso del plan (RE-6.2.10, HU-0.4) -->
-        <section class="inicio-tile inicio-plan" aria-labelledby="inicioTituloPlan">
+        <section class="inicio-tile inicio-plan" aria-labelledby="inicioTituloPlan" data-inicio-bloque="plan">
             <div class="inicio-cabecera">
                 <h2 class="inicio-titulo" id="inicioTituloPlan">Uso del plan</h2>
                 <?php if ($panel['plan'] !== null): ?><span class="inicio-plan__nombre"><?= $e($panel['plan']['nombre']) ?></span><?php endif; ?>
@@ -142,14 +142,19 @@ $ultimoMes = count($panel['tendencia']) - 1;
             <?php endif; ?>
             <div class="inicio-plan__accesos">
                 <a class="inicio-rapido" href="index.php?action=admin_usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a>
-                <a class="inicio-rapido" href="index.php?action=admin_suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>
+                <a class="inicio-rapido" href="index.php?action=admin_configuracion&amp;seccion=suscripcion&amp;desde=inicio#suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>
             </div>
         </section>
     </div>
 
+    <?php
+    $conteoInicioMovil = $totalPendientes;
+    require __DIR__ . '/../partials/inicio_movil.php';
+    ?>
+
     <div class="inicio__abajo">
         <!-- Agenda del día por veterinario (RE-6.2.9) -->
-        <section class="inicio-tile inicio-dia inicio-agenda-tile" aria-labelledby="inicioTituloDia" data-inicio-dia aria-busy="false">
+        <section class="inicio-tile inicio-dia inicio-agenda-tile" aria-labelledby="inicioTituloDia" data-inicio-dia data-inicio-bloque="agenda" aria-busy="false">
             <div class="inicio-dia__contenido" data-inicio-dia-contenido>
                 <?php $agenda = $panel['agenda']; require __DIR__ . '/partials/inicio_agenda.php'; ?>
             </div>
@@ -157,7 +162,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
 
         <div class="inicio-col">
             <!-- Pendientes de la clínica (RE-6.2.3, RE-6.2.11) -->
-            <section class="inicio-tile inicio-pendientes<?= $pendientes ? '' : ' inicio-pendientes--vacio' ?>" aria-labelledby="inicioTituloPendientes">
+            <section class="inicio-tile inicio-pendientes<?= $pendientes ? '' : ' inicio-pendientes--vacio' ?>" aria-labelledby="inicioTituloPendientes" data-inicio-bloque="pendientes">
                 <div class="inicio-cabecera">
                     <h2 class="inicio-titulo" id="inicioTituloPendientes">Pendientes de la clínica</h2>
                     <?php if ($totalPendientes > 0): ?><span class="inicio-meta"><?= (int) $totalPendientes ?> por resolver</span><?php endif; ?>
@@ -178,7 +183,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
             </section>
 
             <!-- Este mes (RE-6.2.1, RE-6.2.4, RE-6.2.12, RE-6.4.1) -->
-            <section class="inicio-tile inicio-mes" aria-labelledby="inicioTituloMes">
+            <section class="inicio-tile inicio-mes" aria-labelledby="inicioTituloMes" data-inicio-bloque="mes">
                 <div class="inicio-cabecera">
                     <h2 class="inicio-titulo" id="inicioTituloMes">Este mes</h2>
                     <span class="inicio-meta"><?= $e($panel['mes_actual']) ?></span>
@@ -200,9 +205,9 @@ $ultimoMes = count($panel['tendencia']) - 1;
                             </p>
                         <?php endif; ?>
                     </div>
-                    <div class="inicio-grafica" aria-hidden="true">
+                    <div class="inicio-grafica<?= $maximoSerie === 1 && array_sum(array_column($panel['tendencia'], 'atendidas')) + array_sum(array_column($panel['tendencia'], 'no_asistidas')) === 0 ? ' inicio-grafica--vacia' : '' ?>" aria-hidden="true">
                         <?php foreach ($panel['tendencia'] as $i => $m): ?>
-                            <span class="inicio-grafica__mes<?= $i === $ultimoMes ? ' inicio-grafica__mes--actual' : '' ?>" title="<?= $e($m['etiqueta'] . ': ' . (int) $m['atendidas'] . ' atendidas, ' . (int) $m['no_asistidas'] . ' no asistieron') ?>">
+                            <span class="inicio-grafica__mes<?= $i === $ultimoMes ? ' inicio-grafica__mes--actual' : '' ?>" data-inicial="<?= $e(mb_substr($m['etiqueta'], 0, 1)) ?>" title="<?= $e($m['etiqueta'] . ': ' . (int) $m['atendidas'] . ' atendidas, ' . (int) $m['no_asistidas'] . ' no asistieron') ?>">
                                 <span class="inicio-grafica__barra inicio-grafica__barra--no-asistio inicio-alto--<?= ResumenPanel::escala5(ResumenPanel::porcentaje((int) $m['no_asistidas'], $maximoSerie)) ?>"></span>
                                 <span class="inicio-grafica__barra inicio-alto--<?= ResumenPanel::escala5(ResumenPanel::porcentaje((int) $m['atendidas'], $maximoSerie)) ?>"></span>
                             </span>

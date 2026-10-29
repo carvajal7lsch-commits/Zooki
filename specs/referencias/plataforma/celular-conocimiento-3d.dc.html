@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Conocimiento clínico 3D en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cab{position:absolute;left:16px;right:16px;top:14px;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px}
+h1{margin:0 auto 0 0;font-size:20px;font-weight:700}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+.dseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border-radius:12px;padding:3px;gap:2px}
+.dseg button{height:38px;border:0;border-radius:9px;background:transparent;font:600 13px Inter,sans-serif;color:#64748B}
+.dseg button.on{background:rgba(0,82,255,.08);color:#0052FF}
+.mapa{position:absolute;left:8px;right:8px;top:122px;bottom:92px;border-radius:22px;overflow:hidden;background:#fff}
+.mapa img{position:absolute;left:0;top:-30px;width:100%;height:auto;display:block}
+.grande{position:absolute;right:12px;top:12px;width:42px;height:42px;border-radius:12px;border:1px solid #E2E8F0;background:rgba(255,255,255,.94);color:#0F172A;display:flex;align-items:center;justify-content:center}
+.buscar{position:absolute;left:12px;right:62px;top:12px;height:42px;border-radius:12px;border:1px solid #E2E8F0;background:rgba(255,255,255,.94);display:flex;align-items:center;gap:10px;padding:0 12px;color:#64748B;font-size:14px}
+.buscar b{color:#0F172A;font-weight:500}
+.tipos{position:absolute;left:12px;right:0;top:62px;display:flex;gap:6px;overflow:hidden}
+.tipos button{height:30px;border-radius:15px;border:1px solid #E2E8F0;background:rgba(255,255,255,.94);font:600 12px Inter,sans-serif;color:#334155;padding:0 11px;display:flex;align-items:center;gap:6px;white-space:nowrap;flex:none}
+.tipos button i{width:8px;height:8px;border-radius:50%}
+.hoja{position:absolute;left:8px;right:8px;bottom:92px;background:#fff;border-radius:22px 22px 18px 18px;box-shadow:0 -10px 30px rgba(15,23,42,.14);border:1px solid #EEF2F7;padding:8px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.asa{width:40px;height:4px;border-radius:2px;background:#CBD5E1;align-self:center}
+.hh{display:flex;align-items:flex-start;gap:10px}
+.ojo{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#7C3AED}
+.ojo i{width:9px;height:9px;border-radius:50%;background:#7C3AED}
+.hh h2{margin:3px 0 0;font-size:18px;font-weight:700}
+.cerrar{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;flex:none}
+.et{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#64748B;margin:0}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 60px 26px;gap:10px;align-items:center;font-size:13px;height:30px}
+.r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.r span i{width:8px;height:8px;border-radius:50%;background:#2F6BFF;flex:none}
+.peso{height:6px;border-radius:3px;background:#EEF2F7;overflow:hidden}
+.peso b{display:block;height:100%;background:#0052FF;border-radius:3px}
+.r em{font-style:normal;font-size:12px;color:#64748B;text-align:right}
+.mas{border:0;background:none;font:600 13px Inter,sans-serif;color:#0052FF;text-align:left;padding:0;height:24px}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+.barra a.salir{color:#B91C1C}
+.barra a.salir span{background:#FEF2F2}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cab">
+    <header class="top">
+      <h1>Conocimiento</h1>
+      <button class="redondo" type="button" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">SC</button>
+    </header>
+    <div class="dseg" role="group" aria-label="Vista"><button class="on" type="button">3D</button><button type="button">Plano</button><button type="button">Lista</button></div>
+  </div>
+  <section class="mapa" aria-label="Mapa 3D del conocimiento">
+    <img src="/_blob/a40f63a242d4d548780e238236c4e291" alt="Parvovirosis canina enfocada en el mapa 3D con sus seis síntomas">
+    <div class="buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><b>Parvovirosis canina</b></div>
+    <button class="grande" type="button" aria-label="Ver el mapa en pantalla completa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <div class="tipos" role="group" aria-label="Tipos">
+      <button type="button"><i style="background:#7C3AED"></i>Diagnósticos 17</button>
+      <button type="button"><i style="background:#2F6BFF"></i>Síntomas 51</button>
+      <button type="button"><i style="background:#0D9488"></i>Fármacos 12</button>
+    </div>
+  </section>
+  <section class="hoja" aria-labelledby="hojaTitulo">
+    <span class="asa" aria-hidden="true"></span>
+    <div class="hh">
+      <div><span class="ojo"><i></i>Diagnóstico · 6 relaciones</span><h2 id="hojaTitulo">Parvovirosis canina</h2></div>
+      <button class="cerrar" type="button" aria-label="Cerrar la ficha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="et">Lo sugieren</p>
+    <div>
+      <div class="r"><span><i></i>Diarrea con sangre</span><span class="peso"><b style="width:80%"></b></span><em>0,8</em></div>
+      <div class="r"><span><i></i>Vómito</span><span class="peso"><b style="width:60%"></b></span><em>0,6</em></div>
+      <div class="r"><span><i></i>Diarrea</span><span class="peso"><b style="width:50%"></b></span><em>0,5</em></div>
+    </div>
+    <button class="mas" type="button">Ver las 6 relaciones y las fuentes</button>
+  </section>
+  <nav class="barra" aria-label="Menú de la plataforma">
+    <a href="Movil.dc.html"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg></span>Plataforma</a>
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.2l7.2.2M7.3 8.2l3.6 7.6M16.9 9.2l-3.7 6.6"/></svg></span>Conocimiento</a>
+    <a class="salir" href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Salir</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

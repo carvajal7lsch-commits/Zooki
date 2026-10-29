@@ -160,11 +160,11 @@ function textoPesoConsulta(peso) {
 
 /** Cabecera de la ficha: especie y raza, y las clínicas donde se atiende. */
 function etiquetasDeLaMascota(m, clinicas) {
-    let html = `<span class="tag-mini">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span>`;
+    let html = `<span class="tag-mini pet-detail__especie">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span><span class="pet-detail__clinicas">`;
     clinicas.forEach(c => {
         html += `<span class="tag-mini tag-mini--azul"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.nombre)}</span>`;
     });
-    return html;
+    return html + '</span>';
 }
 
 /** Clínicas distintas entre todos los registros de la ficha, en orden de aparición. */
@@ -192,6 +192,8 @@ function prepararFiltroClinica(clinicas) {
 }
 
 function filtrarFichaPorClinica(idClinica) {
+    const mascota = window.activePetData;
+    if (mascota) renderSummary(mascota, window.activePetClinicas || [], idClinica);
     document.querySelectorAll('#screen-pet-detail [data-filtro-clinica]').forEach(chip => {
         const activo = chip.dataset.filtroClinica === idClinica;
         chip.classList.toggle('active', activo);
@@ -267,6 +269,8 @@ function seccionDesdeHash(hash) {
     const limpio = (hash || '').replace(/^#/, '');
     const mascota = limpio.match(/^mascota-(\d+)$/);
     if (mascota) return { mascota: Number(mascota[1]) };
+    const salud = limpio.match(/^salud-(\d+)$/);
+    if (salud) return { tab:'citas', salud:Number(salud[1]) };
     const tab = Object.keys(SECCIONES_URL).find(k => SECCIONES_URL[k] === limpio);
     return { tab: tab || SECCIONES_ANTERIORES[limpio] || 'home' };
 }
@@ -341,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const destino = seccionDesdeHash(location.hash);
     if (destino.mascota) verDetalle(destino.mascota, { historial: false });
     else if (destino.tab !== 'home') switchTab(destino.tab, { historial: false });
-    const direccion = destino.mascota ? location.hash : '#' + SECCIONES_URL[destino.tab];
+    const direccion = destino.mascota || destino.salud ? location.hash : '#' + SECCIONES_URL[destino.tab];
     history.replaceState(destino.mascota ? { zkMascota: destino.mascota } : { zkTab: destino.tab }, '', direccion);
 });
 
@@ -391,6 +395,7 @@ async function submitContactEditPortal() {
         if (res.success) {
             zookiToast(res.message || 'Datos de contacto actualizados.', 'success');
             if (resultado) resultado.textContent = '';
+            document.getElementById('portalContactEditForm').dispatchEvent(new CustomEvent('portal:telefono-guardado', { bubbles: true, detail: { telefono: campo.value } }));
         } else if (resultado) {
             // Un error del campo va junto a él, no en una ventana (M0.1).
             resultado.textContent = res.message || 'No se pudo actualizar el teléfono.';
@@ -493,9 +498,10 @@ function calcularEdad(fechaNacimiento) {
     return `${edadMeses} mes${edadMeses !== 1 ? 'es' : ''}`;
 }
 
-function renderSummary(mascota) {
+function renderSummary(mascota, clinicas = [], idClinica = 'all') {
     const edad = calcularEdad(mascota.fecha_nacimiento);
-    const hc = mascota.numero_historia_clinica || '—';
+    const clinica = idClinica === 'all' ? clinicas[0] : clinicas.find(c => String(c.id_clinica) === String(idClinica));
+    const hc = clinica?.numero_historia_clinica || mascota.numero_historia_clinica || '—';
     const sexo = mascota.sexo || '—';
     const peso = mascota.peso ? mascota.peso + ' kg' : '—';
     
@@ -518,6 +524,7 @@ function renderSummary(mascota) {
                 <strong>${escapeHtml(sexo)}</strong>
             </div>
         </div>
+        <a class="portal-boton-secundario pet-detail__pdf" href="index.php?action=portal_imprimir_historial&amp;id_mascota=${encodeURIComponent(mascota.id_mascota)}&amp;origen=mascota"><i class="ri-file-pdf-line" aria-hidden="true"></i> Historia clínica (PDF)</a>
     `;
 }
 
@@ -558,9 +565,10 @@ async function verDetalle(id, opciones = {}) {
 
         const m = res.mascota;
         window.activePetData = m;
+        window.activePetClinicas = res.clinicas || [];
         // C9.1 (RE-5.11): el historial para imprimir de esta mascota.
         if (imprimir) {
-            imprimir.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(m.id_mascota)}`;
+            imprimir.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(m.id_mascota)}&origen=mascota`;
             imprimir.hidden = false;
         }
         
@@ -568,10 +576,10 @@ async function verDetalle(id, opciones = {}) {
             ? `<span class="avatar-mini"><img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt=""></span>`
             : `<span class="avatar-mini avatar-iniciales" aria-hidden="true">${escapeHtml(inicialesDe(m.nombre))}</span>`;
 
-        document.getElementById('drawerPetTitle').innerHTML = `${avatarHtml}<span>${escapeHtml(m.nombre)}</span>`;
+        document.getElementById('drawerPetTitle').innerHTML = `${avatarHtml}<span class="pet-detail__nombre">${escapeHtml(m.nombre)}<small class="pet-detail__raza-movil">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</small></span>`;
         document.getElementById('drawerPetTags').innerHTML = etiquetasDeLaMascota(m, res.clinicas || []);
 
-        renderSummary(m);
+        renderSummary(m, res.clinicas || []);
         // M2 C1 (RE-2.10.1, RN-114): de solo lectura, con la clínica que registró cada una.
         if (alertasMascota && window.ZookiAlertas) {
             window.ZookiAlertas.pintar(alertasMascota, { activas: res.alertas || [], historial: [] }, { idMascota: m.id_mascota, lectura: true, iconos: 'ri' });
@@ -605,7 +613,7 @@ async function verDetalle(id, opciones = {}) {
 
                 html += `
                 <div class="portal-timeline-item" data-id-clinica="${Number(h.id_clinica)}">
-                    <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
+                    <div class="portal-timeline-date">${escapeHtml(fechaHistorial(h.fecha_hora))} · ${escapeHtml(String(h.fecha_hora || '').slice(11, 16))}</div>
                     <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" data-ui-accion="acordeon-historia">
                         <div class="accordion-header">
                             <h3>${escapeHtml(h.motivo_consulta)}</h3>
@@ -710,7 +718,9 @@ async function verDetalle(id, opciones = {}) {
             document.getElementById('desparasitacionesContent').innerHTML = html;
         }
 
-        prepararFiltroClinica(clinicasDeLosRegistros(res));
+        const clinicasFiltro = new Map((res.clinicas || []).map(c => [Number(c.id_clinica), { id:Number(c.id_clinica), nombre:c.nombre }]));
+        clinicasDeLosRegistros(res).forEach(c => { if (!clinicasFiltro.has(c.id)) clinicasFiltro.set(c.id, c); });
+        prepararFiltroClinica([...clinicasFiltro.values()]);
     } catch (e) {
         console.error(e);
         zookiAviso('No se pudieron cargar los datos de la mascota.');
@@ -1074,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Imprimir la ficha de salud solo con una mascota elegida.
         if (printBtn) {
             printBtn.hidden = selectedPetId === 'all';
-            printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(selectedPetId)}`;
+            printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(selectedPetId)}&origen=salud`;
         }
 
         // Filtrar ambos módulos
@@ -1104,6 +1114,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('agenda-salud')) {
         renderMiniCalendar();
         renderSaludLists();
+    }
+
+    // RE-5.5.1: el regreso del PDF recupera Vacunas y su mascota sin guardar datos personales.
+    const retornoSalud = location.hash.match(/^#salud-(\d+)$/);
+    if (retornoSalud) {
+        switchTab('citas', { historial:false });
+        activarPestana(document.querySelector('[data-pestanas="citas"]'), 'agenda-salud');
+        const chip = document.querySelector(`.pet-chip[data-pet-id="${Number(retornoSalud[1])}"]`);
+        if (chip) elegirMascota(chip);
+        history.replaceState({ zkTab:'citas' }, '', '#citas');
     }
 
     // Inicializar Flatpickr personalizado (estilo Win11) para fecha de nacimiento de mascotas y agendamiento
@@ -1795,6 +1815,34 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     [addForm, editForm].forEach(form => {
+        const zona = form.querySelector('.foto-campo');
+        for (const nombre of ['dragenter', 'dragover']) zona.addEventListener(nombre, evento => {
+            evento.preventDefault();
+            zona.dataset.arrastrando = 'true';
+        });
+        zona.addEventListener('dragleave', evento => {
+            if (!zona.contains(evento.relatedTarget)) delete zona.dataset.arrastrando;
+        });
+        zona.addEventListener('drop', evento => {
+            evento.preventDefault();
+            delete zona.dataset.arrastrando;
+            const archivos = evento.dataTransfer?.files;
+            if (!archivos?.length) return;
+            const entrada = campo(form, 'foto');
+            if (archivos.length > 1) {
+                prepararFoto(form, form.dataset.fotoActual);
+                const ayuda = form.querySelector('.foto-campo__ayuda');
+                ayuda.textContent = 'Elige una sola foto.';
+                ayuda.classList.add('is-error');
+                return;
+            }
+            entrada.files = archivos;
+            entrada.dispatchEvent(new Event('change', { bubbles:true }));
+        });
+        // Soltar un archivo fuera de la zona no navega fuera del formulario abierto.
+        for (const nombre of ['dragover', 'drop']) document.addEventListener(nombre, evento => {
+            if (form.getClientRects().length) evento.preventDefault();
+        });
         form.addEventListener('change', (e) => {
             const input = e.target;
 
@@ -1815,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!archivo) return;
                 // Se revisa aquí para avisar de una vez; el servidor lo vuelve a comprobar.
                 const problema = !TIPOS_FOTO.includes(archivo.type) ? 'Esa foto no es JPG ni PNG. Elige otra.'
-                    : archivo.size > MAX_FOTO ? 'Esa foto pesa más de 5 MB. Elige una más liviana.'
+                    : !archivo.size || archivo.size > MAX_FOTO ? 'Esa foto pesa más de 5 MB o está vacía. Elige una más liviana.'
                     : null;
                 if (problema) {
                     prepararFoto(form, form.dataset.fotoActual);

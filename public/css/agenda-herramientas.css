@@ -258,3 +258,46 @@
     .ah-item--fila .ah-item__form { width: 100%; }
 }
 .ah-marca { font-size: 0.72rem; font-weight: 600; color: #64748B; }
+
+/* HU-4.15: misma conciliación en ventana para administrador y veterinario. */
+.urgencia-conciliacion .zk-dialogo__cuerpo {
+    display: grid;
+    gap: 12px;
+}
+.urgencia-conciliacion label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    font-size: 14px;
+}
+.urgencia-conciliacion input, .urgencia-conciliacion select {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+    font: inherit;
+}
+.urgencia-conciliacion fieldset {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+}
+.urgencia-conciliacion [data-error-campo], .urgencia-conciliacion .ah-error {
+    color: var(--z-danger-dark);
+}
+
+.urgencia-conciliacion [hidden] {
+    display: none !important;
+}
+@media (max-width: 767px) {
+    .urgencia-conciliacion input, .urgencia-conciliacion select {
+        font-size: 16px;
+    }
+}

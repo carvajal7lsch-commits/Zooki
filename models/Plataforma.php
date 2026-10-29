@@ -3,6 +3,7 @@ require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorPlataforma.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
+require_once __DIR__ . '/CasoSoporte.php';
 
 /** RN-004/G13/G14: excepción de plataforma, limitada a metadatos; nunca datos clínicos. */
 final class Plataforma
@@ -196,7 +197,19 @@ final class Plataforma
     {
         $this->exigirPlataforma();
         // M0.2.1: el nombre de la clínica del caso, para su tarjeta (metadato de plataforma).
-        return $this->db->query('SELECT cs.id_caso, cs.tipo, cs.id_clinica, c.nombre AS clinica, cs.descripcion, cs.estado, cs.fecha, cs.fecha_cierre FROM casos_soporte cs LEFT JOIN clinicas c ON c.id_clinica = cs.id_clinica ORDER BY cs.fecha DESC, cs.id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
+        $casos = $this->db->query('SELECT cs.id_caso, cs.tipo, cs.id_usuario, u.nombre_completo AS solicitante_nombre, u.email AS solicitante_email, cs.id_clinica, c.nombre AS clinica, cs.descripcion, cs.estado, cs.fecha, cs.fecha_cierre FROM casos_soporte cs LEFT JOIN clinicas c ON c.id_clinica = cs.id_clinica LEFT JOIN usuarios u ON u.id_usuario = cs.id_usuario ORDER BY cs.fecha DESC, cs.id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
+        $cuentaDocumento = $this->db->prepare('SELECT id_usuario, nombre_completo, email FROM usuarios WHERE documento = ?');
+        foreach ($casos as &$caso) {
+            $caso['cuenta_documento'] = null;
+            $documento = $caso['tipo'] === 'documento_duplicado' ? CasoSoporte::documentoSolicitado($caso['descripcion']) : null;
+            if ($documento !== null) {
+                $cuentaDocumento->execute([$documento]);
+                $caso['cuenta_documento'] = $cuentaDocumento->fetch(PDO::FETCH_ASSOC) ?: null;
+            }
+            $caso['descripcion'] = CasoSoporte::descripcionVisible($caso['descripcion']);
+        }
+        unset($caso);
+        return $casos;
     }
 
     public function cerrarCaso(int $id, string $estado, string $nota): void

@@ -180,7 +180,7 @@ final class D21CorreccionTest extends TestCase
 
     public function testSinSesionElLimiteEsPorIp(): void
     {
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 40; $i++) {
             $this->assertSame(200, $this->comprobar('email', "libre{$i}@zooki.test")['codigo']);
         }
         $r = $this->comprobar('email', 'otro@zooki.test');

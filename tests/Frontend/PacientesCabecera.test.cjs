@@ -7,7 +7,7 @@ const { estilosPacientes } = require('./apoyo/pacientes-presentacion.cjs');
 test('Pacientes conserva los controles y eventos al distribuir cabecera y filtros', () => {
     const fuente = fs.readFileSync('views/vet/pacientes.php', 'utf8');
     const titulo = fs.readFileSync('views/vet/partials/cabecera_pacientes.php', 'utf8');
-    const cabecera = fuente.slice(fuente.indexOf('<div class="pacientes-barra"'), fuente.indexOf('<!-- CONTENEDOR PRINCIPAL'));
+    const cabecera = fuente.slice(fuente.indexOf('<div class="pacientes-barra'), fuente.indexOf('<!-- CONTENEDOR PRINCIPAL'));
     assert.match(titulo, /id="tabOwners"/);
     assert.match(titulo, /id="tabPets"/);
     assert.doesNotMatch(titulo, /data-vincular-mascota-cliente|data-c3-click="evento2"/);
@@ -23,7 +23,7 @@ test('Pacientes conserva los controles y eventos al distribuir cabecera y filtro
 test('cabecera adaptable y cambio Propietarios/Mascotas conservan filtros, vistas y acciones', { skip: !buscarChrome() }, async () => {
     const fuente = fs.readFileSync('views/vet/pacientes.php', 'utf8');
     const titulo = fs.readFileSync('views/vet/partials/cabecera_pacientes.php', 'utf8');
-    const barra = fuente.slice(fuente.indexOf('<div class="pacientes-barra"'), fuente.indexOf('<!-- CONTENEDOR PRINCIPAL')).replace(/<\?php[\s\S]*?\?>/g, '');
+    const barra = fuente.slice(fuente.indexOf('<div class="pacientes-barra'), fuente.indexOf('<!-- CONTENEDOR PRINCIPAL')).replace(/<\?php[\s\S]*?\?>/g, '');
     const html = `<header class="top-header top-header--pacientes"><div class="header-left">${titulo}</div><div class="header-right"><span>Clínica Norte · Veterinario</span></div></header><section class="content-body">${barra}</section>`;
     // Cada hoja se parsea por separado, igual que los enlaces/imports de la pantalla real.
     const css = estilosPacientes();

@@ -1,4 +1,13 @@
 /* Pill Sidebar - Navbar Vertical Flotante */
+.pill-icono-huella {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
 .pill-sidebar {
     position: fixed;
     left: 0;
@@ -92,7 +101,7 @@
 .pill-nav-item:hover {
     color: var(--primary);
     background: #f1f5f9;
-    transform: scale(1.05);
+    transform: none;
 }
 
 .pill-nav-item.active {
@@ -377,4 +386,213 @@
 
     .pill-logo-img { width: 36px; height: 36px; }
     .main-content { min-width: 0; }
+}
+
+/*
+ * Barra con nombres (views/partials/barra_navegacion.php), rediseño aprobado por el dueño
+ * (2026-10-26). En escritorio nada cambia: los nombres y «Más» se ocultan. En el celular,
+ * los destinos principales llevan su nombre, el activo un fondo azul suave y lo demás va en
+ * «Más». Sin el logo, que no navega a ningún sitio nuevo.
+ */
+.pill-nav-texto,
+.pill-nav-mas {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .pill-sidebar.pill-sidebar--etiquetas {
+        height: 68px;
+        padding: 0 6px;
+        gap: 0;
+        border-radius: 24px;
+        box-shadow: var(--z-shadow-lista);
+    }
+
+    .pill-sidebar--etiquetas::before {
+        background: none;
+    }
+
+    .pill-sidebar--etiquetas .pill-logo,
+    .pill-sidebar--etiquetas .pill-divider,
+    .pill-sidebar.pill-sidebar--etiquetas .pill-nav-item.pill-nav-item--secundario,
+    .pill-sidebar--etiquetas.pill-sidebar--con-mas .pill-logout,
+    .pill-sidebar--etiquetas.pill-sidebar--sin-salir .pill-logout {
+        display: none;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav {
+        display: grid;
+        grid-auto-columns: minmax(0, 1fr);
+        grid-auto-flow: column;
+        align-items: center;
+        flex: 1;
+        gap: 0;
+        height: 100%;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item,
+    .pill-sidebar--etiquetas .pill-nav-item.active,
+    .pill-sidebar--etiquetas .pill-logout {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        width: auto;
+        max-width: none;
+        height: 58px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 16px;
+        background: transparent;
+        color: var(--z-text-secondary);
+        font: inherit;
+        font-size: 11px;
+        font-weight: 500;
+        transform: none;
+        cursor: pointer;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item.active::before,
+    .pill-sidebar--etiquetas .pill-nav-item.active::after {
+        display: none;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item > i,
+    .pill-sidebar--etiquetas .pill-logout > i {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 30px;
+        border-radius: 999px;
+        font-size: 17px;
+        transition: background 0.2s ease;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-texto {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item.active {
+        color: var(--z-primary);
+        font-weight: 700;
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item.active > i {
+        background: var(--z-primary-soft);
+    }
+
+    .pill-sidebar--etiquetas .pill-nav-item:hover {
+        color: var(--z-primary);
+    }
+
+    .pill-sidebar--etiquetas .pill-logout {
+        flex: 0 0 auto;
+        width: 20%;
+        color: var(--z-danger-dark);
+    }
+
+    .pill-sidebar--etiquetas .pill-logout > i {
+        background: var(--z-danger-soft);
+    }
+
+    .pill-sidebar--etiquetas :is(.pill-nav-item, .pill-logout):focus-visible {
+        outline: 2px solid var(--z-primary);
+        outline-offset: -2px;
+    }
+}
+
+/* Hoja «Más» de la barra (zk-dialogo: hoja inferior en el celular). */
+.barra-mas__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.barra-mas__enlace {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 52px;
+    padding: 0 8px;
+    border-radius: var(--z-radius-sm);
+    color: var(--z-text);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.barra-mas__enlace:hover,
+.barra-mas__enlace.is-activo {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.barra-mas__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
+}
+
+.barra-mas__flecha {
+    margin-left: auto;
+    color: var(--z-text-tenue);
+    font-size: 13px;
+}
+
+.barra-mas__enlace--salir {
+    margin-top: 6px;
+    border-top: 1px solid var(--z-border);
+    border-radius: 0;
+    color: var(--z-danger-dark);
+}
+
+.barra-mas__enlace--salir .barra-mas__icono {
+    background: var(--z-danger-soft);
+    color: var(--z-danger-dark);
+}
+
+.pill-ayuda {
+    position: fixed;
+    z-index: 2000;
+    max-width: min(260px, calc(100vw - 24px));
+    padding: 8px 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-primary);
+    box-shadow: var(--z-shadow-sm);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+.pill-ayuda[hidden] {
+    display: none;
+}
+@media (max-width: 767px) {
+    .pill-ayuda {
+        display: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pill-sidebar,
+    .pill-sidebar :is(.pill-nav-item, .pill-logo-img, .pill-logout) {
+        transition: none;
+    }
 }

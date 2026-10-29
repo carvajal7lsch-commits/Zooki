@@ -304,3 +304,201 @@
         gap: 2rem;
     }
 }
+
+/* HU-5.12/5.13 y HU-T.5: síntesis móvil sin cambiar las tarjetas de escritorio. */
+@media (max-width: 767px) {
+    .clinicas-ayuda-abrir {
+        margin-right: auto;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+    }
+    .clinicas-bloque .portal-subtitulo-fila {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .clinicas-bloque .portal-buscador {
+        flex: 0 0 100%;
+        width: 100%;
+        max-width: none;
+    }
+    .clinica-fila:not(.clinica-fila--otra) {
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr) auto 36px;
+        grid-template-areas: none;
+        gap: 6px 8px;
+        padding: 12px;
+    }
+    .clinica-fila:not(.clinica-fila--otra) .clinica-fila__avatar {
+        grid-area: auto;
+        grid-column: 1;
+        grid-row: 1;
+        width: 32px;
+        height: 32px;
+    }
+    .clinica-fila:not(.clinica-fila--otra) .clinica-fila__datos {
+        display: contents;
+    }
+    .clinica-fila:not(.clinica-fila--otra) h3 {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 14px;
+    }
+    .clinica-fila__contacto {
+        display: none;
+    }
+    .clinica-fila__abierta {
+        grid-column: 3;
+        grid-row: 1;
+        font-size: 11px;
+    }
+    .clinica-fila__llamar {
+        grid-column: 4;
+        grid-row: 1;
+        width: 36px;
+        min-height: 36px;
+        padding: 0;
+        justify-content: center;
+    }
+    .clinica-fila__detalle {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 12px;
+        color: var(--z-text-muted);
+    }
+    .clinica-fila:not(.clinica-fila--otra) .clinica-fila__interruptor {
+        grid-area: auto;
+        grid-column: 1 / -1;
+        grid-row: 3;
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 36px;
+        font-size: 12px;
+    }
+    .clinica-fila:not(.clinica-fila--otra) .clinica-fila__accion {
+        grid-area: auto;
+        grid-column: 1 / -1;
+        grid-row: 4;
+        justify-self: end;
+        min-height: 32px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        font-size: 12px;
+    }
+    .clinica-fila:not(.clinica-fila--otra) .clinica-fila__aviso {
+        grid-area: auto;
+        grid-column: 1 / -1;
+        grid-row: 5;
+    }
+    .clinica-fila--otra {
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 12px;
+    }
+    .clinica-fila--otra h3 {
+        font-size: 14px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .clinica-fila--otra .clinica-fila__avatar {
+        width: 32px;
+        height: 32px;
+    }
+    .clinica-fila--otra .clinica-fila__accion {
+        min-height: 36px;
+        gap: 4px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+    #portalClinicasAyudaModal .clinicas-ayuda {
+        margin: 0;
+        font-size: 14px;
+    }
+    .perfil-grid {
+        display: none;
+    }
+    .portal-perfil-movil {
+        display: grid;
+        gap: 16px;
+    }
+    .portal-perfil-movil__documento {
+        margin: 4px 0 0;
+        color: var(--z-text-muted);
+        font-size: 12px;
+    }
+    .portal-perfil-lista {
+        overflow: hidden;
+        border: 1px solid var(--z-border);
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+    .portal-perfil-fila {
+        display: grid;
+        grid-template-columns: 20px auto minmax(0, 1fr) 16px;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 56px;
+        padding: 12px;
+        border: 0;
+        background: transparent;
+        color: var(--z-text);
+        font-size: 14px;
+        text-align: left;
+        text-decoration: none;
+    }
+    .portal-perfil-fila + .portal-perfil-fila {
+        border-top: 1px solid var(--z-border);
+    }
+    .portal-perfil-fila strong {
+        overflow: hidden;
+        color: var(--z-text-muted);
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        text-align: right;
+        text-overflow: ellipsis;
+    }
+    .portal-perfil-fila > i {
+        color: var(--z-primary);
+    }
+    .portal-perfil-fila > i:last-child {
+        grid-column: 4;
+        color: var(--z-text-muted);
+    }
+    .portal-perfil-fila:hover,
+    .portal-perfil-fila:focus-visible {
+        background: var(--z-primary-soft);
+    }
+    .portal-perfil-movil > .perfil-salir {
+        width: 100%;
+        justify-content: center;
+    }
+    .portal-body .iti--container {
+        z-index: 10010;
+    }
+    #portalTelefonoModal .perfil-telefono__fila {
+        display: block;
+    }
+}
+
+@media (max-width: 767px) {
+    .clinica-fila__detalle .clinica-fila__estado {
+        display: none;
+    }
+    .clinica-fila__datos p .clinica-fila__horario-movil::before {
+        content: none;
+    }
+}

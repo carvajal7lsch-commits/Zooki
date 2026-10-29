@@ -11,7 +11,7 @@
     'use strict';
 
     const MARCA = 'zooki-acceso-giro';
-    const DURACION_MS = 380;
+    const DURACION_MS = 220;
 
     function sinMovimiento() {
         return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -29,16 +29,6 @@
         }
     }
 
-    function hayMarca() {
-        try {
-            const marca = sessionStorage.getItem(MARCA) === '1';
-            sessionStorage.removeItem(MARCA);
-            return marca;
-        } catch (error) {
-            return false;
-        }
-    }
-
     /** Primera mitad del giro y, al terminar, la navegación. */
     function salir(destino) {
         const elemento = tarjeta();
@@ -53,9 +43,16 @@
 
     /** Segunda mitad del giro, al llegar desde la otra página. */
     function entrar() {
+        const raiz = document.documentElement;
+        if (!raiz.classList.contains('acceso-giro-preparado')) return;
         const elemento = tarjeta();
-        if (!hayMarca() || !elemento || sinMovimiento()) return;
+        if (!elemento || sinMovimiento()) {
+            raiz.classList.remove('acceso-giro-preparado');
+            return;
+        }
+        // La clase de animación se aplica antes de retirar la posición de canto del head.
         elemento.classList.add('acceso-giro-entrada');
+        raiz.classList.remove('acceso-giro-preparado');
         setTimeout(() => elemento.classList.remove('acceso-giro-entrada'), DURACION_MS);
     }
 

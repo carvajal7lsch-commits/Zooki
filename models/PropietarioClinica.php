@@ -12,6 +12,7 @@ require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 final class PropietarioClinica extends ModeloClinica
 {
     public const VIGENCIA_HORAS = 24;
+    private const MASCOTAS_RESUMEN_MAX = 3;
 
     /** RN-115: la clínica no edita a un cliente desvinculado. */
     public const MENSAJE_DESVINCULADO = 'El cliente está desvinculado: sus datos solo los cambia él.';
@@ -29,20 +30,39 @@ final class PropietarioClinica extends ModeloClinica
      */
     public function listar(): array
     {
+        // RE-1.2.3/RN-115: solo nombres básicos de mascotas activas de esta clínica y de un vínculo vigente.
+        $resumenMascotas = [];
+        for ($posicion = 0; $posicion < self::MASCOTAS_RESUMEN_MAX; $posicion++) {
+            $resumenMascotas[] = "(SELECT m.nombre FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
+                WHERE m.id_propietario = u.id_usuario AND mc.id_clinica = pc.id_clinica
+                    AND mc.estado = 'activo' AND m.estado = 1 AND pc.estado = 'activo'
+                ORDER BY m.id_mascota LIMIT 1 OFFSET {$posicion}) AS mascota_resumen_{$posicion}";
+        }
         $sql = 'SELECT u.id_usuario, u.nombre_completo, ' . ContactoPropietario::columnas('u', 'pc') . ",
                 pc.estado AS estado_vinculo,
                 CASE WHEN pc.estado = 'activo' THEN 1 ELSE 0 END AS estado,
                 " . ContactoPropietario::marca('pc') . ",
                 CASE WHEN " . ActivacionPropietario::pendiente('u') . " THEN 1 ELSE 0 END AS pendiente_activacion,
                 (SELECT COUNT(*) FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
-                    WHERE m.id_propietario = u.id_usuario AND mc.id_clinica = pc.id_clinica AND mc.estado = 'activo' AND m.estado = 1) AS total_mascotas
+                    WHERE m.id_propietario = u.id_usuario AND mc.id_clinica = pc.id_clinica AND mc.estado = 'activo' AND m.estado = 1) AS total_mascotas,
+                " . implode(",\n", $resumenMascotas) . "
             FROM usuarios u
             JOIN propietario_clinica pc ON pc.id_propietario = u.id_usuario
             WHERE pc.id_clinica = ?
             ORDER BY u.nombre_completo";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$this->clinica()]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $personas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($personas as &$persona) {
+            $persona['mascotas_resumen'] = [];
+            for ($posicion = 0; $posicion < self::MASCOTAS_RESUMEN_MAX; $posicion++) {
+                $campo = 'mascota_resumen_' . $posicion;
+                if ($persona[$campo] !== null) $persona['mascotas_resumen'][] = $persona[$campo];
+                unset($persona[$campo]);
+            }
+        }
+        unset($persona);
+        return $personas;
     }
 
     public function obtener(int $id): array

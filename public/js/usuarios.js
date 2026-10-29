@@ -16,8 +16,11 @@
 
     // C9: preferencia local; la primera visita conserva las tarjetas de v1.12.0.
     const claveVista = 'zooki.usuarios.vista';
-    function cambiarVista(vista) {
-        const elegida = vista === 'tabla' ? 'tabla' : 'tarjetas';
+    const movilUsuarios = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)') : null;
+    let preferenciaVista = 'tarjetas';
+    function cambiarVista(vista, persistir = true) {
+        preferenciaVista = vista === 'tabla' ? 'tabla' : 'tarjetas';
+        const elegida = movilUsuarios?.matches ? 'tarjetas' : preferenciaVista;
         modulo.dataset.vista = elegida;
         modulo.querySelectorAll('[data-vista-contenido]').forEach((panel) => {
             panel.hidden = panel.dataset.vistaContenido !== elegida;
@@ -28,7 +31,7 @@
             boton.setAttribute('aria-pressed', String(activo));
         });
         try {
-            localStorage.setItem(claveVista, elegida);
+            if (persistir) localStorage.setItem(claveVista, preferenciaVista);
         } catch (error) {
             console.debug('Preferencia de vista no disponible.', error);
         }
@@ -40,6 +43,7 @@
         console.debug('Preferencia de vista no disponible.', error);
     }
     cambiarVista(vistaGuardada);
+    movilUsuarios?.addEventListener('change', () => cambiarVista(preferenciaVista, false));
     modulo.querySelectorAll('[data-vista-usuarios]').forEach((boton) => {
         boton.addEventListener('click', () => cambiarVista(boton.dataset.vistaUsuarios));
     });
@@ -72,10 +76,15 @@
     }
 
     // ── Pestañas ──────────────────────────────────────────────────────────
-    modulo.querySelectorAll('.tab-btn').forEach((boton) => {
+    const paginadores = {};
+    modulo.querySelectorAll('[data-panel]').forEach(panel => {
+        paginadores[panel.dataset.panel] = window.zookiPaginacionDirectorio?.crear(panel, panel.dataset.panel === 'personal' ? 'personas' : 'clientes');
+    });
+    const pestanasUsuarios = Array.from(modulo.querySelectorAll('.tab-btn'));
+    pestanasUsuarios.forEach((boton) => {
         boton.addEventListener('click', () => {
             const pestana = boton.dataset.tab;
-            modulo.querySelectorAll('.tab-btn').forEach((b) => {
+            pestanasUsuarios.forEach((b) => {
                 b.classList.toggle('active', b === boton);
                 b.setAttribute('aria-selected', b === boton ? 'true' : 'false');
             });
@@ -87,6 +96,7 @@
             modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
                 barra.classList.toggle('is-active', barra.dataset.filtros === pestana);
             });
+            filtrar(pestana);
         });
     });
 
@@ -115,11 +125,19 @@
             const sinResultados = vista.querySelector('[data-sin-resultados]');
             if (sinResultados) sinResultados.hidden = filas.length === 0 || visibles > 0;
         });
+        paginadores[pestana]?.actualizar(Array.from(panel.querySelectorAll('[data-vista-contenido]'), vista => vista.querySelectorAll('[data-fila]')));
+        const filas = Array.from(panel.querySelectorAll('[data-vista-contenido="tarjetas"] [data-fila]')).filter(fila => !fila.hidden);
+        const pendientes = filas.filter(fila => fila.hasAttribute('data-id-invitacion') || fila.querySelector('.tag-mini--aviso')).length;
+        const inactivas = filas.filter(fila => Array.from(fila.querySelectorAll('.tag-mini')).some(chip => chip.textContent.trim() === 'Cuenta inactiva')).length;
+        const resumen = modulo.querySelector('[data-usuarios-resumen]');
+        if (resumen && panel.classList.contains('active')) resumen.textContent = filas.length + (pestana === 'personal' ? ' personas' : ' clientes') + ' · ' + pendientes + (pendientes === 1 ? ' pendiente de activación' : ' pendientes de activación') + ' · ' + inactivas + (inactivas === 1 ? ' cuenta inactiva' : ' cuentas inactivas');
     }
     modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
         barra.addEventListener('input', () => filtrar(barra.dataset.filtros));
         barra.addEventListener('change', () => filtrar(barra.dataset.filtros));
     });
+    filtrar('personal');
+    filtrar('clientes');
 
     // ── Modales ───────────────────────────────────────────────────────────
     const modales = [modal, modalDetalle].filter(Boolean);
@@ -188,6 +206,7 @@
     }
 
     function abrirModal(esAlta, persona = null) {
+        modal.dataset.alta = String(esAlta);
         modoCliente(false);
         titulo.textContent = esAlta ? 'Nuevo Usuario' : 'Editar Usuario';
         const icono = modal.querySelector('[data-icono-titulo]');
@@ -273,7 +292,7 @@
     // Desactivar pide confirmación (revoca el acceso); activar no.
     async function confirmarDesactivar(interruptor, texto) {
         if (interruptor.checked) return true;
-        const ok = await zookiConfirmar(texto, '¿Desactivar?', 'Desactivar');
+        const ok = await zookiConfirmarCorto(texto, 'Desactivar');
         if (!ok) interruptor.checked = true;
         return ok;
     }
@@ -314,12 +333,6 @@
     // D1 (RN-109): la clínica desactiva el vínculo, pero no lo reactiva; para
     // reactivarlo se envía la solicitud y el titular la confirma por correo.
     async function solicitarVinculo(c, nombre) {
-        const ok = await zookiConfirmar(
-            'Le enviaremos a ' + nombre + ' un correo para que confirme el vínculo con esta clínica. Quedará activo cuando lo confirme.',
-            '¿Enviar la solicitud?',
-            'Enviar'
-        );
-        if (!ok) return null;
         const datos = new FormData();
         // RN-115: con el vínculo inactivo la clínica ya no ve el correo; el servidor lo busca por el id.
         datos.append('id_usuario', c.id_usuario);
@@ -341,7 +354,7 @@
                 return;
             }
             actual.innerHTML = nuevo.innerHTML;
-            cambiarVista(modulo.dataset.vista);
+            cambiarVista(preferenciaVista);
             filtrar('clientes');
         } catch (error) {
             console.error('Usuarios:', error);
@@ -452,7 +465,7 @@
     }
 
     async function cancelarInvitacion(boton) {
-        const ok = await zookiConfirmar('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', '¿Cancelar la invitación?', 'Cancelar invitación');
+        const ok = await zookiConfirmarCorto('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', 'Cancelar invitación');
         if (!ok) return;
         const datos = new FormData();
         datos.append('id_invitacion', boton.dataset.id);
@@ -549,15 +562,9 @@
         } else if (boton.dataset.accion === 'cancelar-invitacion') {
             cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {
-            const ok = await Swal.fire({
-                icon: 'warning',
-                text: 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.',
-                showCancelButton: true,
-                confirmButtonText: 'Restablecer',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#0052FF',
-            });
-            if (!ok.isConfirmed) return;
+            const descripcion = 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.';
+            const ok = await zookiConfirmarCorto('¿Restablecer contraseña?', 'Restablecer', [], 'Cancelar', descripcion);
+            if (!ok) return;
             const datos = new FormData();
             datos.append('id_usuario', id);
             const r = await pedir('index.php?action=resetear_password_usuario_ajax', datos);

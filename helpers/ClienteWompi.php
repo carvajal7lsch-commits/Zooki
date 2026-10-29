@@ -4,6 +4,9 @@ interface ClienteWompi
 {
     public function transaccion(string $id): array;
 
+    /** Lista completa por referencia; una consulta fallida nunca equivale a ausencia. */
+    public function transaccionesPorReferencia(string $referencia): array;
+
     public function comercio(): array;
 
     public function tokenNequi(string $token): array;

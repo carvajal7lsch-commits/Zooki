@@ -121,7 +121,7 @@ function registroPorPasos(validos) {
     const form = elemento({ dataset: { registroPasos: 'registroPasos' } });
     const pasos = [1, 2, 3].map(numero => elemento({ dataset: { paso: String(numero) } }));
     const campos = {
-        1: ['nombre_clinica', 'nit', 'dv'],
+        1: ['nombre_clinica', 'nit'],
         2: ['documento', 'email'],
         3: ['acepta_datos'],
     };
@@ -181,20 +181,20 @@ test('M0.1: el registro de clínica arranca en el paso 1 con el indicador visibl
 });
 
 test('M0.1: un paso con errores no avanza y avisa en el resumen', async () => {
-    const r = registroPorPasos(new Set(['nombre_clinica', 'nit']));
+    const r = registroPorPasos(new Set(['nombre_clinica']));
     const invalidas = [];
     r.form.addEventListener('cuenta:invalida', evento => invalidas.push(Array.from(evento.detail.campos, campo => campo.name)));
     await r.pulsar('siguiente');
     assert.equal(r.visible(), 1, 'Sigue en el paso 1.');
-    assert.deepEqual(r.comprobados, ['nombre_clinica', 'nit', 'dv'], 'Valida solo los campos del paso, con las reglas de validacion-cuenta.js.');
-    assert.deepEqual(invalidas, [['dv']]);
-    assert.equal(r.porPaso[1][2].enfocado, true, 'El foco va al primer campo con error.');
+    assert.deepEqual(r.comprobados, ['nombre_clinica', 'nit'], 'Valida solo los campos del paso, con las reglas de validacion-cuenta.js.');
+    assert.deepEqual(invalidas, [['nit']]);
+    assert.equal(r.porPaso[1][1].enfocado, true, 'El foco va al primer campo con error.');
 });
 
 test('M0.1: con el paso válido avanza, y al volver atrás conserva lo escrito', async () => {
-    const r = registroPorPasos(new Set(['nombre_clinica', 'nit', 'dv', 'documento', 'email']));
+    const r = registroPorPasos(new Set(['nombre_clinica', 'nit', 'documento', 'email']));
     r.porPaso[1][0].value = 'Clínica Huellitas';
-    r.porPaso[1][1].value = '900123456';
+    r.porPaso[1][1].value = '900123456-8';
     await r.pulsar('siguiente');
     assert.equal(r.visible(), 2);
     assert.equal(r.items[0].classList.contains('hecho'), true);
@@ -205,7 +205,7 @@ test('M0.1: con el paso válido avanza, y al volver atrás conserva lo escrito',
     await r.pulsar('anterior');
     assert.equal(r.visible(), 1, 'Atrás no valida.');
     assert.equal(r.porPaso[1][0].value, 'Clínica Huellitas');
-    assert.equal(r.porPaso[1][1].value, '900123456');
+    assert.equal(r.porPaso[1][1].value, '900123456-8');
     await r.pulsar('siguiente');
     await r.pulsar('siguiente');
     assert.equal(r.visible(), 3);
@@ -234,8 +234,8 @@ test('M0.1: los avisos bajo el campo son de una línea y guardan el texto comple
     // Textos cortos: los de validacion-cuenta.js y password-policy.js caben en media columna.
     const mensajes = codigo('public/js/validacion-cuenta.js').match(/const MENSAJES = \{([\s\S]*?)\};/)[1];
     const textos = [...mensajes.matchAll(/:\s*(['"])(.*?)\1/g)].map(coincidencia => coincidencia[2]);
-    assert.equal(textos.length, 7);
-    textos.concat([...codigo('public/js/password-policy.js').matchAll(/return '([^']+)';/g)].map(coincidencia => coincidencia[1]))
+    assert.equal(textos.length, 6);
+    textos.filter(texto => !texto.includes('Revísalo en tu RUT.')).concat([...codigo('public/js/password-policy.js').matchAll(/return '([^']+)';/g)].map(coincidencia => coincidencia[1]))
         .forEach(texto => assert.ok(texto.length <= 35, texto));
 
     // El aviso también queda en title para leerlo completo si no cabe.

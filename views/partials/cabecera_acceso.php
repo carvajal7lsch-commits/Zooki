@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../config/App.php';
 $versionAcceso = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
 ?>
 <meta charset="UTF-8">
+    <script src="js/acceso-giro-inicio.js?v=<?= $versionAcceso ?>"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($tituloPagina ?? $pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/png" href="img/icon_blue.png">

@@ -3,7 +3,7 @@
 // pruebas; nunca usa la base de la aplicación ni lee .env.
 // Uso: php inicio-admin-vista.php ESCENARIO [pagina|ajax] [consulta]
 //   ESCENARIO: dos (dos veterinarios con pendientes), cuatro (cuatro veterinarios con pendientes),
-//              cuatrosin (cuatro sin pendientes), sinpend (dos sin pendientes) o vacio (clínica sin citas).
+//              cuatrosin (cuatro sin pendientes), sinpend, uno o vacio (clínica sin citas).
 require __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../Support/DosClinicas.php';
 require_once __DIR__ . '/../../../controllers/PanelController.php';
@@ -84,6 +84,9 @@ if ($escenario === 'dos' || $escenario === 'cuatro') {
         VALUES (1, 17, 2, 'llegada', 'espera_presencial', 'no_requerida', 'amarillo', '{}', 'x', '$hoy 13:20:00')");
 }
 
+if ($escenario === 'uno') {
+    $db->exec("UPDATE usuario_clinica SET estado = 'inactivo' WHERE id_usuario = 5 AND id_clinica = 1");
+}
 $ahora = new DateTimeImmutable($hoy . ' 13:40:00', new DateTimeZone('America/Bogota'));
 $controlador = new PanelController($db, fn () => $ahora);
 if ($modo === 'ajax') {

@@ -40,7 +40,29 @@
                     tarjeta.className = 'ah-item ah-item--fila';
                     const texto = document.createElement('p');
                     texto.className = 'ah-item__texto';
-                    texto.textContent = propuesta.mascota + ' · Nueva hora estimada: ' + propuesta.inicio_propuesto + ' · Responde antes de ' + propuesta.fecha_limite;
+                    const partes = [
+                        ['nombre', propuesta.mascota],
+                        ['hora', 'Nueva hora estimada: ' + propuesta.inicio_propuesto],
+                        ['plazo', 'Responde antes de ' + propuesta.fecha_limite]
+                    ];
+                    partes.forEach(([clase, valor], indice) => {
+                        if (indice) {
+                            const separador = document.createElement('span');
+                            separador.className = 'agenda-solo-escritorio';
+                            separador.textContent = ' · ';
+                            texto.append(separador);
+                        }
+                        const dato = document.createElement('span');
+                        dato.className = 'agenda-reasignacion__' + clase;
+                        const completo = document.createElement('span');
+                        completo.className = 'agenda-solo-escritorio';
+                        completo.textContent = valor;
+                        const compacto = document.createElement('span');
+                        compacto.className = 'agenda-solo-movil';
+                        compacto.textContent = valor.replace(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})(?::\d{2})?/, (_, anio, mes, dia, hora) => `${dia}/${mes} · ${hora}`);
+                        dato.append(completo, compacto);
+                        texto.append(dato);
+                    });
                     tarjeta.append(texto);
                     for (const respuesta of ['aceptar', 'rechazar']) {
                         const boton = document.createElement('button');

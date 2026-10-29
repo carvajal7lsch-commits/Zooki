@@ -129,6 +129,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
 <script src="js/avisos.js?v=<?= $v ?>"></script>
+<script src="js/fechas.js?v=<?= $v ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
 <script src="js/telefono-internacional.js?v=<?= $v ?>"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
@@ -139,6 +140,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/triage-agenda.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
 <script src="js/carnet.js?v=<?= $v ?>"></script>
+<script src="js/portal-movil.js?v=<?= $v ?>"></script>
 <script src="js/portal-reprogramar.js?v=<?= $v ?>"></script>
 <?php // M2 C1: alergias y alertas de la mascota, de solo lectura; portal.js la usa al abrir la ficha. ?>
 <script src="js/alertas-medicas.js?v=<?= $v ?>"></script>

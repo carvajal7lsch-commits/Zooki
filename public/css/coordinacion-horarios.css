@@ -245,8 +245,50 @@
 .zk-dialogo .flatpickr-time input { padding: 0; height: 38px; }
 .coord-fecha-visible { cursor: pointer; }
 .coord-card__head .coord-varios { align-self: flex-start; flex-shrink: 0; }
-/* Al desplegar el calendario, ocupa la fila completa para no recortar días ni el año. */
-.coord-dialogo-campos > .coord-campo:has(.flatpickr-calendar.open) { grid-column: 1 / -1; }
+
 .zk-dialogo .flatpickr-calendar.static { max-width: 320px !important; }
 .zk-dialogo .flatpickr-current-month input.cur-year { font-size: .8rem !important; padding: 0 !important; height: auto; }
 .zk-dialogo .flatpickr-day { width: 100% !important; max-width: 34px !important; }
+
+/* Ajustes: una hoja con tres secciones, sin tarjetas flotantes ni vacíos enormes. */
+.ajustes .coordinacion:has([data-config-panel="ausencias"]:not([hidden])) {
+    gap: 0;
+    margin-top: 0;
+}
+.ajustes .coordinacion > [data-config-panel="ausencias"] {
+    grid-column: 1 / -1;
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--z-border);
+    border-radius: 0;
+    box-shadow: none;
+    gap: 12px;
+}
+.ajustes .coordinacion > #config-ausencias {
+    padding-top: 0;
+    border-top: 0;
+}
+.ajustes [data-config-panel="ausencias"] .coord-lista:empty::before {
+    padding: 4px 0;
+    border: 0;
+    border-radius: 0;
+    text-align: left;
+    color: var(--z-text-muted);
+}
+.ajustes [data-config-panel="ausencias"] .coord-item {
+    border-radius: var(--z-radius-xs);
+    background: var(--z-bg-suave);
+}
+[data-motivo-agenda] > span:first-child {
+    display: block;
+}
+@media (max-width: 767px) {
+    .coord-dialogo-campos .coord-campo {
+        font-size: 14px;
+    }
+    .coord-dialogo-campos .coord-campo input,
+    .coord-dialogo-campos .coord-campo select {
+        min-height: 44px;
+        font-size: 16px;
+    }
+}

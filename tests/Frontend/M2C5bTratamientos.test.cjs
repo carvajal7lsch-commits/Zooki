@@ -395,7 +395,7 @@ test('«No se pudo pesar» vacía y deshabilita el peso; sin marcarla el peso se
 test('el historial dice «Sin peso registrado» (C7) y nunca muestra el peso NULL como 0', () => {
     const contexto = { console, window: {}, document: { addEventListener() {}, getElementById: () => null } };
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     assert.equal(contexto.textoPeso(null), 'Sin peso registrado');
     assert.equal(contexto.textoPeso(''), 'Sin peso registrado');
     assert.equal(contexto.textoPeso('8.50'), '8.50 Kg');

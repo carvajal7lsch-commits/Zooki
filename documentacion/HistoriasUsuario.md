@@ -24,7 +24,7 @@ _La **Revisión 3.5** (21 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Índice de módulos:**
 
-**Parcial (2.0.0-alpha.5):** HU-4.7 entrega «no asistió» con tolerancia; el reporte de ausentismo (RE-4.7.3) queda para la v2.1.
+**Cierre de HU-4.7 (2.1.0, 26/10/2026):** HU-4.7 pasa a implementada. El reporte de ausentismo (RE-4.7.3) es el porcentaje de no asistencia del mes que muestra el Inicio del administrador (RE-6.2.12); no hizo falta código nuevo.
 HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entrega preparada y no afirman que ya esté desplegada.
 
 - **Módulo 0** — Plataforma: clínicas, planes y suscripción *(v2.0)* · 5 historias
@@ -58,7 +58,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 **Criterios de aceptación:**
 
 - Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, tipo y número de documento, teléfono, correo y contraseña segura), en tres pasos: clínica, administrador y confirmación. Cada paso valida lo suyo antes de avanzar y volver atrás conserva lo escrito. Se llega desde «Crear cuenta», bajo el inicio de sesión.
-- Valida el formato y el dígito de verificación DIAN del NIT. El NIT duplicado se rechaza y puede reportarse a soporte. La respuesta pública no revela identidades: «Revisa tu correo para activar la clínica». Una cuenta existente confirma por correo sin cambiar sus datos, contraseña ni otros roles; la contraseña del formulario se ignora. Si el correo es nuevo y el documento existe, se confirma al titular del documento; si identifican personas distintas, prevalece el correo.
+- Pide un único NIT o cédula: sin guion conserva todo el número y calcula el DV; con guion comprueba el DV escrito mediante el algoritmo DIAN. No añade guion ni recorta cifras al escribir o salir; limpia puntos/espacios al pegar. Se guarda número más DV en el formato normalizado existente (rectificación del dueño, 2026-10-26, que permite cédula sola y sustituye la obligación de escribir siempre el DV). El NIT duplicado se rechaza y puede reportarse a soporte. La respuesta pública no revela identidades: «Revisa tu correo para activar la clínica». Una cuenta existente confirma por correo sin cambiar sus datos, contraseña ni otros roles; la contraseña del formulario se ignora. Si el correo es nuevo y el documento existe, se confirma al titular del documento; si identifican personas distintas, prevalece el correo.
 - El formulario exige superar una verificación anti-bot (CAPTCHA), rechaza correos de dominios desechables y limita los registros desde una misma IP en un periodo; al superar el límite se informa que lo intente más tarde.
 - El registro de clínicas no admite Google, y exige aceptar la política de tratamiento de datos.
 - Crea la clínica en estado "pendiente de verificación" junto con su usuario administrador inicial; la clínica no opera hasta confirmar el correo.
@@ -103,13 +103,13 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
 - **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).
-- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
-- Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
-- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
+- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo; solo dar de baja pide confirmación, y puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
+- Lista casos de soporte con tipo, fecha, cuenta solicitante por id_usuario y cuenta que actualmente tiene el documento si los datos guardados permiten obtenerla; los cierra como resueltos o descartados con nota auditada y aviso breve, sin confirmación adicional ni enlaces clínicos (RN-010). Al abrir un caso se avisa individualmente a cada super-administrador activo y verificado después del commit y de responder al titular: asunto `Zooki: nuevo caso de soporte #<id>`, cuerpo solo con tipo, fecha y enlace al panel con sesión. No incluye documento, nombre ni correo del titular. El fallo se registra, conserva el caso y no altera la respuesta (decisión del dueño, 2026-10-26).
+- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear directamente, con aviso breve y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y pulsa Enviar aviso; nunca es automático (RN-G15).
 - Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega junto con HU-8.1; la base del panel está en 2.0.0-alpha.1 y la consulta financiera RE-0.3.7 en 2.1.0._
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5, RF-0.7 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15, RN-G24 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5, RF-0.7 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -150,10 +150,10 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Profesional: 89.990 COP/mes o 899.900 COP/año, total sin IVA. Un precio nuevo no altera periodos comprados. Mes/año calendario con ancla; renovación anticipada o en gracia desde fin anterior y tras congelar desde acreditación; sin prorrateos al cambiar de ciclo.
 - La tarea programada actualiza estados y avisa por correo a todos los administradores activos verificados, a 7 y 1 días del fin y al congelar. Repetir no duplica transición ni aviso.
 - El profesional legado sin fecha conserva sus condiciones y no se cobra ni congela por una fecha inventada. Plataforma regulariza con motivo y fecha de fin, sin inventar pagos ni levantar suspensión administrativa.
-- **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. La consulta API privada concordante concede periodo una vez, por evento verificado o recuperación del ID del retorno limitada a la clínica propia; los datos del navegador nunca acreditan por sí solos. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida solo se libera tras fallo terminal confirmado; la siguiente usa tarifa vigente y conserva la evidencia anterior.
+- **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. La consulta API privada concordante concede periodo una vez, por evento verificado o recuperación del ID del retorno limitada a la clínica propia; los datos del navegador nunca acreditan por sí solos. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida se libera tras fallo terminal confirmado o, si fue un checkout manual abandonado sin ID, tras búsqueda privada completa y vacía por referencia y revalidación bajo candado con auditoría. La comprobación ocurre al volver a pagar y en la tarea programada existente; errores o resultados dudosos no liberan la reserva. La siguiente cotización usa tarifa vigente y conserva la evidencia anterior; una aprobación tardía de la orden cerrada genera incidencia sin conceder otro periodo (decisión del dueño, 2026-10-26).
 - **Implementada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
 - Cada transición se audita. **Implementada (2.1.0):** plataforma consulta pagos e incidencias sin datos clínicos; las revisa con nota auditada, conservando la evidencia. Los ajustes manuales siguen separados de pagos.
-- Uso del plan enlaza aquí conservando su diseño. Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
+- Uso del plan abre Ajustes › Suscripción conservando el regreso a Inicio. La sección comparte la hoja y el menú de Ajustes; Mi plan e Historial son pestañas interiores y la paginación conserva pestaña y origen (decisión del dueño, 2026-10-26). Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
 
 Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referencia y último día incluido al acreditarse un periodo por cualquier vía, sin duplicados.
 
@@ -865,7 +865,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Buscar y filtrar por tipo y especie conservando relaciones universales.
 - Mostrar detalle de nodo, arista y regla con relación, peso cuando aplique, signo, efecto, condiciones, fuente y validación.
 - Ofrecer solo lectura del conocimiento global sin datos individuales de pacientes ni escritura del conocimiento.
-- Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo del CDN.
+- Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo de la biblioteca 3D local o de WebGL.
 
 **Reglas de negocio:** RN-212, RN-209, RN-004, RN-G13 · **Requisitos:** RF-2.7, RNF-16 · **Dependencias:** conocimiento cargado de M2 B2
 
@@ -1130,7 +1130,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Parcial (2.0.0-alpha.5; RE-4.7.3 en v2.1) | 3 pts | VD-AGN-07 |
+| Media | Implementada (2.1.0) | 3 pts | VD-AGN-07 |
 
 > Como veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
 
@@ -1147,6 +1147,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 > _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Falta RE-4.7.3 (tasa de ausentismo)._
 > _v2.1: se completa el reporte propio de la tasa de ausentismo. El estado `no_asistio` y la liberación del espacio ya existen desde v1.9.0 y se conservan al migrar la agenda en v2.0; HU-4.19 depende solo de esa base operativa._
+> _2.1.0 (decisión del dueño, 26/10/2026): RE-4.7.3 se cumple con el indicador «no asistieron» de «Este mes» en el Inicio del administrador (HU-6.2, RE-6.2.12): citas «no asistió» entre las citas agendadas sin canceladas, del día 1 del mes hasta hoy, solo de la clínica activa. No se construye un reporte aparte. Prueba: `InicioAdministradorTest::testEsteMesPropietariosNuevosYNoAsistencia`._
 
 ### HU-4.8 — Bloqueos de agenda del veterinario y días no laborables
 
@@ -1740,7 +1741,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - No muestra datos de ejemplo ni valores fijos.
 - «Hoy en la clínica» resume citas de hoy, atendidas, en espera y urgencias, con acceso a Gestión de citas.
 - Un calendario del mes marca los días con citas de la clínica; al tocar un día, la agenda por veterinario muestra esa fecha.
-- La agenda del día tiene una columna por veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales, el almuerzo, las ausencias y su porcentaje de ocupación.
+- La agenda del día muestra cada veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales, el almuerzo, las ausencias y su porcentaje de ocupación. En escritorio y tableta conserva las columnas; en celular se elige un veterinario para ver solo su agenda, sin selector cuando hay uno solo (decisión del dueño, 2026-10-27).
 - Muestra el uso del plan (mascotas, citas del mes y personal contra su límite) y accesos a Usuarios y Configuración.
 - Los pendientes incluyen las ausencias y las propuestas de horario por aprobar, cada uno con su acción.
 - «Este mes» compara las consultas con el mismo tramo del mes anterior y muestra pacientes activos, propietarios nuevos y el porcentaje de no asistencia.
@@ -1881,8 +1882,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 - Marca por clínica en su contexto del portal, correos y documentos; historial multi-clínica mantiene cabecera Zooki y procedencia por acto, sin atribuir todo a una clínica. Descargas documentales públicas no se personalizan.
 
-- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada.
-- Gestiono los tipos de cita de la clínica, cada uno con su duración, su margen (buffer), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
+- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada. Elijo o arrastro el logo con vista previa (JPG, PNG o WebP de hasta 5 MB); teléfonos con selector de país, correo de contacto válido sin unicidad de cuenta y errores junto al inicio de cada campo.
+- Gestiono los tipos de cita de la clínica, cada uno con su duración de 1 a 720 minutos y su margen (buffer) de 0 a 120 minutos (decisión del dueño, 2026-10-26), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
 - Los datos de marca aparecen en las salidas propias de la clínica; el historial global conserva su cabecera de plataforma.
 - Todo es propio de cada clínica (aislamiento por `id_clinica`).
 - Los cambios quedan en auditoría.
@@ -2137,7 +2138,7 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-G21 | HU-T.18 |
 | RN-G22 | HU-T.2 |
 | RN-G23 | HU-T.5 |
-| RN-G24 | HU-T.5 |
+| RN-G24 | HU-T.5, HU-0.3 |
 | RN-001 | HU-0.1, HU-T.15 |
 | RN-002 | HU-0.1, HU-0.2 |
 | RN-003 |HU-0.2, HU-0.4, HU-1.5, HU-6.2, HU-0.5 |

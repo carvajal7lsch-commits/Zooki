@@ -122,8 +122,8 @@ test('el detalle de la mascota tiene el botón de imprimir y portal.js le pone s
     // M5 C2: Imprimir es un botón de icono (action-btn-mini) con su nombre en aria-label.
     assert.match(detalle, /<a href="#" id="btnImprimirFichaMascota" class="action-btn-mini" title="Imprimir historial" aria-label="Imprimir historial" hidden>/);
     assert.match(detalle.slice(0, detalle.indexOf('</header>')), /Imprimir historial/);
-    const verDetalle = portal.slice(portal.indexOf('async function verDetalle'), portal.indexOf('renderSummary(m);'));
-    assert.match(verDetalle, /imprimir\.href = `index\.php\?action=portal_imprimir_historial&id_mascota=\$\{encodeURIComponent\(m\.id_mascota\)\}`/);
+    const verDetalle = portal.slice(portal.indexOf('async function verDetalle'), portal.indexOf('renderSummary(m, res.clinicas || []);'));
+    assert.match(verDetalle, /imprimir\.href = `index\.php\?action=portal_imprimir_historial&id_mascota=\$\{encodeURIComponent\(m\.id_mascota\)\}&origen=mascota`/);
     assert.match(verDetalle, /imprimir\.hidden = false/);
 });
 

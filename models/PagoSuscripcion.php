@@ -17,6 +17,16 @@ final class PagoSuscripcion
         return $this->reserva($ciclo, $version, $actor);
     }
 
+    public static function claveOperacion(int $clinica, int $contrato, int $version): string
+    {
+        return hash('sha256', json_encode([$clinica, $contrato, $version], JSON_THROW_ON_ERROR));
+    }
+
+    public static function claveCerrada(string $clave, int $pago): string
+    {
+        return hash('sha256', $clave . ':cerrada:' . $pago);
+    }
+
     /** El trabajador revalida el mandato bajo el mismo candado antes de llamar. */
     public function reservarAutomatico(int $version, int $fuente): array
     {
@@ -54,7 +64,7 @@ final class PagoSuscripcion
                 $s->auditar('suscripciones', $id, [], ['origen' => 'reserva_sin_beneficios'], 'Reserva de pago (RE-0.5.10)', $actor, 'INSERT');
                 $contrato = $s->estado()['suscripcion'];
             }
-            $operacion = hash('sha256', json_encode([$this->clinica, (int) $contrato['id_suscripcion'], $version], JSON_THROW_ON_ERROR));
+            $operacion = self::claveOperacion($this->clinica, (int) $contrato['id_suscripcion'], $version);
             $q = $this->db->prepare('SELECT * FROM pagos_suscripcion WHERE id_clinica=? AND clave_operacion=?');
             $q->execute([$this->clinica, $operacion]);
             $orden = $q->fetch(PDO::FETCH_ASSOC);
@@ -65,9 +75,9 @@ final class PagoSuscripcion
                 }
                 if (in_array($intento['estado'], ['declinado', 'error'], true) && VigenciaSuscripcion::fecha($orden['cotizacion_hasta']) <= $s->ahora()) {
                     // Decisión del dueño: solo un fallo terminal confirmado libera una cotización vencida.
-                    $cerrada = hash('sha256', $operacion . ':cerrada:' . $orden['id_pago']);
+                    $cerrada = self::claveCerrada($operacion, (int) $orden['id_pago']);
                     $this->db->prepare("UPDATE pagos_suscripcion SET estado='cancelado',clave_operacion=?,clave_obligacion=? WHERE id_pago=? AND id_clinica=?")
-                        ->execute([$cerrada, hash('sha256', $orden['clave_obligacion'] . ':cerrada:' . $orden['id_pago']), $orden['id_pago'], $this->clinica]);
+                        ->execute([$cerrada, self::claveCerrada($orden['clave_obligacion'], (int) $orden['id_pago']), $orden['id_pago'], $this->clinica]);
                     $s->auditar('pagos_suscripcion', (int) $orden['id_pago'], ['estado' => 'pendiente'], ['estado' => 'cancelado'], 'Cotización vencida con fallo terminal confirmado', $actor);
                     $orden = false;
                 } else {
@@ -151,13 +161,32 @@ final class PagoSuscripcion
 
     public function estadoLocal(?string $referencia = null): array
     {
-        $s = (new Suscripcion($this->db, $this->clinica, $this->reloj))->estado();
+        $servicio = new Suscripcion($this->db, $this->clinica, $this->reloj);
+        $s = $servicio->estado();
         $resultado = ['situacion' => $s['situacion'], 'plan' => $s['plan_efectivo']['nombre'], 'fin' => $s['periodo_fin'],
             'fin_incluido' => VigenciaSuscripcion::fechaIncluida($s['periodo_fin'])];
+        try {
+            $entorno = $this->configuracion->entorno();
+        } catch (RuntimeException $error) {
+            // Sin pasarela configurada se conserva la lectura del plan; nunca mezclar entornos.
+            if ($referencia !== null) throw $error;
+            return $resultado;
+        }
+        // RE-0.5.17/24: recargar pierde la referencia del JS, pero no el intento de la clínica y entorno.
+        $sql = 'SELECT p.estado,i.estado AS intento,p.cotizacion_hasta FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE p.id_clinica=? AND i.entorno=?';
+        $parametros = [$this->clinica, $entorno];
         if ($referencia !== null) {
-            $q = $this->db->prepare('SELECT p.estado,i.estado AS intento FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE p.id_clinica=? AND i.referencia=?');
-            $q->execute([$this->clinica, $referencia]);
-            $resultado['pago'] = $q->fetch(PDO::FETCH_ASSOC) ?: throw new AccesoDenegado(403, 'Pago no disponible en esta clínica.');
+            $sql .= ' AND i.referencia=?';
+            $parametros[] = $referencia;
+        }
+        $q = $this->db->prepare($sql . ' ORDER BY p.id_pago DESC,i.numero DESC LIMIT 1');
+        $q->execute($parametros);
+        $pago = $q->fetch(PDO::FETCH_ASSOC);
+        if (!$pago && $referencia !== null) throw new AccesoDenegado(403, 'Pago no disponible en esta clínica.');
+        if ($pago) {
+            $pago['cotizacion_vencida'] = VigenciaSuscripcion::fecha($pago['cotizacion_hasta']) <= $servicio->ahora();
+            unset($pago['cotizacion_hasta']);
+            $resultado['pago'] = $pago;
         }
         return $resultado;
     }

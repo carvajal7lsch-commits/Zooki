@@ -4,7 +4,7 @@
  *   una respuesta vieja no pisa a la nueva; las flechas cambian de mes.
  * - En Chrome real: con cuatro veterinarios la agenda se desplaza a los lados
  *   dentro de su tarjeta (decisión del dueño, 2026-10-24) y la página no se
- *   desplaza en 1366×768; sin desborde horizontal de la página a 1024 y 390 px.
+ *   desplaza en 1366×768; en celular se elige un veterinario sin carrusel lateral.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -129,10 +129,14 @@ test('Chrome: con cuatro veterinarios la agenda se desplaza dentro de su tarjeta
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: alto, deviceScaleFactor: 1, mobile: ancho < 768 });
             const arbol = await nav.enviar('Page.getFrameTree');
             await nav.enviar('Page.setDocumentContent', { frameId: arbol.frameTree.frame.id, html: paginas[escenario] });
+            if (ancho < 768) {
+                await nav.evaluar(leer('public/js/inicio-comun.js'));
+                await nav.evaluar(leer('public/js/inicio-admin.js'));
+            }
             const estado = await nav.evaluar(`(() => {
                 const agenda = document.querySelector('.inicio-agenda');
                 return { horizontal: document.documentElement.scrollWidth <= innerWidth, vertical: document.documentElement.scrollHeight <= innerHeight,
-                    columnas: agenda.children.length, desplazaLados: agenda.scrollWidth > agenda.clientWidth + 1 };
+                    columnas: agenda.children.length, visibles: [...agenda.children].filter(n => !n.hidden).length, desplazaLados: agenda.scrollWidth > agenda.clientWidth + 1 };
             })()`);
             const detalle = JSON.stringify({ escenario, ancho, estado });
             assert.equal(estado.horizontal, true, detalle);
@@ -141,7 +145,8 @@ test('Chrome: con cuatro veterinarios la agenda se desplaza dentro de su tarjeta
                 assert.equal(estado.vertical, true, 'RE-6.2.13: cabe sin desplazar la página ' + detalle);
                 assert.equal(estado.desplazaLados, escenario === 'cuatro', 'Más de tres veterinarios se desplazan a los lados ' + detalle);
             } else {
-                assert.equal(estado.desplazaLados, true, 'En el celular se pasa de un veterinario a otro de lado ' + detalle);
+                assert.equal(estado.desplazaLados, false, 'En el celular se elige un veterinario sin desplazamiento lateral ' + detalle);
+                assert.equal(estado.visibles, 1, 'Solo una agenda visible ' + detalle);
             }
         }
     } finally {

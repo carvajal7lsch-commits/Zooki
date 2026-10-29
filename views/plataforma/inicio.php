@@ -18,6 +18,11 @@ $plan = $plan ?? '';
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="expect" href="#paginaLista" blocking="render">
+    <link rel="stylesheet" href="css/navegacion-transicion.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/carga-contenido.css?v=<?= $v ?>">
+    <script src="js/carga-contenido.js?v=<?= $v ?>"></script>
+    <script src="js/navegacion-transicion.js?v=<?= $v ?>"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plataforma · Zooki</title>
@@ -26,6 +31,7 @@ $plan = $plan ?? '';
     <link rel="stylesheet" href="css/styles.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/dashboard.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/identidad.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= $v ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,18 +49,16 @@ $plan = $plan ?? '';
 <div class="main-content plataforma-contenido">
 <?php require __DIR__ . '/cabecera.php'; ?>
 <main id="plataformaContenido" class="content-body plataforma">
+    <?php require __DIR__ . "/../partials/carga_contenido.php"; ?>
     <?php // Revisión del usuario (2026-10-12): la misma cabecera, filtros y tarjeta de Usuarios; sin franja de cifras. ?>
     <div class="header-container-white plataforma-encabezado">
-        <div class="head-title-desc">
-            <h2 class="users-page-title">Administración de la plataforma</h2>
-            <p class="users-module-desc">Gestiona las clínicas, sus planes y suscripciones, los casos de soporte y las IP bloqueadas.</p>
-        </div>
         <div class="head-top-right">
             <div class="tabs-wrapper" role="tablist" aria-label="Secciones del panel">
-                <button type="button" class="tab-btn active" role="tab" id="pestanaClinicas" aria-controls="panelClinicas" aria-selected="true" data-pestana="clinicas"><i class="bi bi-buildings" aria-hidden="true"></i><span>Clínicas</span></button>
+                <button type="button" class="tab-btn active" role="tab" id="pestanaClinicas" aria-controls="panelClinicas" aria-selected="true" data-pestana="clinicas"><i class="bi bi-buildings" aria-hidden="true"></i><span>Clínicas</span><span class="plataforma-contador"><?= count($clinicas) ?></span></button>
                 <button type="button" class="tab-btn" role="tab" id="pestanaSoporte" aria-controls="panelSoporte" aria-selected="false" data-pestana="soporte"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Soporte</span><span class="plataforma-contador" data-contador-soporte><?= (int) $contadores['casos'] ?></span></button>
-                <button type="button" class="tab-btn" role="tab" id="pestanaSeguridad" aria-controls="panelSeguridad" aria-selected="false" data-pestana="seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Seguridad</span><span class="plataforma-contador" data-contador-seguridad><?= (int) $contadores['ips'] ?></span></button>
+                <button type="button" class="tab-btn" role="tab" id="pestanaSeguridad" aria-controls="panelSeguridad" aria-selected="false" data-pestana="seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Seguridad</span><span class="plataforma-contador" data-contador-seguridad data-alerta="<?= $contadores['ips'] > 0 ? '1' : '0' ?>"><?= (int) $contadores['ips'] ?></span></button>
             </div>
+            <button type="button" class="btn-modal-secondary plataforma-pagos-global" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Pagos sin clínica <span class="plataforma-contador" data-finanzas-conteo aria-label="Pendientes sin consultar">—</span></button>
         </div>
         <?php // Sin JavaScript el formulario filtra en el servidor; con él, al escribir. Solo se ve en la pestaña Clínicas. ?>
         <form method="GET" class="users-controls-bar__filters is-active plataforma-filtros" data-filtros-clinicas>
@@ -89,6 +93,7 @@ $plan = $plan ?? '';
         </form>
     </div>
 
+    <p class="plataforma-resumen" data-plataforma-resumen data-solo-clinicas role="status"></p>
     <section class="plataforma-panel" id="panelClinicas" role="tabpanel" aria-labelledby="pestanaClinicas" data-panel="clinicas">
         <?php if ($error !== null): ?><p class="plataforma-alerta" role="alert"><?= $e($error) ?></p><?php endif; ?>
         <div class="plataforma-vacio" data-sin-resultados <?= $clinicas ? 'hidden' : '' ?>>
@@ -97,7 +102,7 @@ $plan = $plan ?? '';
         </div>
         <div class="personal-grid view-grid plataforma-tarjetas" data-lista-vista="tarjetas">
             <?php foreach ($clinicas as $clinica): ?>
-            <article class="person-card plataforma-tarjeta" data-clinica-fila data-buscar="<?= $e($p::buscable($clinica)) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>">
+            <article class="person-card plataforma-tarjeta" tabindex="0" role="button" aria-label="<?= $e('Abrir detalle de ' . $clinica['nombre']) ?>" data-clinica-fila data-buscar="<?= $e($p::buscable($clinica)) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>">
                 <div class="card-header-mini">
                     <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e($p::iniciales($clinica['nombre'])) ?></span>
                 </div>
@@ -105,6 +110,7 @@ $plan = $plan ?? '';
                     <h3 class="card-title-mini" title="<?= $e($clinica['nombre']) ?>"><?= $e($clinica['nombre']) ?></h3>
                     <div class="card-tags-mini">
                         <?php require __DIR__ . '/estado_clinica.php'; ?>
+                        <span class="tag-mini plataforma-pago" data-situacion="<?= $e(!empty($clinica['vigencia']['legado_sin_fecha']) ? 'legado_sin_fecha' : $clinica['vigencia']['situacion']) ?>"><?= $e($clinica['estado'] === 'pendiente_verificacion' ? 'Sin verificar' : ($clinica['estado'] === 'suspendida' ? 'Suspendida' : $p::situacion($clinica['vigencia']))) ?></span>
                         <span class="tag-mini"><i class="bi bi-gem" aria-hidden="true"></i> <?= $e($clinica['plan'] ?? 'Sin plan') ?></span>
                     </div>
                     <div class="card-contact-mini">
@@ -118,7 +124,7 @@ $plan = $plan ?? '';
                     </div>
                     <?php require __DIR__ . '/uso_plan.php'; ?>
                 </div>
-                <div class="card-footer-mini"><?php require __DIR__ . '/boton_clinica.php'; ?></div>
+                <div class="card-footer-mini"><span>Desde <?= $e($p::fecha($clinica['fecha_registro'])) ?></span><?php require __DIR__ . '/boton_clinica.php'; ?><i class="bi bi-chevron-right" aria-hidden="true"></i></div>
             </article>
             <?php endforeach; ?>
         </div>
@@ -140,7 +146,6 @@ $plan = $plan ?? '';
                 </tbody>
             </table>
         </div>
-        <button type="button" class="btn-modal-secondary" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Incidencias · Sin clínica identificada</button>
     </section>
 
     <div class="users-modal plataforma-dialogo" id="incidenciasSinClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="incidenciasSinClinicaTitulo">
@@ -171,34 +176,43 @@ $plan = $plan ?? '';
                     <span class="tag-mini plataforma-estado <?= $abierto ? 'plataforma-estado--activa' : '' ?>"><i class="bi <?= $abierto ? 'bi-envelope-open' : 'bi-check2-circle' ?>" aria-hidden="true"></i> <?= $e(ucfirst($caso['estado'])) ?></span>
                 </div>
                 <div class="card-body-mini">
-                    <h3 class="card-title-mini" title="Caso <?= (int) $caso['id_caso'] ?>">Caso <?= (int) $caso['id_caso'] ?> · <?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?></h3>
+                    <h3 class="card-title-mini" title="Caso <?= (int) $caso['id_caso'] ?>">Caso <?= (int) $caso['id_caso'] ?> · <?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?></h3>
                     <div class="card-contact-mini">
                         <span class="contact-text-mini"><i class="bi bi-buildings" aria-hidden="true"></i> <span class="plataforma-recorte"><?= $e($caso['clinica'] ?? 'Sin clínica') ?></span></span>
                         <span class="contact-text-mini"><i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($p::fecha($caso['fecha'])) ?></span>
                     </div>
                     <p class="plataforma-tarjeta__texto"><?= $e($caso['descripcion']) ?></p>
                 </div>
-                <?php if ($abierto): ?>
                 <div class="card-footer-mini">
-                    <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="casoModal<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                    <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="casoModal<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Ver detalle</button>
                 </div>
-                <?php endif; ?>
             </article>
             <?php endforeach; ?>
         </div>
         <?php // Fuera de las tarjetas: su animación (transform) encerraría el fondo fijo del modal. ?>
         <?php foreach ($casos as $caso): ?>
-            <?php if ($caso['estado'] !== 'abierto') continue; ?>
+            <?php $abierto = $caso['estado'] === 'abierto'; ?>
             <div class="users-modal plataforma-dialogo" id="casoModal<?= (int) $caso['id_caso'] ?>" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="casoTitulo<?= (int) $caso['id_caso'] ?>">
                 <div class="modal-content users-modal__panel plataforma-modal plataforma-modal--angosto">
                     <div class="modal-header">
                         <div class="plataforma-modal__cabeza">
-                            <h3 id="casoTitulo<?= (int) $caso['id_caso'] ?>">Cerrar el caso <?= (int) $caso['id_caso'] ?></h3>
-                            <p class="plataforma-modal__datos"><?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span><?= $e($caso['clinica'] ?? 'Sin clínica') ?></p>
+                            <h3 id="casoTitulo<?= (int) $caso['id_caso'] ?>">Detalle del caso <?= (int) $caso['id_caso'] ?></h3>
+                            <p class="plataforma-modal__datos"><?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span><?= $e($caso['clinica'] ?? 'Sin clínica') ?></p>
                         </div>
                         <button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button>
                     </div>
                     <div class="users-modal__body">
+                        <dl class="plataforma-caso__datos">
+                            <dt>Tipo</dt><dd><?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?></dd>
+                            <dt>Fecha</dt><dd><?= $e($p::fecha($caso['fecha'])) ?></dd>
+                            <dt>Cuenta que lo pidió</dt><dd><?= $e($caso['solicitante_nombre'] ?? 'No identificada') ?> · <?= $e($caso['solicitante_email'] ?? 'Sin correo disponible') ?><?php if ($caso['id_usuario'] !== null): ?> · Cuenta #<?= (int) $caso['id_usuario'] ?><?php endif; ?></dd>
+                            <?php if ($caso['tipo'] === 'documento_duplicado'): ?>
+                            <dt>Cuenta que actualmente tiene el documento</dt><dd><?php if ($caso['cuenta_documento'] !== null): ?><?= $e($caso['cuenta_documento']['nombre_completo'] ?? 'Sin nombre') ?> · <?= $e($caso['cuenta_documento']['email'] ?? 'Sin correo disponible') ?> · Cuenta #<?= (int) $caso['cuenta_documento']['id_usuario'] ?><?php else: ?>No se pudo identificar con los datos disponibles.<?php endif; ?></dd>
+                            <?php endif; ?>
+                            <dt>Descripción</dt><dd><?= $e($caso['descripcion']) ?></dd>
+                            <dt>Estado</dt><dd><?= $e(ucfirst($caso['estado'])) ?></dd>
+                        </dl>
+                        <?php if ($abierto): ?>
                         <form class="plataforma-form" id="casoForm<?= (int) $caso['id_caso'] ?>" data-plataforma-accion="plataforma_caso_ajax">
                             <?php Csrf::field(); ?><input type="hidden" name="id_caso" value="<?= (int) $caso['id_caso'] ?>">
                             <fieldset class="plataforma-grupo">
@@ -214,10 +228,13 @@ $plan = $plan ?? '';
                             </div>
                             <p class="plataforma-form__resultado" data-resultado role="status"></p>
                         </form>
+                        <?php endif; ?>
                     </div>
                     <div class="users-modal__footer">
                         <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
-                        <button type="submit" class="btn-modal-primary" form="casoForm<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                        <?php if ($abierto): ?>
+                        <button type="submit" class="btn-modal-primary" form="casoForm<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Guardar resultado</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -306,6 +323,7 @@ $plan = $plan ?? '';
     <div class="users-modal" id="gestionarClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="clinicaModalTitulo">
         <div class="modal-content users-modal__panel plataforma-modal">
             <div class="modal-header">
+                <span class="plataforma-modal__avatar" data-clinica-avatar aria-hidden="true"></span>
                 <div class="plataforma-modal__cabeza">
                     <div class="plataforma-modal__titulo">
                         <h3 id="clinicaModalTitulo" data-clinica-titulo></h3>
@@ -425,5 +443,6 @@ $plan = $plan ?? '';
     </div>
 </main>
 </div></div>
+<span id="paginaLista" hidden></span>
 </body>
 </html>

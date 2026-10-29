@@ -13,10 +13,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let turno = 0;
     let consulta = 0;
     let enviando = false;
+    // HU-5.6 / RN-401: mismos días cerrados que Agendar, sin otra consulta ni calendario nativo.
+    const calendario = typeof flatpickr !== 'undefined' ? flatpickr(fecha, {
+        locale: window.zkLocale || 'es',
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd/m/Y',
+        minDate: 'today',
+        disableMobile: true,
+        monthSelectorType: 'static',
+        disable: [dia => {
+            const cerrados = JSON.parse(form.dataset.diasCerrados || '{}')[cita?.id_clinica] || [];
+            return cerrados.includes(dia.getDay() === 0 ? 7 : dia.getDay());
+        }],
+        onReady: (fechas, texto, instancia) => { if (window.zkMesesAnios) window.zkMesesAnios(instancia); },
+    }) : null;
+
 
     function cerrar() {
         turno++;
         consulta++;
+        calendario?.close();
         closeModal('portalReprogramarModal');
     }
 
@@ -64,9 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const veterinarios = await (await fetch('index.php?action=portal_get_vets_ajax&id_clinica=' + cita.id_clinica)).json();
             if (actual !== turno) return;
             vet.replaceChildren(new Option('Elige veterinario', ''));
-            for (const veterinario of veterinarios) vet.add(new Option(veterinario.nombre, veterinario.id));
+            for (const veterinario of veterinarios) vet.add(new Option(veterinario.nombre_completo, veterinario.id_usuario));
             vet.value = String(cita.id_veterinario);
-            fecha.value = cita.fecha;
+            if (calendario) {
+                calendario.redraw();
+                calendario.setDate(cita.fecha, false);
+            } else fecha.value = cita.fecha;
             form.elements.id_cita.value = cita.id_cita;
             await cargar();
         } catch (fallo) {

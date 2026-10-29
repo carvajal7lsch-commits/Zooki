@@ -72,7 +72,7 @@
                     const c = controles(fila, periodo);
                     c.activo.checked = dato.bloques[periodo].length > 0;
                     [c.inicio.value, c.fin.value] = dato.bloques[periodo][0] || DEFECTO[periodo];
-                    selectores.push(new BlockPicker(c.inicio, c.fin, { minuteInterval: 1, period: periodo, compactDisplay: true }));
+                    selectores.push(new BlockPicker(c.inicio, c.fin, { minuteInterval: 1, period: periodo, compactDisplay: raiz.closest('[data-ajustes-horarios]') ? 'rango' : true }));
                 });
             });
             actualizar();

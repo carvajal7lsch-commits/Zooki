@@ -78,6 +78,10 @@ function format12h(time24) {
     return zookiHoraAgenda(time24);
 }
 
+function formatearHoraReserva(hora) {
+    return zookiHoraAgenda(String(hora || '').slice(0, 5), 'a. m.', 'p. m.');
+}
+
 function formatHora(date) {
     return date ? format12h(`${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`) : '';
 }
@@ -202,6 +206,7 @@ const FilterManager = {
             if (ev.display !== display) ev.setProp('display', display);
         });
         refrescarPanel();
+        window.ZookiAgendaMovil?.actualizar();
     }
 };
 
@@ -278,6 +283,7 @@ function seleccionarDia(date, pintarLista = true) {
     const celda = document.querySelector(`.fc-daygrid-day[data-date="${toLocalDateStr(_selectedDate)}"]`);
     if (celda) celda.classList.add('is-selected');
     if (pintarLista) renderPanelDia();
+    window.ZookiAgendaMovil?.actualizar();
 }
 
 function iniciarCalendario() {
@@ -305,6 +311,7 @@ function iniciarCalendario() {
             return 'popover';
         },
         events: cargarEventos,
+        eventsSet: () => window.ZookiAgendaMovil?.actualizar(),
         loading: cargando => {
             _cargando = cargando;
             if (!cargando) FilterManager.aplicar();
@@ -348,6 +355,10 @@ function iniciarCalendario() {
 
             // Al cambiar de periodo el panel sigue a la vista: hoy si está en
             // ella y, si no, el primer día del periodo.
+            if (window.ZookiAgendaMovil?.activa()) {
+                if (!_selectedDate) seleccionarDia(new Date());
+                return;
+            }
             const { currentStart, currentEnd } = info.view;
             const dentro = d => d >= currentStart && d < currentEnd;
             if (!_selectedDate || !dentro(_selectedDate)) {
@@ -606,7 +617,8 @@ function manejarClicPanel(e) {
 async function postCita(accion, datos) {
     const cuerpo = new URLSearchParams(datos);
     if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo });
+    // B.9: el botón ya indica la reprogramación; el velo global tapaba el resultado.
+    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
     return res.json();
 }
 
@@ -654,17 +666,7 @@ async function confirmarCita(idCita) {
 
 // RN-408: el paciente no llegó. La cita se cierra y libera su espacio.
 async function marcarNoAsistio(idCita) {
-    const confirmacion = await Swal.fire({
-        title: '¿Marcar como no asistió?',
-        text: 'La cita quedará cerrada y su espacio en la agenda se libera.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#0052FF',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: 'Sí, no asistió',
-        cancelButtonText: 'Volver'
-    });
-    if (!confirmacion.isConfirmed) return;
+    if (!(await zookiConfirmarCorto('La cita quedará cerrada y su espacio en la agenda se libera. ¿Marcar como no asistió?', 'Sí, no asistió', [], 'Volver'))) return;
 
     try {
         const r = await postCita('marcar_no_asistio_ajax', { id_cita: idCita });
@@ -677,17 +679,7 @@ async function marcarNoAsistio(idCita) {
 }
 
 async function cancelarCita(idCita) {
-    const confirmacion = await Swal.fire({
-        title: '¿Cancelar la cita?',
-        text: 'Se notificará al propietario. Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DC2626',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: 'Sí, cancelar',
-        cancelButtonText: 'No, mantener'
-    });
-    if (!confirmacion.isConfirmed) return;
+    if (!(await zookiConfirmarCorto('¿Cancelar la cita? Se notificará al propietario y no se puede deshacer.', 'Cancelar cita', [], 'Mantener cita'))) return;
 
     try {
         const r = await postCita('cancelar_cita_ajax', { id_cita: idCita });
@@ -793,11 +785,14 @@ function renderSlots(id, horas, alElegir) {
         : `<p class="slot-caption">${grupos[0][1]} · ${grupos[0][2].length} ${grupos[0][2].length === 1 ? 'horario libre' : 'horarios libres'}</p>`;
 
     cont.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
-        `<div class="slot-grid" data-franja="${clave}"${i ? ' hidden' : ''}>${hs.map(h =>
-            `<button type="button" class="slot-chip" data-hora="${esc(h)}">${esc(format12h(h))}</button>`
+        `<div class="slot-grid" data-franja="${clave}" aria-label="${clave === 'manana' ? 'Mañana' : 'Tarde'}"${i ? ' hidden' : ''}>${hs.map(h =>
+            `<button type="button" class="slot-chip" data-hora="${esc(h)}" aria-pressed="false">${esc(formatearHoraReserva(h))}</button>`
         ).join('')}</div>`
     ).join('');
 
+    if (window.matchMedia('(max-width: 767px)').matches && id === 'modal_slots_container') {
+        cont.querySelectorAll('.slot-grid').forEach(grupo => { grupo.hidden = false; });
+    }
     cont.onclick = e => {
         const tab = e.target.closest('.slot-tab');
         if (tab) {
@@ -810,7 +805,10 @@ function renderSlots(id, horas, alElegir) {
         }
         const chip = e.target.closest('.slot-chip');
         if (chip) {
-            cont.querySelectorAll('.slot-chip').forEach(c => c.classList.toggle('is-selected', c === chip));
+            cont.querySelectorAll('.slot-chip').forEach(c => {
+                c.classList.toggle('is-selected', c === chip);
+                c.setAttribute('aria-pressed', String(c === chip));
+            });
             alElegir(chip.dataset.hora);
         }
     };
@@ -846,12 +844,20 @@ function textoGuiaSlots() {
 
 let pasoCitaModal = 0;
 
+function citaEsMovil() {
+    return window.matchMedia('(max-width: 767px)').matches;
+}
+
 function mostrarPasoCita(paso, enfocar = true) {
-    if (enviosC3.reserva || ![0, 1].includes(paso)) return;
-    if (paso === 1 && !(val('modal_mascota') && val('modal_tipo_cita') && getVetModal())) return;
+    const movil = citaEsMovil();
+    if (enviosC3.reserva || ![0, 1, ...(movil ? [2] : [])].includes(paso)) return;
+    if (paso > 0 && !(val('modal_mascota') && val('modal_tipo_cita') && getVetModal())) return;
+    if (paso === 2 && !triageModalC4?.consulta()) return;
     pasoCitaModal = paso;
+    document.getElementById('citaModalOverlay').dataset.paso = paso;
     document.querySelectorAll('[data-cita-paso]').forEach(panel => {
-        panel.hidden = Number(panel.dataset.citaPaso) !== paso;
+        const numero = Number(panel.dataset.citaPaso);
+        panel.hidden = numero === 2 && !movil ? false : numero !== paso;
         if (!panel.hidden) {
             panel.scrollTop = 0;
             if (enfocar) panel.querySelector('h4')?.focus();
@@ -871,24 +877,37 @@ function actualizarPasosCita() {
     const anterior = document.getElementById('cm_anterior');
     const submit = document.getElementById('cm_submit');
     if (!siguiente || !anterior || !submit) return;
+    const movil = citaEsMovil();
+    const ultimo = movil ? 2 : 1;
     const pacienteListo = Boolean(val('modal_mascota') && getVetModal() && val('modal_tipo_cita'));
-    siguiente.hidden = pasoCitaModal === 1;
-    siguiente.disabled = enviosC3.reserva || !pacienteListo;
+    const solicitud = triageModalC4?.consulta();
+    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
+    siguiente.hidden = pasoCitaModal === ultimo || (pasoCitaModal === 1 && (!movil || !solicitud || rojo));
+    siguiente.disabled = enviosC3.reserva || !pacienteListo || (movil && pasoCitaModal === 1 && !solicitud);
     anterior.hidden = pasoCitaModal === 0;
     anterior.disabled = enviosC3.reserva;
-    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
-    submit.hidden = pasoCitaModal !== 1 || rojo;
-    submit.disabled = enviosC3.reserva || !pacienteListo || !triageModalC4?.consulta() || !val('modal_hora') || pasoCitaModal !== 1 || rojo;
+    submit.hidden = pasoCitaModal !== ultimo || rojo;
+    submit.disabled = enviosC3.reserva || !pacienteListo || !solicitud || !val('modal_hora') || pasoCitaModal !== ultimo || rojo;
     const cancelar = document.getElementById('cm_cancelar');
     if (cancelar) cancelar.hidden = pasoCitaModal !== 0;
+    const calcular = document.querySelector('#citaModalOverlay [data-triage-calcular]');
+    const revision = Boolean(triageModalC4?.resultado?.()?.revision);
+    if (movil && calcular) calcular.hidden = pasoCitaModal !== 1 || Boolean(solicitud) || rojo || revision;
+    const aprobar = document.querySelector('#citaModalOverlay [data-triage-aprobar]');
+    if (movil && aprobar) aprobar.hidden = pasoCitaModal !== 1 || !revision;
+    const urgencias = document.getElementById('cm_urgencias');
+    if (movil && urgencias) urgencias.hidden = pasoCitaModal !== 1 || !rojo;
     document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
-        indicador.disabled = enviosC3.reserva || (Number(indicador.dataset.citaIndicador) === 1 && !pacienteListo);
+        const numero = Number(indicador.dataset.citaIndicador);
+        indicador.disabled = enviosC3.reserva || (numero > 0 && !pacienteListo) || (numero === 2 && !solicitud);
     });
+    const fecha = document.querySelector('[data-cita-fecha]');
+    if (fecha && val('modal_fecha')) fecha.textContent = new Date(val('modal_fecha') + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
 }
 
 function avanzarPasoCita() {
     actualizarPasosCita();
-    if (document.getElementById('cm_siguiente')?.disabled || pasoCitaModal >= 1) return;
+    if (document.getElementById('cm_siguiente')?.disabled || pasoCitaModal >= (citaEsMovil() ? 2 : 1)) return;
     ocultarErrorModal();
     mostrarPasoCita(pasoCitaModal + 1);
 }
@@ -1163,7 +1182,7 @@ function actualizarResumenModal() {
     const resumenHorario = document.getElementById('cm_horario_resumen');
     if (resumenHorario) {
         resumenHorario.hidden = !hora || !solicitud || nivel === 'rojo';
-        resumenHorario.textContent = `${_mascotaNombre} · ${tipoNombre} · ${nivel} · ${format12h(hora)}`;
+        resumenHorario.textContent = `${_mascotaNombre} · ${tipoNombre} · ${nivel ? nivel[0].toUpperCase() + nivel.slice(1) : ''} · ${formatearHoraReserva(hora)}`;
     }
     actualizarPasosCita();
 }
@@ -1184,7 +1203,7 @@ function ocultarErrorModal() {
 async function crearCitaModal(e) {
     e.preventDefault();
     if (enviosC3.reserva) return;
-    if (pasoCitaModal !== 1) return;
+    if (pasoCitaModal !== (citaEsMovil() ? 2 : 1)) return;
     actualizarResumenModal();
     const submit = document.getElementById('cm_submit');
     if (submit.disabled) return;
@@ -1413,6 +1432,7 @@ function moverModalesAlBody() {
 
 document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    if (document.querySelector('dialog[open]')) return;
     if (document.getElementById('reprogramarModalOverlay')?.classList.contains('is-open')) cerrarModalReprogramar();
     else if (document.getElementById('citaModalOverlay')?.classList.contains('is-open')) closeCitaModal();
     document.querySelectorAll('.fc-popover').forEach(p => p.remove());
@@ -1444,6 +1464,37 @@ function conectarFormulariosC3() {
     for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
         document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
     }
+}
+
+function adaptarPieCita() {
+    const pie = document.querySelector('[data-cita-pie]');
+    if (!pie) return;
+    const controles = ['cm_cancelar', 'cm_anterior', 'cm_siguiente'].map(id => document.getElementById(id));
+    controles.push(document.querySelector('#formCitaModal [data-triage-calcular]'));
+    controles.push(document.querySelector('#formCitaModal [data-triage-aprobar]'));
+    controles.push(document.getElementById('cm_urgencias'));
+    const piezas = controles.filter(Boolean).map(nodo => {
+        const marca = document.createComment('Posición de escritorio del control');
+        nodo.before(marca);
+        return { nodo, marca };
+    });
+    const ajustar = () => {
+        piezas.forEach(({ nodo, marca }) => {
+            if (citaEsMovil()) pie.insertBefore(nodo, document.getElementById('cm_submit'));
+            else {
+                marca.after(nodo);
+                if (nodo.hasAttribute('data-triage-calcular') || nodo.hasAttribute('data-triage-aprobar')) nodo.hidden = false;
+            }
+        });
+        if (!citaEsMovil() && pasoCitaModal === 2) pasoCitaModal = 1;
+        const franja = document.querySelector('#modal_slots_container .slot-tab.is-active')?.dataset.franja;
+        document.querySelectorAll('#modal_slots_container .slot-grid[data-franja]').forEach(grupo => {
+            grupo.hidden = !citaEsMovil() && Boolean(franja) && grupo.dataset.franja !== franja;
+        });
+        mostrarPasoCita(pasoCitaModal, false);
+    };
+    window.matchMedia('(max-width: 767px)').addEventListener('change', ajustar);
+    ajustar();
 }
 
 function evitarEnvioCitaConEnter(evento) {
@@ -1486,6 +1537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alCambiar: () => cargarSlotsModal()
     });
     conectarFormulariosC3();
+    adaptarPieCita();
     moverModalesAlBody();
     FilterManager.init();
     conectarBarra();

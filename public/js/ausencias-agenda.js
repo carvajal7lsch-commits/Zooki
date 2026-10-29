@@ -28,15 +28,7 @@
         // Mismo calendario del sistema; el valor enviado conserva fecha, hora y segundos.
         if (global.SelectorFechas && typeof global.flatpickr === 'function') {
             form.querySelectorAll('[data-fecha-ausencia]').forEach(campo => {
-                global.SelectorFechas.iniciar(campo, {
-                    maxDate: null,
-                    enableTime: true,
-                    enableSeconds: true,
-                    time_24hr: true,
-                    dateFormat: 'Y-m-d\\TH:i:S',
-                    altFormat: 'd/m/Y H:i:S',
-                    static: true,
-                    altInputClass: 'coord-fecha-visible',
+                global.SelectorFechas.iniciarFechaHora(campo, {
                     onChange() {
                         campo.dataset.tocado = '1';
                         campo.dispatchEvent(new Event('input', { bubbles: true }));

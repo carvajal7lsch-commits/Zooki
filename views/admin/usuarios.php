@@ -29,16 +29,12 @@ $contexto = Contexto::actual();
 $telefonoHtml = ValidadorTelefono::atributosHtml();
 $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Identidad', 'CE' => 'Cédula de Extranjería', 'PP' => 'Pasaporte', 'NIT' => 'NIT'];
 ?>
+<link rel="stylesheet" href="css/directorio.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
-<div class="users-container" id="usuariosModulo" data-vista="tarjetas">
-    <div class="header-container-white">
-        <div class="head-title-desc">
-            <h1 class="users-page-title">Gestión de Usuarios</h1>
-            <p class="users-module-desc">
-                Administra las cuentas del personal de <?= $e($contexto['clinica'] ?? 'la clínica') ?> y gestiona a los clientes y sus mascotas.
-            </p>
-        </div>
-        <div class="head-top-right">
+<div class="users-container directorio-unificado" id="usuariosModulo" data-vista="tarjetas">
+    <div class="header-container-white directorio-barra usuarios-barra directorio-controles">
+        <div class="directorio-controles-cabecera" data-directorio-controles-cabecera></div>
+        <div class="head-top-right" data-usuarios-origen-pestanas>
             <div class="tabs-wrapper" role="tablist">
                 <button type="button" class="tab-btn active" data-tab="personal" role="tab" aria-selected="true">
                     <i class="fas fa-users-cog" aria-hidden="true"></i><span>Personal</span>
@@ -48,7 +44,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                 </button>
             </div>
             <button type="button" class="btn-create btn-create-large" data-accion="nuevo">
-                <i class="fas fa-plus" aria-hidden="true"></i><span>Nuevo Usuario</span>
+                <i class="fas fa-plus" aria-hidden="true"></i><span>Invitar personal</span>
             </button>
         </div>
 
@@ -102,6 +98,8 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                 <button type="button" class="view-toggle-btn active" data-vista-usuarios="tarjetas" aria-pressed="true" title="Vista de tarjetas"><i class="bi bi-grid" aria-hidden="true"></i></button>
             </div>
         </div>
+        <div class="command-center-actions" data-usuarios-barra-acciones></div>
+        <p class="directorio-resumen" data-usuarios-resumen aria-live="polite"></p>
     </div>
 
     <!-- Personal de la clínica -->
@@ -116,7 +114,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                 $esYo = (int) $p['id_usuario'] === $yo;
                 $rol = (int) $p['id_rol'];
                 ?>
-                <article class="person-card <?= $esYo ? 'current-user' : '' ?>" data-fila data-id-usuario="<?= (int) $p['id_usuario'] ?>" data-identidad-editable="<?= $p['identidad_editable'] ? '1' : '0' ?>" data-rol="<?= $rol ?>" data-estado="<?= $activo ? 1 : 0 ?>" data-buscar="<?= $e($buscable($p)) ?>">
+                <article class="directorio-tarjeta person-card <?= $esYo ? 'current-user' : '' ?>" data-fila data-id-usuario="<?= (int) $p['id_usuario'] ?>" data-identidad-editable="<?= $p['identidad_editable'] ? '1' : '0' ?>" data-rol="<?= $rol ?>" data-estado="<?= $activo ? 1 : 0 ?>" data-buscar="<?= $e($buscable($p)) ?>">
                     <div class="card-header-mini">
                         <span class="avatar-mini avatar-iniciales avatar-iniciales--rol-<?= $rol ?>" aria-hidden="true"><?= $e($iniciales($p['nombre_completo'])) ?></span>
                         <div class="status-indicator"><?php require __DIR__ . '/partials/interruptor_personal.php'; ?></div>
@@ -142,7 +140,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
             <?php endforeach; ?>
             <?php foreach ($invitaciones as $i): ?>
                 <?php $rol = (int) $i['id_rol']; ?>
-                <article class="person-card" data-fila data-id-invitacion="<?= (int) $i['id_invitacion'] ?>" data-rol="<?= $rol ?>" data-estado="pendiente" data-buscar="<?= $e($buscable($i)) ?>">
+                <article class="directorio-tarjeta person-card" data-fila data-id-invitacion="<?= (int) $i['id_invitacion'] ?>" data-rol="<?= $rol ?>" data-estado="pendiente" data-buscar="<?= $e($buscable($i)) ?>">
                     <div class="card-header-mini">
                         <span class="avatar-mini avatar-iniciales avatar-iniciales--rol-<?= $rol ?>" aria-hidden="true"><?= $e($iniciales($i['nombre_completo'])) ?></span>
                     </div>
@@ -241,7 +239,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
             <?php endif; ?>
             <?php foreach ($propietarios as $p): ?>
                 <?php $activo = (int) $p['estado_clinica'] === 1; ?>
-                <article class="client-card person-card" data-fila data-id-usuario="<?= (int) $p['id_usuario'] ?>" data-estado="<?= $activo ? 1 : 0 ?>" data-buscar="<?= $e($buscable($p)) ?>">
+                <article class="directorio-tarjeta client-card person-card" data-fila data-id-usuario="<?= (int) $p['id_usuario'] ?>" data-estado="<?= $activo ? 1 : 0 ?>" data-buscar="<?= $e($buscable($p)) ?>">
                     <div class="card-header-mini">
                         <span class="avatar-mini avatar-iniciales avatar-iniciales--cliente" aria-hidden="true"><?= $e($iniciales($p['nombre_completo'])) ?></span>
                         <div class="status-indicator"><?php require __DIR__ . '/partials/interruptor_cliente.php'; ?></div>
@@ -312,24 +310,28 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
     </section>
 </div>
 
+<?php require __DIR__ . '/partials/acciones_usuario_movil.php'; ?>
 <!-- Alta y edición de personal y edición de clientes. D2.1: diseño de v1.12.0
      (modalUsuarioGestion, specs/referencias/usuarios-modal-editar-v1.png) con las
      reglas v2: alta por invitación de 72 horas e identidad compartida de C1.7.
      D2.2: como en producción, el cliente usa este mismo modal con el rol oculto. -->
 <div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">
     <div class="modal-content users-modal__panel">
+        <span class="zk-hoja__asa zk-hoja__asa--adorno" aria-hidden="true"></span>
         <div class="modal-header">
-            <h3 id="usuarioModalTitulo">
-                <i class="fas fa-user-plus" aria-hidden="true" data-icono-titulo></i>
-                <span data-titulo>Nuevo Usuario</span>
+            <div class="usuario-modal-identidad">
+                <h3 id="usuarioModalTitulo">
+                    <i class="fas fa-user-plus" aria-hidden="true" data-icono-titulo></i>
+                    <span data-titulo>Nuevo Usuario</span>
+                </h3>
                 <span class="modal-subtitle" data-subtitulo hidden>
                     <i class="bi bi-person" aria-hidden="true"></i> <span data-subtitulo-nombre></span>
                     &nbsp;&bull;&nbsp;
                     <i class="bi bi-card-text" aria-hidden="true"></i> <span data-subtitulo-documento></span>
                 </span>
-            </h3>
+            </div>
             <button type="button" class="close-modal" data-accion="cerrar" aria-label="Cerrar">
-                <i class="fas fa-times" aria-hidden="true"></i>
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
         </div>
         <?php // D2.2 (RE-T.7.5): el alta no consulta si la cuenta existe; al editar sí se comprueba la unicidad. ?>
@@ -367,7 +369,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="usuarioEmail" name="email" required placeholder="correo@ejemplo.com">
                     </div>
                     <div class="input-group">
-                        <label for="usuarioTelefono">Teléfono</label>
+                        <label for="usuarioTelefono">Teléfono <span class="usuario-opcional">(opcional)</span></label>
                         <input type="tel" id="usuarioTelefono" name="telefono" placeholder="Ej: 3001234567" minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
@@ -425,4 +427,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 <!-- D2.1: teléfono con bandera y prefijo, el mismo intl-tel-input de Pacientes. -->
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
 <script src="js/telefono-internacional.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/paginacion-directorio.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/usuarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/usuarios-movil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/usuarios-distribucion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

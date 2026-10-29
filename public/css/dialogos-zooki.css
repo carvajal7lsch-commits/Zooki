@@ -54,6 +54,46 @@
 }
 
 /* Botones compactos compartidos por ventanas y paneles de agenda. */
+.zk-hoja__asa {
+    display: none;
+}
+
+/* RNF-16: cierre en forma de asa, con área táctil accesible, según el mockup. */
+@media (max-width: 767px) {
+    .zk-hoja__asa {
+        display: grid;
+        place-items: center;
+        flex: 0 0 32px;
+        width: 80px;
+        min-height: 40px;
+        margin: 0 auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .zk-hoja__asa::after {
+        content: '';
+        width: 40px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--z-border-fuerte);
+    }
+
+    .zk-hoja__asa:focus-visible {
+        outline: 2px solid var(--z-primary);
+        outline-offset: -4px;
+        border-radius: var(--z-radius-sm);
+    }
+
+    .zk-hoja__asa--adorno {
+        flex-basis: 20px;
+        min-height: 20px;
+        cursor: default;
+    }
+}
+
 .zk-btn {
     display: inline-flex;
     align-items: center;
