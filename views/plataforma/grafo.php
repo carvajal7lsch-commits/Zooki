@@ -11,6 +11,11 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="expect" href="#paginaLista" blocking="render">
+    <link rel="stylesheet" href="css/navegacion-transicion.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/carga-contenido.css?v=<?= $v ?>">
+    <script src="js/carga-contenido.js?v=<?= $v ?>"></script>
+    <script src="js/navegacion-transicion.js?v=<?= $v ?>"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conocimiento clínico · Plataforma · Zooki</title>
@@ -37,6 +42,7 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
 <div class="main-content plataforma-contenido">
 <?php require __DIR__ . '/cabecera.php'; ?>
 <main class="content-body plataforma grafo" data-grafo data-url="index.php?action=obtener_grafo_conocimiento_ajax">
+    <?php require __DIR__ . "/../partials/carga_contenido.php"; ?>
     <div class="grafo-composicion">
     <aside class="grafo-filtros-lateral" id="grafoFiltros" aria-label="Explorar conocimiento">
         <form class="users-controls-bar__filters is-active plataforma-filtros grafo-filtros" role="search" data-grafo-filtros hidden>
@@ -96,5 +102,6 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
     </div>
 </main>
 </div></div>
+<span id="paginaLista" hidden></span>
 </body>
 </html>

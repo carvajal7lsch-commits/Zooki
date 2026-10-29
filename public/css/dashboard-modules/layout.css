@@ -179,11 +179,9 @@ body {
   /* clip y no hidden: hidden convierte a .main-content en un contenedor con
      scroll propio, y aparecía una segunda barra junto a la del navegador. */
   overflow-x: clip;
-  /* Sin "forwards": dejaba aplicado para siempre el transform final, y un
-     transform convierte a .main-content en un contexto de apilamiento propio.
-     Ningún modal ni drawer de dentro podía pasar por encima de la barra
-     lateral (z-index 1000), que quedaba sin oscurecer. El final es igual. */
-  animation: pageFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  /* R (2026-10-29): la navegación común anima el cambio entre documentos;
+     volver a desvanecer todo durante medio segundo producía otro destello. */
+  animation: none;
 }
 
 @keyframes pageFadeIn {
@@ -1137,21 +1135,6 @@ a.cabecera-clinica:hover {
   border-radius: 50px;
   font-size: 0.75rem;
   font-weight: 600;
-}
-
-/* Loader */
-#global-loader {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
 }
 
 .spinner {

@@ -6,6 +6,14 @@
 
 ## Ahora
 
+### Navegación interna y ayudas de iconos — entregadas, pendientes de revisión (2026-10-29)
+
+- **Retoque del dueño, escribió Codex; pendiente de revisión:** etiquetas ancladas a14px del icono en los tres roles, conservando teclado y móvil. Comprobación conjunta con el perro2/2, captura ayuda-cercana-1366.png y comandos actualizados; sin repetir suite completa.
+
+- **Corrección y skeleton entregados, pendientes de revisión (2026-10-29), escribió Codex; revisa Claude.** La activación CSS de la transición pasa al principio de los cuatro documentos base: recorrido estricto de16 cambios, incluyendo Inicio, en admin/vet/plataforma y con caché fría. Skeleton propio compartido reemplaza el velo/spinner en peticiones >400ms; conserva cabecera/barra y campos, concurrencia/errores/abortos, sinLoader y movimiento reducido. Avisos en segundo plano sin skeleton. Dirigidas11/11, sintaxis PHP/JS correcta; capturas1366/390 y comprobación360 sin desborde en scratch/r/navegacion-interna. Resultado y comandos actualizados en Etapa R; no convierte la navegación PHP en SPA ni añade biblioteca. Sigue comprobación del dueño y revisión de Claude; sin datos/rutas/permisos, .env, base de trabajo, versión nueva, commit/push ni otra pantalla.
+
+- **Escribió Codex; revisa Claude.** R/RNF-16: barra compartida admin/vet/plataforma, transición nativa breve y respaldo de160ms si el navegador omite su captura; ayudas inmediatas blancas/azules por ratón/teclado. Portal, enlaces, rutas/permisos/respuestas, historial y aviso de cambios sin guardar conservados; movimiento reducido sin animación. NavegacionInterna3/3, dos regresiones de cabecera correctas y sintaxis PHP/JS verificada. Resultado, evidencia/comandos en scratch/r/navegacion-interna; A/B previos separados, sin .env, base de trabajo, servicios reales, commit/push ni versión nueva. Sigue revisión de Claude y comprobación del dueño; no se inició otra pantalla.
+
 ### Paleta armónica del mapa (5b) — entregada, pendiente de revisión (2026-10-28)
 
 - **Escribió Codex; revisa Claude.** Ajuste de A: PALETA única (azules clínicos/grises de contexto/rojo de peligro), usada por chips/leyenda/ficha/lista/mapa; diagnóstico mayor y síntomas pequeños. M2C6Grafo13/13 y conjunto dirigido16/16; capturas1366/390 reales y log paleta-dirigidas.log en scratch/r/grafo-comodidad, sin repetir suites completas. Resultado5b en Etapa R y anexo con autor; parte-a.patch/comandos actualizados para incluirlo en A manteniendo B aparte. Sin datos/rutas/respuestas nuevos, .env, base de trabajo, commit/push ni otra pantalla;2.2.0 sin publicar.

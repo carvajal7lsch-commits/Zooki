@@ -18,6 +18,11 @@ $plan = $plan ?? '';
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="expect" href="#paginaLista" blocking="render">
+    <link rel="stylesheet" href="css/navegacion-transicion.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/carga-contenido.css?v=<?= $v ?>">
+    <script src="js/carga-contenido.js?v=<?= $v ?>"></script>
+    <script src="js/navegacion-transicion.js?v=<?= $v ?>"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plataforma · Zooki</title>
@@ -44,6 +49,7 @@ $plan = $plan ?? '';
 <div class="main-content plataforma-contenido">
 <?php require __DIR__ . '/cabecera.php'; ?>
 <main id="plataformaContenido" class="content-body plataforma">
+    <?php require __DIR__ . "/../partials/carga_contenido.php"; ?>
     <?php // Revisión del usuario (2026-10-12): la misma cabecera, filtros y tarjeta de Usuarios; sin franja de cifras. ?>
     <div class="header-container-white plataforma-encabezado">
         <div class="head-top-right">
@@ -437,5 +443,6 @@ $plan = $plan ?? '';
     </div>
 </main>
 </div></div>
+<span id="paginaLista" hidden></span>
 </body>
 </html>

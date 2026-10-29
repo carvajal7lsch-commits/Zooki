@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zooki</title>
+    <?php // RNF-16: esperar también las hojas incluidas por las vistas antes de pintar la transición. ?>
+    <link rel="expect" href="#paginaLista" blocking="render">
+    <link rel="stylesheet" href="css/navegacion-transicion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/carga-contenido.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <script src="js/carga-contenido.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/navegacion-transicion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
     <!-- Fuentes e iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -48,7 +54,6 @@
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
-    <div id="global-loader"><div class="spinner"></div></div>
 
     <div class="dashboard-layout">
 
@@ -118,6 +123,7 @@
 
             <!-- Cuerpo del contenido -->
             <div class="content-body">
+                <?php require __DIR__ . "/../partials/carga_contenido.php"; ?>
                 <?php if (isset($content_view)): ?>
                     <div class="content-wrapper">
                         <?php include $content_view; ?>
@@ -157,5 +163,6 @@
 <script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<span id="paginaLista" hidden></span>
 </body>
 </html>

@@ -16,40 +16,7 @@ if (typeof Chart !== "undefined") {
   Chart.defaults.plugins.tooltip.backgroundColor = "rgba(26,29,35,0.9)";
 }
 
-// ── Loader global ────────────────────────────────────────────────────────
-// Antes se mostraba en cada petición y se ocultaba al terminar cada una: una
-// pantalla que dispara varias (el calendario, por ejemplo) hacía parpadear el
-// velo blanco varias veces y parecía que la página se recargaba. Ahora cuenta
-// las peticiones en curso y solo aparece si tardan más de LOADER_ESPERA_MS.
-const _loader = document.getElementById("global-loader");
-const _origFetch = window.fetch;
-const LOADER_ESPERA_MS = 400;
-let _peticionesEnCurso = 0;
-let _temporizadorLoader = null;
-
-window.fetch = async (...args) => {
-  // Trabajo en segundo plano (p. ej. el envío de un correo): no bloquea la
-  // pantalla. Se pide con fetch(url, { ..., sinLoader: true }).
-  if (args[1] && args[1].sinLoader) {
-    return _origFetch(...args);
-  }
-  _peticionesEnCurso++;
-  if (_loader && !_temporizadorLoader) {
-    _temporizadorLoader = setTimeout(() => {
-      if (_peticionesEnCurso > 0) _loader.style.display = "flex";
-    }, LOADER_ESPERA_MS);
-  }
-  try {
-    return await _origFetch(...args);
-  } finally {
-    _peticionesEnCurso--;
-    if (_peticionesEnCurso === 0) {
-      clearTimeout(_temporizadorLoader);
-      _temporizadorLoader = null;
-      if (_loader) _loader.style.display = "none";
-    }
-  }
-};
+// El skeleton y las peticiones concurrentes se administran en carga-contenido.js (los tres roles).
 
 // TR-02 — Aqui se sobrescribia window.alert para que abriera un SweetAlert.
 // Funcionaba, pero solo en las paginas que cargan este archivo: en el portal
@@ -147,7 +114,7 @@ async function loadSystemNotifications() {
   const listMain = document.getElementById("pendingVaccinesList");
   if (!listMain) return;
   try {
-    const res = await fetch("index.php?action=get_notificaciones_ajax");
+    const res = await fetch("index.php?action=get_notificaciones_ajax", { sinLoader: true });
     const data = await res.json();
 
     if (!data.success) return;

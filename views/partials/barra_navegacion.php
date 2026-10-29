@@ -54,3 +54,4 @@ $__masActivo = (bool) array_filter($__secundarios, static fn (array $item): bool
     </div>
 </dialog>
 <?php endif; ?>
+<script src="js/barra-navegacion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>

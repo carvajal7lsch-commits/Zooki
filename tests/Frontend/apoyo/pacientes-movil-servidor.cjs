@@ -3,7 +3,7 @@ const path = require('node:path');
 const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const raiz = path.resolve(__dirname, '../../..');
-async function servidorPacientes({ directorio = false, htmlVista = null, respuestasVista = {} } = {}) {
+async function servidorPacientes({ directorio = false, htmlVista = null, respuestasVista = {}, vistas = {}, animaciones = false, ocultarLoader = true, demoraAjax = 0 } = {}) {
     const html = htmlVista ?? execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'pacientes-movil-vista.php'), directorio ? 'directorio' : ''], { encoding: 'utf8', env: { ...process.env, ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' } });
     const propietario = { id_usuario: 6, nombre_completo: 'Fabio Propietario', documento: '1000000006', telefono: '3001112233', email: 'fabio@zooki.test', estado: 1, total_mascotas: 5 };
     const propietarios = directorio ? [propietario, ...['Juanito Ramiro', 'Mariana López', 'Carlos Pérez', 'Laura Gómez', 'Andrés Ruiz', 'Diego Torres'].map((nombre, i) => ({ ...propietario, id_usuario: i + 11, nombre_completo: nombre, total_mascotas: i % 3, pendiente_activacion: i < 2 ? 1 : 0 })), { id_usuario: 20, nombre_completo: 'Sofía Martínez', estado: 0, total_mascotas: 0 }] : [propietario];
@@ -20,7 +20,8 @@ async function servidorPacientes({ directorio = false, htmlVista = null, respues
     const llamadas = [];
     const servidor = http.createServer((req, res) => {
         const url = new URL(req.url, 'http://localhost');
-        if (url.pathname === '/') {
+        const vista = req.method === 'GET' && url.pathname === '/index.php' ? vistas[url.searchParams.get('action')] : null;
+        if (url.pathname === '/' || typeof vista === 'string') {
             const rutas = {
                 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css': '/__bootstrap.css',
                 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css': '/__fontawesome.css',
@@ -28,11 +29,13 @@ async function servidorPacientes({ directorio = false, htmlVista = null, respues
                 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js': '/__flatpickr-es.js',
                 'https://cdn.jsdelivr.net/npm/flatpickr': '/__flatpickr.js'
             };
-            let pagina = html;
+            let pagina = vista ?? html;
             Object.entries(rutas).forEach(([remota, local]) => { pagina = pagina.replaceAll(remota, local); });
             pagina = pagina.replace(/<script[^>]+src="https:[^>]*><\/script>/g, '').replace(/<link[^>]+href="https:[^>]*>/g, '');
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.end(pagina.replace('</head>', '<style>*{animation:none!important;transition:none!important}#global-loader{display:none!important}</style></head>'));
+            const quieto = animaciones ? '' : '*{animation:none!important;transition:none!important}';
+            const cargador = ocultarLoader ? '#global-loader{display:none!important}' : '';
+            res.end(pagina.replace('</head>', '<style>' + quieto + cargador + '</style></head>'));
             return;
         }
         const cache = { '/__bootstrap.css': 'usuarios-mockup/bootstrap-icons.css', '/__bootstrap.woff2': 'usuarios-mockup/bootstrap-icons.woff2', '/__fontawesome.css': 'r/agenda-vet-movil/fontawesome.css', '/__solid.woff2': 'r/agenda-vet-movil/fa-solid-900.woff2', '/__flatpickr.css': 'flatpickr.min.css', '/__flatpickr.js': 'flatpickr.min.js', '/__flatpickr-es.js': 'flatpickr-es.js' };
@@ -81,7 +84,8 @@ async function servidorPacientes({ directorio = false, htmlVista = null, respues
                 res.setHeader('Content-Type', 'text/html; charset=utf-8');
                 res.end(salida);
             } else {
-                res.end(JSON.stringify(salida));
+                if (demoraAjax) setTimeout(() => res.end(JSON.stringify(salida)), demoraAjax);
+                else res.end(JSON.stringify(salida));
             }
             return;
         }

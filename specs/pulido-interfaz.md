@@ -73,6 +73,49 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Navegación interna suave y ayudas de los iconos (2026-10-29)
+
+- **Retoque del dueño (2026-10-29), escribió Codex; entregado, pendiente de revisión:** ajuste posterior de8 a14px para dejar más aire junto al icono. La ayuda se ancla a14px del icono, no al borde de la barra. Admin/vet/plataforma conservan blanco/azul, foco, escape, rutas y barra móvil. Comprobaciones dirigidas conjuntas2/2 con el desplazamiento del perro; retoque-patas-ayuda.log en scratch/r/portal-bienvenida y captura ayuda-cercana-1366.png en scratch/r/navegacion-interna. Sin otra pasada completa.
+
+#### Corrección del recorrido completo y skeleton compartido — entregada, pendiente de revisión (2026-10-29)
+
+**Escribió Codex; revisa Claude.** El dueño reporta que Inicio↔Usuarios y otros destinos siguen bruscos; pide incluir administrador, veterinario y plataforma, y añadir skeleton para los datos que tardan en cargar. La verificación anterior no cubría Inicio y aceptaba el fundido de respaldo sin exigir la transición entre documentos.
+
+- Preparar los estilos críticos de navegación antes de scripts/librerías en los cuatro documentos base. Conservar enlaces PHP, permisos, rutas, historial, salida con cambios sin guardar, teclado y movimiento reducido. Probar ambos sentidos de Inicio y los destinos reales de cada barra, también con caché fría; el respaldo no sustituye la comprobación de la transición nativa en Chrome compatible.
+- Skeleton propio compartido, sin dependencia adicional: formas compactas con tokens Zooki en la zona de contenido durante peticiones lentas; cabecera/barra disponibles. Sin flashes en respuestas rápidas, sin mostrarlo por consultar notificaciones en segundo plano, con solicitudes concurrentes/errores/abortos y movimiento reducido. No inventa datos ni adelanta peticiones.
+- Pruebas dirigidas del recorrido y la carga; vistas PHP reales sobre SQLite efímera, sin ocultar el cargador en el arnés de navegación. Resultado con autor y comandos propios; sin .env, base de trabajo, commit/push ni cambio de versión (2.2.0 sin publicar).
+
+##### Corrección y skeleton — Resultado (2026-10-29)
+
+**Anexo escrito por Codex. Entregada, pendiente de revisión de Claude y comprobación del dueño.**
+
+- **Alcance y riesgo:** se mantienen documentos PHP completos y todos sus enlaces/inicializadores. La mejora visual no convierte el sistema en una aplicación de una sola página ni acelera la consulta al servidor. No se agregó ninguna biblioteca ni se anticiparon consultas. El portal conserva su navegación propia.
+- **Causa corregida:** la activación de la transición estaba dentro de pill-sidebar.css, después de scripts/librerías; con recursos nuevos por carga en desarrollo, Chrome podía revelar la vista sin esa preparación y omitir la transición. Se extrajo a navegacion-transicion.css, primera hoja de los cuatro documentos base, antes de scripts, y el fundido de salida/entrada comparte180ms sin retardo entre ellos. La prueba nueva exige transición nativa sin errores de captura en16 cambios reales con caché desactivada: Inicio↔Usuarios/Citas/Auditoría/Ajustes del administrador, Inicio↔Pacientes/Agenda/Mi perfil del veterinario y Clínicas↔Conocimiento de plataforma. Atención no es un destino de esa barra y no se rediseñó.
+- **Skeleton común:** carga_contenido.php, carga-contenido.css/js en los tres contextos. Sustituye al velo blanco global con spinner, conserva los márgenes del contenido y deja libres cabecera/barra. Cuatro filas compactas neutras con pulso suave, anuncio de carga y aria-busy restaurado. Umbral400ms para evitar destellos en respuestas rápidas; contador de concurrencia, limpieza en error/aborto, respeto de sinLoader y movimiento reducido. Las notificaciones usan sinLoader y no cubren el módulo; las respuestas, los errores y las opciones de fetch se conservan.
+- **Verificación dirigida11/11:** CargaContenido5/5 (incluye Chrome en admin/vet/plataforma), NavegacionInterna4/4 (incluye el recorrido nativo estricto con Inicio/caché fría), RCabeceraNotificaciones2/2. El arnés conserva dashboard.js y el cargador real. Sintaxis PHP de los cinco archivos de vista y JS correcta; sin suite general repetida. Último ajuste visual de márgenes revisado solo con la prueba Chrome afectada. Capturas a1366/390 y comprobación adicional360 sin desborde, preservando los campos existentes.
+- **Evidencia:** scratch/r/navegacion-interna/correccion-skeleton.log, skeleton-visual-final.log, skeleton-1366.png y skeleton-390.png. Comandos actualizados en comandos-commit.txt/comandos-todos.txt de esa carpeta, conservando A/B previos aparte. 2.2.0 sin publicar; sin .env, base de trabajo, commit/push ni otra pantalla.
+- **Dueño, tres comprobaciones:** (1) Inicio↔Usuarios/Citas/Ajustes y después Inicio↔Pacientes/Agenda/Perfil con el veterinario; (2) con red lenta, skeleton en el contenido y barra/cabecera utilizables, sin velo por cargar avisos; (3) cancelar la salida de un formulario sin guardar conserva la pantalla y sus datos.
+
+**Entregada, pendiente de revisión. Escribió Codex; revisa Claude.** Pedido del dueño para la barra compartida de administrador, veterinario y plataforma: investigar el salto al cambiar de módulo frente al portal, suavizarlo y mostrar ayudas inmediatas con fondo blanco/texto azul al pasar el mouse, siguiendo su referencia visual. Sin cambiar el portal, rutas, datos, permisos ni respuestas.
+
+- Diagnóstico: el portal alterna secciones ya cargadas; la barra interna navega entre documentos PHP, reinicia pageFadeIn de500ms y cambia de golpe la gota activa. Usar transiciones nativas entre documentos compatibles (barra estable, indicador activo y contenido breves), retirar la reaparición larga y conservar navegación normal, Ctrl/cmd-clic, Atrás/Adelante y beforeunload de formularios. Respaldo nativo y prefers-reduced-motion sin animación.
+- Ayudas compartidas por ratón/teclado, blancas y azules, texto seguro, sin demora ni duplicar el title nativo; dentro del viewport, cierre al salir/Escape/clic, sin ocupar espacio ni estorbar la barra inferior del celular. Nombres/rutas/estado activo siguen viniendo de PHP.
+- Solo componente común de navegación/CSS de layout y script externo; pruebas dirigidas de los tres roles, navegación real entre vistas PHP, vuelta atrás, aviso nativo de formulario, ayudas/foco/escape y movimiento reducido. Evidencia y comandos propios en scratch/r/navegacion-interna. Trabajo separado de A/B ya entregados, versión2.2.0 sin publicar; sin .env, base de trabajo, servicios reales, commit ni push.
+
+Referencia técnica: [transiciones entre documentos, Chrome](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document).
+
+#### Navegación interna — Resultado (2026-10-29)
+
+**Anexo escrito por Codex. Entregada, pendiente de revisión de Claude.**
+
+- **Riesgo principal:** siguen siendo documentos PHP completos. El navegador puede omitir la transición nativa; un script externo pequeño en el head aplica entonces un fundido de respaldo de160ms. Sin interceptar enlaces, cambiar respuestas ni reemplazar el DOM de otros módulos. La barra permanece estable; el indicador cambia en200ms cuando hay transición nativa. Sin animación con movimiento reducido. La espera declarativa hasta el final del documento evita capturas de contenido todavía sin analizar; no se adelantaron peticiones ni acciones de negocio.
+- Se retiró pageFadeIn de500ms y el aumento del icono al pasar el mouse. Ayuda compartida blanca/azul, inmediata, con texto seguro, aria-describedby y foco; cierre al salir, Escape, clic, scroll o cambio de página. En celular no se superpone a los nombres de la barra inferior. El contenido no conserva una capa de apilamiento de transición que encierre modales.
+- **Verificación dirigida:** NavegacionInterna3/3 en Chrome aislado con vistas PHP reales/SQLite efímera: destinos de los tres roles, historial, Ctrl-clic, cancelación de beforeunload, ayudas/escape y respaldo con movimiento reducido. PlataformaCabecera y RUsuariosCabecera conservaron sus dos pruebas correctas en la ejecución precedente. PHP lint de los cinco archivos de vista y node --check de los dos scripts correctos. Sin repetir suites completas. Chrome puede notificar por CDP su aborto interno de captura al navegar: se admite solo ese mensaje exacto en la prueba, que exige el respaldo; cualquier error de la aplicación hace fallar la prueba.
+- **Evidencia:** scratch/r/navegacion-interna/navegacion-final.log, dirigidas.log (cabeceras), capturas.log y capturas1366-ayuda.png/390-barra.png. Sin desborde en ambas capturas; scripts/pruebas y comandos propios separados de A/B. Versión2.2.0 sin publicar; sin .env, datos reales, commit ni push.
+- **Dueño:** (1) cambiar de módulo y volver con Atrás en admin/vet/plataforma; (2) pasar el mouse y usar Tab/Escape en los iconos: ayuda blanca/azul sin espera ni duplicado; (3) dejar un formulario sin guardar e intentar salir: al cancelar se conserva la pantalla y el formulario.
+
+Comandos: scratch/r/navegacion-interna/comandos-commit.txt, después de los dos commits A/B de scratch/r/grafo-comodidad/comandos-commit.txt. La misma carpeta de navegación contiene comandos-todos.txt con la secuencia completa; el dueño los ejecuta.
+
 ### Mapa del conocimiento: paneles compactos, ocultables y pantalla completa (2026-10-28)
 
 **Parte A entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Pedido del dueño y referencias demo-mapa-3d.html/escritorio-conocimiento-3d.dc.html en specs/referencias/plataforma. Parte A primero; parte B después y con entrega/commit separados. 2.2.0 sin publicar.
