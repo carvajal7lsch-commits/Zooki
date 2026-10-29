@@ -60,7 +60,8 @@
                 conteo.className = 'usuarios-tab-conteo';
                 pestana.prepend(conteo);
             }
-            if (conteo.textContent !== String(filas.length)) conteo.textContent = String(filas.length);
+            const filtradas = filas.filter(fila => !fila.hidden).length;
+            if (conteo.textContent !== String(filtradas)) conteo.textContent = String(filtradas);
             modulo.querySelectorAll(`[data-filtros="${panel}"] [data-filtro-estado]`).forEach(radio => {
                 const cantidad = filas.filter(fila => radio.value === '' || fila.dataset.estado === radio.value).length;
                 const etiqueta = modulo.querySelector(`label[for="${radio.id}"]`);

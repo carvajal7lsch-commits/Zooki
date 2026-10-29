@@ -35,32 +35,33 @@ test('R retoques: buscador completo, controles centrados, tarjetas y detalle leg
                     const filtro = fila.querySelector('.head-status-filters').getBoundingClientRect();
                     const selector = fila.querySelector('select');
                     const estilo = selector && getComputedStyle(selector);
-                    return { desborde:document.documentElement.scrollWidth > innerWidth, ancho:caja.width, libre:espacio.width, hueco:filtro.left-caja.right, centrado:[...fila.querySelectorAll('.segmented-control label')].every(e=>getComputedStyle(e).alignItems==='center'), raya:getComputedStyle(document.querySelector('.head-view-toggle')).borderRightWidth, selector:selector && { ancho:selector.getBoundingClientRect().width, alto:selector.getBoundingClientRect().height, color:estilo.color, fondo:estilo.backgroundColor } };
+                    return { desborde:document.documentElement.scrollWidth > innerWidth, ancho:caja.width, libre:espacio.width, hueco:filtro.top>caja.top+2 ? filtro.top-caja.bottom : filtro.left-caja.right, centrado:[...fila.querySelectorAll('.segmented-control label')].every(e=>getComputedStyle(e).alignItems==='center'), raya:getComputedStyle(document.querySelector('.head-view-toggle')).borderRightWidth, selector:selector && { ancho:selector.getBoundingClientRect().width, alto:selector.getBoundingClientRect().height, color:estilo.color, fondo:estilo.backgroundColor } };
                 })()`);
                 assert.equal(controles.desborde, false, width + '/' + modulo);
                 assert.ok(Math.abs(controles.ancho - controles.libre) < 1, JSON.stringify(controles));
                 assert.ok(Math.abs(controles.hueco - 10) < 1, JSON.stringify(controles));
                 assert.equal(controles.centrado, true);
                 assert.equal(controles.raya, '0px');
-                if (modulo === 'pets') assert.deepEqual(controles.selector, { ancho:170, alto:40, color:'rgb(71, 85, 105)', fondo:'rgb(248, 250, 252)' });
+                if (modulo === 'pets') assert.deepEqual(controles.selector, { ancho:170, alto:40, color:'rgb(15, 23, 42)', fondo:'rgb(248, 250, 252)' });
             }
             await nav.evaluar("switchModule('owners',{recargar:false})");
             const tarjetas = await nav.evaluar(`(() => {
                 const vacias = [...document.querySelectorAll('#ownersGrid [data-total-mascotas="0"]')];
-                return { vacias:vacias.length>0 && vacias.every(e=>e.querySelector('.propietario-mascotas__nombres').textContent==='Sin mascotas aún'), espacios:[...document.querySelectorAll('#ownersGrid .client-card')].map(e=>e.querySelector('.propietario-cantidad').getBoundingClientRect().top-e.querySelector('.card-title-mini').getBoundingClientRect().bottom) };
+                return { vacias:vacias.length>0 && vacias.every(e=>e.querySelector('.propietario-mascotas__nombres').textContent==='Sin mascotas aún'), espacios:[...document.querySelectorAll('#ownersGrid .client-card')].map(e=>e.querySelector('.card-tags-mini').getBoundingClientRect().top-e.querySelector('.card-title-mini').getBoundingClientRect().bottom) };
             })()`);
             assert.equal(tarjetas.vacias, true);
-            assert.ok(tarjetas.espacios.every(g => Math.abs(g - 2) < 1), JSON.stringify(tarjetas));
+            assert.ok(tarjetas.espacios.every(g => Math.abs(g - 8) < 1), JSON.stringify(tarjetas));
             await nav.evaluar('openOwnerDossier(6)');
             const detalle = await nav.evaluar(`(() => {
                 const edad = document.querySelector('.propietario-mascota-edad');
                 const avatar = document.querySelector('.propietario-mascota-avatar .avatar-iniciales');
-                return { desborde:document.documentElement.scrollWidth>innerWidth, edad:edad.getBoundingClientRect().width, salto:getComputedStyle(edad).whiteSpace, fondo:getComputedStyle(avatar).backgroundColor, tarjeta:getComputedStyle(document.querySelector('#ownersGrid .avatar-mini')).backgroundColor, selector:document.getElementById('dossierPetSpeciesFilter').getBoundingClientRect().width };
+                return { controles:getComputedStyle(document.querySelector('.pacientes-barra')).display, desborde:document.documentElement.scrollWidth>innerWidth, edad:edad.getBoundingClientRect().width, salto:getComputedStyle(edad).whiteSpace, fondo:getComputedStyle(avatar).backgroundColor, tarjeta:getComputedStyle(document.querySelector('#ownersGrid .avatar-mini')).backgroundColor, selector:document.getElementById('dossierPetSpeciesFilter').getBoundingClientRect().width };
             })()`);
             assert.equal(detalle.desborde, false, JSON.stringify(detalle));
+            assert.equal(detalle.controles, 'none', 'El detalle conserva oculta la barra del directorio');
             assert.equal(detalle.edad, 140);
             assert.equal(detalle.salto, 'nowrap');
-            assert.equal(detalle.fondo, detalle.tarjeta);
+            assert.equal(detalle.fondo, 'rgba(0, 82, 255, 0.08)');
             assert.equal(detalle.selector, 170);
             await nav.evaluar('hideDossier()');
         }
@@ -76,9 +77,9 @@ test('R A: al guardar y repintar sin recargar, las tarjetas y filas nuevas conse
             const tarjeta = document.querySelector('#petsGrid .pet-card');
             const campo = tarjeta.querySelector('input[type=checkbox]');
             window.__nuevo = campo;
-            return { nuevo:campo!==__anterior, tab:tarjeta.tabIndex, pie:!!campo.closest('.card-footer-mini'), cantidad:tarjeta.querySelectorAll('input[type=checkbox]').length, respaldo:tarjeta.dataset.fotoRespaldo };
+            return { nuevo:campo!==__anterior, tab:tarjeta.tabIndex, cabecera:!!campo.closest('.card-header-mini'), cantidad:tarjeta.querySelectorAll('input[type=checkbox]').length, respaldo:tarjeta.dataset.fotoRespaldo };
         })()`);
-        assert.deepEqual(preparada, { nuevo:true, tab:0, pie:true, cantidad:1, respaldo:'true' });
+        assert.deepEqual(preparada, { nuevo:true, tab:0, cabecera:true, cantidad:1, respaldo:'true' });
         const envios = servidor.llamadas.filter(l => l.accion === 'cambiar_estado_mascota_ajax').length;
         await nav.evaluar('window.__nuevo.click()');
         await pintar(nav);
@@ -105,7 +106,7 @@ test('R A: hoja, columnas, conteos/plural/filtros, filas y control móvil sin de
             assert.equal(propietarios.tabsEnHoja,width>=768,width);
             assert.equal(propietarios.columnas,width>=1280?4:width>=1024?3:width>=768?2:1,width);
             assert.equal(propietarios.sinContacto,true);
-            if(width>=768) assert.equal(propietarios.hoja,'rgb(255, 255, 255)');
+            if(width>=768) assert.equal(propietarios.hoja,'rgba(0, 0, 0, 0)');
             assert.match(propietarios.resumen,/8 propietarios · 2 sin activar/);
             await nav.evaluar("document.getElementById('eprop_inactivos').checked=true;filterOwners()");
             await pintar(nav);

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pacientes del veterinario unificado</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;gap:12px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px;margin-right:auto}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+h1{margin:0;font-size:20px;font-weight:700}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.clinica{height:40px;border-radius:20px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;font:600 13px Inter,sans-serif;color:#0F172A}
+.cn{width:28px;height:28px;border-radius:50%;background:rgba(0,82,255,.1);color:#0052FF;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+.control{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.cab{display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid #EEF2F7;height:58px}
+.utabs{display:flex;gap:24px;align-self:stretch;margin-right:auto}
+.utabs a{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#64748B;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.utabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.cnt{min-width:22px;height:20px;border-radius:10px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.on .cnt{background:rgba(0,82,255,.1);color:#0052FF}
+.prim{height:40px;border-radius:12px;border:0;background:#0052FF;color:#fff;font:600 14px Inter,sans-serif;padding:0 16px;display:flex;align-items:center;gap:8px}
+.tools{display:flex;align-items:center;gap:10px;padding:12px 20px 4px}
+.search{flex:1;height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:10px;padding:0 14px;color:#94A3B8;font-size:14px}
+.sel{height:40px;width:170px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 14px;font-size:14px}
+.dseg{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;gap:2px}
+.dseg button{height:34px;padding:0 13px;border:0;border-radius:9px;background:transparent;font:600 13px Inter,sans-serif;color:#64748B;display:flex;align-items:center}
+.dseg button.on{background:#fff;color:#0052FF;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.dseg.ico button{width:36px;padding:0;justify-content:center}
+.sum{padding:8px 20px 12px;font-size:13px;color:#64748B}
+.sum b{color:#0F172A}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.card{background:#fff;border-radius:22px;box-shadow:0 4px 14px rgba(15,23,42,.06);padding:20px 20px 16px;display:flex;flex-direction:column;gap:8px;position:relative;min-height:0}
+.card.hover{box-shadow:0 10px 26px rgba(0,82,255,.14)}
+.av{width:48px;height:48px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.sw{position:absolute;top:20px;right:20px;width:44px;height:24px;border-radius:12px;background:#0052FF}
+.sw::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw.yo-mismo{opacity:.45}
+.card strong{font-size:16px;font-weight:700}
+.card strong em{font-style:normal;color:#94A3B8;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:22px;border-radius:11px;padding:0 9px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;background:#F1F5F9;color:#334155}
+.chip svg{color:#64748B}
+.dt{display:flex;align-items:center;gap:8px;font-size:13px;color:#334155}
+.dt svg{color:#94A3B8}
+.pie{margin-top:auto;border-top:1px solid #E2E8F0;padding-top:12px;display:flex;gap:8px}
+.sec{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:600 14px Inter,sans-serif;color:#0F172A;padding:0 16px;display:flex;align-items:center;gap:8px}
+.mas{display:flex;align-items:center;gap:8px;margin-right:auto;min-width:0}
+.st{display:flex}
+.st i{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-6px;background:#E0EAFF;color:#0052FF;font-style:normal;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.st i:first-child{margin-left:0}
+.mas small{font-size:12px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pie{align-items:center}
+.ib{width:34px;height:34px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú principal">
+    <img class="logo" src="/_blob/9a706094b16871564b26168bd83be148" alt="Zooki">
+    <a class="nav" href="#" aria-label="Inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11h14V9"/></svg></a>
+    <a class="nav on" href="#" aria-label="Pacientes" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg></a>
+    <a class="nav" href="#" aria-label="Agenda"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></a>
+    <a class="nav" href="#" aria-label="Mi perfil"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.3-2 3.2-3 5.5-3s4.2 1 5.5 3"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+  <main class="main">
+    <header class="top">
+      <div class="ttl"><span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="10" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><circle cx="18" cy="10" r="2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg></span><div><h1>Pacientes</h1><div class="sub">Propietarios y mascotas de la clínica</div></div></div>
+      <button class="clinica" type="button"><span class="cn">CN</span>Clínica Norte (prueba)<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="redondo" type="button" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">BN</button>
+    </header>
+    <section class="control" aria-label="Buscar y filtrar pacientes">
+      <div class="cab">
+        <nav class="utabs" aria-label="Secciones de Pacientes"><a class="on" href="#">Propietarios <span class="cnt">8</span></a><a href="#">Mascotas <span class="cnt">12</span></a></nav>
+        <button class="sec" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Vincular mascota</button>
+        <button class="prim" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo registro</button>
+      </div>
+      <div class="tools">
+        <div class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Buscar por nombre, documento o correo</div>
+        <div class="dseg" role="group" aria-label="Estado"><button class="on" type="button">Todos</button><button type="button">Activos</button><button type="button">Desvinculados</button></div>
+        <div class="dseg ico" role="group" aria-label="Tipo de vista"><button type="button" aria-label="Tabla"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></button><button class="on" type="button" aria-label="Tarjetas"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button></div>
+      </div>
+      <div class="sum"><b>8 propietarios</b> · 2 sin activar su cuenta</div>
+    </section>
+    <div class="grid">
+      <article class="card hover"><span class="av">FP</span><strong>Fabio Propietario</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>5 mascotas</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>1000000006</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>300 111 2233</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>fabio@zooki.test</div><div class="pie"><div class="mas"><span class="st"><i>D</i><i>G</i><i>K</i></span><small>Doki, Gato, Kira</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+      <article class="card"><span class="av">JR</span><strong>Juanito Ramiro</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>0 mascotas</span><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Cuenta sin activar</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>1080361990</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>+57 311 526 5529</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>juancarlos@gmail.com</div><div class="pie"><div class="mas"><small>Sin mascotas aún</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button><button class="ib" type="button" aria-label="Reenviar enlace"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button></div></article>
+      <article class="card"><span class="av">ML</span><strong>Mariana López</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>1 mascota</span><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Cuenta sin activar</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>52890114</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>315 402 7781</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>mariana.lopez@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>D</i></span><small>Doki</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button><button class="ib" type="button" aria-label="Reenviar enlace"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button></div></article>
+      <article class="card"><span class="av">CP</span><strong>Carlos Pérez</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>2 mascotas</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>7765021</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>301 778 9902</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>carlos.perez@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>D</i><i>G</i></span><small>Doki, Gato</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+      <article class="card"><span class="av">LG</span><strong>Laura Gómez</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>3 mascotas</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>1019283746</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>320 115 4410</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>laura.gomez@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>K</i><i>N</i><i>B</i></span><small>Kira, Nala, Bruno</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+      <article class="card"><span class="av">AR</span><strong>Andrés Ruiz</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>1 mascota</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>80123456</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>310 660 1288</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>andres.ruiz@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>S</i></span><small>Simba</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+      <article class="card"><span class="av">DT</span><strong>Diego Torres</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>2 mascotas</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>1032456789</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>318 220 4471</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>diego.torres@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>C</i><i>M</i></span><small>Coco, Max</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+      <article class="card"><span class="av">SA</span><strong>Sara Acosta</strong><div class="chips"><span class="chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg>1 mascota</span></div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/></svg>1117890123</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>312 908 1144</div><div class="dt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>sara.acosta@correo.com</div><div class="pie"><div class="mas"><span class="st"><i>L</i></span><small>Lola</small></div><button class="ib" type="button" aria-label="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></article>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

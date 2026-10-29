@@ -76,6 +76,10 @@
     }
 
     // ── Pestañas ──────────────────────────────────────────────────────────
+    const paginadores = {};
+    modulo.querySelectorAll('[data-panel]').forEach(panel => {
+        paginadores[panel.dataset.panel] = window.zookiPaginacionDirectorio?.crear(panel, panel.dataset.panel === 'personal' ? 'personas' : 'clientes');
+    });
     const pestanasUsuarios = Array.from(modulo.querySelectorAll('.tab-btn'));
     pestanasUsuarios.forEach((boton) => {
         boton.addEventListener('click', () => {
@@ -92,6 +96,7 @@
             modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
                 barra.classList.toggle('is-active', barra.dataset.filtros === pestana);
             });
+            filtrar(pestana);
         });
     });
 
@@ -120,11 +125,19 @@
             const sinResultados = vista.querySelector('[data-sin-resultados]');
             if (sinResultados) sinResultados.hidden = filas.length === 0 || visibles > 0;
         });
+        paginadores[pestana]?.actualizar(Array.from(panel.querySelectorAll('[data-vista-contenido]'), vista => vista.querySelectorAll('[data-fila]')));
+        const filas = Array.from(panel.querySelectorAll('[data-vista-contenido="tarjetas"] [data-fila]')).filter(fila => !fila.hidden);
+        const pendientes = filas.filter(fila => fila.hasAttribute('data-id-invitacion') || fila.querySelector('.tag-mini--aviso')).length;
+        const inactivas = filas.filter(fila => Array.from(fila.querySelectorAll('.tag-mini')).some(chip => chip.textContent.trim() === 'Cuenta inactiva')).length;
+        const resumen = modulo.querySelector('[data-usuarios-resumen]');
+        if (resumen && panel.classList.contains('active')) resumen.textContent = filas.length + (pestana === 'personal' ? ' personas' : ' clientes') + ' · ' + pendientes + (pendientes === 1 ? ' pendiente de activación' : ' pendientes de activación') + ' · ' + inactivas + (inactivas === 1 ? ' cuenta inactiva' : ' cuentas inactivas');
     }
     modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
         barra.addEventListener('input', () => filtrar(barra.dataset.filtros));
         barra.addEventListener('change', () => filtrar(barra.dataset.filtros));
     });
+    filtrar('personal');
+    filtrar('clientes');
 
     // ── Modales ───────────────────────────────────────────────────────────
     const modales = [modal, modalDetalle].filter(Boolean);

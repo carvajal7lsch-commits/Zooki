@@ -1157,9 +1157,9 @@ select.mascota-extra__control:focus,
 
 .pacientes-escritorio .pacientes-modulo {
     padding:0;
-    background:var(--z-surface)!important;
+    background:transparent!important;
     border-radius:22px;
-    box-shadow:var(--z-shadow-sm)!important;
+    box-shadow:none!important;
     min-width:0
 }
 
@@ -1364,169 +1364,6 @@ select.mascota-extra__control:focus,
     font-size:13px
 }
 
-.pacientes-escritorio #ownersGrid,.pacientes-escritorio #petsGrid {
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:14px;
-    padding:0 20px 20px
-}
-
-.pacientes-escritorio #ownersGrid .client-card,.pacientes-escritorio #petsGrid .pet-card {
-    position:relative;
-    min-width:0;
-    width:auto;
-    padding:16px;
-    border:1px solid var(--z-border);
-    border-radius:18px;
-    background:var(--z-surface);
-    box-shadow:none;
-    overflow:hidden
-}
-
-.pacientes-escritorio #ownersGrid .client-card:hover,.pacientes-escritorio #petsGrid .pet-card:hover {
-    border-color:var(--z-primary-borde);
-    transform:none;
-    box-shadow:var(--z-shadow-sm)
-}
-
-.pacientes-escritorio #ownersGrid .client-card {
-    display:grid;
-    grid-template-columns:44px minmax(0,1fr);
-    grid-template-rows:24px 18px;
-    gap:2px 12px
-}
-
-.pacientes-escritorio #ownersGrid .card-header-mini,.pacientes-escritorio #ownersGrid .card-body-mini {
-    display:contents
-}
-
-.pacientes-escritorio #ownersGrid .avatar-mini {
-    grid-column:1;
-    grid-row:1 / span 2;
-    width:44px;
-    height:44px;
-    margin:0;
-    background:var(--z-primary-soft);
-    color:var(--z-primary);
-    font-size:15px;
-    box-shadow:none
-}
-
-.pacientes-escritorio #ownersGrid .card-title-mini {
-    grid-column:2;
-    grid-row:1;
-    margin:0;
-    padding-right:15px;
-    font-size:15px;
-    line-height:20px;
-    align-self:end;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis
-}
-
-.pacientes-escritorio #ownersGrid .propietario-cantidad {
-    grid-column:2;
-    grid-row:2;
-    color:var(--z-text-muted);
-    font-size:12px;
-    line-height:18px;
-    align-self:start
-}
-
-.pacientes-escritorio #ownersGrid .card-tags-mini {
-    display:none
-}
-
-.pacientes-escritorio #ownersGrid .card-contact-mini {
-    grid-column:1 / -1;
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-    margin:9px 0 6px;
-    padding:0;
-    border:0
-}
-
-.pacientes-escritorio #ownersGrid .contact-text-mini {
-    display:block;
-    min-width:0;
-    margin:0;
-    padding:0;
-    border:0;
-    background:transparent;
-    color:var(--z-text-secondary);
-    font-size:13px;
-    line-height:1.25;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    overflow-wrap:normal
-}
-
-.pacientes-escritorio #ownersGrid .propietario-telefono {
-    --paciente-display:block;
-    order:-1
-}
-
-.pacientes-escritorio #ownersGrid .contact-text-mini>i {
-    margin-right:8px;
-    color:var(--z-text-tenue)
-}
-
-.pacientes-escritorio #ownersGrid .tag-mini--aviso,.pacientes-escritorio #ownersGrid .card-header-mini>.tag-mini {
-    grid-column:1 / -1;
-    justify-self:start;
-    margin:4px 0;
-    padding:3px 8px;
-    background:var(--z-bg-light);
-    color:var(--z-text-secondary);
-    font-size:11px
-}
-
-.pacientes-escritorio #ownersGrid .card-footer-mini {
-    grid-column:1 / -1;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-top:8px;
-    padding-top:12px;
-    border-top:1px solid var(--z-bg-light)
-}
-
-.pacientes-escritorio #ownersGrid .card-footer-mini>.action-btn-mini:first-child:not([data-reenviar-activacion]) {
-    position:absolute;
-    right:10px;
-    top:10px;
-    width:32px;
-    height:32px;
-    border:0;
-    background:transparent;
-    color:var(--z-text-tenue)
-}
-
-.pacientes-escritorio #ownersGrid .card-footer-mini>.action-btn-mini[aria-label^="Ver"] {
-    display:none
-}
-
-.pacientes-escritorio #ownersGrid [data-reenviar-activacion] {
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    width:auto;
-    height:auto;
-    padding:0;
-    border:0;
-    background:transparent;
-    color:var(--z-primary);
-    font-size:12px;
-    white-space:nowrap
-}
-
-.pacientes-escritorio #ownersGrid [data-reenviar-activacion]>.paciente-solo-escritorio {
-    --paciente-display:inline
-}
-
 .propietario-mascotas {
     --paciente-display:flex;
     flex:1;
@@ -1581,80 +1418,6 @@ select.mascota-extra__control:focus,
     font-size:13px
 }
 
-.pacientes-escritorio #ownersGrid .client-card[data-estado="0"] {
-    background:var(--z-bg-suave)
-}
-
-.pacientes-escritorio #ownersGrid .client-card[data-estado="0"] .card-title-mini,.pacientes-escritorio #ownersGrid .client-card[data-estado="0"] .avatar-mini {
-    opacity:.55
-}
-
-.pacientes-escritorio #petsGrid .pet-card {
-    display:flex;
-    flex-direction:column;
-    gap:10px
-}
-
-.pacientes-escritorio #petsGrid .card-header-mini {
-    margin:0;
-    align-items:flex-start
-}
-
-.pacientes-escritorio #petsGrid .avatar-mini {
-    width:52px;
-    height:52px;
-    margin:0;
-    border-radius:16px;
-    background:var(--z-primary-soft);
-    box-shadow:none
-}
-
-.pacientes-escritorio #petsGrid .avatar-mini img {
-    width:52px;
-    height:52px;
-    border-radius:16px;
-    object-fit:cover
-}
-
-.pacientes-escritorio #petsGrid .card-body-mini {
-    padding:0;
-    min-width:0
-}
-
-.pacientes-escritorio #petsGrid .card-title-mini {
-    margin:0 0 5px;
-    font-size:15px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis
-}
-
-.pacientes-escritorio #petsGrid .card-tags-mini {
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:5px;
-    margin:0 0 8px
-}
-
-.pacientes-escritorio #petsGrid .card-tags-mini>.tag-mini:first-of-type {
-    background:var(--z-bg-light);
-    color:var(--z-text-secondary)
-}
-
-.pacientes-escritorio #petsGrid .card-tags-mini>.tag-mini:has(.fa-paw) {
-    order:-2;
-    flex-basis:100%;
-    padding:0;
-    background:transparent;
-    font-size:13px;
-    font-weight:400
-}
-
-.pacientes-escritorio #petsGrid .card-tags-mini>.tag-mini:has(.fa-venus-mars) {
-    display:none
-}
-
 .paciente-hc {
     --paciente-display:inline-flex;
     padding:3px 8px;
@@ -1670,85 +1433,10 @@ select.mascota-extra__control:focus,
     color:var(--z-text-secondary)
 }
 
-.pacientes-escritorio #petsGrid .card-contact-mini {
-    display:flex;
-    flex-direction:column;
-    gap:7px
-}
-
-.pacientes-escritorio #petsGrid .card-contact-mini>.contact-text-mini {
-    margin:0;
-    font-size:13px;
-    color:var(--z-text-secondary)
-}
-
-.pacientes-escritorio #petsGrid .card-contact-mini>.contact-text-mini:has(.bi-file-medical) {
-    display:none
-}
-
-.pacientes-escritorio #petsGrid .card-contact-mini>.contact-text-mini:has(.bi-person) {
-    order:-1
-}
-
 .paciente-edad {
     --paciente-display:flex;
     gap:8px;
     align-items:center
-}
-
-.pacientes-escritorio #petsGrid .card-contact-mini i {
-    color:var(--z-text-tenue)
-}
-
-.pacientes-escritorio #petsGrid .card-footer-mini {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-top:auto;
-    padding-top:12px;
-    border-top:1px solid var(--z-bg-light)
-}
-
-.pacientes-escritorio #petsGrid .card-footer-mini>.status-indicator {
-    margin-right:auto
-}
-
-.pacientes-escritorio #petsGrid .status-indicator label {
-    display:inline-flex;
-    align-items:center;
-    width:auto;
-    min-width:34px;
-    height:20px;
-    padding-left:42px;
-    color:var(--z-text-secondary);
-    font-size:12px
-}
-
-.pacientes-escritorio #petsGrid .status-indicator .toggle-slider {
-    width:34px;
-    height:20px;
-    left:0;
-    right:auto
-}
-
-.pacientes-escritorio #petsGrid .status-indicator .toggle-slider:before {
-    width:16px;
-    height:16px
-}
-
-.pacientes-escritorio #petsGrid .status-indicator input:checked~.paciente-toggle-off,.pacientes-escritorio #petsGrid .status-indicator input:not(:checked)~.paciente-toggle-on {
-    --paciente-display:none
-}
-
-.pacientes-escritorio #petsGrid .card-footer-mini>.action-btn-mini {
-    width:34px;
-    height:34px;
-    border:1px solid var(--z-border);
-    border-radius:10px
-}
-
-.pacientes-escritorio #petsGrid [data-c3-click="evento40"] {
-    display:none
 }
 
 .pacientes-escritorio .modern-table {
@@ -1801,7 +1489,7 @@ select.mascota-extra__control:focus,
     display:none
 }
 
-.pacientes-escritorio .paciente-abrible:focus-visible,.pacientes-escritorio #ownersGrid .client-card:focus-visible,.pacientes-escritorio #ownersTable tr:focus-visible {
+.pacientes-escritorio .paciente-abrible:focus-visible,.pacientes-escritorio #ownersTable tr:focus-visible {
     outline:3px solid var(--z-primary);
     outline-offset:-3px
 }
@@ -2101,80 +1789,15 @@ select.mascota-extra__control:focus,
 
 @media(min-width:1024px) {
 
-.pacientes-escritorio #ownersGrid,.pacientes-escritorio #petsGrid {
-    grid-template-columns:repeat(3,minmax(0,1fr))!important
-}
-
 
 }
 
 @media(min-width:1280px) {
 
-.pacientes-escritorio #ownersGrid,.pacientes-escritorio #petsGrid {
-    grid-template-columns:repeat(4,minmax(0,1fr))!important
-}
-
 
 }
 
 @media (min-width: 768px) {
-    .pacientes-escritorio #ownersGrid .tag-mini--aviso i {
-        color: var(--z-text-muted);
-    }
-    .pacientes-escritorio #petsGrid .pet-card {
-        display: grid;
-        grid-template-columns: 52px minmax(0, 1fr);
-        gap: 6px 10px;
-    }
-    .pacientes-escritorio #petsGrid .card-header-mini,
-    .pacientes-escritorio #petsGrid .card-body-mini,
-    .pacientes-escritorio #petsGrid .card-tags-mini {
-        display: contents;
-    }
-    .pacientes-escritorio #petsGrid .avatar-mini {
-        grid-column: 1;
-        grid-row: 1 / span 2;
-    }
-    .pacientes-escritorio #petsGrid .card-title-mini {
-        grid-column: 2;
-        grid-row: 1;
-        margin: 0;
-        align-self: end;
-    }
-    .pacientes-escritorio #petsGrid .card-tags-mini>.tag-mini:has(.fa-paw) {
-        grid-column: 2;
-        grid-row: 2;
-        align-self: start;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pacientes-escritorio #petsGrid .paciente-hc {
-        grid-column: 1 / -1;
-        grid-row: 3;
-        justify-self: start;
-        margin-top: 6px;
-    }
-    .pacientes-escritorio #petsGrid .tag-mini:has(.bi-moon-stars) {
-        grid-column: 2;
-        grid-row: 3;
-        justify-self: end;
-        align-self: end;
-    }
-    .pacientes-escritorio #petsGrid .card-contact-mini {
-        grid-column: 1 / -1;
-        grid-row: 4;
-        padding-top: 4px;
-    }
-    .pacientes-escritorio #petsGrid .card-footer-mini {
-        grid-column: 1 / -1;
-        grid-row: 5;
-        margin-top: 6px;
-    }
-    .pacientes-escritorio #petsGrid .pet-card[data-foto-respaldo="true"] .avatar-mini img {
-        display: none;
-    }
     .paciente-foto-respaldo {
         --paciente-display: none;
         width: 52px;
@@ -2186,9 +1809,6 @@ select.mascota-extra__control:focus,
         background: var(--z-primary-soft);
         font-size: 18px;
         font-weight: 700;
-    }
-    .pacientes-escritorio #petsGrid .pet-card[data-foto-respaldo="true"] .paciente-foto-respaldo {
-        --paciente-display: inline-flex;
     }
 }
 

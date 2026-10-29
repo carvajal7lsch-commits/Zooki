@@ -289,6 +289,7 @@ function switchModule(module, { recargar = true } = {}) {
 
     document.getElementById('modulePets').classList.toggle('active', module === 'pets');
     document.getElementById('moduleOwners').classList.toggle('active', module === 'owners');
+    window.zookiPaginarPacientes?.(module);
 
     if (module === 'owners' && recargar) {
         loadOwners();
@@ -367,7 +368,7 @@ function estadoDueno(o) {
 /** M5 C4b (captura 06): la tarjeta mini de Usuarios › Clientes. */
 function tarjetaDueno(o) {
     const activo = Number(o.estado) === 1;
-    const tarjeta = nodoDueno('article', 'client-card person-card');
+    const tarjeta = nodoDueno('article', 'client-card person-card directorio-tarjeta');
     tarjeta.dataset.estado = String(o.estado);
     tarjeta.dataset.pendienteActivacion = String(o.pendiente_activacion || 0);
     tarjeta.dataset.totalMascotas = String(Number(o.total_mascotas) || 0);
@@ -383,12 +384,12 @@ function tarjetaDueno(o) {
     cuerpo.append(nodoDueno('h3', 'card-title-mini', o.nombre_completo));
     cuerpo.append(nodoDueno('span', 'paciente-solo-escritorio propietario-cantidad', Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
     const etiquetas = nodoDueno('div', 'card-tags-mini');
-    etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} mascota(s)`, 'bi-heart'));
+    etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} ${Number(o.total_mascotas) === 1 ? 'mascota' : 'mascotas'}`, 'bi-heart'));
     if (o.telefono) etiquetas.append(etiquetaDueno(o.telefono, 'bi-phone'));
     cuerpo.append(etiquetas);
     const datosContacto = [];
-    if (o.telefono) datosContacto.push(etiquetaDueno(o.telefono, 'bi-telephone', 'contact-text-mini paciente-solo-escritorio propietario-telefono'));
     if (o.documento) datosContacto.push(etiquetaDueno(o.documento, 'bi-person-badge', 'contact-text-mini'));
+    if (o.telefono) datosContacto.push(etiquetaDueno(o.telefono, 'bi-telephone', 'contact-text-mini paciente-solo-escritorio propietario-telefono'));
     if (o.email) datosContacto.push(etiquetaDueno(o.email, 'bi-envelope', 'contact-text-mini'));
     if (datosContacto.length) {
         const contacto = nodoDueno('div', 'card-contact-mini');
@@ -1196,6 +1197,7 @@ function filterTable() {
 
         c.style.display = (matchesSearch && matchesStatus && matchesSpecies) ? '' : 'none';
     });
+    window.zookiPaginarPacientes?.('pets');
 }
 
 // --- CONSULTAS ---
@@ -2452,4 +2454,5 @@ function filterOwners() {
         const txt = row.innerText.toLowerCase();
         row.style.display = txt.includes(term) && (!estado || row.dataset.estado === estado) ? '' : 'none';
     });
+    window.zookiPaginarPacientes?.('owners');
 }

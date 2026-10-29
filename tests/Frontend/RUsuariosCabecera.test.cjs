@@ -104,7 +104,7 @@ test('R Usuarios y cabecera: filas, acciones permitidas, cuenta de ambos roles e
                 const distribucion = await nav.evaluar(`(() => {
                     const pestanas = document.querySelector('.tabs-wrapper');
                     const nuevo = document.querySelector('#usuariosModulo [data-accion=nuevo]');
-                    return { tituloUnico: document.querySelectorAll('h1').length === 1, arriba: !!pestanas.closest('.top-header'), nuevoEnBarra: !!nuevo.closest('[data-usuarios-barra-acciones]') };
+                    return { tituloUnico: document.querySelectorAll('h1').length === 1, arriba: !!pestanas.closest('.directorio-controles-cabecera'), nuevoEnBarra: !!nuevo.closest('[data-usuarios-barra-acciones]') };
                 })()`);
                 assert.deepEqual(distribucion, { tituloUnico: true, arriba: width >= 768, nuevoEnBarra: true });
                 const filas = await nav.evaluar(`(() => {

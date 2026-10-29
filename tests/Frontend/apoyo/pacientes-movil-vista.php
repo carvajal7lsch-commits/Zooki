@@ -12,9 +12,21 @@ Contexto::activar($contexto, 1);
 Security::definirFuenteDeContextos(static fn (): array => [$contexto]);
 $_GET = ['action' => 'vet_pacientes'];
 $mascotas = [];
-if (($argv[1] ?? '') === 'directorio') {
+if (in_array($argv[1] ?? '', ['directorio', 'treinta'], true)) {
     require __DIR__ . '/pacientes-directorio-datos.php';
     $mascotas = pacientesDirectorioDatos();
+}
+if (($argv[1] ?? '') === 'treinta') {
+    $modelo = $mascotas[0];
+    $mascotas = [];
+    for ($indice = 0; $indice < 30; $indice++) {
+        $mascotas[] = array_replace($modelo, [
+            'id_mascota' => $indice + 1,
+            'nombre' => 'Mascota ' . str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT),
+            'estado' => 1,
+            'numero_historia_clinica' => $indice % 3 ? 'HC-' . $indice : null,
+        ]);
+    }
 }
 $content_view = __DIR__ . '/../../../views/vet/pacientes.php';
 require __DIR__ . '/../../../views/vet/layout.php';

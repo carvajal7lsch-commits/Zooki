@@ -30,6 +30,29 @@ $controller = new UsuarioController($db);
 $personal = $controller->listar();
 $propietarios = $controller->listarPropietarios();
 $invitaciones = [['id_invitacion' => 11, 'id_rol' => Roles::VETERINARIO, 'tipo_documento' => 'CC', 'documento' => '1098765432', 'nombre_completo' => 'Valeria Invitada', 'email' => 'valeria@zooki.test', 'telefono' => '3001234567']];
+if (($argv[1] ?? '') === 'treinta') {
+    $modelo = $personal[0];
+    $personal = [];
+    $propietarios = [];
+    for ($indice = 0; $indice < 30; $indice++) {
+        if ($indice < 29) {
+            $personal[] = array_replace($modelo, [
+                'id_usuario' => $indice + 1,
+                'nombre_completo' => 'Persona ' . str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT),
+                'documento' => (string) (1000000000 + $indice),
+                'estado_clinica' => $indice === 1 ? 0 : 1,
+            ]);
+        }
+        $propietarios[] = array_replace($modelo, [
+            'id_usuario' => $indice + 6,
+            'nombre_completo' => 'Cliente ' . str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT),
+            'documento' => (string) (1000000000 + $indice),
+            'estado' => 1,
+            'pendiente_activacion' => $indice % 5 === 0 ? 1 : 0,
+            'num_mascotas' => 2,
+        ]);
+    }
+}
 $_GET = ['action' => 'admin_usuarios'];
 $content_view = __DIR__ . '/../../../views/admin/usuarios.php';
 require __DIR__ . '/../../../views/admin/layout.php';

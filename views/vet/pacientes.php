@@ -5,19 +5,21 @@ require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 // D1: los teléfonos usan la regla del servidor (ValidadorTelefono).
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 ?>
+<script src="js/paginacion-directorio.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <!-- intl-tel-input CSS -->
+<link rel="stylesheet" href="css/directorio.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
 <!-- Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-<div class="section-card pacientes-modulo">
-    <div class="pacientes-hoja-cabecera" data-pacientes-hoja-cabecera hidden>
-        <div data-pacientes-pestanas-destino></div>
-        <div data-pacientes-acciones-destino></div>
-    </div>
-    <div class="pacientes-barra directorio-barra" role="region" aria-label="Buscar y filtrar pacientes">
+<div class="section-card pacientes-modulo directorio-unificado">
+    <div class="pacientes-barra directorio-barra directorio-controles" role="region" aria-label="Buscar y filtrar pacientes">
+        <div class="pacientes-hoja-cabecera directorio-controles-cabecera" data-pacientes-hoja-cabecera hidden>
+            <div data-pacientes-pestanas-destino></div>
+            <div data-pacientes-acciones-destino></div>
+        </div>
         <!-- Area: search and status (Filtros Propietarios) -->
         <div class="users-controls-bar__filters is-active" id="searchRowOwners">
             <div class="head-search">
@@ -95,10 +97,10 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                 <span>Nuevo registro</span>
             </button>
         </div>
+        <p class="pacientes-resumen paciente-solo-escritorio" data-pacientes-resumen aria-live="polite"></p>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL DEL MÓDULO -->
-    <p class="pacientes-resumen paciente-solo-escritorio" data-pacientes-resumen aria-live="polite"></p>
     <div id="moduleOwners" class="module-section active">
 
         <!-- VISTA 1: Directorio de Clientes -->
@@ -427,7 +429,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         <div id="gridView" class="view-container active">
             <div class="pets-grid" id="petsGrid">
                 <?php foreach ($mascotas as $m): ?>
-                    <div class="client-card person-card pet-card" data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-species="<?php echo htmlspecialchars((string)($m["nombre_especie"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>" data-propietario="<?= (int) $m['id_propietario'] ?>" data-sin-historia="<?= empty($m['numero_historia_clinica']) ? '1' : '0' ?>">
+                    <div class="client-card person-card pet-card directorio-tarjeta" data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-species="<?php echo htmlspecialchars((string)($m["nombre_especie"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>" data-propietario="<?= (int) $m['id_propietario'] ?>" data-sin-historia="<?= empty($m['numero_historia_clinica']) ? '1' : '0' ?>">
                         <div class="card-header-mini">
                             <div class="avatar-mini cursor-pointer" data-c3-click="evento34" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
                                 <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"

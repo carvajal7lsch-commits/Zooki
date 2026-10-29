@@ -58,7 +58,7 @@
                 imagen.addEventListener('error', () => { tarjeta.dataset.fotoRespaldo = 'true'; });
             }
             const toggle = tarjeta.querySelector('.status-indicator');
-            const pie = tarjeta.querySelector('.card-footer-mini');
+            const cabecera = tarjeta.querySelector('.card-header-mini');
             if (toggle && !toggle._marcaMovil) {
                 toggle._marcaMovil = document.createComment('Interruptor original');
                 toggle.before(toggle._marcaMovil);
@@ -70,8 +70,9 @@
                 }
             }
             if (toggle) {
-                if (escritorio.matches) pie.prepend(toggle);
-                else toggle._marcaMovil.after(toggle);
+                if (escritorio.matches) {
+                    if (toggle.parentElement !== cabecera) cabecera.append(toggle);
+                } else toggle._marcaMovil.after(toggle);
             }
         });
         raiz.querySelectorAll('[data-paciente-nacimiento]').forEach(campo => {
@@ -79,6 +80,14 @@
         });
     }
     function pintarEstadosPropietario() {
+        raiz.querySelectorAll('#ownersGrid .client-card').forEach(tarjeta => {
+            const cabecera = tarjeta.querySelector('.card-header-mini');
+            const etiquetas = tarjeta.querySelector('.card-tags-mini');
+            const chip = tarjeta.querySelector('.tag-mini--aviso') || tarjeta.querySelector('.tag-mini:has(.bi-link-45deg)');
+            if (!chip || !etiquetas) return;
+            const destino = escritorio.matches ? etiquetas : cabecera;
+            if (chip.parentElement !== destino) destino.append(chip);
+        });
         raiz.querySelectorAll('.pet-card .tag-mini:has(.bi-moon-stars)').forEach(chip => {
             const texto = Array.from(chip.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
             if (!texto) return;
@@ -108,7 +117,7 @@
         if (!raiz) return;
         const propietarios = Array.from(raiz.querySelectorAll('#ownersGrid .client-card'));
         const mascotas = Array.from(raiz.querySelectorAll('#petsGrid .pet-card'));
-        for (const [clave, cantidad] of [['owners', propietarios.length], ['pets', mascotas.length]]) {
+        for (const [clave, cantidad] of [['owners', propietarios.filter(n => n.style.display !== 'none').length], ['pets', mascotas.filter(n => n.style.display !== 'none').length]]) {
             const contador = document.querySelector('[data-pacientes-conteo="' + clave + '"]');
             if (contador && contador.textContent !== String(cantidad)) contador.textContent = cantidad;
         }
@@ -121,6 +130,8 @@
         const resumen = raiz.querySelector('[data-pacientes-resumen]');
         if (resumen.textContent !== texto) resumen.textContent = texto;
         pintarEstadosPropietario();
+        global.zookiPaginarPacientes?.('owners', false);
+        global.zookiPaginarPacientes?.('pets', false);
     }
     function programar() {
         if (!turno) turno = requestAnimationFrame(actualizar);
@@ -138,6 +149,17 @@
     function iniciar() {
         raiz = document.querySelector('.pacientes-modulo');
         if (!raiz) return;
+        const paginadores = {
+            owners: global.zookiPaginacionDirectorio?.crear(document.getElementById('ownersDirectory'), 'propietarios'),
+            pets: global.zookiPaginacionDirectorio?.crear(document.getElementById('modulePets'), 'mascotas'),
+        };
+        global.zookiPaginarPacientes = (tipo, reiniciar = true) => {
+            const mascotas = tipo === 'pets';
+            return paginadores[tipo]?.actualizar([
+                raiz.querySelectorAll(mascotas ? '#petsGrid .pet-card' : '#ownersGrid .client-card'),
+                raiz.querySelectorAll(mascotas ? '#petsTableBody tr:not(.empty-table)' : '#ownersTableBody tr'),
+            ], reiniciar);
+        };
         mover(document.querySelector('[data-pacientes-directorio] .tabs-wrapper'), raiz.querySelector('[data-pacientes-pestanas-destino]'));
         mover(raiz.querySelector('.command-center-actions'), raiz.querySelector('[data-pacientes-acciones-destino]'));
         const observador = new MutationObserver(programar);
