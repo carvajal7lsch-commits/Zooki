@@ -47,6 +47,40 @@
 
 .mascotas-carrusel::-webkit-scrollbar { display: none; }
 
+.home-agregar-mascota__movil,
+.mascota-mini__clinica-resumen,
+.mascota-mini__estado {
+    display: none;
+}
+
+/* RNF-16: las piezas compactas no sustituyen la presentación de tableta/escritorio. */
+@media (max-width: 767px) {
+    .home-agregar-mascota {
+        color: var(--z-primary);
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0;
+        border-radius: 50%;
+    }
+    .home-agregar-mascota__escritorio {
+        display: none;
+    }
+    .home-agregar-mascota__movil {
+        display: block;
+        position: relative;
+        font-size: 22px;
+    }
+    .home-agregar-mascota__movil b {
+        position: absolute;
+        right: -5px;
+        bottom: -1px;
+        font-size: 12px;
+        line-height: 1;
+        background: var(--z-surface);
+    }
+}
+
 .mascota-mini {
     flex: 0 0 150px;
     scroll-snap-align: start;
@@ -164,6 +198,54 @@
     }
 
     .mascota-mini:hover .mascota-mini__avatar { border-color: var(--z-primary); }
+}
+
+@media (max-width: 767px) {
+    .mascota-mini {
+        flex: 0 0 136px;
+        height: 170px;
+        padding: 10px 8px;
+        gap: 3px;
+    }
+    .mascota-mini__avatar {
+        width: 56px;
+        height: 56px;
+        padding: 2px;
+        margin-bottom: 0;
+    }
+    .mascota-mini__avatar .avatar-mini img,
+    .mascota-mini__avatar .avatar-iniciales {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    .mascota-mini__clinicas {
+        display: block;
+        width: 100%;
+        margin: 0;
+    }
+    .mascota-mini__clinicas > .tag-mini,
+    .mascota-mini__dosis {
+        display: none;
+    }
+    .mascota-mini__clinicas > .mascota-mini__clinica-resumen {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .mascota-mini__estado {
+        display: block;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+        color: var(--z-text-muted);
+        font-size: 11px;
+        line-height: 16px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .mascota-mini__estado.is-pendiente {
+        color: var(--z-primary);
+    }
 }
 
 /* ── Próximo en salud: solo en tableta y escritorio (decisión 1 del usuario) ── */

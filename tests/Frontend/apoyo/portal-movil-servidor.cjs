@@ -30,6 +30,11 @@ async function servidorPortalMovil({ uno = false, reajuste = false, html = null 
             return;
         }
         if (url.pathname === '/index.php') {
+            if (accion === 'portal_imprimir_historial') {
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.end(php('imprimir-' + (url.searchParams.get('origen') || '')));
+                return;
+            }
             let cuerpo = '';
             for await (const parte of req) cuerpo += parte;
             llamadas.push({ accion, cuerpo, consulta:url.search, metodo:req.method });

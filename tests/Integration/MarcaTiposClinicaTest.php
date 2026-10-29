@@ -229,7 +229,7 @@ final class MarcaTiposClinicaTest extends TestCase
         ob_start();
         require __DIR__ . '/../../views/portal/imprimir_historial.php';
         $documento = ob_get_clean();
-        $this->assertStringContainsString('<h1>Zooki</h1>', $documento);
+        $this->assertStringContainsString('<strong class="historial-marca">Zooki</strong>', $documento);
         $this->assertStringContainsString('Marca Norte', $documento);
         $this->assertStringContainsString('Marca Sur', $documento);
         $this->assertStringContainsString('https://example.com/sur.png', $documento);

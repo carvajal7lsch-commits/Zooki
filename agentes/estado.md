@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Portal: retoques del dueño antes de desplegar 2.2.0 — revisada y aprobada (2026-10-29)
+
+- **Cierre de Claude:** Codex se quedó sin uso antes del anexo; Claude verificó en Linux JS 433/433 y PHP con MySQL 8 1209/10954 sin omitidas, y escribió «Portal: retoques — Resultado y revisión» en specs/pulido-interfaz.md. Sigue: commit, push, CI verde, prueba del dueño y despliegue de 2.2.0 (reconstruir la imagen).
+
+- **Escribe Codex; revisa Claude (arquitecto).** Solo portal: foto arrastrable, Agendar/triage, Inicio/ficha móvil, HC por clínica con RN-G02 y documento imprimible/PDF con retorno acotado. Encargo y pruebas en specs/pulido-interfaz.md, Etapa R. Conserva identidad, datos clínicos, rutas y versión2.2.0; sin .env, base de trabajo, commit/push ni otra pantalla.
+
 ### Portal del propietario en el celular — revisada, aprobada con corrección del revisor (2026-10-29)
 
 - **Revisión de Claude:** suite JS 428/429 en Linux; la única falla era la prueba de medidas de escritorio, que dependía de la fuente de Windows y ahora compara posición y ancho. Los commits 526d53e/3c465ae del dueño quedaron solo con archivos nuevos y se rehacen con la secuencia completa. Sigue: prueba del dueño en su celular, datos de demo, versión 2.2.0 y despliegue. Detalle en specs/pulido-interfaz.md, «Portal en el celular — Revisión».

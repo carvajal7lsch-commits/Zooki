@@ -8,6 +8,8 @@
 
 ### Versión 2.2.0 (Actual)
 
+* **Portal, retoques antes de publicar (2026-10-29, HU-5.1/5.3/5.5/5.6):** foto de mascota por elección o arrastre, triage con campos completos y Agendar móvil a todo el ancho. Inicio conserva su identidad con tarjetas compactas y botón de patita; ficha con raza junto al nombre, acceso al PDF y HC de la clínica elegida. La respuesta existente aporta el número por clínica solo al propietario de la mascota (RN-G02). Historial clínico A4 con paciente, HC, alertas, vacunas, desparasitación y consultas identificadas por clínica/veterinario (RN-114), numeración y regreso a la ficha o a Vacunas. Sin esquema ni endpoints nuevos; versión aún sin publicar.
+
 Pulido final P1, preparado el 26 de octubre de 2026; pendiente de revisión e integración. El dueño renombra la rama y realiza el despliegue.
 
 * **Registro de clínica:** 40 comprobaciones por IP en 15 minutos; el freno temporal se avisa de forma general, sin invalidar el campo, y se vuelve a comprobar al enviar (RE-T.13.2, RN-G15).

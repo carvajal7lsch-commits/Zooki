@@ -121,8 +121,9 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
                     <h2 id="tituloMascotas">Mis mascotas<?php if ($mascotas): ?> <span class="tag-mini"><?= count($mascotas) ?></span><?php endif; ?></h2>
                     <?php if ($mascotas): ?>
                         <?php // M5 C4a (punto 12): un botón claro, no un «+» suelto. ?>
-                        <button type="button" class="portal-boton-secundario" data-agregar-mascota>
-                            <i class="ri-add-line" aria-hidden="true"></i> Agregar mascota
+                        <button type="button" class="portal-boton-secundario home-agregar-mascota" data-agregar-mascota aria-label="Agregar mascota">
+                            <i class="ri-add-line home-agregar-mascota__escritorio" aria-hidden="true"></i><span class="home-agregar-mascota__escritorio"> Agregar mascota</span>
+                            <span class="home-agregar-mascota__movil" aria-hidden="true"><i class="ri-baidu-line"></i><b>+</b></span>
                         </button>
                     <?php endif; ?>
                 </div>
@@ -140,6 +141,7 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
                                 <h3 class="mascota-mini__nombre"><?= $e($m['nombre']) ?></h3>
                                 <p class="mascota-mini__raza"><?= $e(PresentacionPortal::especieYRaza($m)) ?></p>
                                 <div class="mascota-mini__clinicas">
+                                    <span class="tag-mini tag-mini--azul mascota-mini__clinica-resumen"><?= $e(count($m['clinicas']) > 1 ? count($m['clinicas']) . ' clínicas' : ($m['clinicas'][0]['nombre'] ?? 'Sin clínica todavía')) ?></span>
                                     <?php // RN-110: las clínicas donde se atiende; sin ninguna, se vincula al agendar. ?>
                                     <?php foreach ($m['clinicas'] as $clinica): ?>
                                         <span class="tag-mini tag-mini--azul" title="<?= $e($clinica['nombre']) ?>"><?= $e($clinica['nombre']) ?></span>
@@ -156,6 +158,7 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
                                         <span>Sin dosis pendientes</span>
                                     <?php endif; ?>
                                 </p>
+                                <p class="mascota-mini__estado<?= $m['proxima_dosis'] ? ' is-pendiente' : '' ?>"><?php if ($m['proxima_dosis']): ?><?= $e($m['proxima_dosis']['nombre']) ?> · <?= $e((new DateTimeImmutable($m['proxima_dosis']['fecha']))->format('j') . ' ' . ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][(int) (new DateTimeImmutable($m['proxima_dosis']['fecha']))->format('n') - 1]) ?><?php else: ?>Al día<?php endif; ?></p>
                             </article>
                         <?php endforeach; ?>
                     </div>

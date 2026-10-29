@@ -4,6 +4,11 @@
    Escritorio: ficha fija a la izquierda, pestañas a la derecha.
    ═══════════════════════════════════════════════════════════ */
 
+.pet-detail__raza-movil,
+.pet-detail__pdf {
+    display: none;
+}
+
 .pet-detail__cabecera {
     display: flex;
     align-items: center;
@@ -463,10 +468,28 @@
         min-width: 0;
     }
     .pet-detail__especie {
-        padding: 0;
-        background: transparent;
+        display: none;
+    }
+    .pet-detail__nombre {
+        display: block;
+        min-width: 0;
+    }
+    .pet-detail__raza-movil {
+        display: block;
+        overflow: hidden;
+        font-size: 12px;
+        font-weight: 400;
         color: var(--z-text-muted);
-        font-size: 13px;
+        text-overflow: ellipsis;
+    }
+    .pet-detail__pdf {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        min-height: 44px;
+        margin-top: 10px;
+        font-size: 14px;
+        text-decoration: none;
     }
     .pet-detail__clinicas {
         display: flex;

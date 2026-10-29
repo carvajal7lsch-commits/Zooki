@@ -100,7 +100,7 @@ final class M2C7PulidoTest extends TestCase
         $this->assertStringContainsString('Alergia a la amoxicilina', $html);
         $this->assertStringContainsString('Clínica Sur', $html);
         $this->assertStringNotContainsString('Alerta ya desactivada', $html);
-        $this->assertStringContainsString('<strong>Síntomas:</strong> Vómito', $html);
+        $this->assertStringContainsString('<dt>Síntomas</dt><dd>Vómito</dd>', $html);
         $this->assertStringContainsString('Sin peso registrado', $html);
 
         $this->comoPropietario(self::DUENO_DE_MILO);

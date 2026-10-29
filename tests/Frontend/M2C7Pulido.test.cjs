@@ -70,13 +70,14 @@ test('2. los síntomas salen en el historial del portal y su imprimible', () => 
     assert.equal(p.lineaSintomas(undefined), '');
     assert.equal(p.lineaSintomas([{ codigo: 'sintoma.vomito', etiqueta: 'Vómito' }, { codigo: 'x', etiqueta: '<b>Tos</b>' }]), '<p><strong>Síntomas:</strong> Vómito, &lt;b&gt;Tos&lt;/b&gt;</p>');
     assert.match(leer('public/js/portal.js'), /\$\{lineaSintomas\(h\.sintomas\)\}/);
-    assert.match(leer('views/portal/imprimir_historial.php'), /<strong>Síntomas:<\/strong>/);
+    assert.match(leer('views/portal/imprimir_historial.php'), /<dt>Síntomas<\/dt><dd>/);
 });
 
 test('3. el imprimible del portal tiene las alergias y alertas activas con su clínica', () => {
     const vista = leer('views/portal/imprimir_historial.php');
-    assert.ok(vista.indexOf('Alergias y alertas activas') < vista.indexOf('Historial de Consultas'), 'Arriba, antes de las consultas');
-    assert.match(vista, /MarcaClinica::html\(MarcaClinica::delRegistro\(\$alerta\)\)/);
+    assert.ok(vista.indexOf('Alergias y alertas activas') < vista.indexOf('Consultas y diagnósticos'), 'Arriba, antes de las consultas');
+    assert.match(vista, /\$e\(\$alerta\['clinica_nombre'\]\)/);
+    assert.match(vista, /MarcaClinica::html\(\$marca\)/, 'La marca y el contacto completos se conservan una vez por clínica.');
     const marca = leer('models/MarcaClinica.php');
     assert.match(marca, /'nombre' => \$fila\['clinica_nombre'\]/);
     assert.match(marca, /htmlspecialchars\(\(string\) \$v, ENT_QUOTES/);

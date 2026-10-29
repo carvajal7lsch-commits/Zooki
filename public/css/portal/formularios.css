@@ -173,6 +173,12 @@
 .foto-campo__ayuda { margin-top: 0; }
 .foto-campo__ayuda.is-error { color: var(--z-danger); font-weight: 600; }
 
+.foto-campo[data-arrastrando="true"] {
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+    box-shadow: var(--z-foco);
+}
+
 @media (hover: hover) {
     .foto-campo__boton:hover { background: var(--z-primary); color: #ffffff; }
 }
@@ -391,8 +397,13 @@
         text-overflow: ellipsis;
     }
     #portalBookingForm .booking__pie {
-        align-items: center;
-        gap: 10px;
+        display: block;
+    }
+    #portalBookingForm .booking__guia {
+        display: none;
+    }
+    #portalBookingForm #booking_confirmar {
+        width: 100%;
     }
 }
 

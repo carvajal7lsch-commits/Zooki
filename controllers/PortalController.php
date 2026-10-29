@@ -184,7 +184,17 @@ class PortalController
         // M2 C7 (pendiente de C1): alergias y alertas activas, con la clínica de cada una.
         $alertas = $this->historia->alertas($idMascota);
 
-        require_once __DIR__ . '/../views/portal/imprimir_historial.php';
+        $clinicas = $this->mascotas->clinicasDeSusMascotas()[$idMascota] ?? [];
+        // RE-5.5.1: solo destinos internos conocidos; sin origen se conserva Inicio.
+        $origen = is_string($_GET['origen'] ?? null) ? $_GET['origen'] : '';
+        $volver = 'index.php?action=portal_propietario';
+        if ($origen === 'mascota') {
+            $volver .= '#mascota-' . $idMascota;
+        } elseif ($origen === 'salud') {
+            $volver .= '#salud-' . $idMascota;
+        }
+
+        require __DIR__ . '/../views/portal/imprimir_historial.php';
     }
 
     /** Detalle de una cita propia, con su resultado clínico si ya se atendió. */

@@ -1,4 +1,58 @@
 /* Pulido de interfaz (2026-10-21): captura de síntomas y triage, compartida por la agenda del vet y el portal. */
+/* HU-5.3: el portal no carga modals.css. Completar su base aquí conserva la agenda existente. */
+.portal-body .triage-captura .zk-input {
+    width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid var(--z-border, #E2E8F0);
+    border-radius: 12px;
+    background: var(--z-surface, #FFFFFF);
+    color: var(--z-text, #0F172A);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+.portal-body .triage-captura .zk-input:focus {
+    border-color: var(--z-primary, #0052FF);
+    box-shadow: var(--z-foco, 0 0 0 3px rgba(0, 82, 255, 0.14));
+}
+.portal-body .triage-captura .triage-captura__input {
+    padding-left: 34px;
+}
+.portal-body .triage-captura .zk-input:disabled {
+    background: var(--z-bg-suave, #F8FAFC);
+    color: var(--z-text-muted, #64748B);
+}
+.portal-body .triage-captura select.zk-input {
+    padding-right: 12px;
+    cursor: pointer;
+}
+.portal-body .triage-captura .triage-captura__calcular,
+.portal-body .triage-captura .triage-captura__confirmar,
+.portal-body .triage-captura .triage-captura__extra > summary {
+    min-height: 44px;
+    height: auto;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+.portal-body .triage-captura .triage-captura__extra > summary {
+    border: 1px solid var(--z-border, #E2E8F0);
+    background: var(--z-surface, #FFFFFF);
+    color: var(--z-text-secondary, #475569);
+}
+.portal-body .triage-captura .triage-captura__extra > summary:focus-visible,
+.portal-body .triage-captura button:focus-visible {
+    outline: 2px solid var(--z-primary, #0052FF);
+    outline-offset: 2px;
+}
+@media (max-width: 767px) {
+    .portal-body .triage-captura .zk-input {
+        font-size: 16px;
+    }
+}
+
 .triage-captura {
     display: flex;
     flex-direction: column;

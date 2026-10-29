@@ -73,6 +73,28 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Portal: retoques del dueño antes de desplegar 2.2.0 (2026-10-29)
+
+**Entregada y revisada. Escribió Codex; cerró la verificación y el anexo Claude (arquitecto), porque Codex se quedó sin uso antes de escribirlos.** HU-5.1/5.3/5.5/5.6, RE-5.5.1–3, RN-G02/RN-114/RNF-16. Conserva identidad del portal y versión2.2.0 sin publicar; sin endpoints nuevos ni cambios de datos clínicos.
+
+1. Foto Registrar/Editar en todos los anchos: arrastrar/soltar en foto-campo con resaltado, bloqueo del drop exterior y misma validación JPG/PNG≤5MB, vista previa/Quitar, sin duplicar lógica.
+2. Agendar móvil: pie con solo Agendar a todo el ancho, sin ayuda inferior; escritorio intacto.
+3. Triage del portal en todos los anchos: estilos completos y acotados a triage-captura, controles44/radio12/borde/foco azul/mobile16; agenda vet conservada, capturas antes/después1366/390.
+4. Inicio móvil: Agregar mascota redondo40/patita ri-baidu-line y pequeño+, misma acción/aria-label; carrusel≈136×≤170, anillo56, nombre/especie-raza elípticos, un chip de clínicas y próxima dosis azul o Al día gris.
+5. Ficha móvil: especie/raza junto al avatar debajo del nombre, tira de clínicas y enlace secundario Historia clínica (PDF) debajo de cuatro datos; conserva icono imprimir.
+6. Backend autorizado: modelo aporta numero_historia_clinica por clínica en la respuesta existente, solo mascotas propias; HC según chip seleccionado/primera con Todas/— si falta. Prueba PHP de acceso propio/ajeno.
+7. Imprimible: origen en lista blanca mascota/salud, regreso a ficha o Vacunas con mascota seleccionada; sin origen conserva Inicio.
+8. Historial/PDF en todos los anchos: documento clínico blanco/azul, paciente/foto/propietario/HC por clínica, alergias/alertas, tablas compactas de vacunas/desparasitación, consultas cronológicas con clínica/vet, emisión/pie/página, A4 sin partir registros/cabeceras repetidas/controles ocultos; sin desborde390.
+9. Pruebas Chrome360/390/1366 de lo anterior y posiciones/anchos de escritorio (sin alturas exactas), PHP dirigido y una pasada completa PHP con host/base exclusiva zooki_test_base_v2 y JS con Chrome. Evidencia/capturas/PDF/anexo de Codex en scratch/r/portal-retoques; actualizar HistorialVersiones2.2.0 y entregar comandos en un bloque desde el último commit. Sin .env, base de trabajo, grafos, otras pantallas, commit ni push.
+
+#### Portal: retoques — Resultado y revisión (2026-10-29)
+
+- **Hecho por Codex (puntos 1–8):** foto por elección o arrastre con la validación existente; Agendar móvil con solo el botón a todo el ancho; triage con campos completos y acotados en triage-captura.css (44 px, borde y foco; la agenda del veterinario no cambió en las capturas 1366/390); botón redondo de patita; tarjetas compactas con anillo 56, un chip de clínicas y «Al día» o próxima dosis; ficha con especie/raza junto al nombre y «Historia clínica (PDF)»; HC por clínica desde MascotaPropietario::clinicasDeSusMascotas (filtro del propietario, RN-G02) según el chip elegido; regreso del imprimible por origen en lista blanca (mascota → #mascota-id, salud → Vacunas con la mascota); documento clínico nuevo con paciente, HC por clínica, alertas en rojo, tablas, consultas con clínica y veterinario, pie con página y A4.
+- **Pruebas:** PortalRetoques (nueva) y C91Interfaz, M2C7Pulido, PortalPropietario, M2C7PulidoTest y MarcaTiposClinica ajustadas a la ficha nueva. Evidencia de Codex en scratch/r/portal-retoques (capturas 360/390/1366, antes/después del veterinario y PDF de ejemplo de dos páginas).
+- **Verificación de cierre (Claude, Linux):** JS completa con Chrome **433/433**; PHP completa con MySQL 8 y base zooki_test_base_v2 **1209/10954, sin omitidas**. Las pasadas de Codex con MariaDB y JS final se cortaron por falta de uso; la de PHP sin host sí terminó (1209, 94 omitidas por motor).
+- **Revisión:** aprobada. HC solo de mascotas propias; el origen del imprimible no acepta valores libres; sin CSS/JS en línea. Detalle menor para después: en la vista en pantalla a 390, «Antiparasitario» se parte dentro de la tabla.
+- **Dueño (máximo 5):** (1) arrastrar una foto en Registrar y Editar; (2) Agendar en el celular con síntomas; (3) Inicio con el botón de patita y las tarjetas; (4) ficha con HC al cambiar de clínica y «Historia clínica (PDF)», volver y quedar en la ficha; (5) imprimir desde Citas → Vacunas y volver ahí.
+
 ### Portal del propietario en el celular — encargo del dueño (2026-10-29)
 
 **Entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Solo presentación, HU-5.1/5.3/5.6/5.12/5.13, HU-T.5 y RNF-16; sin flujo nuevo en Modelos.md. Conserva identidad, fondo, carrusel, avatares, chips y barra inferior central. No usar specs/referencias/portal/ (descartado); bienvenida Idea2 existente y encargos móviles de Pacientes/Agenda como referencia de forma.

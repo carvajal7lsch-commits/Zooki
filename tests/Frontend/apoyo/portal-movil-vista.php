@@ -15,6 +15,7 @@ DosClinicas::vincularLunaASur($db);
 $db->exec("UPDATE usuarios SET telefono = '3001112233', tipo_documento = 'CC' WHERE id_usuario = 6");
 $db->exec("UPDATE mascotas SET id_especie = 1, id_raza = 49, fecha_nacimiento = '2024-12-28', peso = 12.5, sexo = 'Macho' WHERE id_mascota = 1");
 $db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'HC-000001' WHERE id_mascota = 1 AND id_clinica = 1");
+$db->exec("UPDATE mascota_clinica SET numero_historia_clinica = 'SUR-000042' WHERE id_mascota = 1 AND id_clinica = 2");
 $insertarMascota = $db->prepare("INSERT INTO mascotas (id_mascota,id_propietario,id_clinica_registro,token_carnet,nombre,id_especie,id_raza,fecha_nacimiento,peso,sexo,estado) VALUES (?,6,1,?,?,1,49,'2024-12-28',12.5,'Macho',1)");
 foreach (['Doki', 'Kira', 'Coco', 'Simba', 'Pelusa'] as $indice => $nombre) {
     $id = $indice + 2;
@@ -38,7 +39,14 @@ $_SESSION = ['id_usuario' => DosClinicas::PROPIETARIO, 'usuario_nombre' => 'Fabi
 Contexto::activar(Contexto::dePropietario(), ($argv[1] ?? '') === 'uno' ? 1 : 2);
 $_GET = [];
 $_POST = [];
-if (($argv[1] ?? '') === 'detalle') {
+if (str_starts_with($argv[1] ?? '', 'imprimir-')) {
+    // Datos clínicos de ejemplo, solo para revisar el documento real en SQLite efímera.
+    $db->exec("INSERT INTO consultas (id_clinica,id_mascota,id_veterinario,fecha_hora,motivo_consulta,anamnesis,diagnostico,plan_tratamiento) VALUES (1,1,2,'2026-09-01 10:00:00','Dolor de oído','Revisión','Otitis','Control según indicación veterinaria'),(2,1,4,'2026-10-01 14:00:00','Seguimiento','Revisión de control','Evolución favorable','Seguimiento clínico')");
+    $db->exec("INSERT INTO desparasitaciones (id_clinica,id_mascota,id_veterinario,tipo,producto,periodicidad,fecha_aplicacion,fecha_proxima) VALUES (1,1,2,'interna','Antiparasitario','trimestral','2026-09-01','2026-12-01')");
+    $db->exec("INSERT INTO alertas_medicas (id_mascota,id_clinica,id_veterinario,tipo,descripcion) VALUES (1,1,2,'alergia','Reacción alérgica registrada por el veterinario')");
+    $_GET = ['id_mascota' => 1, 'origen' => substr($argv[1], 9)];
+    (new PortalController($db))->imprimirHistorial();
+} elseif (($argv[1] ?? '') === 'detalle') {
     $_GET = ['id_mascota' => 1];
     (new PortalController($db))->verDetalleMascotaAjax();
 } else {
