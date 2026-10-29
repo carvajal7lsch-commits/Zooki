@@ -55,29 +55,50 @@
 
 /* RNF-16: las piezas compactas no sustituyen la presentación de tableta/escritorio. */
 @media (max-width: 767px) {
+    /* Patita en un círculo azul suave y un «+» en insignia: se lee como «agregar mascota» sin texto. */
     .home-agregar-mascota {
-        color: var(--z-primary);
+        position: relative;
         width: 40px;
         height: 40px;
         min-height: 40px;
         padding: 0;
+        border: 0;
         border-radius: 50%;
+        background: rgba(0, 82, 255, 0.1);
+        color: var(--z-primary);
+        transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .home-agregar-mascota:active {
+        transform: scale(0.94);
+        background: rgba(0, 82, 255, 0.16);
+    }
+    .home-agregar-mascota:focus-visible {
+        outline: 2px solid var(--z-primary);
+        outline-offset: 2px;
     }
     .home-agregar-mascota__escritorio {
         display: none;
     }
     .home-agregar-mascota__movil {
         display: block;
-        position: relative;
-        font-size: 22px;
+        font-size: 20px;
+        line-height: 1;
     }
-    .home-agregar-mascota__movil b {
+    .home-agregar-mascota__mas {
         position: absolute;
-        right: -5px;
-        bottom: -1px;
+        top: -3px;
+        right: -3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--z-bg);
+        border-radius: 50%;
+        background: var(--z-primary);
+        color: var(--z-surface);
         font-size: 12px;
         line-height: 1;
-        background: var(--z-surface);
     }
 }
 

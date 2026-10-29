@@ -123,7 +123,7 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
                         <?php // M5 C4a (punto 12): un botón claro, no un «+» suelto. ?>
                         <button type="button" class="portal-boton-secundario home-agregar-mascota" data-agregar-mascota aria-label="Agregar mascota">
                             <i class="ri-add-line home-agregar-mascota__escritorio" aria-hidden="true"></i><span class="home-agregar-mascota__escritorio"> Agregar mascota</span>
-                            <span class="home-agregar-mascota__movil" aria-hidden="true"><i class="ri-baidu-line"></i><b>+</b></span>
+                            <span class="home-agregar-mascota__movil" aria-hidden="true"><i class="ri-baidu-line"></i><i class="ri-add-line home-agregar-mascota__mas"></i></span>
                         </button>
                     <?php endif; ?>
                 </div>
