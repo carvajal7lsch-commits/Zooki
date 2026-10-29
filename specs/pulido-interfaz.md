@@ -106,7 +106,37 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 **Punto de separación A → B:** A implementada por Codex, dirigida15/15 correcta (M2C6Grafo/GrafoComodidad/RPlataforma), con cuatro capturas del 3D real y sin errores de navegador en scratch/r/grafo-comodidad. La pasada JS completa y la entrega se cierran después de B. El parche parte-a.patch conserva A antes de tocar la cabecera común.
 
-**Encargada a Codex después de A; revisa Claude.** RNF-16. Medir antes de tocar B con vistas PHP reales a1366×768: admin Inicio/Usuarios/Citas/Auditoría/Ajustes/Mi perfil; vet Inicio/Pacientes/Agenda/Atención/Mi perfil; plataforma Clínicas/Conocimiento. Tabla antes/después en Resultado. Cabecera a22 del borde,52 de alto,título20/subtítulo13/botones40 centrados,18 hasta contenido (±2px entre pantallas). Corregir layout.css .top-header/.content-body y quitar sumas de módulos (plataforma,pacientes,usuarios,admin-citas,etc.); <768 sin cambios, sin desborde ni contenido pegado. Prueba Chrome de las13 pantallas y regresiones existentes; actualizar solo medidas aprobadas. Commit aparte: fix(interfaz): cabecera comun mas arriba e igual en todas las pantallas (RNF-16).
+**Parte B entregada, pendiente de revisión. Escribió Codex; revisa Claude.** RNF-16. Medir antes de tocar B con vistas PHP reales a1366×768: admin Inicio/Usuarios/Citas/Auditoría/Ajustes/Mi perfil; vet Inicio/Pacientes/Agenda/Atención/Mi perfil; plataforma Clínicas/Conocimiento. Tabla antes/después en Resultado. Cabecera a22 del borde,52 de alto,título20/subtítulo13/botones40 centrados,18 hasta contenido (±2px entre pantallas). Corregir layout.css .top-header/.content-body y quitar sumas de módulos (plataforma,pacientes,usuarios,admin-citas,etc.); <768 sin cambios, sin desborde ni contenido pegado. Prueba Chrome de las13 pantallas y regresiones existentes; actualizar solo medidas aprobadas. Commit aparte: fix(interfaz): cabecera comun mas arriba e igual en todas las pantallas (RNF-16).
+
+### Cabecera común — Resultado B (2026-10-28)
+
+**Entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Regla en dashboard-modules/layout.css y retirada de sumas de escritorio en módulos: las13 vistas dan cabecera y=22/alto52, título y=26/línea24/font20, contenido y=92 (18px debajo) y controles40. Subtítulo13. El Inicio ordena saludo/fecha en la misma banda; Atención tenía el título vacío y ahora dice Atención solo ≥768. El perfil del administrador se mide dentro de Ajustes, donde vive actualmente. Se actualiza la clave del import de layout.css para invalidar la caché.
+
+Tabla a1366×768 (px); misma caché de recursos y vistas PHP reales con datos simulados, sin scripts de negocio para medir la geometría. Las regresiones funcionales corren por separado:
+
+| Pantalla | Título antes (y) | Hoja antes (y) | Título después (y) | Hoja después (y) |
+|---|---:|---:|---:|---:|
+| Admin · Inicio | 32 | 73,89 | 26 | 92 |
+| Admin · Usuarios | 28 | 105,89 | 26 | 92 |
+| Admin · Citas | 17,45 | 92 | 26 | 92 |
+| Admin · Auditoría | 26,39 | 72 | 26 | 92 |
+| Admin · Ajustes | 26,39 | 72 | 26 | 92 |
+| Admin · Mi perfil (Mi cuenta en Ajustes) | 26,39 | 72 | 26 | 92 |
+| Vet · Inicio | 32 | 73,89 | 26 | 92 |
+| Vet · Pacientes | 28 | 109,09 | 26 | 92 |
+| Vet · Agenda | 26,39 | 72 | 26 | 92 |
+| Vet · Atención | Sin título | 72 | 26 | 92 |
+| Vet · Mi perfil | 26,39 | 72 | 26 | 92 |
+| Plataforma · Clínicas | 39,5 | 114 | 26 | 92 |
+| Plataforma · Conocimiento | 39,5 | 114 | 26 | 92 |
+
+- CabeceraComun recorre las13 vistas a1366/820/390; coincide a±2px, sin desborde. Las13 capturas móviles de B son idénticas antes/después, píxel por píxel (390×844). Medidas completas/capturas en scratch/r/grafo-comodidad/antes-cabeceras.json y despues-cabeceras.json.
+- Dirigidas A+B16/16. Una sola pasada JS completa:406 pruebas,405 correctas y una expectativa antigua de Suscripción que añadía un h1 fuera de la cabecera. Se corrigió solo esa medición al contexto real y se reverificó RedisenoSuscripcion/GrafoComodidad5/5; sin fallos conocidos pendientes y sin repetir la suite. Sintaxis PHP/JS y git diff --check correctos. Sin PHP completo por ser el bloque visual solicitado.
+- Anexo de Codex, evidencias y comandos separados A/B en scratch/r/grafo-comodidad. Sin datos/permisos/rutas/respuestas, esquema, motores, .env ni base de trabajo nuevos. R abierta; C fuera de P1 por decisión del dueño (2026-10-26); versión2.2.0 sin publicar. Sin commit/push ni otra pantalla.
+
+**Tres comprobaciones del dueño:** (1) Ocultar Filtros/Ficha, recargar y elegir nodo con ficha oculta → Ver ficha; (2) fullscreen → elegir nodo/ficha derecha, Ver N más/fuentes/details y Esc; (3) comparar cabeceras en escritorio y comprobar que el celular conserva su posición y distribución.
+
+**Ajuste del dueño (2026-10-29), escribió Codex; entregado, pendiente de revisión:** solo el grupo de controles de plataforma (Super-administrador/campana/avatar) se alinea al borde superior de su cabecera ≥768: y28→22,6px arriba. Se conserva la geometría del título y26/contenido y92 y el alto40. Comparación previa con el administrador y comprobación puntual1366/390; móvil conserva controles y24. Captura cabecera-subida-1366.png y medidas en scratch/r/grafo-comodidad. Incluido en B; sin suites completas repetidas.
 
 ### Panel de plataforma y mapa 3D — mockup aprobado (2026-10-28)
 

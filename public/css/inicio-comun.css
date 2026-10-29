@@ -714,11 +714,6 @@
         min-height: 640px;
     }
 
-    .main-content--inicio .top-header {
-        padding-top: 14px;
-        padding-bottom: 12px;
-    }
-
     .main-content--inicio .content-body {
         display: flex;
         flex: 1;

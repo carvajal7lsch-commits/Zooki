@@ -114,7 +114,7 @@
                             <h1 class="inicio-encabezado__saludo"><?= htmlspecialchars($panel['saludo'] . ', ' . explode(" ", trim($__adminNombre))[0]) ?></h1>
                         </div>
                     <?php else: ?>
-                        <h1 class="top-header-title"><?php if ($__action === 'vet_agenda'): ?><span class="agenda-titulo-escritorio"><?= htmlspecialchars($currentTitle) ?></span><span class="agenda-titulo-movil">Agenda</span><?php else: ?><?= htmlspecialchars($currentTitle) ?><?php endif; ?></h1>
+                        <h1 class="top-header-title"><?php if ($__action === 'vet_agenda'): ?><span class="agenda-titulo-escritorio"><?= htmlspecialchars($currentTitle) ?></span><span class="agenda-titulo-movil">Agenda</span><?php elseif ($__action === 'vet_atencion'): ?><span class="atencion-titulo-escritorio">Atención</span><?php else: ?><?= htmlspecialchars($currentTitle) ?><?php endif; ?></h1>
                         <?php if ($__action === 'vet_agenda'): ?><button type="button" class="agenda-movil-nueva" data-agenda-nueva aria-label="Nueva cita"><i class="fas fa-plus" aria-hidden="true"></i></button><?php endif; ?>
                     <?php endif; ?>
                 </div>

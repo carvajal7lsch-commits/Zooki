@@ -1761,3 +1761,88 @@ a.header-user:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
 }
+
+/* RNF-16, R-B (2026-10-28): una geometría común; los módulos no suman aire arriba. */
+@media (min-width: 768px) {
+    .dashboard-layout .main-content > .top-header {
+        box-sizing: border-box;
+        min-height: 52px;
+        flex-shrink: 0;
+        padding: 0 40px;
+        margin: 22px 0 18px;
+        align-items: center;
+    }
+    .dashboard-layout .main-content > .content-body {
+        margin-top: 0;
+        padding-top: 0;
+    }
+    .dashboard-layout .main-content > .top-header .header-left {
+        height: 44px;
+        min-width: 0;
+        align-items: center;
+    }
+    .dashboard-layout .main-content > .top-header :is(.top-header-title, .users-page-title, .inicio-encabezado__saludo) {
+        margin: 0;
+        padding: 0;
+        font-size: 20px;
+        line-height: 24px;
+        font-weight: 800;
+    }
+    .dashboard-layout .main-content > .top-header .header-left > :is(h1, h2) {
+        align-self: flex-start;
+    }
+    .dashboard-layout .main-content > .top-header :is(.head-title-desc, .encabezado-pagina__textos, .inicio-encabezado) {
+        height: 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 2px;
+    }
+    .dashboard-layout .main-content > .top-header :is(.users-module-desc, .encabezado-pagina__subtitulo, .inicio-encabezado__fecha, .plataforma-cabecera__titulo p) {
+        margin: 0;
+        font-size: 13px;
+        line-height: 18px;
+    }
+    .dashboard-layout .main-content > .top-header .inicio-encabezado__saludo {
+        order: 0;
+    }
+    .dashboard-layout .main-content > .top-header .inicio-encabezado__fecha {
+        order: 1;
+    }
+    .dashboard-layout .main-content > .top-header .encabezado-pagina {
+        height: 44px;
+    }
+    .dashboard-layout .main-content > .top-header :is(.header-right, .cabecera-cuenta) {
+        align-self: center;
+    }
+    .dashboard-layout .main-content > .top-header :is(.notif-btn, .cabecera-cuenta__boton) {
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0;
+    }
+    .dashboard-layout .main-content > .top-header .cabecera-clinica {
+        height: 40px;
+        min-height: 40px;
+    }
+    .dashboard-layout .plataforma-contenido > .top-header {
+        padding-inline: 0;
+    }
+    .dashboard-layout .plataforma-cabecera__titulo {
+        height: 44px;
+        align-items: flex-start;
+    }
+    .dashboard-layout .plataforma-titulo-icono {
+        align-self: center;
+    }
+}
+@media (min-width: 1024px) {
+    .dashboard-layout .main-content > .top-header {
+        height: 52px;
+    }
+}
+@media (max-width: 767px) {
+    .atencion-titulo-escritorio {
+        display: none;
+    }
+}

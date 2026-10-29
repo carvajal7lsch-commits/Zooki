@@ -132,7 +132,8 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
             const normal = document.createElement('h1');
             normal.className = 'top-header-title';
             normal.textContent = 'Configuración';
-            document.body.append(normal);
+            // RNF-16: el tamaño común pertenece a la cabecera, no a cualquier h1 del documento.
+            document.querySelector('.top-header .header-left').append(normal);
             const titulo = document.querySelector('.encabezado-pagina__titulo');
             const coinciden = getComputedStyle(titulo).fontSize === getComputedStyle(normal).fontSize;
             normal.remove();

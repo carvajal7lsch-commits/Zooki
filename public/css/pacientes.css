@@ -2413,3 +2413,13 @@ select.mascota-extra__control:focus,
         font-size: 16px;
     }
 }
+
+/* RNF-16: la separación de escritorio la fija layout.css. */
+@media (min-width: 768px) {
+    .top-header--pacientes {
+        margin-bottom: 0;
+    }
+    .top-header--pacientes .pacientes-cabecera {
+        padding-top: 0;
+    }
+}

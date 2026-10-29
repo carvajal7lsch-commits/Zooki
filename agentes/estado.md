@@ -20,9 +20,12 @@
 
 - **Escribió Codex; revisa Claude (arquitecto).** A de Etapa R/HU-2.12: chips/ayuda/cobertura compactos, ficha con relaciones/fuentes limitadas y desplegables, lados ocultables con memoria, fullscreen del mapa con tarjetas flotantes. Tableta conserva ficha superpuesta y celular su hoja. Mismos datos/rutas/respuestas; prueba de fallo de almacenamiento y CI sin WebGL. Dirigidas15/15; cuatro capturas de 3D real y anexo en scratch/r/grafo-comodidad. La pasada JS completa se consolida con B.
 
-### Cabecera común — encargada a Codex después de A (2026-10-28)
+### Cabecera común — entregada, pendiente de revisión (2026-10-28)
 
-- **Escribe Codex; revisa Claude.** B pedida por el dueño: medir13 vistas antes/después, cabecera22/52 y contenido18 debajo (RNF-16), celular intacto. Cambio/commit separados mediante parte-a.patch; sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla;2.2.0 sin publicar.
+- **Escribió Codex; revisa Claude.** B/RNF-16:13 vistas reales a1366 con cabecera y22/alto52, título y26/font20 y hoja y92; tabla antes/después en specs/pulido-interfaz.md. CabeceraComun a1366/820/390 correcta;13 capturas móviles idénticas antes/después. Atención con título solo de escritorio; perfil admin dentro de Ajustes. Reglas comunes y retirada de extras por módulo, import de layout invalidado.
+- **Cierre A+B:** dirigidas16/16; una pasada JS completa406 (405 correctas,1 medición antigua de Suscripción corregida), reverificación afectada5/5, sin fallos conocidos. Sintaxis/diff correctos. Evidencia, anexo con autor y comandos separados mediante parte-a.patch en scratch/r/grafo-comodidad. Sigue revisión de Claude y tres comprobaciones del dueño. R abierta, C fuera de P1 por decisión del dueño (2026-10-26),2.2.0 sin publicar; sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla.
+
+- **Retoque del dueño (2026-10-29), escribió Codex; pendiente de revisión:** controles de plataforma6px arriba en escritorio (y22/alto40), conservando título y26/hoja y92; móvil intacto. Comprobación puntual1366/390 y captura/medidas cabecera-subida en scratch/r/grafo-comodidad; incluido en B, sin repetir suites completas.
 
 ### Panel de plataforma y mapa 3D — entregada, pendiente de revisión (2026-10-28)
 
