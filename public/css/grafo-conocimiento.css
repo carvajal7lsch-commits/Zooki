@@ -156,7 +156,7 @@
 }
 
 .grafo-muestra--alarma {
-    box-shadow: 0 0 0 2px var(--z-surface), 0 0 0 4px var(--z-danger);
+    box-shadow: 0 0 0 2px var(--z-surface), 0 0 0 4px var(--grafo-peligro, var(--z-danger));
 }
 
 .grafo-trazo {
@@ -335,7 +335,7 @@
 
 .grafo-ficha--alarma {
     background: var(--z-danger-soft);
-    color: var(--z-danger-dark);
+    color: var(--grafo-peligro, var(--z-danger-dark));
 }
 
 .grafo-ficha--clinico {
@@ -884,7 +884,7 @@
     height: 7px;
     margin-right: 4px;
     border-radius: 50%;
-    background: var(--z-danger);
+    background: var(--grafo-peligro, var(--z-danger));
 }
 .grafo .grafo-detalle {
     position: relative;
@@ -948,7 +948,7 @@
     accent-color: var(--z-primary);
 }
 .grafo-peso--bloqueo {
-    accent-color: var(--z-danger);
+    accent-color: var(--grafo-peligro, var(--z-danger));
 }
 .grafo-peso-valor {
     color: var(--z-text-muted);
@@ -965,7 +965,7 @@
 }
 .grafo .grafo-alarma {
     background: var(--z-danger-soft);
-    color: var(--z-danger-dark);
+    color: var(--grafo-peligro, var(--z-danger-dark));
 }
 .grafo .grafo-detalle-vacio {
     padding: 24px;
@@ -1099,5 +1099,372 @@
     }
     .grafo .grafo-detalle__titulo {
         font-size: 18px;
+    }
+}
+
+/* HU-2.12, R: los laterales se recogen sin cambiar la hoja móvil. */
+.grafo-lado-boton,
+.grafo-mas,
+[data-grafo-detalle-fichas],
+.grafo-efecto {
+    display: none;
+}
+@media (max-width: 767px) {
+    .grafo-ayuda,
+    .grafo-cobertura-detalle {
+        display: none;
+    }
+}
+@media (min-width: 768px) {
+    .grafo .grafo-composicion {
+        --grafo-izquierda: 280px;
+        --grafo-derecha: 340px;
+        grid-template-columns: minmax(0, var(--grafo-izquierda)) minmax(0, 1fr) minmax(0, var(--grafo-derecha));
+        gap: 0;
+        transition: grid-template-columns 180ms ease;
+    }
+    .grafo--sin-filtros .grafo-composicion {
+        --grafo-izquierda: 0px;
+    }
+    .grafo--sin-ficha .grafo-composicion {
+        --grafo-derecha: 0px;
+    }
+    .grafo .grafo-filtros-lateral {
+        margin-right: 12px;
+        padding: 12px;
+        min-width: 0;
+        align-self: start;
+        max-height: 100%;
+    }
+    .grafo .grafo-detalle,
+    .grafo .grafo-detalle-vacio {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        width: auto;
+        min-width: 0;
+        margin-left: 12px;
+        box-shadow: none;
+        overflow: hidden;
+        align-self: start;
+        max-height: 100%;
+    }
+    .grafo:not(.grafo--con-detalle) .grafo-detalle-vacio {
+        display: block;
+    }
+    .grafo--sin-filtros .grafo-filtros-lateral,
+    .grafo--sin-ficha .grafo-detalle,
+    .grafo--sin-ficha .grafo-detalle-vacio {
+        visibility: hidden;
+        padding: 0;
+        border: 0;
+        margin: 0;
+    }
+    .grafo .grafo-tipos__opciones {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .grafo .grafo-tipo {
+        position: relative;
+        height: 32px;
+        min-height: 32px;
+        padding: 0 5px;
+        gap: 4px;
+        border: 1px solid var(--z-border);
+        border-radius: 10px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    .grafo .grafo-tipo input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+    }
+    .grafo .grafo-tipo:has(input:not(:checked)) {
+        opacity: .4;
+    }
+    .grafo .grafo-tipo:focus-within {
+        outline: 2px solid var(--z-primary);
+    }
+    .grafo .grafo-tipos__titulo {
+        margin: 0 0 8px;
+    }
+    .grafo-ayuda,
+    .grafo-cobertura-detalle {
+        padding-top: 12px;
+        margin-top: 12px;
+        border-top: 1px solid var(--z-border);
+        font-size: 12px;
+        color: var(--z-text-secondary);
+    }
+    .grafo-ayuda > summary,
+    .grafo-cobertura-detalle > summary,
+    .grafo-reglas-desplegable > summary {
+        cursor: pointer;
+        padding: 4px 0;
+        font-weight: 600;
+    }
+    .grafo .grafo-leyenda {
+        margin: 10px 0 0;
+        display: block;
+    }
+    .grafo .grafo-franja {
+        padding-top: 10px;
+        border: 0;
+    }
+    .grafo .grafo-franja__cobertura .card-tags-mini {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .grafo .grafo-cobertura {
+        background: none;
+        padding: 4px 0;
+        white-space: normal;
+    }
+    .grafo .grafo-barra {
+        gap: 5px;
+        padding: 8px;
+        flex-wrap: wrap;
+    }
+    .grafo .grafo-barra button {
+        min-height: 40px;
+        padding: 6px 9px;
+    }
+    .grafo .grafo-lado-boton {
+        display: inline-grid;
+        place-items: center;
+        width: 40px;
+        flex: 0 0 40px;
+    }
+    .grafo-lado-boton[aria-pressed="true"] {
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+    }
+    .grafo .grafo-barra [data-grafo-girar] {
+        margin-left: auto;
+    }
+    .grafo [data-grafo-ver-ficha] {
+        color: var(--z-primary);
+        background: none;
+        border: 0;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .grafo .grafo-detalle__cabeza {
+        padding: 10px 12px;
+        align-items: center;
+    }
+    .grafo-detalle__cabeza > div {
+        min-width: 0;
+        flex: 1;
+    }
+    .grafo .grafo-detalle__titulo {
+        font-size: 17px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    [data-grafo-detalle-fichas] {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .grafo .grafo-detalle__cuerpo {
+        padding: 10px 12px;
+    }
+    .grafo .grafo-detalle__cuerpo > .grafo-fichas,
+    .grafo .grafo-detalle__cuerpo > .grafo-detalle__validacion {
+        display: none;
+    }
+    .grafo .grafo-relacion {
+        grid-template-columns: minmax(0, 1fr) 48px 28px;
+        height: 32px;
+        min-height: 32px;
+        padding: 0;
+        margin: 0;
+        gap: 6px;
+    }
+    .grafo .grafo-relacion > .grafo-enlace {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        font-size: 12px;
+    }
+    .grafo-relacion > .grafo-enlace::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        flex-shrink: 0;
+        background: var(--grafo-color, var(--z-primary));
+        border-radius: 50%;
+    }
+    .grafo-relacion__nombre {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .grafo .grafo-relacion__detalle {
+        display: none;
+    }
+    .grafo .grafo-efecto {
+        display: inline-block;
+        background: var(--z-bg-light);
+        color: var(--z-text-muted);
+        font-size: 9px;
+        padding: 2px 4px;
+        border-radius: 5px;
+        white-space: nowrap;
+    }
+    .grafo .grafo-efecto--bloqueo {
+        background: var(--z-danger-soft);
+        color: var(--grafo-peligro, var(--z-danger-dark));
+    }
+    .grafo-limitada[data-limite="6"]:not(.grafo-expandida) > :nth-child(n+7),
+    .grafo-limitada[data-limite="3"]:not(.grafo-expandida) > :nth-child(n+4) {
+        display: none;
+    }
+    .grafo .grafo-mas {
+        display: block;
+        border: 0;
+        background: none;
+        color: var(--z-primary);
+        cursor: pointer;
+        padding: 8px 0;
+        font-size: 12px;
+    }
+    .grafo .grafo-fuente {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
+        font-size: 11px;
+        padding: 5px 0;
+    }
+    .grafo .grafo-fuente__titulo {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .grafo .grafo-fuente__entidad {
+        white-space: nowrap;
+        font-size: 10px;
+        color: var(--z-text-muted);
+    }
+    .grafo .grafo-fuente__localizador,
+    .grafo .grafo-fuente__pie {
+        display: none;
+    }
+    .grafo-reglas-desplegable {
+        margin: 12px 0;
+    }
+    .grafo--pantalla .grafo-composicion {
+        display: block;
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        min-height: 0;
+        background: var(--z-surface);
+    }
+    .grafo--pantalla .grafo-lienzo,
+    .grafo--pantalla .grafo-mapa {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+    .grafo--pantalla .grafo-barra {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        z-index: 60;
+        background: color-mix(in srgb, var(--z-surface) 94%, transparent);
+        border: 1px solid var(--z-border);
+        border-radius: 14px;
+    }
+    .grafo--pantalla .grafo-foco {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        z-index: 20;
+        border-radius: 12px;
+    }
+    .grafo--pantalla .grafo-filtros-lateral,
+    .grafo--pantalla .grafo-detalle,
+    .grafo--pantalla .grafo-detalle-vacio {
+        position: absolute;
+        top: 78px;
+        max-height: calc(100dvh - 96px);
+        height: auto;
+        margin: 0;
+        z-index: 30;
+        background: color-mix(in srgb, var(--z-surface) 94%, transparent);
+        border-radius: 18px;
+        box-shadow: var(--z-shadow-lista);
+        overflow-y: auto;
+    }
+    .grafo--pantalla .grafo-filtros-lateral {
+        left: 12px;
+        width: 280px;
+    }
+    .grafo--pantalla .grafo-detalle,
+    .grafo--pantalla .grafo-detalle-vacio {
+        left: auto;
+        right: 12px;
+        width: 340px;
+    }
+    .grafo--pantalla .grafo-detalle__cuerpo {
+        overflow: visible;
+    }
+    .grafo--pantalla.grafo--sin-filtros .grafo-filtros-lateral,
+    .grafo--pantalla.grafo--sin-ficha .grafo-detalle,
+    .grafo--pantalla.grafo--sin-ficha .grafo-detalle-vacio {
+        display: none;
+    }
+    .grafo--pantalla .grafo-lista {
+        position: absolute;
+        inset: 72px 12px 54px;
+        background: var(--z-surface);
+    }
+    .grafo--pantalla .grafo-lienzo__conteo {
+        bottom: 58px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .grafo .grafo-composicion {
+        transition: none;
+    }
+}
+/* RNF-16: la tableta conserva la ficha superpuesta; tres columnas dejarían el lienzo sin ancho. */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .grafo:not(.grafo--pantalla) .grafo-composicion {
+        position: relative;
+        --grafo-derecha: 0px;
+    }
+    .grafo:not(.grafo--pantalla) .grafo-detalle {
+        position: absolute;
+        top: 72px;
+        right: 0;
+        width: 300px;
+        max-height: calc(100% - 72px);
+        margin-left: 0;
+        z-index: 50;
+        box-shadow: var(--z-shadow-lista);
+    }
+    .grafo:not(.grafo--pantalla) .grafo-detalle-vacio {
+        display: none;
     }
 }

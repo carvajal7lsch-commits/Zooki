@@ -6,26 +6,37 @@
 (function (global) {
     'use strict';
 
-    // RE-2.12.2: color y forma por tipo; la leyenda se dibuja con estas mismas constantes.
+    // RE-2.12.2, R-5b: una paleta para toda la presentación; rojo solo identifica peligro.
+    const PALETA = Object.freeze({
+        diagnostico: '#0052FF',
+        sintoma: '#8FB0FF',
+        farmaco: '#1E3A8A',
+        especie: '#475569',
+        raza: '#CBD5E1',
+        condicion: '#94A3B8',
+        sustancia: '#E11D48',
+        fondo: '#FFFFFF',
+        tenue: 'rgba(148,163,184,0.18)',
+        enlace: 'rgba(71,85,105,0.30)',
+        enlaceTenue: 'rgba(148,163,184,0.06)',
+    });
     const TIPOS = {
-        sintoma: { nombre: 'Síntoma', plural: 'Síntomas', color: '#2F6BFF', forma: 'ellipse' },
-        diagnostico: { nombre: 'Diagnóstico', plural: 'Diagnósticos', color: '#7C3AED', forma: 'round-rectangle' },
-        farmaco: { nombre: 'Fármaco', plural: 'Fármacos', color: '#0D9488', forma: 'diamond' },
-        sustancia: { nombre: 'Sustancia', plural: 'Sustancias', color: '#DB2777', forma: 'triangle' },
-        especie: { nombre: 'Especie', plural: 'Especies', color: '#334155', forma: 'hexagon' },
-        raza: { nombre: 'Raza', plural: 'Razas', color: '#94A3B8', forma: 'round-pentagon' },
-        condicion: { nombre: 'Condición', plural: 'Condiciones', color: '#0891B2', forma: 'star' },
+        sintoma: { nombre: 'Síntoma', plural: 'Síntomas', color: PALETA.sintoma, forma: 'ellipse', volumen: 1.5 },
+        diagnostico: { nombre: 'Diagnóstico', plural: 'Diagnósticos', color: PALETA.diagnostico, forma: 'round-rectangle', volumen: 9 },
+        farmaco: { nombre: 'Fármaco', plural: 'Fármacos', color: PALETA.farmaco, forma: 'diamond', volumen: 3 },
+        sustancia: { nombre: 'Sustancia', plural: 'Sustancias', color: PALETA.sustancia, forma: 'triangle', volumen: 3 },
+        especie: { nombre: 'Especie', plural: 'Especies', color: PALETA.especie, forma: 'hexagon', volumen: 4 },
+        raza: { nombre: 'Raza', plural: 'Razas', color: PALETA.raza, forma: 'round-pentagon', volumen: 2 },
+        condicion: { nombre: 'Condición', plural: 'Condiciones', color: PALETA.condicion, forma: 'star', volumen: 2 },
     };
-    const COLOR_ALARMA = '#dc2626';
-    const COLORES_MAPA = { fondo:'#FFFFFF', marca:'#0052FF', tenue:'rgba(148,163,184,0.18)', enlace:'rgba(71,85,105,0.30)', enlaceTenue:'rgba(148,163,184,0.06)' };
     const EFECTOS = {
         evidencia: { nombre: 'Evidencia', linea: 'solid', flecha: 'triangle' },
-        bloqueo: { nombre: 'Bloqueo', linea: 'solid', flecha: 'tee', color: '#b91c1c' },
-        advertencia: { nombre: 'Advertencia', linea: 'dashed', flecha: 'triangle', color: '#d97706' },
+        bloqueo: { nombre: 'Bloqueo', linea: 'solid', flecha: 'tee', color: PALETA.sustancia },
+        advertencia: { nombre: 'Advertencia', linea: 'dashed', flecha: 'triangle', color: PALETA.especie },
     };
     const SIGNOS = {
-        positivo: { nombre: 'Positivo', color: '#2563eb', linea: 'solid' },
-        negativo: { nombre: 'Negativo', color: '#e11d48', linea: 'dotted' },
+        positivo: { nombre: 'Positivo', color: PALETA.diagnostico, linea: 'solid' },
+        negativo: { nombre: 'Negativo', color: PALETA.especie, linea: 'dotted' },
     };
     const RELACIONES = {
         sugiere: 'sugiere', trata: 'trata', toxico_para: 'tóxico para', alergia: 'alergia',
@@ -47,14 +58,14 @@
     }
 
     function estiloNodo(nodo) {
-        const tipo = TIPOS[nodo.tipo] || { color: '#94a3b8', forma: 'ellipse' };
+        const tipo = TIPOS[nodo.tipo] || { color: PALETA.condicion, forma: 'ellipse', volumen: 2 };
         const alarma = Boolean(nodo.alarma_universal);
         return {
             color: tipo.color,
             forma: tipo.forma,
-            borde: alarma ? COLOR_ALARMA : '#ffffff',
+            borde: alarma ? PALETA.sustancia : PALETA.fondo,
             grosorBorde: alarma ? 4 : 1.5,
-            tamano: nodo.tipo === 'especie' ? 34 : (alarma ? 30 : 24),
+            tamano: Math.round(tipo.volumen * 2 + 16),
         };
     }
 
@@ -316,7 +327,7 @@
         return;
     }
 
-    const estado = { datos: null, porCodigo: {}, etiquetas: {}, aristas: {}, reglas: {}, visibles: null, mapa: null, nodosMapa: [], enlacesMapa: [], foco: new Set(), girando: false, reducido: false, vista: 'mapa', seleccion: null };
+    const estado = { datos: null, porCodigo: {}, etiquetas: {}, aristas: {}, reglas: {}, visibles: null, mapa: null, nodosMapa: [], enlacesMapa: [], foco: new Set(), girando: false, reducido: false, vista: 'mapa', seleccion: null, paneles: { filtros: true, ficha: true }, pantalla: false, panelesNormales: null };
 
     function el(etiqueta, clase, texto) {
         const nodo = doc.createElement(etiqueta);
@@ -433,7 +444,7 @@
         cobertura.appendChild(el('span', 'grafo-franja__rotulo', 'Cobertura por especie'));
         const fichas = el('div', 'card-tags-mini');
         for (const especie of datos.cobertura) {
-            const ficha = el('span', 'tag-mini grafo-cobertura grafo-cobertura--' + (especie.triage === 'sin_cobertura' ? 'nula' : 'parcial'), especie.etiqueta + ': ' + coberturaLegible(especie));
+            const ficha = el('span', 'tag-mini grafo-cobertura grafo-cobertura--' + (especie.triage === 'sin_cobertura' ? 'nula' : 'parcial'), especie.etiqueta + ' – ' + coberturaLegible(especie));
             fichas.appendChild(ficha);
         }
         cobertura.appendChild(fichas);
@@ -474,37 +485,36 @@
 
     function pintarLeyenda(raiz) {
         const leyenda = raiz.querySelector('[data-grafo-leyenda]');
-        leyenda.replaceChildren(el('h3', 'grafo-leyenda__titulo', 'Leyenda'));
-        const nodos = el('ul', 'grafo-leyenda__lista');
-        for (const tipo of Object.values(TIPOS)) {
-            const item = el('li');
-            const muestra = el('span', 'grafo-muestra grafo-muestra--' + tipo.forma);
-            muestra.style.setProperty('--grafo-color', tipo.color);
-            muestra.setAttribute('aria-hidden', 'true');
-            item.append(muestra, el('span', null, tipo.nombre));
-            nodos.appendChild(item);
-        }
-        const alarma = el('li');
-        const muestraAlarma = el('span', 'grafo-muestra grafo-muestra--ellipse grafo-muestra--alarma');
-        muestraAlarma.style.setProperty('--grafo-color', TIPOS.sintoma.color);
-        muestraAlarma.setAttribute('aria-hidden', 'true');
-        alarma.append(muestraAlarma, el('span', null, 'Alarma universal: punto rojo'));
-        nodos.appendChild(alarma);
-        const aristas = el('ul', 'grafo-leyenda__lista');
-        const trazos = [
-            ['Relación con foco', { color: COLORES_MAPA.marca, linea: 'solid' }],
-            ['Bloqueo por toxicidad', { color: COLOR_ALARMA, linea: 'solid' }],
+        const lista = el('ul', 'grafo-leyenda__lista');
+        const entradas = [
+            ['Grosor = peso', PALETA.especie],
+            ['Partículas = sentido', PALETA.diagnostico],
+            ['Rojo = bloqueo', PALETA.sustancia],
+            ['Punto rojo = alarma', PALETA.sustancia],
         ];
-        for (const [texto, estilo] of trazos) {
+        for (const [texto, color] of entradas) {
+            const muestra = el('span', 'grafo-muestra');
+            muestra.style.setProperty('--grafo-color', color);
             const item = el('li');
-            const trazo = el('span', 'grafo-trazo grafo-trazo--' + estilo.linea);
-            trazo.style.setProperty('--grafo-color', estilo.color);
-            trazo.setAttribute('aria-hidden', 'true');
-            item.append(trazo, el('span', null, texto));
-            aristas.appendChild(item);
+            item.append(muestra, doc.createTextNode(texto));
+            lista.appendChild(item);
         }
-        aristas.appendChild(el('li', 'grafo-leyenda__nota', 'Las flechas van del origen al destino; el grosor crece con el peso (heurístico, no es una probabilidad). Consulta signo, efecto y condiciones en la ficha de la relación.'));
-        leyenda.append(nodos, aristas);
+        leyenda.replaceChildren(lista);
+    }
+
+    function limitarLista(lista, limite, texto) {
+        if (lista.children.length <= limite) return null;
+        lista.classList.add('grafo-limitada');
+        lista.dataset.limite = String(limite);
+        const boton = el('button', 'grafo-mas', texto || 'Ver ' + (lista.children.length - limite) + ' más');
+        boton.type = 'button';
+        boton.setAttribute('aria-expanded', 'false');
+        boton.addEventListener('click', () => {
+            lista.classList.add('grafo-expandida');
+            boton.setAttribute('aria-expanded', 'true');
+            boton.hidden = true;
+        });
+        return boton;
     }
 
     function pintarLista(raiz, datos) {
@@ -574,11 +584,16 @@
             estado.mapa = g;
             g.width(lienzo.clientWidth || 600);
             g.height(lienzo.clientHeight || 500);
-            g.backgroundColor(COLORES_MAPA.fondo);
+            g.backgroundColor(PALETA.fondo);
             g.showNavInfo(false);
             g.nodeId('id');
             g.nodeLabel(() => '');
-            g.nodeVal(n => (n.tipo === 'diagnostico' ? 6 : n.tipo === 'especie' ? 7 : 2) + n.grado * 0.6);
+            g.nodeVal(n => {
+                const volumen = (TIPOS[n.tipo] || TIPOS.condicion).volumen;
+                const grado = Math.max(0, Number(n.grado) || 0);
+                // El grado aporta hasta un 25 %; el diagnóstico siempre conserva la mayor jerarquía.
+                return volumen * (1 + grado / (grado + 1) * 0.25);
+            });
             g.nodeRelSize(3.2);
             g.nodeResolution(18);
             g.nodeOpacity(0.95);
@@ -586,7 +601,7 @@
             g.linkDirectionalArrowLength(3);
             g.linkDirectionalArrowRelPos(1);
             g.linkDirectionalParticleSpeed(l => 0.003 + Number(l.peso || 0.4) * 0.006);
-            g.linkDirectionalParticleColor(l => l.efecto === 'bloqueo' ? COLOR_ALARMA : COLORES_MAPA.marca);
+            g.linkDirectionalParticleColor(l => l.efecto === 'bloqueo' ? PALETA.sustancia : PALETA.diagnostico);
             g.onNodeClick(n => seleccionar(raiz, n.codigo));
             let nodoSobrevolado = null;
             g.onNodeHover(n => { nodoSobrevolado = n?.codigo; });
@@ -666,12 +681,12 @@
     function refrescarMapa() {
         const g = estado.mapa;
         if (!g) return;
-        g.nodeColor(n => estado.seleccion && !estado.foco.has(n.codigo) ? COLORES_MAPA.tenue : estiloNodo(n).color);
+        g.nodeColor(n => estado.seleccion && !estado.foco.has(n.codigo) ? PALETA.tenue : estiloNodo(n).color);
         g.nodeVisibility(n => estado.visibles?.nodos.has(n.codigo) !== false);
         g.linkVisibility(l => estado.visibles?.aristas.has(l.codigo) !== false);
         g.linkColor(l => {
-            if (estado.seleccion && l.origen !== estado.seleccion && l.destino !== estado.seleccion) return COLORES_MAPA.enlaceTenue;
-            return l.efecto === 'bloqueo' ? COLOR_ALARMA : estado.seleccion ? COLORES_MAPA.marca : COLORES_MAPA.enlace;
+            if (estado.seleccion && l.origen !== estado.seleccion && l.destino !== estado.seleccion) return PALETA.enlaceTenue;
+            return l.efecto === 'bloqueo' ? PALETA.sustancia : estado.seleccion ? PALETA.diagnostico : PALETA.enlace;
         });
         g.linkWidth(l => estado.seleccion && (l.origen === estado.seleccion || l.destino === estado.seleccion) ? 0.6 + Number(l.peso || 0.5) * 2.2 : 0);
         g.linkDirectionalParticles(l => estado.reducido ? 0 : estado.seleccion && (l.origen === estado.seleccion || l.destino === estado.seleccion) ? 3 : 1);
@@ -753,8 +768,21 @@
         if (foco) foco.hidden = false;
         const textoFoco = raiz.querySelector('[data-grafo-foco-texto]');
         if (textoFoco) textoFoco.textContent = 'Enfocado: ' + nodo.etiqueta;
+        encuadrar();
+        for (const fila of raiz.querySelectorAll('[data-nodo]')) {
+            fila.classList.toggle('is-activo', fila.dataset.nodo === codigo);
+        }
+        verNodo(raiz, nodo);
+    }
+
+    function encuadrar() {
+        estado.ajustarMapa?.();
+        if (!estado.seleccion) {
+            estado.mapa?.zoomToFit(estado.reducido ? 0 : 500, 35);
+            return;
+        }
         if (estado.mapa) {
-            const n = estado.nodosMapa.find(n => n.codigo === codigo);
+            const n = estado.nodosMapa.find(n => n.codigo === estado.seleccion);
             if (n && Number.isFinite(n.x)) {
                 const distancia = 175;
                 const radio = Math.hypot(n.x, n.y, n.z || 0) || 1;
@@ -762,10 +790,6 @@
                 estado.mapa.cameraPosition({ x:n.x*k+60, y:n.y*k+80, z:(n.z||0)*k+(estado.vista==='plano'?distancia:0) }, n, estado.reducido ? 0 : 1100);
             }
         }
-        for (const fila of raiz.querySelectorAll('[data-nodo]')) {
-            fila.classList.toggle('is-activo', fila.dataset.nodo === codigo);
-        }
-        verNodo(raiz, nodo);
     }
 
     function abrirDetalle(raiz, titulo, subtitulo, contenido) {
@@ -776,6 +800,8 @@
         cuerpo.replaceChildren(...contenido);
         cuerpo.scrollTop = 0;
         panel.hidden = false;
+        if (estado.pantalla && global.innerWidth >= 768) estado.paneles.ficha = true;
+        actualizarLados(raiz);
         raiz.classList.add('grafo--con-detalle');
         global.requestAnimationFrame?.(() => estado.ajustarMapa?.());
     }
@@ -819,6 +845,7 @@
             if (enlaceSeguro(fuente.url)) {
                 const enlace = el('a', null, fuente.titulo || fuente.url);
                 enlace.href = fuente.url;
+                enlace.title = fuente.titulo || fuente.url;
                 enlace.target = '_blank';
                 enlace.rel = 'noopener noreferrer';
                 cabeza.append(enlace, doc.createTextNode(' '), icono('bi bi-box-arrow-up-right'));
@@ -899,23 +926,48 @@
             peso.max = 1;
             peso.value = Math.min(1, Math.max(0, Number(arista.peso) || 0));
             peso.setAttribute('aria-label', 'Peso de la relación');
-            const valor = el('small', 'grafo-peso-valor', Number(arista.peso || 0).toFixed(2));
+            const valor = el('small', 'grafo-peso-valor', Number(arista.peso || 0).toLocaleString('es-CO', { maximumFractionDigits: 2 }));
             const detalle = el('button', 'grafo-relacion__detalle', descripcionArista(arista));
             detalle.type = 'button';
             detalle.addEventListener('click', () => verArista(raiz, arista.codigo));
-            item.append(botonNodo(raiz, destino), peso, valor, detalle);
+            const enlace = botonNodo(raiz, destino);
+            enlace.style.setProperty('--grafo-color', estiloNodo(estado.porCodigo[destino] || {}).color);
+            enlace.title = (estado.etiquetas[destino] || destino) + ' · ' + descripcionArista(arista);
+            enlace.replaceChildren(el('span', 'grafo-relacion__nombre', enlace.textContent));
+            if (arista.efecto !== 'evidencia') {
+                enlace.appendChild(el('span', 'grafo-efecto grafo-efecto--' + arista.efecto, (EFECTOS[arista.efecto] || EFECTOS.advertencia).nombre.toLowerCase()));
+            }
+            item.append(enlace, peso, valor, detalle);
             grupos.get(titulo).append(item);
         }
-        for (const [titulo, lista] of grupos) contenido.push(seccion(titulo, lista));
+        for (const [titulo, lista] of grupos) {
+            const bloque = seccion(titulo, lista);
+            const mas = limitarLista(lista, 6);
+            if (mas) bloque.appendChild(mas);
+            contenido.push(bloque);
+        }
         const reglas = (nodo.reglas || []).map(codigo => estado.reglas[codigo]).filter(Boolean);
         if (reglas.length > 0) {
             const lista = el('div', 'grafo-reglas');
             for (const regla of reglas) {
                 lista.appendChild(tarjetaRegla(regla));
             }
-            contenido.push(seccion('Reglas que lo usan (' + reglas.length + ')', el('p', 'grafo-detalle__nota', 'Una regla combina varias condiciones; no es una arista del mapa.'), lista));
+            const reglasDetalle = el('details', 'grafo-reglas-desplegable');
+            reglasDetalle.open = global.innerWidth < 768;
+            reglasDetalle.append(el('summary', null, 'Reglas que lo usan (' + reglas.length + ')'), lista);
+            contenido.push(reglasDetalle);
         }
-        contenido.push(seccion('Fuentes', listaFuentes(nodo.fuentes || [])));
+        const fuentesNodo = listaFuentes(nodo.fuentes || []);
+        const fuentesSeccion = seccion('Fuentes', fuentesNodo);
+        const masFuentes = limitarLista(fuentesNodo, 3, 'Ver todas');
+        if (masFuentes) fuentesSeccion.appendChild(masFuentes);
+        contenido.push(fuentesSeccion);
+        const fichasCabecera = raiz.querySelector('[data-grafo-detalle-fichas]');
+        if (fichasCabecera) {
+            fichasCabecera.replaceChildren(el('span', 'tag-mini', relaciones.length + ' relaciones'));
+            if (nodo.estado_validacion !== 'validado') fichasCabecera.appendChild(el('span', 'tag-mini', 'Por validar'));
+            if (nodo.alarma_universal) fichasCabecera.appendChild(el('span', 'tag-mini grafo-alarma', 'Alarma'));
+        }
         const datosNodo = el('details', 'grafo-nodo-datos');
         datosNodo.append(el('summary', null, 'Datos del nodo y sinónimos'), ...secundarios);
         contenido.push(datosNodo);
@@ -994,11 +1046,57 @@
         return resultados;
     }
 
+    const CLAVE_LADOS = 'zooki.grafo.lados.v1';
+
+    function restaurarLados() {
+        try {
+            const guardados = JSON.parse(global.localStorage.getItem(CLAVE_LADOS));
+            if (guardados && typeof guardados.filtros === 'boolean' && typeof guardados.ficha === 'boolean') {
+                estado.paneles = guardados;
+            }
+        } catch (_) {
+            estado.paneles = { filtros: true, ficha: true };
+        }
+    }
+
+    function actualizarLados(raiz) {
+        const escritorio = (global.innerWidth || 1366) >= 768;
+        for (const lado of ['filtros', 'ficha']) {
+            const visible = !escritorio || estado.paneles[lado];
+            raiz.classList.toggle('grafo--sin-' + lado, !visible);
+            const boton = raiz.querySelector('[data-grafo-lado="' + lado + '"]');
+            boton?.setAttribute('aria-pressed', String(visible));
+        }
+        const verFicha = raiz.querySelector('[data-grafo-ver-ficha]');
+        if (verFicha) verFicha.hidden = !escritorio || estado.paneles.ficha || !estado.seleccion;
+        global.requestAnimationFrame?.(() => estado.ajustarMapa?.());
+    }
+
+    function cambiarLado(raiz, lado, visible) {
+        estado.paneles[lado] = visible ?? !estado.paneles[lado];
+        if (!estado.pantalla) {
+            try {
+                global.localStorage.setItem(CLAVE_LADOS, JSON.stringify(estado.paneles));
+            } catch (_) {
+                estado.paneles = { filtros: true, ficha: true };
+            }
+        }
+        actualizarLados(raiz);
+    }
+
     function iniciar() {
         const raiz = doc.querySelector('[data-grafo]');
         if (!raiz) {
             return;
         }
+        raiz.style.setProperty('--grafo-peligro', PALETA.sustancia);
+        restaurarLados();
+        actualizarLados(raiz);
+        for (const boton of raiz.querySelectorAll('[data-grafo-lado]')) {
+            boton.addEventListener('click', () => cambiarLado(raiz, boton.dataset.grafoLado));
+        }
+        raiz.querySelector('[data-grafo-ver-ficha]')?.addEventListener('click', () => cambiarLado(raiz, 'ficha', true));
+        global.addEventListener?.('resize', () => actualizarLados(raiz));
         const buscador = raiz.querySelector('[data-grafo-buscar]');
         buscador.addEventListener('input', () => sugerir(raiz, buscador.value));
         buscador.addEventListener('keydown', evento => {
@@ -1021,7 +1119,7 @@
         }
         raiz.querySelector('[data-grafo-cerrar-detalle]').addEventListener('click', () => limpiarSeleccion(raiz));
         doc.addEventListener('keydown', evento => {
-            if (evento.key === 'Escape' && !raiz.querySelector('[data-grafo-detalle]').hidden) {
+            if (evento.key === 'Escape' && !estado.pantalla && !raiz.querySelector('[data-grafo-detalle]').hidden) {
                 limpiarSeleccion(raiz);
             }
         });
@@ -1038,11 +1136,19 @@
             }
         });
         doc.addEventListener('fullscreenchange', () => {
-            // Al entrar o salir cambia el tamaño: se vuelve a encuadrar el nodo enfocado o todo el mapa.
-            global.setTimeout(() => {
-                if (estado.seleccion) seleccionar(raiz, estado.seleccion);
-                else if (estado.mapa) estado.mapa.zoomToFit(estado.reducido ? 0 : 500, 35);
-            }, 250);
+            const completa = doc.fullscreenElement === raiz.querySelector('.grafo-composicion');
+            if (completa === estado.pantalla) return;
+            estado.pantalla = completa;
+            raiz.classList.toggle('grafo--pantalla', completa);
+            if (completa) {
+                estado.panelesNormales = { ...estado.paneles };
+                if ((global.innerWidth || 1366) >= 768) estado.paneles = { filtros: false, ficha: false };
+            } else {
+                estado.paneles = estado.panelesNormales || { filtros: true, ficha: true };
+            }
+            actualizarLados(raiz);
+            if (global.setTimeout) global.setTimeout(encuadrar, estado.reducido ? 0 : 220);
+            else encuadrar();
         });
         cargar(raiz);
     }

@@ -22,3 +22,4 @@ $eCabecera = static fn ($texto) => htmlspecialchars((string) $texto, ENT_QUOTES,
         </details>
     </div>
 </header>
+<script src="js/plataforma-cabecera.js?v=<?= $v ?>" defer></script>

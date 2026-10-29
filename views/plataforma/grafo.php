@@ -38,7 +38,7 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
 <?php require __DIR__ . '/cabecera.php'; ?>
 <main class="content-body plataforma grafo" data-grafo data-url="index.php?action=obtener_grafo_conocimiento_ajax">
     <div class="grafo-composicion">
-    <aside class="grafo-filtros-lateral" aria-label="Explorar conocimiento">
+    <aside class="grafo-filtros-lateral" id="grafoFiltros" aria-label="Explorar conocimiento">
         <form class="users-controls-bar__filters is-active plataforma-filtros grafo-filtros" role="search" data-grafo-filtros hidden>
             <div class="head-search grafo-buscador">
                 <div class="search-input">
@@ -55,8 +55,8 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
                 <div class="grafo-tipos__opciones" data-grafo-tipos-opciones></div>
             </fieldset>
         </form>
-    <section class="grafo-leyenda" aria-label="Leyenda del mapa" data-grafo-leyenda></section>
-    <section class="grafo-franja" aria-label="Versión, cobertura y validación" data-grafo-franja hidden></section>
+    <details class="grafo-ayuda"><summary>Cómo leer el mapa</summary><section class="grafo-leyenda" aria-label="Leyenda del mapa" data-grafo-leyenda></section></details>
+    <details class="grafo-cobertura-detalle"><summary>Versión y cobertura</summary><section class="grafo-franja" aria-label="Versión, cobertura y validación" data-grafo-franja hidden></section></details>
     <div class="plataforma-vacio grafo-estado" role="status" data-grafo-estado></div>
     <p class="plataforma-alerta grafo-aviso" role="alert" data-grafo-aviso-cdn hidden>No se pudo iniciar el mapa 3D. Se muestran los mismos datos en lista; puedes seguir consultando filtros, relaciones y fuentes.</p>
 
@@ -64,6 +64,7 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
     <section class="grafo-area" data-grafo-area hidden>
         <div class="grafo-lienzo">
             <div class="grafo-barra">
+                <button type="button" class="grafo-lado-boton" data-grafo-lado="filtros" aria-label="Filtros" aria-pressed="true" aria-controls="grafoFiltros" title="Mostrar u ocultar filtros"><i class="bi bi-layout-sidebar" aria-hidden="true"></i></button>
                 <div class="grafo-vistas" role="group" aria-label="Vista del conocimiento">
                     <button type="button" data-vista-boton="mapa" aria-pressed="true">3D</button>
                     <button type="button" data-vista-boton="plano" aria-pressed="false">Plano</button>
@@ -71,17 +72,19 @@ $v = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
                 </div>
                 <button type="button" data-grafo-girar aria-pressed="false"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Girar</button>
                 <button type="button" data-grafo-pantalla aria-label="Pantalla completa"><i class="bi bi-fullscreen" aria-hidden="true"></i></button>
+                <button type="button" class="grafo-lado-boton" data-grafo-lado="ficha" aria-label="Ficha" aria-pressed="true" aria-controls="grafoDetalle" title="Mostrar u ocultar ficha"><i class="bi bi-layout-sidebar-reverse" aria-hidden="true"></i></button>
             </div>
-            <div class="grafo-foco" data-grafo-foco hidden><span data-grafo-foco-texto></span><button type="button" data-grafo-todo>Ver todo</button></div>
+            <div class="grafo-foco" data-grafo-foco hidden><span data-grafo-foco-texto></span><button type="button" data-grafo-ver-ficha hidden>Ver ficha</button><button type="button" data-grafo-todo>Ver todo</button></div>
             <p class="grafo-lienzo__conteo" data-grafo-visibles role="status"></p>
             <div class="grafo-mapa" data-vista-grafo="mapa" data-grafo-mapa role="img" aria-label="Mapa del conocimiento: elige un nodo o usa el buscador; la vista de lista tiene los mismos datos"></div>
             <div class="grafo-lista" data-vista-grafo="lista" hidden></div>
         </div>
-        <aside class="grafo-detalle" aria-labelledby="grafoDetalleTitulo" data-grafo-detalle hidden>
+        <aside class="grafo-detalle" id="grafoDetalle" aria-labelledby="grafoDetalleTitulo" data-grafo-detalle hidden>
             <div class="grafo-detalle__cabeza">
                 <div>
                     <p class="grafo-detalle__subtitulo" data-grafo-detalle-subtitulo></p>
                     <h3 class="grafo-detalle__titulo" id="grafoDetalleTitulo" data-grafo-detalle-titulo></h3>
+                    <div data-grafo-detalle-fichas></div>
                 </div>
                 <button type="button" class="close-modal" aria-label="Cerrar el detalle" data-grafo-cerrar-detalle>×</button>
             </div>

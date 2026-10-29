@@ -70,6 +70,11 @@ test('C6: cada tipo tiene color y forma propios y la alarma universal se disting
     const api = cargarApi();
     const tipos = ['sintoma', 'diagnostico', 'farmaco', 'sustancia', 'especie', 'raza', 'condicion'];
     const estilos = tipos.map(tipo => api.estiloNodo({ tipo }));
+    const esperados = { diagnostico: '#0052FF', sintoma: '#8FB0FF', farmaco: '#1E3A8A', especie: '#475569', raza: '#CBD5E1', condicion: '#94A3B8', sustancia: '#E11D48' };
+    for (const tipo of tipos) assert.equal(api.estiloNodo({ tipo }).color, esperados[tipo]);
+    assert.equal(api.estiloArista({ efecto: 'bloqueo' }).color, esperados.sustancia);
+    assert.equal(api.estiloArista({ efecto: 'advertencia' }).color, esperados.especie);
+    assert.ok(api.estiloNodo({ tipo: 'diagnostico' }).tamano > api.estiloNodo({ tipo: 'especie' }).tamano);
     assert.equal(new Set(estilos.map(e => e.color)).size, tipos.length);
     assert.equal(new Set(estilos.map(e => e.forma)).size, tipos.length);
     const normal = api.estiloNodo({ tipo: 'sintoma' });
@@ -164,6 +169,7 @@ function pagina({ respuesta, ForceGraph3D, webgl = true, reducido = false, anima
     const documento = { escuchas: {} };
     documento.createElement = etiqueta => {
         const elemento = crearNodo(etiqueta, documento);
+        Object.defineProperty(elemento, 'children', { get: () => elemento.hijos.filter(hijo => hijo.tagName) });
         if (etiqueta === 'canvas') elemento.getContext = () => webgl ? {} : null;
         return elemento;
     };
@@ -253,8 +259,8 @@ test('C6: sin biblioteca 3D, los mismos datos se ven en lista con la franja y el
     assert.match(franja, /aaaaaaaaaaaa/);
     assert.match(franja, /Pendiente de validación veterinaria/);
     assert.match(franja, /Todo pendiente de validación veterinaria\./);
-    assert.match(franja, /Perro: Parcial/);
-    assert.match(franja, /Gato: Sin cobertura/);
+    assert.match(franja, /Perro – Parcial/);
+    assert.match(franja, /Gato – Sin cobertura/);
     p.q('[data-nodo="sintoma.vomito"]').click();
     const detalle = p.q('[data-grafo-detalle]');
     assert.equal(detalle.hidden, false);
@@ -304,10 +310,13 @@ test('C6 3D: colores, tipos/especie, foco/cámara, relaciones/fuentes, Ver todo 
     const vomito = nodos.find(n => n.codigo === 'sintoma.vomito');
     const parvo = nodos.find(n => n.codigo === 'diagnostico.parvovirosis');
     const lirio = nodos.find(n => n.codigo === 'sustancia.lilium');
-    assert.equal(g.valores.get('nodeColor')(vomito),'#2F6BFF');
-    assert.equal(g.valores.get('nodeColor')(parvo),'#7C3AED');
-    assert.equal(g.valores.get('nodeColor')(lirio),'#DB2777');
-    assert.ok(g.valores.get('nodeVal')(vomito)>2);
+    assert.equal(g.valores.get('nodeColor')(vomito),'#8FB0FF');
+    assert.equal(g.valores.get('nodeColor')(parvo),'#0052FF');
+    assert.equal(g.valores.get('nodeColor')(lirio),'#E11D48');
+    assert.ok(g.valores.get('nodeVal')({ ...vomito, grado: 10 }) > g.valores.get('nodeVal')({ ...vomito, grado: 0 }));
+    assert.ok(g.valores.get('nodeVal')({ ...parvo, grado: 0 }) > g.valores.get('nodeVal')({ ...vomito, grado: 1000 }));
+    assert.equal(g.valores.get('linkDirectionalParticleColor')(aristas.find(l => l.codigo === 'a.lirio')), '#E11D48');
+    assert.equal(g.valores.get('linkDirectionalParticleColor')(aristas.find(l => l.codigo === 'a.parvo')), '#0052FF');
     const especie = p.q('[data-grafo-especie]');
     especie.value = 'especie.felino';
     especie.disparar('change');
@@ -324,7 +333,7 @@ test('C6 3D: colores, tipos/especie, foco/cámara, relaciones/fuentes, Ver todo 
     p.raiz.querySelectorAll('[data-sugerencia]')[0].click();
     assert.ok(g.valores.get('cameraPosition'));
     assert.equal(g.valores.get('nodeColor')(lirio),'rgba(148,163,184,0.18)');
-    assert.equal(g.valores.get('nodeColor')(parvo),'#7C3AED');
+    assert.equal(g.valores.get('nodeColor')(parvo),'#0052FF');
     assert.ok(g.valores.get('linkWidth')(aristas[0])>g.valores.get('linkWidth')(aristas[2]));
     assert.equal(g.valores.get('linkDirectionalParticles')(aristas[0]),3);
     assert.match(p.q('[data-grafo-detalle]').textContent,/Sugiere/);
@@ -336,7 +345,7 @@ test('C6 3D: colores, tipos/especie, foco/cámara, relaciones/fuentes, Ver todo 
     assert.equal(p.q('[data-vista-grafo="lista"]').hidden,false);
     p.q('[data-grafo-todo]').click();
     assert.equal(p.q('[data-grafo-detalle]').hidden,true);
-    assert.equal(g.valores.get('nodeColor')(lirio),'#DB2777');
+    assert.equal(g.valores.get('nodeColor')(lirio),'#E11D48');
     assert.ok(g.valores.has('zoomToFit'));
     buscador.value = 'Meloxicam';
     buscador.disparar('input');
@@ -369,6 +378,8 @@ test('C6 3D: etiquetas HTML como texto y movimiento reducido sin giro ni partíc
     p.q('[data-grafo-mapa]').clientWidth = 600;
     p.q('[data-grafo-mapa]').clientHeight = 500;
     p.animar();
+    p.animar();
+    p.animar();
     const rotulo = p.raiz.todos().find(n => n.className?.includes('grafo-etiqueta') && n.textContent === etiqueta);
     assert.ok(rotulo);
     assert.equal(rotulo.hijos.length, 0);
@@ -389,4 +400,45 @@ test('C6: si el servidor falla, estado de error con reintento y sin cobertura', 
     estado.todos().find(n => n.tagName === 'BUTTON').click();
     await new Promise(resolver => setImmediate(resolver));
     assert.equal(p.peticiones.length, 2);
+});
+
+
+test('R comodidad: seis relaciones, fuentes con Ver todas y reglas cerradas', async () => {
+    const datos = datosDePrueba();
+    const elegido = datos.nodes.find(n => n.codigo === 'sintoma.vomito');
+    elegido.fuentes = Array.from({ length: 5 }, (_, i) => ({ ...FUENTE, titulo: 'Fuente ' + i }));
+    for (let i = 0; i < 6; i++) {
+        datos.edges.push(arista('extra.' + i, elegido.codigo, 'diagnostico.parvovirosis'));
+    }
+    const p = pagina({ respuesta: { success: true, datos } });
+    await iniciar(p);
+    p.q('[data-nodo="sintoma.vomito"]').click();
+    const detalle = p.q('[data-grafo-detalle]');
+    const mas = detalle.todos().filter(n => n.className === 'grafo-mas');
+    assert.equal(mas.length, 2);
+    assert.equal(mas[0].textContent, 'Ver 2 más');
+    assert.equal(mas[1].textContent, 'Ver todas');
+    mas.forEach(boton => boton.click());
+    assert.ok(mas.every(boton => boton.hidden));
+    assert.ok(detalle.todos().some(n => n.classList?.contains('grafo-expandida')));
+    const reglas = detalle.todos().find(n => n.className === 'grafo-reglas-desplegable');
+    assert.equal(reglas.open, false);
+});
+
+
+test('R-5b: chips, lista, leyenda y puntos de ficha usan la misma paleta del mapa', async () => {
+    const p = pagina({ respuesta: { success: true, datos: datosDePrueba() } });
+    await iniciar(p);
+    const casilla = p.q('[data-grafo-tipo="diagnostico"]');
+    const chip = p.raiz.todos().find(n => n.hijos?.includes(casilla));
+    const puntoChip = chip.hijos.find(n => n.className?.includes('grafo-muestra'));
+    assert.equal(puntoChip.propiedades['--grafo-color'], '#0052FF');
+    const fila = p.q('[data-nodo="diagnostico.parvovirosis"]');
+    assert.equal(fila.hijos[0].propiedades['--grafo-color'], '#0052FF');
+    assert.equal(p.raiz.propiedades['--grafo-peligro'], '#E11D48');
+    const leyenda = p.q('[data-grafo-leyenda]').todos().filter(n => n.className === 'grafo-muestra');
+    assert.deepEqual(leyenda.map(n => n.propiedades['--grafo-color']), ['#475569', '#0052FF', '#E11D48', '#E11D48']);
+    p.q('[data-nodo="sintoma.vomito"]').click();
+    const puntoFicha = p.q('[data-grafo-detalle]').todos().find(n => n.tagName === 'BUTTON' && n.title?.startsWith('Parvovirosis canina'));
+    assert.equal(puntoFicha.propiedades['--grafo-color'], '#0052FF');
 });

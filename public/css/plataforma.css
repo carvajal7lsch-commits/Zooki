@@ -903,17 +903,24 @@
     flex-shrink: 0;
 }
 .plataforma-rol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 40px;
-    padding: 8px 12px;
+    padding: 0 12px;
     background: var(--z-surface);
     border-radius: 24px;
     font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
     white-space: nowrap;
     color: var(--z-text-secondary);
 }
 .plataforma-rol i {
     color: var(--z-primary);
-    margin-right: 6px;
+    margin-right: 0;
+    line-height: 1;
 }
 .plataforma-menu-cuenta {
     position: relative;
@@ -1523,4 +1530,20 @@
         min-width: 0;
         font-size: 16px;
     }
+}
+
+/* HU-0.3 / HU-2.12: misma respuesta azul en la cabecera, el mapa y los modales compartidos. */
+:is(.plataforma-contenido, #gestionarClinica) :is(button, summary, .grafo-tipo, .plataforma-menu-cuenta nav a):not(:disabled):not(.btn-modal-peligro):not(:is(.btn-modal-primary, .btn-create, .plataforma-boton-mini--principal, .plataforma-avatar)):is(:hover, :focus-visible) {
+    background: var(--z-primary-suave);
+    border-color: var(--z-primary-borde);
+    color: var(--z-primary);
+}
+:is(.plataforma-contenido, #gestionarClinica) :is(.btn-modal-primary, .btn-create, .plataforma-boton-mini--principal, .plataforma-avatar):not(:disabled):is(:hover, :focus-visible) {
+    background: var(--z-primary-dark);
+    border-color: var(--z-primary-dark);
+    color: var(--z-surface);
+}
+:is(.plataforma-contenido, #gestionarClinica) :is(button, summary, .grafo-tipo):not(:disabled):focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
 }

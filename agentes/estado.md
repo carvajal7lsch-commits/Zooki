@@ -2,9 +2,27 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-28
+**Actualizado:** 2026-10-29
 
 ## Ahora
+
+### Paleta armónica del mapa (5b) — entregada, pendiente de revisión (2026-10-28)
+
+- **Escribió Codex; revisa Claude.** Ajuste de A: PALETA única (azules clínicos/grises de contexto/rojo de peligro), usada por chips/leyenda/ficha/lista/mapa; diagnóstico mayor y síntomas pequeños. M2C6Grafo13/13 y conjunto dirigido16/16; capturas1366/390 reales y log paleta-dirigidas.log en scratch/r/grafo-comodidad, sin repetir suites completas. Resultado5b en Etapa R y anexo con autor; parte-a.patch/comandos actualizados para incluirlo en A manteniendo B aparte. Sin datos/rutas/respuestas nuevos, .env, base de trabajo, commit/push ni otra pantalla;2.2.0 sin publicar.
+
+- **Retoque visual del dueño, escribió Codex:** controles del mapa agrupados a la derecha y Super-administrador centrado con fuente600/alto40. Chrome puntual y GrafoComodidad1/1; evidencia en scratch/r/grafo-comodidad/retoque-botones-1366.png. Incluido en A; B conserva sus cambios aparte.
+
+- **Hover del dueño (2026-10-29), escribió Codex; pendiente de revisión:** azul uniforme en controles de plataforma/mapa/modales y foco de teclado; principales conservan texto blanco y los graves su rojo. Comprobación puntual de10 controles en Chrome correcta, registro hover-plataforma.json. Incluido en A, sin repetir suites completas ni cambiar funcionamiento.
+
+- **Campana/cuenta (2026-10-29), escribió Codex; pendientes de revisión:** cierre al pulsar fuera, enlace o Escape; un menú abierto a la vez. Escape restaura el foco sin cerrar la ficha del fondo. JS externo compartido en Clínicas/Conocimiento; PlataformaCabecera/E1Plataforma10/10 a1366/390, sin repetir suites completas. Incluido en A; mismos permisos/rutas/respuestas.
+
+### Comodidad del mapa — entregada, pendiente de revisión (2026-10-28)
+
+- **Escribió Codex; revisa Claude (arquitecto).** A de Etapa R/HU-2.12: chips/ayuda/cobertura compactos, ficha con relaciones/fuentes limitadas y desplegables, lados ocultables con memoria, fullscreen del mapa con tarjetas flotantes. Tableta conserva ficha superpuesta y celular su hoja. Mismos datos/rutas/respuestas; prueba de fallo de almacenamiento y CI sin WebGL. Dirigidas15/15; cuatro capturas de 3D real y anexo en scratch/r/grafo-comodidad. La pasada JS completa se consolida con B.
+
+### Cabecera común — encargada a Codex después de A (2026-10-28)
+
+- **Escribe Codex; revisa Claude.** B pedida por el dueño: medir13 vistas antes/después, cabecera22/52 y contenido18 debajo (RNF-16), celular intacto. Cambio/commit separados mediante parte-a.patch; sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla;2.2.0 sin publicar.
 
 ### Panel de plataforma y mapa 3D — entregada, pendiente de revisión (2026-10-28)
 
