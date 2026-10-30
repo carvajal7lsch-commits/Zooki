@@ -17,7 +17,7 @@ final readonly class ConocimientoClinico
     private static function decodificar(array $filas): array
     {
         foreach ($filas as &$fila) {
-            foreach (['fuentes', 'metadatos', 'condiciones', 'resultado'] as $campo) {
+            foreach (['fuentes', 'metadatos', 'condiciones', 'resultado', 'pauta'] as $campo) {
                 if (isset($fila[$campo]) && is_string($fila[$campo])) {
                     $fila[$campo] = json_decode($fila[$campo], true, 64, JSON_THROW_ON_ERROR);
                 }

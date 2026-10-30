@@ -22,6 +22,21 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testPautaMigracion16DobleConservaContenido(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('ALTER TABLE grafo_aristas DROP COLUMN pauta');
+        $this->cargar('16_pautas_tratamiento.sql');
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        (new CargadorConocimiento($this->db))->cargar(__DIR__ . '/../Fixtures/conocimiento/pautas');
+        $antes = $this->db->query('SELECT codigo, pauta FROM grafo_aristas ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC);
+        $this->cargar('16_pautas_tratamiento.sql');
+        $this->assertSame($antes, $this->db->query('SELECT codigo, pauta FROM grafo_aristas ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertCount(8, $antes);
+        $this->assertNotNull(array_column($antes, 'pauta', 'codigo')['trata.prueba']);
+    }
+
     public function testCorrecciones230Migracion15DoblePreservaTiposYConfiguraSoloSuClinica(): void
     {
         $this->prepararHistoriaClinica();
@@ -1613,7 +1628,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

@@ -7,6 +7,15 @@
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4, F) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
 
+## Consulta que se llena sola: tratamientos y plan sugeridos (2.3.0)
+
+**Encargo aprobado del dueño (2026-10-30); decisión clínica del 2026-10-29. Escribe Codex; revisa Claude (arquitecto).** Rama `release/v2.3.0`.
+Al pulsar Usar se agregan diagnóstico, plan y pautas editables, sin reemplazar texto ni duplicar. Deshacer retira solo lo agregado. Peso de la consulta recalcula únicamente dosis aún no editadas. Nada se guarda sin decisión del veterinario (RN-209).
+Contrato: ampliar RE-2.8.2/4/5 y RE-2.9.4; conservar HU-2.4/2.11 y RN-210/211. `trata` exige pauta cerrada, especie y fuente clínica; plan opcional en metadatos de diagnóstico. Migración 16 repetible agrega `grafo_aristas.pauta` JSON; MER/drawDB/esquema se sincronizan.
+Reutilizar MotorPrescripcion, PrescripcionPublica y validación de filas. Endpoint solo veterinario con vínculo activo (RN-113/115); ninguna evidencia protegida sale al cliente. Fuera: JSON reales del conocimiento (Claude), triage, agenda y demo.
+Verificación: validador, carga idempotente/cambio de versión, cálculo con/sin peso/rango, toxicidad/alergia/interacción protegida, permisos y migración doble; Chrome 390/1366 en modal/Atención con Usar/Deshacer/no duplicar/recalcular/bloqueo. Suites PHP sin/con host (base por defecto `zooki_test_base_v2`) y JS completas. Diagrama de consulta y exportación documental en esta entrega.
+Estado: **entregada, pendiente de revisión** (Codex, 2026-10-30; revisa Claude).
+
 ## 1. Resultado y límites
 
 **Resultado:** al atender, el veterinario marca los síntomas del paciente y Zooki le sugiere los diagnósticos probables ordenados por peso; al prescribir, bloquea un fármaco tóxico para la especie o raza o al que la mascota es alérgica, y advierte una interacción con su medicación vigente; las alergias y alertas médicas se registran y se ven en toda clínica vinculada y en el portal; existe el motor de triage de 4 niveles, probado con la batería de casos, listo para que la agenda lo use en el módulo 4; y el superadministrador ve el grafo completo como un mapa interactivo de nodos para revisar el conocimiento. Todo es de apoyo: la decisión es siempre del veterinario (RN-209).
@@ -2022,3 +2031,29 @@ Log del contenedor (completo, sin `--tail`):
 - `migrar.php --revisar`: «La base está al día».
 
 **M2 cerrado.** Producción en 2.0.0-alpha.4. Siguiente: plan del módulo 4 (agenda y Grafo II).
+
+## Anexo — Consulta que se llena sola (2.3.0), resultado
+
+**Lo escribió Codex (2026-10-30); entregada, pendiente de revisión de Claude (arquitecto).** Base del diff: `58afb30`; rama `release/v2.3.0`.
+
+- **Primero lo clínico y privado:** toda pauta pasa por el motor existente antes de sugerir; toxicidad/alergia la excluyen y las interacciones protegidas solo emiten el aviso genérico. Guardar conserva su revalidación transaccional y sus decisiones auditadas. Los fixtures nuevos son sintéticos; esta entrega no modifica ni aprueba los JSON clínicos de Claude.
+- Usar agrega diagnóstico, plan y filas editables sin duplicar. Deshacer conserva texto previo y ediciones posteriores; peso recalcula solo dosis aún no editadas. Se descartan respuestas de un formulario anterior. Ambas entradas comparten implementación y conservan diseño y validación en vivo; marca de verificación por fila.
+
+| RE ampliado | Evidencia |
+|---|---|
+| RE-2.8.2 | `ConsultaSugerida230.test.cjs`: modal/Atención a 390/1366, Usar, doble clic y repetición, Deshacer, edición conservada, restricción de dosis, aviso de cambios sin guardar y respuesta tardía. |
+| RE-2.8.4 | `PautasTratamientoTest` y Chrome: dosis fija/rango/texto, peso de consulta, sin peso, recálculo solo sin editar. |
+| RE-2.8.5 | `PautasTratamientoTest` valida/rechaza pauta/plan/fuente/especie; `SugerenciasTratamientoTest` comprueba IDs estables y versión sensible a pauta/plan. |
+| RE-2.9.4 | Motor y API: toxicidad/alergia, advertencia protegida sin evidencia, veterinario/CSRF/vínculo activo; Chrome omite bloqueo y usa la evaluación normal. |
+
+- **Esquema:** MER/drawDB/01 y migración 16; doble ejecución conserva pauta cargada. `AgendaB2MysqlTest` solo incorpora 16 a la comparación de instalación nueva/legada, sin cambiar lógica de agenda. App ya declara `2.3.0` y el historial amplía esa entrada.
+- **Verificación:** PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto33309, MariaDB10.4.32 temporal y base por defecto `zooki_test_base_v2`: **1245 pruebas,11947 aserciones, ninguna omitida**, en19m52s. Sin host1244/10613 (97 omitidas) y clase adicional final4/37; esquema/migración doble12/114. JS completo **466/466**, afectados finales **22/22** y Chrome390/1366 correcto; logs/capturas en `scratch/r/consulta230/`. Primer intento con motor interrumpido por stderr tratado como error fatal en el arnés PowerShell: corregido y repetido completo. Sin `.env`, base de trabajo ni Git de escritura; los motores temporales se detuvieron al terminar.
+- **Documentos:** HU/RE/RN/README/MER e historial actualizados; consulta y MER renderizados con Mermaid. PDF/Word regenerados y `--revisar` al día. `Modelos` conserva su exclusión del exportador: diagrama fuente validado; draw.io lo resincroniza el dueño.
+- **Sigue:** revisión de Claude; comprobar con Beto Norte, tras cargar las pautas de Claude, (1) Usar y Deshacer en ambas entradas, (2) peso y dosis editada, (3) alergia y advertencia protegida con conciliación. El dueño hace commit/push/CI y comprueba MySQL 8; sin iniciar triage, agenda ni demo.
+
+## Revisión — Consulta que se llena sola (2.3.0) (2026-10-30)
+
+- **Revisó Claude (arquitecto): aprobada.** Dirigidas PautasTratamiento/SugerenciasTratamiento/ConocimientoReal 24/24, BaseV2Mysql y AgendaB2Mysql con MySQL 8 82/82 (una falla aislada no se repitió), ConsultaSugerida230 y M2C5 en Chrome 22/22.
+- **Datos reales (Claude, lote 1B):** 20 fármacos, 36 pautas «trata» por especie con dosis textuales de MSD Veterinary Manual y planes en 29 diagnósticos. Prueba con el motor: perro de 20 kg con ehrlichiosis → doxiciclina 100 mg (5 mg/kg) cada 12 h, 28 días; sin peso → mg/kg y «calcula con el peso».
+- **Ajuste de política:** ConocimientoRealTest reemplaza «sin dosis» por «dosis solo en pautas de trata con fuente clínica», y el manifiesto deja de decir «Sin dosis ni pautas»; la aclaración «el veterinario verifica la dosis» queda en el aviso.
+- **Dueño:** tras migrar y cargar el conocimiento, en una consulta con peso usar «Ehrlichiosis canina» o «Dermatitis atópica canina» y probar Usar, editar una dosis, cambiar el peso y Deshacer.

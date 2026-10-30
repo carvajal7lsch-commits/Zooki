@@ -707,6 +707,10 @@ switch ($action) {
         require_once '../controllers/TriageController.php';
         (new TriageController())->calcularAjax();
         break;
+    case "sugerir_tratamientos_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->sugerirAjax();
+        break;
     case "validar_prescripcion_ajax":
         require_once "../controllers/PrescripcionController.php";
         (new PrescripcionController())->validarAjax();

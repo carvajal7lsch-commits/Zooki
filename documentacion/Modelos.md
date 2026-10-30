@@ -186,8 +186,14 @@ flowchart TD
   K -- No --> L[El veterinario escribe el diagnostico]
   K -- Si --> M[Mostrar diagnosticos probables rankeados]
   M -- Escribe el suyo --> L
-  M -- Usar este diagnostico --> MU["Copiar el texto al campo para que el vet lo edite;<br/>nunca se rellena solo"]
-  MU --> L
+  M -- Usar este diagnostico --> MU["Consultar pautas: solo veterinario con vinculo activo; peso actual de consulta"]
+  MU --> MA{Respuesta y contexto vigentes?}
+  MA -- No --> ME["Aviso junto al apoyo; conservar formulario y permitir reintento"]
+  ME --> M
+  MA -- Si --> MS["Filtrar trata por especie y condiciones; excluir bloqueos de toxicidad o alergia;<br/>advertencias publicas sin evidencia protegida; ordenar por preferencia"]
+  MS --> ML["Agregar sin duplicar: diagnostico, examenes, recomendaciones y filas editables;<br/>mg calculados o mg/kg con calcula con el peso; marca verifica la dosis"]
+  ML --> MD["Aviso de lo agregado y Deshacer que conserva texto previo y ediciones;<br/>peso recalcula solo dosis sugeridas aun no editadas; validacion en tiempo real"]
+  MD --> L
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L

@@ -119,6 +119,8 @@ La **Revisión 2.5 (23/10/2026)** prepara 2.0.0: RN-502–505 aplicadas al carne
 | RN-211 | Al prescribir un fármaco, una alergia registrada del paciente a ese fármaco o una contraindicación por especie o raza (toxicidad) bloquean la prescripción; una interacción con la medicación vigente se advierte, y el veterinario confirma o cambia el fármaco, con registro en auditoría. El motor evalúa internamente las alergias y la medicación vigentes registradas por cualquier clínica. Si un tratamiento de otra clínica no es visible por RN-113, el aviso no revela su fármaco, dosis ni contenido: indica una posible interacción con medicación protegida y exige que el veterinario concilie la medicación con el propietario o solicite autorización antes de confirmar su decisión; la verificación y la decisión quedan auditadas. | Restricción | Aplicada (2.0.0-alpha.4) |
 | RN-212 | El conocimiento clínico (nodos y relaciones con signo) es global: se comparte entre todas las clínicas y no pertenece a ninguna en particular. | Estructura | Aplicada (2.0.0-alpha.4) |
 
+**Ampliación RN-212 (decisión del dueño, 2026-10-29):** las relaciones `trata` contienen pauta estructurada con especie y fuente clínica localizada; el diagnóstico puede aportar exámenes y recomendaciones acotados. Al elegirlo, todo se agrega como sugerencia editable y reversible, nunca como orden guardada (RN-209); los bloqueos y advertencias de RN-211 se aplican antes de sugerir.
+
 ## Módulo 3 — Vacunación, desparasitación y recordatorios
 
 | ID | Regla de negocio | Tipo | Estado |

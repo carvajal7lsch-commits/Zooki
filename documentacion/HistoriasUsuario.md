@@ -783,7 +783,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 **Criterios de aceptación:**
 
 - Con el contexto del paciente (especie, raza, edad, historia) y los síntomas registrados, el Grafo I ordena los diagnósticos probables por peso.
-- Los diagnósticos se muestran rankeados; el veterinario puede aceptarlos o escribir el suyo.
+- Los diagnósticos se muestran rankeados; el veterinario puede aceptarlos o escribir el suyo. Usar agrega como sugerencia editable el plan disponible y las pautas aplicables, sin borrar ni duplicar; indica qué se llenó y permite Deshacer solo lo agregado. Cada fila pide verificar la dosis; al cambiar peso solo recalcula dosis aún no editadas (decisión del dueño, 2026-10-29).
 - Si el grafo no encuentra coincidencias, el veterinario escribe el diagnóstico libremente; el diagnóstico es obligatorio para continuar (RN-202).
 - La sugerencia es de apoyo: nunca diagnostica ni prescribe por sí sola.
 - El conocimiento clínico es global y compartido entre clínicas; no pertenece a ninguna en particular.
@@ -803,7 +803,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Al prescribir un fármaco, el Grafo I lo cruza con la especie, la raza, las alergias y la medicación vigente del paciente, incluidas las registradas por otras clínicas (RN-113).
 - Si hay contraindicación por especie o raza (toxicidad), la prescripción se **bloquea** con un mensaje para elegir otro fármaco.
 - Si hay interacción con la medicación vigente, se **advierte**: el veterinario confirma o cambia, y la decisión queda en auditoría. Si la interacción procede de un tratamiento de otra clínica sin autorización de lectura, el aviso es genérico y el veterinario documenta la conciliación con el propietario o solicita autorización antes de confirmar; no se revela el tratamiento protegido.
-- El soporte es de apoyo (RN-209): no receta por sí solo; la decisión final es del veterinario.
+- El soporte es de apoyo (RN-209): no receta por sí solo; la decisión final es del veterinario. Las pautas sugeridas excluyen bloqueos y marcan advertencias, también al completar desde un diagnóstico; se validan igual que una fila manual y solo se consultan con vínculo activo.
 - El conocimiento (relaciones positivas y negativas con signo) es global a la plataforma.
 
 **Reglas de negocio:** RN-209, RN-211, RN-212, RN-113 · **Requisitos:** RF-2.9, RF-2.10 · **Dependencias:** HU-2.4, HU-2.8

@@ -65,6 +65,7 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/13_plataforma_finanzas.sql');
         $this->cargar('database/14_aviso_pago_confirmado.sql');
         $this->cargar('database/15_correcciones_agenda.sql');
+        $this->cargar('database/16_pautas_tratamiento.sql');
     }
 
     private function instalar(bool $anterior = false): void

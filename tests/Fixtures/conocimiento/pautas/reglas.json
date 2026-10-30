@@ -1,0 +1,39 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "regla.prueba",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.prueba"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "especie",
+              "codigo": "especie.prueba"
+            },
+            {
+              "predicado": "raza",
+              "atributo": "tamanio",
+              "valor": "gigante"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "amarillo",
+      "revision": true
+    }
+  }
+]

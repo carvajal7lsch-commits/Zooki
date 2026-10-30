@@ -145,7 +145,7 @@ $prefijoConsulta = 'modalConsulta';
                         <div class="consulta-fila-2">
                             <div class="consulta-campo">
                                 <label for="consultaPlan" class="consulta-campo__etiqueta">Plan / recomendaciones</label>
-                                <textarea id="consultaPlan" name="plan_tratamiento" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
+                                <textarea id="consultaPlan" name="plan_tratamiento" data-consulta-campo="plan_tratamiento" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                             </div>
                             <div class="consulta-campo">
                                 <label for="consultaObservaciones" class="consulta-campo__etiqueta">Observaciones</label>

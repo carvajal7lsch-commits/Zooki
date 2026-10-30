@@ -129,13 +129,18 @@
         const idMascota = opciones.idMascota || (() => '');
         const raizDiagnosticos = form.querySelector('[data-diagnosticos]');
         const campoDiagnostico = form.querySelector('[data-consulta-campo="diagnostico"]');
+        let sugerencias = null;
         const diagnosticos = raizDiagnosticos && window.ZookiDiagnosticos
-            ? window.ZookiDiagnosticos.crear(raizDiagnosticos, { idMascota, campoDiagnostico })
+            ? window.ZookiDiagnosticos.crear(raizDiagnosticos, { idMascota, campoDiagnostico, alUsar: candidato => {
+                if (sugerencias) sugerencias.usar(candidato);
+                else window.ZookiDiagnosticos.usarDiagnostico(campoDiagnostico, candidato.etiqueta);
+            } })
             : null;
         const raizTratamientos = form.querySelector('[data-tratamientos]');
         const tratamientos = raizTratamientos && window.ZookiTratamientos
             ? window.ZookiTratamientos.crear(raizTratamientos, { idMascota })
             : null;
+        if (diagnosticos && tratamientos) sugerencias = window.ZookiDiagnosticos.completar(form, raizDiagnosticos, tratamientos, idMascota);
         const raizSintomas = form.querySelector('[data-sintomas]');
         const sintomas = raizSintomas && window.ZookiSintomas
             ? window.ZookiSintomas.crear(raizSintomas, {
@@ -161,6 +166,7 @@
             /** Antes de validar al guardar: que las alertas de prescripción estén al día. */
             listo: () => (tratamientos ? tratamientos.listo() : Promise.resolve()),
             limpiar() {
+                if (sugerencias) sugerencias.limpiar();
                 reiniciar(form);
                 if (sintomas) sintomas.limpiar();
                 if (diagnosticos) diagnosticos.limpiar();

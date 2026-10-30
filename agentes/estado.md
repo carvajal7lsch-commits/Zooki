@@ -2,9 +2,16 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-29
+**Actualizado:** 2026-10-30
 
 ## Ahora
+
+### Consulta que se llena sola: tratamientos y plan sugeridos (2.3.0) — revisada y aprobada (2026-10-30)
+
+- **Revisión de Claude y datos reales:** aprobada; lote 1B con 36 pautas y 29 planes cargado en database/conocimiento. Detalle en la revisión al final de specs/M2-grafo-clinico.md. Sigue: semilla de demo con casos guionados de los dos grafos.
+
+- **Escribió Codex; revisa Claude (arquitecto).** Encargo del dueño y decisión del 2026-10-29 registrados en M2. Pautas/plan declarativos, migración 16, motor de seguridad reutilizado y Usar/Deshacer/recalcular compartidos por modal y Atención. JSON clínicos intactos; sin cambios de lógica en triage/agenda ni demo.
+- PHP completo con host 127.0.0.1/puerto33309, MariaDB10.4.32 temporal y base por defecto `zooki_test_base_v2`: **1245/11947, sin fallos ni omitidas**. Sin host 1244/10613 (97 omitidas de motor), clase adicional final 4/37; esquema/migración doble 12/114. JS completo **466/466**, afectados finales **22/22**, Chrome390/1366 en ambas entradas correcto. Consulta/MER renderizados; PDF/Word al día. Primer intento con motor interrumpido por el arnés PowerShell al tratar stderr como error fatal; corregido y repetido completo. Anexo con autor/riesgos/evidencia al final de M2. Sigue revisión de Claude y prueba del dueño con el conocimiento de Claude cargado; el dueño hace commit/push/CI (MySQL8). Sin `.env`, base de trabajo ni Git de escritura.
 
 ### Correcciones de la prueba del dueño (2.3.0) — revisada y aprobada (2026-10-29)
 

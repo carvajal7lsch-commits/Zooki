@@ -472,10 +472,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-2.8.1 | Con los síntomas y el contexto del paciente, el Grafo I debe ordenar los diagnósticos probables por peso. | Funcional | Se muestran diagnósticos rankeados. | Alta |
-| RE-2.8.2 | El sistema debe permitir aceptar un diagnóstico sugerido o escribir el propio. | Funcional | El veterinario decide el diagnóstico. | Alta |
+| RE-2.8.2 | El sistema debe permitir aceptar un diagnóstico sugerido o escribir el propio y completar como sugerencia editable el plan y las pautas disponibles. | Funcional | Usar agrega diagnóstico, Exámenes sugeridos y Recomendaciones sin borrar texto, y filas con código de fármaco, dosis, vía, duración, fin e indicación. No duplica al repetir; cada fila dice «Sugerido por Zooki · verifica la dosis». Un aviso indica qué se llenó y Deshacer quita solo lo agregado, conservando lo escrito previamente y las ediciones posteriores. | Alta |
 | RE-2.8.3 | Si el grafo no encuentra coincidencias, el sistema debe permitir escribir el diagnóstico libremente, y debe exigirlo. | Validación | Sin diagnóstico no se continúa. | Alta |
-| RE-2.8.4 | La sugerencia debe ser de apoyo y no diagnosticar por sí sola. | Restricción | La decisión final es del veterinario. | Alta |
-| RE-2.8.5 | El conocimiento clínico debe ser global y compartido entre clínicas. | Funcional | El grafo no pertenece a una clínica. | Media |
+| RE-2.8.4 | La sugerencia debe ser de apoyo y no diagnosticar ni guardar por sí sola (RN-209). | Restricción | El veterinario revisa y edita antes de guardar. La dosis muestra mg/kg y, con peso de la consulta, mg calculados y rango redondeados; sin peso dice «calcula con el peso». Cambiar peso recalcula solo dosis sugeridas aún no editadas. | Alta |
+| RE-2.8.5 | El conocimiento clínico debe ser global y compartido entre clínicas, con pautas declarativas y plan opcional del diagnóstico. | Funcional | El grafo no pertenece a una clínica. El cargador valida la lista cerrada de pauta, especie y fuente clínica con localizador, y los límites del plan; conserva IDs en recargas y cambia la versión ante cambios de pauta o plan. | Media |
 
 **Reglas de negocio:** RN-209, RN-210, RN-212, RN-202
 
@@ -486,7 +486,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.9.1 | Al prescribir, el Grafo I debe cruzar el fármaco con la especie, la raza, las alergias y la medicación vigente, incluidas las registradas por otras clínicas. | Funcional | Se evalúa en cada prescripción. | Alta |
 | RE-2.9.2 | Una alergia registrada del paciente a ese fármaco o una contraindicación por especie o raza (toxicidad) debe bloquear la prescripción. | Restricción | Una prescripción tóxica o de un fármaco al que el paciente es alérgico se bloquea. | Alta |
 | RE-2.9.3 | Una interacción con la medicación vigente debe advertirse; el veterinario confirma o cambia y queda en auditoría. Si el tratamiento que origina la alerta pertenece a otra clínica y no hay autorización de lectura, el motor lo evalúa internamente pero solo emite un aviso genérico; antes de confirmar, el veterinario documenta la conciliación con el propietario o solicita autorización. | Funcional | La alerta detecta la interacción aun sin autorización; ni interfaz ni respuesta AJAX revelan el tratamiento protegido, y la verificación y la decisión quedan en auditoría. | Alta |
-| RE-2.9.4 | El soporte debe ser de apoyo y no recetar por sí solo. | Restricción | La decisión final es del veterinario. | Alta |
+| RE-2.9.4 | El soporte debe ser de apoyo y no recetar por sí solo. | Restricción | Solo veterinario con vínculo activo obtiene pautas aplicables ordenadas por preferencia; se excluyen las bloqueadas por toxicidad o alergia, se marcan advertencias y se oculta evidencia protegida. Las filas editables pasan por validar_prescripcion_ajax y por la validación del guardado, como las manuales. | Alta |
 
 **Reglas de negocio:** RN-209, RN-211, RN-212, RN-113
 

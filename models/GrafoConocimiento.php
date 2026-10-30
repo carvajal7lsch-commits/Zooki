@@ -32,7 +32,7 @@ final class GrafoConocimiento
         )->fetchAll(PDO::FETCH_ASSOC);
         // Una arista hacia un nodo retirado tampoco se muestra.
         $aristas = $this->db->query(
-            'SELECT a.codigo, o.codigo AS origen, d.codigo AS destino, a.tipo_relacion, a.signo, a.peso, a.efecto, a.condiciones, a.fuentes, a.estado_validacion
+            'SELECT a.codigo, o.codigo AS origen, d.codigo AS destino, a.tipo_relacion, a.signo, a.peso, a.efecto, a.condiciones, a.pauta, a.fuentes, a.estado_validacion
              FROM grafo_aristas a
              JOIN grafo_nodos o ON o.id_nodo = a.id_origen AND o.activo = 1
              JOIN grafo_nodos d ON d.id_nodo = a.id_destino AND d.activo = 1

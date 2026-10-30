@@ -319,7 +319,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                                     <div class="consulta-fila-2">
                                         <div class="consulta-campo">
                                             <label for="atencionPlan" class="consulta-campo__etiqueta">Plan / recomendaciones</label>
-                                            <textarea id="atencionPlan" name="plan_tratamiento" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
+                                            <textarea id="atencionPlan" name="plan_tratamiento" data-consulta-campo="plan_tratamiento" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                                         </div>
                                         <div class="consulta-campo">
                                             <label for="atencionObservaciones" class="consulta-campo__etiqueta">Observaciones</label>

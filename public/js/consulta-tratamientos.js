@@ -105,6 +105,8 @@
         if (!campo) return '';
         const valor = String(campo.value || '').trim();
         if (OBLIGATORIOS.includes(nombre) && valor === '') return avisos[nombre] || 'Este campo es obligatorio.';
+        const maximo = Number(campo.getAttribute('maxlength'));
+        if (maximo > 0 && Array.from(valor).length > maximo) return `Admite hasta ${maximo} caracteres.`;
         if (nombre === 'fecha_fin' && valor !== '' && valor < String(campoDe(fila, 'fecha_inicio').value || '')) return avisos.fecha_fin || 'El fin no puede ser anterior al inicio.';
         return '';
     }
@@ -407,6 +409,58 @@
             return fila;
         }
 
+        function agregarSugerida(pauta) {
+            const fila = agregar();
+            fila.dataset.pautaSugerida = pauta.codigo;
+            for (const nombre of ['medicamento', 'farmaco', 'dosis', 'via_administracion', 'duracion', 'observaciones']) {
+                campoDe(fila, nombre).value = pauta[nombre];
+            }
+            fila.querySelector('[data-farmaco-estado]').textContent = TEXTOS.cruzado + pauta.medicamento;
+            const marca = elemento('small', 'consulta-ayuda', 'Sugerido por Zooki · verifica la dosis');
+            marca.dataset.marcaSugerida = '';
+            fila.prepend(marca);
+            fila._dosisSugerida = pauta.dosis;
+            fila._farmacoSugerido = pauta.farmaco;
+            fila._dosisEditada = false;
+            fila._sugerenciaEditada = false;
+            fila.addEventListener('input', evento => {
+                fila._sugerenciaEditada = true;
+                if (evento.target === campoDe(fila, 'dosis') || evento.target === campoDe(fila, 'medicamento')) fila._dosisEditada = true;
+            });
+            fila.addEventListener('change', () => { fila._sugerenciaEditada = true; });
+            proponerFin(fila);
+            pintarPrescripcion(fila, pauta.seguridad);
+            for (const nombre of OBLIGATORIOS) pintarAviso(fila, nombre, errorDe(fila, nombre));
+            programar();
+            return fila;
+        }
+
+        function retirarSugeridas(sugeridas) {
+            for (const fila of sugeridas) {
+                if (!fila._sugerenciaEditada) fila.remove();
+            }
+            actualizarVacio();
+            programar();
+        }
+
+        function recalcularSugeridas(sugeridas, pautas) {
+            for (const fila of sugeridas) {
+                if (!filas().includes(fila)) continue;
+                const pauta = pautas.find(p => p.codigo === fila.dataset.pautaSugerida);
+                if (!pauta || pauta.seguridad.bloqueada) {
+                    if (!fila._sugerenciaEditada) fila.remove();
+                    continue;
+                }
+                if (!fila._dosisEditada && campoDe(fila, 'farmaco').value === fila._farmacoSugerido && campoDe(fila, 'dosis').value === fila._dosisSugerida) {
+                    campoDe(fila, 'dosis').value = pauta.dosis;
+                    fila._dosisSugerida = pauta.dosis;
+                    pintarAviso(fila, 'dosis', errorDe(fila, 'dosis'));
+                }
+            }
+            actualizarVacio();
+            programar();
+        }
+
         /** Marca toda fila con error y devuelve el primer campo para llevar allí al veterinario. */
         function validar() {
             let primero = null;
@@ -456,6 +510,9 @@
 
         return {
             agregar,
+            agregarSugerida,
+            retirarSugeridas,
+            recalcularSugeridas,
             validar,
             listo,
             mostrarErrorServidor,

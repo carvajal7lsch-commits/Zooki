@@ -3,7 +3,7 @@
 Desde B2 estos archivos contienen el conocimiento inicial: lo que exige la batería de triage y un núcleo común de perros y gatos.
 Todo elemento está **pendiente de validación veterinaria** y cita su fuente pública con localizador; no es una aprobación clínica (RN-209).
 El fundamento distingue `clinico` (lo sostiene la fuente), `politica` (colores de triage de RN-416 a RN-418 y la batería) y `heuristico` (pesos del ranking).
-Un bloqueo solo existe con fundamento clínico explícito de toxicidad; no hay dosis ni pautas de tratamiento.
+Un bloqueo solo existe con fundamento clínico explícito de toxicidad. Desde 2.3.0 el formato admite pautas y planes como sugerencias editables (decisión del dueño, 2026-10-29); el veterinario revisa y guarda, RN-209.
 El conjunto sintético de las pruebas del cargador sigue en `tests/Fixtures/conocimiento/`; las pruebas del conjunto real están en `tests/Unit/ConocimientoRealTest.php`.
 
 **Para corregir el conocimiento:** editar el JSON, correr `vendor/bin/phpunit tests/Unit/ConocimientoRealTest.php` y `php scripts/cargar_conocimiento.php --revisar` antes de cargar.
@@ -42,7 +42,31 @@ Tipos de nodo: síntoma, diagnóstico, fármaco, especie, raza, condición y sus
 Una especie declara `taxonomia.especie`; una raza también `taxonomia.raza`.
 Ambos nombres deben corresponder a una pareja ya existente; el cargador no da de alta taxonomía.
 En base, el nodo especie enlaza `id_especie`; el nodo raza enlaza `id_raza` y obtiene su especie del catálogo, sin duplicarla.
-Los metadatos admiten solo `cobertura` por motor (`sin_cobertura`, `parcial`, `completa`), `tamanio` (`pequeno`, `mediano`, `grande`, `gigante`) y `braquicefalo` booleano.
+Los metadatos admiten solo `cobertura` por motor (`sin_cobertura`, `parcial`, `completa`), `tamanio` (`pequeno`, `mediano`, `grande`, `gigante`), `braquicefalo` booleano y, exclusivamente en diagnóstico, `plan` opcional.
+`plan` exige ambas listas: `examenes` (máximo 8 textos de hasta 80 caracteres) y `recomendaciones` (máximo 6 textos de hasta 160); pueden estar vacías. No admite campos adicionales.
+
+### Pautas de tratamiento (2.3.0, RE-2.8.2/4/5, RE-2.9.4)
+
+Cada relación `trata` va de diagnóstico a fármaco, con `signo: positivo`, `efecto: evidencia` y `peso` entre 0 y 1 como preferencia (mayor primero; desempate por código).
+Exige una fuente de fundamento `clinico` con localizador, y `condiciones` con el predicado `especie` existente: cada alternativa debe restringir especie. No incorpora predicados nuevos.
+Solo `trata` admite el campo obligatorio `pauta`, de lista cerrada:
+
+```json
+{
+  "dosis_mg_kg": {"minimo": 0.5, "maximo": 1},
+  "dosis_texto": null,
+  "via": "oral",
+  "frecuencia_horas": 24,
+  "duracion_dias": 5,
+  "indicacion": "Ejemplo sintético; no usar clínicamente"
+}
+```
+
+Exactamente uno de `dosis_mg_kg` y `dosis_texto` es distinto de null. El rango exige ambos extremos numéricos positivos finitos y mínimo ≤ máximo; un valor fijo repite ambos extremos. `dosis_texto` es texto no vacío que cabe en el campo de dosis (100 caracteres).
+Vías: `oral`, `subcutanea`, `intramuscular`, `intravenosa`, `topica`, `otica`, `oftalmica`. `frecuencia_horas` es entero positivo o null (dosis única); `duracion_dias` es entero positivo o null (según evolución); `indicacion` es texto no vacío de hasta 160 caracteres. Se rechazan espacios sobrantes y campos desconocidos.
+La migración 16 agrega `grafo_aristas.pauta` JSON; el plan usa los metadatos existentes. Cambiar pauta o plan modifica la versión y conserva IDs en recarga idempotente. Fixtures exclusivamente sintéticos en `tests/Fixtures/conocimiento/pautas`.
+`MotorPrescripcion::sugerir` filtra condiciones y bloqueos de toxicidad/alergia, ordena pautas y marca advertencias mediante `PrescripcionPublica` (RN-113). Con peso de la consulta calcula mg y conserva mg/kg y rango, redondeando a dos decimales o tres cifras significativas para dosis pequeñas; sin peso muestra mg/kg y «calcula con el peso».
+`POST sugerir_tratamientos_ajax` exige CSRF, contexto veterinario y vínculo activo; recibe mascota, diagnóstico y peso actual opcional. No guarda ni devuelve medicación o evidencias protegidas. Usar agrega sin duplicar y permite Deshacer; todo sigue editable y pasa por la evaluación normal de filas y guardado.
 Gran danés se incorpora al catálogo en B1; su atributo gigante con fuente se carga en el nodo en B2.
 
 ## Condiciones: lista cerrada y evaluador de C2

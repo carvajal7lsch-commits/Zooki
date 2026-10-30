@@ -398,6 +398,7 @@ erDiagram
         decimal peso
         enum efecto
         json condiciones
+        json pauta
     }
     grafo_sinonimos {
         int id_sinonimo PK
@@ -906,7 +907,9 @@ erDiagram
 
 ### 4. Grafo de conocimiento clínico (Grafo I) — nuevo, global
 *   **grafo_nodos**: Conceptos clínicos con su `tipo` (`sintoma`, `diagnostico`, `farmaco`, `especie`, `raza`, `condicion`, `sustancia`), con fuentes, validación, código estable, versión y activo.
+    En 2.3.0, el diagnóstico admite `metadatos.plan` opcional con `examenes` (máximo 8 textos de 80 caracteres) y `recomendaciones` (máximo 6 de 160); usa la columna JSON existente, sin tabla adicional.
 *   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece; un efecto negativo puede advertir o bloquear según su semántica, no solo por su signo. Compartido por todas las clínicas.
+    `pauta` JSON nullable (migración 16 repetible) contiene dosis en mg/kg o texto, vía, frecuencia, duración e indicación exclusivamente para `trata` (diagnóstico → fármaco, evidencia positiva, preferencia por peso). El cargador exige especie y fuente clínica con localizador. Las filas sugeridas se revisan y editan antes de guardar (RN-209/212).
 *   Los datos de cada paciente se cruzan con el grafo por cuatro puntos: `alertas_medicas.id_nodo`, `cita_sintomas`, `consulta_sintomas` y `tratamientos.id_nodo_farmaco`. Sin esos enlaces el triage y las advertencias de prescripción no tendrían de dónde leer.
 
 > El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Persiste hechos/estados recuperables necesarios de agenda, no sus aristas: solicitudes/revisión/espera, bloques, pausas, idempotencia y eventos, además de reasignaciones/propuestas. Ver el contrato B1/B1.1 y su materialización de datos B2 al final; sin declarar operativos sus flujos.

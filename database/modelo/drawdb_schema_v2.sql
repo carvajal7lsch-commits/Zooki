@@ -132,6 +132,7 @@ CREATE TABLE `grafo_aristas` (
   `peso` DECIMAL(4,3) NOT NULL DEFAULT 1.000,
   `efecto` ENUM('evidencia','bloqueo','advertencia') NOT NULL DEFAULT 'evidencia',
   `condiciones` JSON DEFAULT NULL,
+  `pauta` JSON DEFAULT NULL,
   PRIMARY KEY (`id_arista`),
   UNIQUE KEY `uq_grafo_aristas_codigo` (`codigo`),
   KEY `idx_grafo_aristas_origen` (`id_origen`, `tipo_relacion`)

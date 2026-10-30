@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Consulta que se llena sola (Codex, 2026-10-30, HU-2.8/2.9):** Usar agrega diagnóstico, plan y pautas como sugerencias editables, con Deshacer y recálculo según peso solo en dosis sin editar. Motor de seguridad existente excluye bloqueos y conserva advertencias sin evidencia protegida; endpoint exclusivo de veterinario con vínculo activo. Migración 16 repetible: pauta JSON, carga idempotente y versión sensible a pauta/plan. Datos clínicos reales a cargo de Claude.
+
 Preparada el 29 de octubre de 2026 en `release/v2.3.0`; entregada, pendiente de revisión de Claude e integración/despliegue del dueño.
 
 * **Triage que no frena (RN-418, HU-4.13):** el nivel provisional permite elegir horario y reservar en el portal y en Nueva cita del veterinario, incluso con revisión inmediata. El veterinario recibe REVISION_TRIAGE, marcado inmediato cuando corresponde. Rojo conserva aviso y derivación de inmediato, sin horario reservable.
