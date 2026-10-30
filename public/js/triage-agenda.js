@@ -354,6 +354,9 @@
         });
 
         capturaActual = {
+            resumen() {
+                return [...controles.sintomas.marcados(), ...controles.exposiciones.marcados()].map(e => e.etiqueta).filter(Boolean).join(' · ');
+            },
             // RNF-16: cambiar el día invalida la evaluación conservando las marcas escritas.
             refrescarSeleccion: invalidar,
             resultado() {

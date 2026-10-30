@@ -43,6 +43,8 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 > **Preparación M4/B1 — 2026-10-17:** criterios confirmados de destino pendientes de implementación funcional; no se cambia revisión. El ejecutable sigue en alpha.4 y los estados históricos no acreditan los nuevos flujos.
 
+> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
 > Arquitectura SaaS multi-inquilino: onboarding autónomo de clínicas, control de límites por plan (freemium) y administración de la plataforma por el super-administrador.
@@ -548,6 +550,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Nueva/Editar mascota del veterinario usa la convención del portal: obligatorios con *, resto «(opcional)» y nota «* Obligatorio. Lo demás es opcional.», conservando ValidadorMascota y validación en vivo.
+
 - El formulario exige nombre, especie, raza, fecha de nacimiento, peso y sexo. _(M5, decisión del usuario 2026-10-13: el color ya no se pide; la foto identifica a la mascota.)_
 - Se puede subir una fotografía (JPG/PNG).
 - Al guardar, la mascota aparece en el listado y en la búsqueda.
@@ -1006,6 +1010,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Sin jornada aprobada, Nueva cita avisa al abrir «Aún no tienes horario aprobado: propón tu horario en Mi perfil»; portal no ofrece ese veterinario. La cuenta que también es propietaria reserva para su propia mascota en ambos contextos con auditoría RN-G18.
+
 - Solo veterinario y propietario crean citas; propietario sobre sus mascotas y clínicas vinculadas. Administrador conserva supervisión, cancelación, reprogramación y configuración autorizadas, sin creación.
 - Duración más margen caben completamente en la intersección de horarios, menos ausencias aprobadas/cierres/ocupación; mismos recursos globales no se reservan dos veces entre clínicas.
 
@@ -1015,7 +1021,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Al crear, se envía correo de confirmación.
 - Las citas aparecen en el calendario.
 
-**Reglas de negocio:** RN-401, RN-402, RN-403, RN-404 · **Dependencias:** HU-1.1
+**Reglas de negocio:** RN-G18, RN-401, RN-402, RN-403, RN-404 · **Dependencias:** HU-1.1
 
 > _v2.0: el agendado incorpora el triage de 4 niveles y la disponibilidad real del Grafo II — ver HU-4.13._
 
@@ -1029,13 +1035,15 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- RN-430: propietario/veterinario cambian solo con al menos N minutos de anticipación a la hora pactada original. Exacto N permite; N=0 desactiva. Portal muestra «Ya no se puede cambiar: comunícate con la clínica»; veterinario oculta acciones. Administrador cancela con motivo auditado. Se conservan excepciones clínicas de Llegadas, urgencias y cascada.
+
 - Se puede cancelar o cambiar la fecha/hora de una cita pendiente o confirmada, a un momento que no haya pasado.
 - El veterinario gestiona sus propias citas; el administrador, cualquiera, y puede reasignar el veterinario.
 - Al cambiar, se notifica al propietario por correo.
 - Las canceladas quedan con estado cancelada.
 - No se puede reprogramar a un horario ocupado del veterinario ni que se cruce con otra cita de la mascota.
 
-**Reglas de negocio:** RN-405 · **Dependencias:** HU-4.1
+**Reglas de negocio:** RN-430, RN-405 · **Dependencias:** HU-4.1
 
 ### HU-4.3 — Marcar cita como completada
 
@@ -1090,6 +1098,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 > Como veterinario, quiero registrar la hora real de inicio y fin de cada atención y que el sistema detecte los retrasos, para que la agenda coincida con la realidad y no se acumulen los choques.
 
 **Criterios de aceptación:**
+
+- Al completar se libera desde el fin real, sin margen posterior; el sobrante admite reservas y recupera retrasos de la cascada sin adelantar pactadas (RN-412, decisión 2026-10-29).
 
 - Al iniciar y completar se sella la hora real.
 - El sistema detecta cuando una atención excede su duración planificada.
@@ -1159,6 +1169,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Días completamente cerrados por semana o fecha se ven como pasados, sin «+», agenda por toque ni arrastre; los eventos existentes siguen consultables.
+
 - Se registran bloqueos por veterinario y por fecha.
 - Se registran festivos y cierres puntuales.
 - La disponibilidad excluye esos periodos.
@@ -1226,6 +1238,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Propuesta idéntica a apertura lunes–viernes 08–12 y 14–18 se acepta. El formulario del veterinario bloquea fines de semana cerrados y horas fuera de apertura; validación en vivo y servidor coinciden. Guardar deja aviso interno pendiente al administrador de esa clínica en la misma transacción.
+
 - Se definen franjas de atención por día de la semana para cada veterinario, sin solapamientos y dentro del horario de la clínica.
 - Si las franjas se solapan o caen fuera del horario de la clínica, se rechaza con un mensaje que indica el motivo.
 - El horario recurrente reemplaza el supuesto de disponibilidad permanente: la agenda solo ofrece espacios dentro de esas franjas.
@@ -1272,9 +1286,9 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Al describir el motivo y los síntomas, el **Grafo I** calcula el nivel de triage (🔴 rojo, 🟠 naranja, 🟡 amarillo, 🟢 verde); el propietario no lo elige.
 - El nivel se calcula según HU-2.11. Si es 🔴, no se verifica el límite del plan (RN-420); en los demás niveles se verifica antes de reservar (HU-0.4).
 - 🔴 **Rojo (crítico):** no se agenda en línea; se avisa y se deriva a atención de urgencia (HU-4.15).
-- 🟠 **Naranja (urgente):** se ubica por **sobrecupo** sobre el próximo bloque del veterinario adecuado, hasta el tope de sobrecupos del bloque. Si dos compiten, va primero el que llegó antes; un veterinario puede cambiar el orden con motivo obligatorio y auditoría. Superado el tope, se avisa al personal.
-- 🟡 **Amarillo (prioritario):** toma el primer espacio disponible priorizado.
-- 🟢 **Verde (no urgente):** el actor elige entre los espacios disponibles; si no hay, se ofrece cambiar de fecha o rango.
+- 🟠 **Naranja (urgente):** ve los tres horarios más cercanos y se le asigna el primero libre; mensaje «Nivel naranja: se le asigna el primer horario libre para atenderlo cuanto antes». Sin hueco ordinario usa sobrecupo sujeto al tope RN-422; se conserva el orden fecha/ID y su cambio clínico motivado.
+- 🟡 **Amarillo (prioritario):** elige cualquiera entre todos los horarios libres del día; el más cercano lleva «Recomendado», incluido nivel provisional.
+- 🟢 **Verde (no urgente):** elige entre todos los horarios libres del día; el más cercano lleva «Recomendado». Sin huecos se ofrece otra fecha o rango.
 - La disponibilidad se calcula como `horario clínica ∩ horario del veterinario − ausencias`, por duración + margen del tipo de cita (RN-415).
 - La reserva se concreta con bloqueo (si el espacio se ocupó antes, se busca otro); al crear se registran tipo, duración, margen y prioridad, se notifica y queda en auditoría.
 
@@ -1312,6 +1326,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 > Como veterinario, quiero atender de inmediato un caso crítico aunque no tenga cita para no perder tiempo en una emergencia.
 
 **Criterios de aceptación:**
+
+- Desde el rojo de Nueva cita, «Ir a Urgencias» abre llegada con la mascota, resumen de síntomas/exposiciones y evaluación de la misma solicitud; solo confirmar presencial acredita llegada.
 
 - Rojo remoto registra derivación/aviso; no acredita llegada, crea reserva ordinaria, pausa ni inicia atención. Al llegar se enlaza el mismo caso y crea cita antes de atender.
 - Entre rojos presentes rige llegada física/ID; cambio clínico por vet con motivo/auditoría. Ante otro rojo con una atención pausada decide el vet, sin interrupciones anidadas automáticas.
@@ -1473,7 +1489,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Se verifica la disponibilidad (sin empalmes).
 - Envío de confirmación por correo y registro en auditoría.
 
-**Reglas de negocio:** RN-401, RN-402, RN-501, RN-109, RN-110 · **Dependencias:** HU-5.2, HU-4.1
+**Reglas de negocio:** RN-G18, RN-401, RN-402, RN-501, RN-109, RN-110 · **Dependencias:** HU-5.2, HU-4.1
 
 > _v2.0: el agendado desde el portal usa la agenda inteligente — ver HU-4.13 y HU-5.9._
 
@@ -1527,7 +1543,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - El cambio notifica a la clínica y queda en auditoría.
 - Respeta las reglas de disponibilidad y horario.
 
-**Reglas de negocio:** RN-405, RN-401, RN-G02 · **Dependencias:** HU-5.3
+**Reglas de negocio:** RN-430, RN-405, RN-401, RN-G02 · **Dependencias:** HU-5.3
 
 > _Nota: Función deseable propuesta. Desde v1.9.0 el propietario cancela sus citas pendientes o confirmadas desde el portal: el botón existía, pero el portal buscaba un estado «programada» que no existe y nunca lo mostraba (M4-07). Siguen pendientes reprogramar desde el portal y el registro del cambio en auditoría._
 
@@ -1662,8 +1678,10 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Una mascota creada después del vínculo del propietario queda vinculada desde su alta a todas sus clínicas activas, con límites/auditoría por clínica y rollback completo si falla; no reactiva vínculos inactivos (RN-110/115).
+
 - Desde el portal veo la lista de clínicas activas de la plataforma y puedo vincularme a una con un clic; como ya inicié sesión, no se me pide verificar de nuevo el correo.
-- La clínica nueva solo ve mis datos de propietario; mis mascotas se le vinculan cuando agendo con ellas allí o cuando la clínica las atiende (RN-110).
+- La clínica nueva solo ve mis datos de propietario; mis mascotas previas se le vinculan al agendar o ser atendidas allí. Las que cree después se vinculan desde el alta a mis clínicas activas (RN-110).
 - Desde el portal llego como máximo a 3 clínicas con vínculo activo (RN-116). Con 3, «Vincularme» se deshabilita con una línea que lo explica; desvincularme de una libera el cupo. El tope no aplica cuando una clínica me registra o confirmo su solicitud de vínculo: una atención nunca se bloquea por esto.
 - Puedo desvincularme de una clínica; la clínica conserva lo que registró, deja de ver mis datos nuevos y pierde la autorización a la historia de otras clínicas (RN-115). No puedo desvincularme mientras tenga citas pendientes en ella: primero debo cancelarlas.
 - Cada vinculación y desvinculación queda en auditoría.
@@ -1880,6 +1898,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Cirugía programada por defecto: 120 minutos, margen 15, no pausable, solo para personal. Administrador configura solo_personal por tipo; portal filtra y rechaza por servidor los restringidos. Migración repetible conserva tipos del mismo nombre/personalizaciones; clínicas pendientes reciben los siete tipos al activarse.
+
 - Marca por clínica en su contexto del portal, correos y documentos; historial multi-clínica mantiene cabecera Zooki y procedencia por acto, sin atribuir todo a una clínica. Descargas documentales públicas no se personalizan.
 
 - Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada. Elijo o arrastro el logo con vista previa (JPG, PNG o WebP de hasta 5 MB); teléfonos con selector de país, correo de contacto válido sin unicidad de cuenta y errores junto al inicio de cada campo.
@@ -1900,11 +1920,13 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Configuro N de anticipación mínima para cambios ordinarios: entero 0–1440 minutos, 30 por defecto, 0 desactiva, con validación en vivo, servidor y auditoría aislada (RN-430).
+
 - Puedo definir la duración de cita por defecto y el buffer entre citas.
 - _(v2.0)_ La agenda usa valores por defecto para tolerancia de llegada tarde, plazo de confirmación de reasignación, umbral de aviso y tope de sobrecupos. El teléfono de urgencias se captura en los datos de la clínica (HU-7.4). En v2.1 el administrador puede configurar estos parámetros.
 - Los cambios se aplican en la agenda. Los tiempos de los recordatorios se configuran en HU-8.4.
 
-**Reglas de negocio:** RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 · **Requisitos:** RF-7.5 · **Dependencias:** HU-7.1
+**Reglas de negocio:** RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 · **Requisitos:** RF-7.5 · **Dependencias:** HU-7.1
 
 > _Nota: Función deseable propuesta; sería el hogar natural del buffer (HU-4.6) y las ventanas de recordatorio (HU-3.6)._
 
@@ -2107,7 +2129,7 @@ Mientras llega la v2.1, la solicitud de eliminación de cuenta (HU-5.14) se atie
 
 ## Apéndice — Cobertura y trazabilidad (RN → HU)
 
-Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** están cubiertas por al menos una historia de usuario.
+Auditoría automática de la Fase 3: de **127 reglas de negocio**, **127** están cubiertas por al menos una historia de usuario.
 
 **Reglas sin historia asociada:** — ninguna: cobertura total —
 
@@ -2132,7 +2154,7 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-G15 | HU-0.3, HU-T.13 |
 | RN-G16 | HU-T.19, HU-4.15, HU-5.14 |
 | RN-G17 | HU-T.16 |
-| RN-G18 | HU-T.17, HU-8.1 |
+| RN-G18 | HU-4.1, HU-5.3, HU-T.17, HU-8.1 |
 | RN-G19 | HU-0.1, HU-T.18, HU-T.19, HU-1.2, HU-4.15 |
 | RN-G20 | HU-0.1, HU-T.18 |
 | RN-G21 | HU-T.18 |
@@ -2222,6 +2244,7 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-427 | HU-4.15, HU-7.4 |
 | RN-428 | HU-4.14, HU-7.5 |
 | RN-429 | HU-4.14, HU-7.5 |
+| RN-430 | HU-4.2, HU-5.6, HU-7.5 |
 | RN-501 | HU-5.2, HU-5.3 |
 | RN-502 | HU-5.10, HU-5.11 |
 | RN-503 | HU-5.10, HU-5.11 |

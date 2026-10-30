@@ -13,7 +13,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 ?>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
-<div class="agenda" data-rol="<?= $rolAgenda ?>" data-usuario="<?= $usuarioAgenda ?>">
+<div class="agenda" data-rol="<?= $rolAgenda ?>" data-usuario="<?= $usuarioAgenda ?>" data-contexto-agenda="<?= htmlspecialchars(json_encode($contextoAgenda ?? null), ENT_QUOTES, 'UTF-8') ?>">
     <div class="agenda-toolbar">
         <div class="agenda-toolbar__nav">
             <button type="button" class="cal-icon-btn" data-nav="prev" aria-label="Periodo anterior"><i class="fas fa-chevron-left"></i></button>

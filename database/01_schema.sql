@@ -55,6 +55,7 @@ CREATE TABLE `clinicas` (
   `plazo_reasignacion_min` INT NOT NULL DEFAULT 10,
   `umbral_aviso_min` INT NOT NULL DEFAULT 15,
   `tope_sobrecupos` INT NOT NULL DEFAULT 2,
+  `anticipacion_cambios_min` INT NOT NULL DEFAULT 30,
   `email_contacto` VARCHAR(255) DEFAULT NULL,
   `url_logo` VARCHAR(255) DEFAULT NULL,
   `id_plan` INT DEFAULT NULL,
@@ -542,6 +543,7 @@ CREATE TABLE `tipos_cita` (
   `margen_minutos` INT NOT NULL DEFAULT 10,
   -- Si se puede interrumpir por una urgencia (RN-427)
   `pausable` TINYINT(1) NOT NULL DEFAULT 1,
+  `solo_personal` TINYINT(1) NOT NULL DEFAULT 0,
   `descripcion` TEXT DEFAULT NULL,
   `color` VARCHAR(20) DEFAULT '#0C66E4',
   `activo` TINYINT NOT NULL DEFAULT 1,

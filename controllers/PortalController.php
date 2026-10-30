@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/VinculosPropietario.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/HorarioAtencion.php';
 require_once __DIR__ . '/../helpers/ReglaAtencion.php';
+require_once __DIR__ . '/../helpers/ReglaCambioCita.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
@@ -113,7 +114,10 @@ class PortalController
     {
         foreach ($citas as &$cita) {
             $abierta = in_array($cita['estado'], self::CITAS_ABIERTAS, true);
-            $cita['cancelable'] = $abierta && in_array((int) $cita['id_clinica'], $vinculadas, true);
+            $legitima = $abierta && in_array((int) $cita['id_clinica'], $vinculadas, true);
+            $plazo = ReglaCambioCita::permite($cita, new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA)), (int) ($cita['anticipacion_cambios_min'] ?? ReglaCambioCita::DEFECTO));
+            $cita['cancelable'] = $legitima && $plazo;
+            $cita['cambio_vencido'] = $legitima && !$plazo;
         }
         unset($cita);
         return $citas;

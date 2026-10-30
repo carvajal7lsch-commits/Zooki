@@ -32,11 +32,13 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <?php if ($esVetUrgencia): ?>
     <dialog class="zk-dialogo" id="dialogoRojo" aria-labelledby="dialogoRojoTitulo">
         <form data-ingreso-rojo novalidate class="zk-dialogo__form ah-dialogo">
+            <input type="hidden" name="id_solicitud" value="">
             <header class="zk-dialogo__head">
                 <h3 id="dialogoRojoTitulo">Registrar rojo presencial</h3>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </header>
             <div class="zk-dialogo__cuerpo">
+                <p data-evaluacion-conservada hidden></p>
                 <label>Identidad <select name="identidad"><option value="conocida">Cuenta y ficha verificadas</option><option value="provisional">Relación no verificada o sin cuenta</option></select></label>
                 <label data-identidad-conocida>Mascota <select name="id_mascota" required></select><span data-error-campo="id_mascota" aria-live="polite"></span></label>
                 <fieldset data-identidad-provisional hidden disabled>

@@ -64,6 +64,7 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/12_suscripcion_pagos.sql');
         $this->cargar('database/13_plataforma_finanzas.sql');
         $this->cargar('database/14_aviso_pago_confirmado.sql');
+        $this->cargar('database/15_correcciones_agenda.sql');
     }
 
     private function instalar(bool $anterior = false): void
@@ -113,6 +114,19 @@ final class AgendaB2MysqlTest extends TestCase
         return $this->db->query('SELECT * FROM ' . $tabla . ' ORDER BY 1')->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** Inserta columnas nuevas en el mismo orden físico que les da la migración (ALTER ... AFTER). */
+    private static function despues(array $fila, string $columna, array $nuevas): array
+    {
+        $salida = [];
+        foreach ($fila as $clave => $valor) {
+            $salida[$clave] = $valor;
+            if ($clave === $columna) {
+                $salida += $nuevas;
+            }
+        }
+        return $salida;
+    }
+
     private function rechazo(string $sql): void
     {
         try {
@@ -156,6 +170,19 @@ final class AgendaB2MysqlTest extends TestCase
             if ($t === 'clinicas') {
                 // S1 añade solo estos parámetros; el resto del registro debe conservarse.
                 $previas[$t] = array_map(static fn (array $c): array => $c + ['suscripcion_gracia_dias' => 3, 'aviso_vencimiento_1_dias' => 7, 'aviso_vencimiento_2_dias' => 1], $previas[$t]);
+                // 2.3.0 (RN-430): la 15 agrega el plazo de cambios tardíos detrás de tope_sobrecupos.
+                $previas[$t] = array_map(static fn (array $c): array => self::despues($c, 'tope_sobrecupos', ['anticipacion_cambios_min' => 30]), $previas[$t]);
+            }
+            if ($t === 'tipos_cita') {
+                // 2.3.0 (HU-7.4): solo_personal detrás de pausable y una cirugía programada por clínica no pendiente.
+                $previas[$t] = array_map(static fn (array $tipo): array => self::despues($tipo, 'pausable', ['solo_personal' => 0]), $previas[$t]);
+                $siguiente = max(array_map(static fn (array $tipo): int => (int) $tipo['id_tipo_cita'], $previas[$t])) + 1;
+                foreach ($previas['clinicas'] as $clinica) {
+                    if ($clinica['estado'] === 'pendiente_verificacion') {
+                        continue;
+                    }
+                    $previas[$t][] = ['id_tipo_cita' => $siguiente++, 'id_clinica' => $clinica['id_clinica'], 'nombre_tipo' => 'Cirugía programada', 'duracion_minutos' => 120, 'margen_minutos' => 15, 'pausable' => 0, 'solo_personal' => 1, 'descripcion' => 'Cirugía programada por el personal veterinario', 'color' => '#0C66E4', 'activo' => 1];
+                }
             }
             $this->assertSame($previas[$t], $this->filas($t), $t);
         }

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../helpers/Transaccion.php';
 /** RE-7.4.5, RN-701: gestión de marca/tipos exclusivamente en el contexto administrativo. */
 final class ConfiguracionClinica extends ModeloClinica
 {
-    private const CAMPOS_MARCA = 'id_clinica, nombre, direccion, telefono, telefono_urgencias, email_contacto, url_logo';
+    private const CAMPOS_MARCA = 'id_clinica, nombre, direccion, telefono, telefono_urgencias, email_contacto, url_logo, anticipacion_cambios_min';
 
     private function exigirAdministrador(): void
     {
@@ -79,10 +79,17 @@ final class ConfiguracionClinica extends ModeloClinica
     {
         $this->exigirAdministrador();
         $datos = ValidadorConfiguracionClinica::datos($entrada);
-        return $this->escribir(function () use ($datos) {
+        return $this->escribir(function () use ($datos, $entrada) {
             $antes = $this->marca();
             $this->conn->prepare('UPDATE clinicas SET nombre = ?, direccion = ?, telefono = ?, telefono_urgencias = ?, email_contacto = ?, url_logo = ? WHERE id_clinica = ?')
                 ->execute([...array_values($datos), $this->clinica()]);
+            if (array_key_exists('anticipacion_cambios_min', $entrada)) {
+                $error = ValidadorConfiguracionClinica::campo('anticipacion_cambios_min', $entrada['anticipacion_cambios_min']);
+                if ($error !== null) {
+                    throw new CampoInvalido('anticipacion_cambios_min', $error, $error);
+                }
+                $this->conn->prepare('UPDATE clinicas SET anticipacion_cambios_min=? WHERE id_clinica=?')->execute([(int) $entrada['anticipacion_cambios_min'], $this->clinica()]);
+            }
             $despues = $this->marca();
             $this->auditar('clinicas', $this->clinica(), $antes, $despues);
             return $despues;
@@ -105,14 +112,17 @@ final class ConfiguracionClinica extends ModeloClinica
     {
         $this->exigirAdministrador();
         $datos = ValidadorConfiguracionClinica::datos($entrada, true);
-        return $this->escribir(function () use ($id, $datos) {
+        return $this->escribir(function () use ($id, $datos, $entrada) {
             $antes = $id === null ? null : $this->tipoPropio($id);
+            if ($antes !== null && !array_key_exists('solo_personal', $entrada)) {
+                $datos['solo_personal'] = (int) $antes['solo_personal'];
+            }
             if ($id === null) {
-                $q = $this->conn->prepare('INSERT INTO tipos_cita (id_clinica, nombre_tipo, duracion_minutos, margen_minutos, pausable) VALUES (?, ?, ?, ?, ?)');
+                $q = $this->conn->prepare('INSERT INTO tipos_cita (id_clinica, nombre_tipo, duracion_minutos, margen_minutos, pausable, solo_personal) VALUES (?, ?, ?, ?, ?, ?)');
                 $q->execute([$this->clinica(), ...array_values($datos)]);
                 $id = (int) $this->conn->lastInsertId();
             } else {
-                $this->conn->prepare('UPDATE tipos_cita SET nombre_tipo = ?, duracion_minutos = ?, margen_minutos = ?, pausable = ? WHERE id_clinica = ? AND id_tipo_cita = ?')
+                $this->conn->prepare('UPDATE tipos_cita SET nombre_tipo = ?, duracion_minutos = ?, margen_minutos = ?, pausable = ?, solo_personal = ? WHERE id_clinica = ? AND id_tipo_cita = ?')
                     ->execute([...array_values($datos), $this->clinica(), $id]);
             }
             $despues = $this->tipoPropio($id);

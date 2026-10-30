@@ -115,7 +115,8 @@
                 ++lectura;
                 raiz.querySelectorAll('button').forEach(b => { b.disabled = true; });
                 try {
-                    const respuesta = await global.fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo });
+                    const destino = typeof accion === 'function' ? accion() : accion;
+                    const respuesta = await global.fetch(`index.php?action=${destino}`, { method: 'POST', body: cuerpo });
                     const datos = await respuesta.json();
                     if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudo guardar.');
                     comando.reiniciar();
@@ -288,7 +289,30 @@
         if (ingreso) {
             // El botón y el aviso ya pertenecen al HTML de la ventana; preparar los reutiliza.
             ingreso.dataset.etiqueta = 'Registrar llegada roja';
-            preparar(ingreso, 'ingresar_rojo_ajax');
+            preparar(ingreso, () => ingreso.elements.namedItem('id_solicitud').value ? 'llegada_rojo_ajax' : 'ingresar_rojo_ajax');
+            document.addEventListener('agenda:ingreso-rojo', async evento => {
+                try {
+                    await recargar();
+                    ingreso.reset();
+                    ingreso.elements.namedItem('id_solicitud').value = evento.detail.id_solicitud;
+                    ingreso.elements.namedItem('id_mascota').value = evento.detail.id_mascota;
+                    ingreso.elements.namedItem('motivo').value = evento.detail.resumen.slice(0, 255);
+                    const resumen = ingreso.querySelector('[data-evaluacion-conservada]');
+                    resumen.textContent = 'Evaluación roja conservada: ' + evento.detail.resumen;
+                    resumen.hidden = false;
+                    validar(ingreso);
+                    global.zookiAbrirDialogo('dialogoRojo');
+                } catch (error) {
+                    aviso.textContent = error.message;
+                }
+            });
+            document.addEventListener('click', evento => {
+                if (!evento.target.closest('[data-abrir-dialogo="dialogoRojo"]')) return;
+                ingreso.reset();
+                ingreso.elements.namedItem('id_solicitud').value = '';
+                ingreso.querySelector('[data-evaluacion-conservada]').hidden = true;
+                validar(ingreso);
+            });
             ingreso.elements.namedItem('identidad').addEventListener('change', () => {
                 const provisional = ingreso.elements.namedItem('identidad').value === 'provisional';
                 const ficha = ingreso.querySelector('[data-identidad-provisional]');

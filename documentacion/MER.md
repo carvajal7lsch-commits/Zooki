@@ -1,5 +1,8 @@
 # Modelo Entidad-Relación (MER) - Zooki v2.1
 
+> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+
+
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
 > **Carnet B — 2026-10-23:** 59 tablas. `carnet_accesos` cuenta también tokens inválidos sin guardar mascota ni token; `carnet_escaneos` conserva solo vistas válidas y ubicaciones consentidas. La IP se seudonimiza con HMAC-SHA256 y un secreto del entorno.
@@ -164,6 +167,7 @@ erDiagram
         int plazo_reasignacion_min
         int umbral_aviso_min
         int tope_sobrecupos
+        int anticipacion_cambios_min
         int suscripcion_gracia_dias
         int aviso_vencimiento_1_dias
         int aviso_vencimiento_2_dias
@@ -484,6 +488,7 @@ erDiagram
         int duracion_minutos
         int margen_minutos
         tinyint pausable
+        tinyint solo_personal
     }
     citas {
         int id_cita PK
@@ -878,7 +883,7 @@ erDiagram
 ## Detalle de Entidades Principales
 
 ### 1. Plataforma y suscripción (SaaS) — nuevo
-*   **clinicas**: Cada inquilino de la plataforma; su `id_clinica` aísla los datos. Incluye nombre, `nit` (único, validado con el dígito de verificación de la DIAN; RN-010), dirección, teléfono, logo y el plan vigente. Su `estado` es `pendiente_verificacion` hasta que confirma el correo (RN-002), y luego `activa`, `suspendida` o `baja` (RN-012). Guarda también los parámetros de la agenda, con valores por defecto: `telefono_urgencias` (RN-421), `tope_sobrecupos` (2, RN-422), `tolerancia_llegada_min` (10, RN-426), `plazo_reasignacion_min` (10, RN-428) y `umbral_aviso_min` (15, RN-429).
+*   **clinicas**: Cada inquilino de la plataforma; su `id_clinica` aísla los datos. Incluye nombre, `nit` (único, validado con el dígito de verificación de la DIAN; RN-010), dirección, teléfono, logo y el plan vigente. Su `estado` es `pendiente_verificacion` hasta que confirma el correo (RN-002), y luego `activa`, `suspendida` o `baja` (RN-012). Guarda también los parámetros de la agenda, con valores por defecto: `telefono_urgencias` (RN-421), `tope_sobrecupos` (2, RN-422), `tolerancia_llegada_min` (10, RN-426), `plazo_reasignacion_min` (10, RN-428) `umbral_aviso_min` (15, RN-429) y `anticipacion_cambios_min` (30, rango 0–1440, 0 desactiva; RN-430).
 *   **planes**: Catálogo **global** de planes (gratuito y profesional) con sus precios (mensual/anual) y límites (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL significa sin límite; RN-003).
 *   **suscripciones**: Estado de la suscripción de cada clínica (`activa`/`suspendida`/`cancelada`), ciclo de cobro, indicador `al_dia` y vigencia.
 *   **plantillas_comunicacion**: Plantillas de correo/notificación por clínica (asunto, cuerpo, formato) y parámetros de envío (días de anticipación, hora). Es la base de las comunicaciones del Módulo 8 (reputación y comunicaciones); la bitácora de envíos reutiliza `notificaciones`.
@@ -917,7 +922,7 @@ erDiagram
 
 ### 6. Operación clínica
 *   **citas**: Agenda por clínica (`id_clinica`). El campo `prioridad` guarda el **nivel de triage de 4 niveles** — 🔴 rojo (crítico), 🟠 naranja (urgente), 🟡 amarillo (prioritario), 🟢 verde (no urgente) — **calculado por el Grafo I** a partir de los síntomas; conserva estados, horas reales y control de solapamientos. `prioridad_calculada` conserva el nivel que dio el Grafo I cuando el veterinario lo ajusta (RN-419); `hora_llegada` registra la llegada del propietario (RN-426); los estados incluyen `sin_cerrar` y `pausada` (RN-427). Los síntomas se guardan de forma estructurada (RN-424): los marcados del catálogo del grafo en `cita_sintomas`, el texto libre en `sintomas_texto` y su comienzo en `inicio_sintomas`. `motivo_ajuste_prioridad` es obligatorio cuando el veterinario cambia el nivel (RN-419); `es_sobrecupo` marca las citas que cuentan contra el tope de sobrecupos del bloque y `orden_sobrecupo` conserva su posición, inicialmente por llegada y modificable por veterinario con motivo auditado (RN-422). `id_tipo_cita` pasa a ser clave foránea. `duracion_minutos` y `margen_minutos` guardan los valores aplicados al reservar; cambiar después el tipo no altera las citas existentes. `aviso_atencion_abierta` guarda cuándo se avisó que la atención seguía abierta después de su hora de fin, para avisar una sola vez (RN-409). `ocupa_horario` es una columna calculada que vale 1 mientras la cita ocupa su horario y NULL cuando está libre (`cancelada` o `no_asistio`) o es sobrecupo o tiene `origen=urgencia`; con ella, el índice único `(id_veterinario, fecha, hora, ocupa_horario)` impide en la base dos reservas del mismo veterinario a la misma hora (RN-401). El índice no lleva `id_clinica`, así que tampoco deja reservar dos veces a un veterinario que trabaja en dos clínicas; el tope de sobrecupos (RN-422) se controla en la transacción de reserva.
-*   **tipos_cita**: Servicios y su duración base, ahora por clínica. Suma `margen_minutos`: el **colchón (buffer)** por tipo de cita que absorbe los retrasos y alimenta el cálculo de disponibilidad y el reajuste en vivo (Grafo II). `pausable` indica si una cita de ese tipo puede interrumpirse por una urgencia (RN-427).
+*   **tipos_cita**: Servicios y su duración base, ahora por clínica. Suma `margen_minutos`: el **colchón (buffer)** por tipo de cita que absorbe los retrasos y alimenta el cálculo de disponibilidad y el reajuste en vivo (Grafo II). `pausable` indica si puede interrumpirse por urgencia (RN-427). `solo_personal` (booleano, default 0) excluye el tipo del portal y de sus POST. Cirugía programada viene con duración 120, margen 15, pausable=0 y solo_personal=1. La migración 15 agrega ese tipo donde falta sin sobreescribir personalizaciones; pendientes de verificación reciben los siete tipos juntos al activar.
 *   **horarios_veterinario**: Horario **recurrente** de cada veterinario por clínica (`id_clinica`) y día de la semana (franjas `hora_inicio`–`hora_fin`); un veterinario que trabaja en dos clínicas tiene un horario en cada una, y no pueden chocar entre sí. Lo configura el administrador de esa clínica (RN-706). Reemplaza el supuesto de disponibilidad 24/7: la disponibilidad real es `horario de la clínica ∩ horario del veterinario − ausencias`.
 *   **ausencias_veterinario**: Excepciones por clínica y rango de fecha y hora (permiso, incapacidad, "ese día no vino") que tapan la disponibilidad del veterinario en ese rango. `fecha_hora_inicio` es inclusiva y `fecha_hora_fin` exclusiva, en la zona horaria de la clínica; un día completo va de las 00:00 de ese día a las 00:00 del siguiente. `id_cobertura` es la clave foránea del veterinario que lo reemplaza; así un "intercambio de turnos" queda registrado como **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió realmente la da la historia clínica, no la agenda.
 *   **propuestas_horario**: Cambios de horario que propone el veterinario (`franjas`), con estado `pendiente`, `aprobada` o `rechazada` y el administrador que la revisó (`id_revisor`). Al aprobarse, las franjas pasan a `horarios_veterinario` y las citas que queden fuera se marcan para reajuste (RN-706).

@@ -37,6 +37,11 @@ class CitaController
 
     // ── Agendar ─────────────────────────────────────────────────────────
 
+    public function contextoAgenda(): array
+    {
+        return (new CoordinacionHorarios($this->db))->leer(Contexto::idUsuario());
+    }
+
     /** HU-4.1: el veterinario agenda para sí mismo; el administrador elige el veterinario. */
     public function registrarAjax(): void
     {
@@ -132,6 +137,7 @@ class CitaController
     private function eventoDeCita(array $cita): array
     {
         return [
+            'cambiable' => $this->citas->permiteCambio($cita),
             'id_cita' => (int) $cita['id_cita'],
             'prioridad' => $cita['prioridad'],
             'inicio_estimado' => $cita['inicio_estimado'],
@@ -375,7 +381,7 @@ class CitaController
             $cita = $this->citaDelContexto($this->idDeLaPeticion());
             $modelo = Contexto::rolActivo() === Roles::PROPIETARIO
                 ? $this->citas->enClinicaDelPropietario((int) $cita['id_clinica']) : $this->citas;
-            $modelo->cancelar($cita, $_POST['clave_operacion'] ?? null);
+            $modelo->cancelar($cita, $_POST['clave_operacion'] ?? null, (string) ($_POST['motivo'] ?? ''));
             return ['message' => 'Cita cancelada correctamente.', 'id_cita' => (int) $cita['id_cita']];
         }, 'C4 cancelación');
     }

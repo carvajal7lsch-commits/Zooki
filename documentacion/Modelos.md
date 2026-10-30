@@ -252,13 +252,16 @@ flowchart TD
   A([Agendar o registrar llegada]) --> R{"Veterinario o propietario en contexto legitimo?"}
   R -- No --> DEN[/"403; admin no crea citas"/]
   R -- Si --> CAP["Mascota propia/vinculada, marcas y tiempos; vacunacion declarada o registros de esa mascota en cualquier clinica; nota fuera del calculo"]
+  NUE["Abrir Nueva cita"] --> JOR{"Jornada aprobada del veterinario?"}
+  JOR -- No --> SIN["Aún no tienes horario aprobado: propón tu horario en Mi perfil; portal excluye ese vet"]
+  JOR -- Si --> CAP
   CAP --> G["Grafo I: maximo, version y banderas; conservar 26 T"]
   G --> RO{Rojo?}
   RO -- Si --> HOR{Clinica abierta segun horario y cierres?}
   HOR -- No --> CERR[/"Cerrada; telefono de urgencias si existe y servicio 24h"/]
   HOR -- Si --> DER[/"Derivacion inmediata; no es reserva ni llegada"/]
   CERR --> AV
-  DER --> AV["Guardar caso/aviso idempotente sin cuotas; presencia real va a §6"]
+  DER --> AV["Guardar caso/aviso idempotente sin cuotas; Ir a Urgencias abre llegada con mascota y resumen; reutiliza solicitud/evaluacion; solo confirmar presencia real va a §6"]
   RO -- No --> REV{Requiere revision?}
   REV -- Si --> PEN["Guardar nivel provisional y avisar REVISION_TRIAGE; marcar inmediato si procede; permite reservar"]
   PEN --> LIM
@@ -269,9 +272,9 @@ flowchart TD
   DISP --> NIV{Nivel aprobado o provisional?}
   NIV -- Naranja --> TOP{"Cupo en franja original/fecha? Default 2; cuentan todos los naranjas del bloque"}
   TOP -- No --> TOPE[/"Avisar sin insertar; ausencia parcial no multiplica cupos"/]
-  TOP -- Si --> ORD["Primer hueco ordinario o, si no hay, sobrecupo; cola por fecha_registro/id_cita; cambio solo vet con motivo"]
-  NIV -- Amarillo --> PRI["Primer espacio compatible"]
-  NIV -- Verde --> EL["Eleccion entre espacios compatibles"]
+  TOP -- Si --> ORD["Mostrar tres mas cercanos y asignar primero libre; si no hay ordinario, sobrecupo; cola por fecha_registro/id_cita; cambio solo vet con motivo"]
+  NIV -- Amarillo --> PRI["Todos los horarios libres del dia; elige cualquiera; primero Recomendado"]
+  NIV -- Verde --> EL["Todos los horarios libres del dia; elige cualquiera; primero Recomendado"]
   PRI --> HAY{Hay hueco?}
   EL --> HAY
   HAY -- No --> LLEG{Llegada presencial?}
@@ -304,8 +307,8 @@ flowchart TD
 s es inicio pactado; r/f son primer inicio real y fin real; D es servicio activo decidido, no recortado por el algoritmo; P suma pausas cerradas.
 Antes de iniciar: e=máximo(s, extremo del predecesor, ahora), N=e+D.
 En atención/reanudada: N=r+D+P; A(t)=tiempo transcurrido menos pausas; R=máximo(0,D−A); F=máximo(N,t+R).
-Completada: F=f y el reloj posterior no cambia el resultado.
-Extremo de ocupación L=máximo(N+margen único,F); si F supera N+margen se propaga el exceso, sin descontar ni sumar margen otra vez.
+Completada: F=f y L=f, sin margen posterior; libera el sobrante desde el fin real (decisión del dueño, 2026-10-29).
+Durante atención o antes de completar, extremo de ocupación L=máximo(N+margen único,F); si F supera N+margen se propaga el exceso, sin descontar ni sumar margen otra vez.
 Pausa abierta: u es reanudación prevista condicional, N_u=r+D+P+(u−inicio de pausa); F_u=máximo(N_u,u+R_al_pausar). Sin u sustentada solo se informa una cota, nunca libera al veterinario.
 Inicio 09:00/D=30, pausa 09:10–09:30/margen10: N=09:50/L=10:00; dos pausas 10+15: N=09:55/L=10:05.
 Se preservan pactadas, segmentos y sellos; repetición de hechos/reloj no acumula delta.
@@ -323,8 +326,8 @@ flowchart TD
   B --> P{Pausa abierta o historia incierta?}
   P -- Si --> PC["Pendiente_revision; sin fin ni liberacion inventados; siguientes quedan condicionadas"]
   PC --> FIN([Fin])
-  P -- No --> N["Politica M desde hechos: nominal, fin clinico y L=maximo de nominal+margen unico y fin"]
-  N --> COL["Secuencia desde pactadas: propagar por vet/fecha y absorber con huecos"]
+  P -- No --> N["Politica M desde hechos: completada L=fin real sin margen; restantes L=maximo de nominal+margen unico y fin estimado"]
+  N --> COL["Secuencia desde pactadas: propagar por vet/fecha, absorber con huecos y recuperar sobrante sin adelantar pactadas"]
   COL --> EST["Guardar estimaciones, marca y version solo si cambian; auditar en la misma unidad"]
   EST --> FU{Cita fuera de franja compatible?}
   FU -- No --> AV
@@ -370,7 +373,8 @@ Este flujo también aplica si se regulariza mientras una solicitud sigue activa;
 ```mermaid
 flowchart TD
   REG([Regularizar identidad de un ingreso existente, incluso con solicitud activa]) --> VER
-  A([Rojo remoto o ingreso presencial]) --> B["Caso y aviso idempotentes con prioridad maxima, sin cuota ni mora"]
+  A([Rojo remoto o ingreso presencial]) --> REU["Desde Nueva cita: conservar mascota, sintomas/exposiciones y evaluacion en la solicitud existente; abrir llegada sin duplicar"]
+  REU --> B["Caso y aviso idempotentes con prioridad maxima, sin cuota ni mora"]
   B --> F{Presencia fisica acreditada?}
   F -- No --> REM[/"Derivar; si cerrada, telefono y servicio 24h; no pausar/iniciar"/]
   F -- Si --> ID{Identidad y titularidad verificadas?}
@@ -878,7 +882,7 @@ flowchart TD
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0
 
-La mascota creada en el portal sin clínica sigue global y no consume cupo hasta vincularla. El punto de entrada de urgencia recibe una prioridad evaluada en servidor; una petición ordinaria no puede autodeclararse roja. El motor de triage pertenece a los módulos 2/4.
+Una mascota creada en el portal se vincula atómicamente a todas las clínicas activas con vínculo activo de su propietario, con límites y auditoría por clínica; sin esos vínculos sigue global sin consumir cupo (RN-110/115). El punto de entrada de urgencia recibe una prioridad evaluada en servidor; una petición ordinaria no puede autodeclararse roja. El motor de triage pertenece a los módulos 2/4.
 
 ```mermaid
 flowchart TD
@@ -1212,11 +1216,11 @@ flowchart TD
   Q -- Ver sus especialidades --> E1[Solo lectura: las asigna el administrador de la clinica]
   E1 --> ZF([Fin])
 
-  Q -- Proponer un cambio de horario --> H1[Proponer franjas por dia para la clinica del contexto activo]
+  Q -- Proponer un cambio de horario --> H1[Proponer franjas de la clinica activa; dias cerrados bloqueados, horas restringidas a apertura y validacion en vivo]
   H1 --> H2{"Sin solapamientos, dentro del horario de la clinica<br/>y sin chocar con su horario en otra clinica?"}
   H2 -- No --> H3[/"Mensaje: la franja se solapa, queda fuera del horario o choca con otro compromiso"/]
   H3 --> H1
-  H2 -- Si --> H4[Enviar la propuesta al administrador]
+  H2 -- Si --> H4[Guardar propuesta y aviso interno pendiente al administrador de esa clinica en una transaccion]
   H4 --> H5{El administrador la aprueba?}
   H5 -- No --> H6[Avisar al veterinario el rechazo y el motivo]
   H6 --> AUD
@@ -1262,7 +1266,7 @@ La escritura del conocimiento ocurre solo desde el cargador por consola, despué
 
 ## 15. Configuración de marca y tipos de cita — M4 C1 (HU-7.4)
 
-RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Desde la decisión del dueño del 2026-10-26: duración de 1 a 720 minutos, margen de 0 a 120 y logo por elección/arrastre con vista previa (JPG/PNG/WebP reales de hasta 5 MB). Correo de contacto validado por formato, sin unicidad de cuenta. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
+RE-7.4.1–7, RE-7.5.4 y configuración de RE-4.6.1; RN-701 y RNF-11. Desde la decisión del dueño del 2026-10-26: duración de 1 a 720 minutos, margen de 0 a 120 y logo por elección/arrastre con vista previa (JPG/PNG/WebP reales de hasta 5 MB). Correo de contacto validado por formato, sin unicidad de cuenta. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
 
 ```mermaid
 flowchart TD
@@ -1275,7 +1279,7 @@ flowchart TD
   C -- Escritura --> E
   D --> E{"POST y CSRF válidos?"}
   E -- No --> F["405 o 403; conservar formulario"]
-  E -- Sí --> G{"Campos y duración/margen/pausable explícito válidos?"}
+  E -- Sí --> G{"Campos, duracion/margen, pausable/solo_personal booleanos y N entero 0–1440 validos?"}
   G -- No --> H["422 con campo y mensaje; no escribir"]
   H --> UI
   G -- Sí --> I{"Clínica del formulario coincide con contexto autorizado?"}
@@ -1290,7 +1294,7 @@ flowchart TD
   V -- No --> R["Rollback; retirar solo logo nuevo si existe; 403 e intento auditado fuera de la transacción"]
   V -- Sí --> K{"Marca propia, tipo nuevo o tipo existente propio bloqueado?"}
   K -- No --> R
-  K -- Sí --> W["Guardar marca o tipo; desactivar/reactivar sin borrar ni alterar snapshots de citas"]
+  K -- Sí --> W["Guardar marca, N de esa clinica o tipo con solo_personal; desactivar/reactivar sin borrar ni alterar snapshots"]
   W --> AU["Registrar antes/después y actor/clínica en auditoría de la misma transacción"]
   AU --> OK{"Escritura y auditoría correctas?"}
   OK -- No --> ERR["Rollback completo y retirar solo logo nuevo; error sin exito aparente; permitir reintento"]
@@ -1302,7 +1306,7 @@ flowchart TD
   L --> OUT["Consumidores autorizados: marca de la clínica del contexto o del acto; global conserva Zooki"]
 ```
 
-La validación remota por campo usa POST/CSRF y revalida el administrador sin escribir. El guardado repite la validación en servidor. Los tipos inactivos siguen legibles en históricos; el catálogo de reservas los excluye y el servidor rechaza usarlos en una nueva reserva. Las salidas clínicas usan la procedencia ya autorizada, sin elegir una clínica para mensajes globales ni personalizar las descargas públicas.
+La validación remota por campo usa POST/CSRF y revalida el administrador sin escribir. El guardado repite la validación en servidor. Los tipos inactivos siguen legibles en históricos; reservas los excluyen. Además, el portal excluye solo_personal=1 y rechaza un POST forzado. Cirugía programada inicia con 120 minutos, margen 15, no pausable y solo_personal=1. Migración 15 conserva personalizaciones; clínicas pendientes de correo reciben los siete tipos al activarse. Las salidas clínicas usan la procedencia ya autorizada, sin elegir una clínica para mensajes globales ni personalizar las descargas públicas.
 
 ## 16. Coordinación de horarios y cierres puntuales — M4 C2
 
@@ -1313,7 +1317,7 @@ flowchart TD
   A["Configuracion admin o perfil del veterinario"] --> P{"Sesion y contexto autorizados segun §9?"}
   P -- No --> DEN["Denegar sin datos ajenos; auditar intento"]
   P -- Si --> L["Leer horario propio de clinica, propuestas y marcas; vet solo su jornada"]
-  L --> F["Editar con validacion en vivo y restricciones; clave del comando y doble envio protegido"]
+  L --> F["Editar con validacion en vivo; vet ve dias cerrados bloqueados y horas limitadas a apertura; clave del comando y doble envio protegido"]
   F --> T{"POST, CSRF, contexto y sintaxis validos?"}
   T -- No --> ERR["Error junto al campo; no escribir; permitir correccion"]
   T -- Si --> EXT{"Transaccion exterior compatible?"}
@@ -1329,7 +1333,7 @@ flowchart TD
   ACC -- "Vet propone lo propio" --> VAL["Validar dia, intervalos, apertura y compromisos globales minimos"]
   VAL --> PV{"Franjas compatibles?"}
   PV -- No --> GEN["Error de franja; conflicto ajeno generico sin clinica ni horas"]
-  PV -- Si --> PRO["Guardar propuesta pendiente; horario y citas no cambian"]
+  PV -- Si --> PRO["Guardar propuesta pendiente y aviso interno al administrador de la misma clinica; horario y citas no cambian"]
   ACC -- "Admin rechaza" --> MOT{"Propuesta propia pendiente, vet vigente y motivo presente?"}
   MOT -- No --> CON
   MOT -- Si --> RECH["Guardar rechazo, revisor, fecha y motivo"]
@@ -1373,13 +1377,13 @@ flowchart TD
   A["Horas o sugerencias internas/portal; reservar o reprogramar"] --> V{"Contexto vigente, mascota propia/vinculada, vet miembro y parámetros válidos?"}
   V -- No --> DEN["Denegación genérica auditada; sin proyección global"]
   V -- Sí --> Q{"Consulta o escritura?"}
-  Q -- Consulta --> DAT["Tipo activo del servidor; reprogramar usa snapshot y exclusión legítima"]
+  Q -- Consulta --> DAT["Tipo activo del servidor; portal exige solo_personal=0; reprogramar usa snapshot y exclusion legitima"]
   Q -- Escritura --> TX["Coordinador común: clínica; usuarios y mascotas globales ordenados; vínculos"]
   TX --> ACT["Lecturas actuales tras esperar; revalidar acceso y recursos"]
   ACT --> OP{"Clave del mismo actor, clínica y acción?"}
   OP -- "Misma huella" --> REP["Devolver referencia guardada sin repetir negocio ni auditoría"]
   OP -- "Otra huella" --> RB["Rollback completo; conflicto"]
-  OP -- Nueva --> NUE{"Estado y tiempo válidos para un comando nuevo?"}
+  OP -- Nueva --> NUE{"Estado y tiempo validos? Cambio ordinario cumple N de la clinica RN-430?"}
   NUE -- No --> RB
   NUE -- Sí --> DAT
   DAT --> CAL["Un corte del reloj inyectable America/Bogota; apertura intersectada con jornada vet"]
@@ -1414,7 +1418,7 @@ El servidor vuelve a calcular al guardar; un resultado de consulta no equivale a
 Una cita cancelada/no_asistio libera ocupación; un sobrecupo no se omite como si fuera un hueco libre.
 Para una atención con evidencia suficiente se reconstruye la cota de A.3 sin escribir cascada; una cota agotada o una pausa sin reanudación no acredita liberación real.
 La decisión del dueño de 2026-10-20 mantiene la fecha afectada para revisión cuando la ocupación no pueda demostrarse, sin rellenar snapshots con el tipo actual.
-Una completada con evidencia conserva N y usa máximo(N+m, fin real), sin desplazar el margen con el reloj posterior.
+Una completada con evidencia ocupa hasta el fin real, sin margen posterior; el reloj no extiende su ocupación (RN-412, decisión del dueño, 2026-10-29).
 Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/topes ni entregan triage, nuevos avisos, gestión de ausencias o continuidad clínica.
 Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.
 
@@ -1601,3 +1605,45 @@ flowchart TD
 ```
 
 El correo «Recibimos tu pago» usa la outbox de S1: se reserva al acreditar bajo bloqueo de clínica y clave única por pago/administrador D7, y se despacha tras commit. Incluye valor, ciclo, referencia, medio mínimo saneado del GET y fin incluido de ese pago, aunque haya otra renovación posterior. SMTP incierto no se repite a ciegas ni invalida el periodo.
+
+
+## 18. Cambios ordinarios y registro global de mascota — correcciones 2.3.0
+
+RN-430, RE-4.2.5, RE-5.6.1/2, RE-7.5.4: se aplica el mismo control del servidor al POST y al arrastre.
+La fecha usada para N es la pactada original, conservada durante la cascada; el instante estimado no extiende el plazo.
+El replay confirmado conserva idempotencia y acceso vigente sin repetir auditoría.
+
+```mermaid
+flowchart TD
+  A["Cancelar o reprogramar; sesion, contexto, CSRF y clave"] --> P{"Permiso vigente sobre cita propia/asignada?"}
+  P -- No --> DEN["Denegar sin datos ajenos"]
+  P -- Si --> TX["Coordinador: clinica, usuarios, mascota; releer cita y parametros"]
+  TX --> EX{"Admin, urgencia o decision clinica de Llegadas con presencia?"}
+  EX -- Si --> VAL
+  EX -- No --> N{"N=0 o faltan al menos N minutos desde ahora a hora pactada?"}
+  N -- No --> ERR["Sin cambios; portal muestra Ya no se puede cambiar: comunícate con la clínica; vet oculta acciones"]
+  N -- Si --> VAL{"Estado valido; destino compatible si reprograma; admin cancela con motivo 1–255?"}
+  VAL -- No --> RB["Rollback; error y correccion en formulario"]
+  VAL -- Si --> GU["Guardar sin borrar; auditar actor, rol y motivo administrativo; operacion idempotente"]
+  GU --> OK{"Unidad integra?"}
+  OK -- No --> RB
+  OK -- Si --> COM["Commit; avisar y recalcular por flujos existentes"]
+  CAS["Cascada automatica"] --> CAL["Procesador existente; sin puerta N; conservar pactadas"]
+```
+
+RN-110/115, RE-5.13.2 y RN-G18: la cuenta con ambos roles conserva un único paciente global y permisos del contexto activo.
+En Calendario, un día totalmente cerrado se presenta como pasado, sin nueva reserva ni arrastre; las citas existentes permiten consulta.
+
+```mermaid
+flowchart TD
+  A["Propietario crea mascota propia; validacion en vivo y servidor"] --> TX["Transaccion: descubrir y bloquear clinicas activas con vinculo activo ordenadas por ID"]
+  TX --> PET["Insertar una ficha global, propietario por id_usuario; carnet unico"]
+  PET --> HAY{"Hay clinicas activas vinculadas?"}
+  HAY -- No --> COM
+  HAY -- Si --> LIM["Reutilizar vincular por clinica: revalidar vinculo, cuota y auditoria"]
+  LIM --> OK{"Todos los vinculos y auditorias correctos?"}
+  OK -- No --> RB["Rollback de ficha y todos los vinculos; no queda alta parcial"]
+  OK -- Si --> COM["Commit; mascota visible sin duplicarla ni reactivar vinculos inactivos"]
+  COM --> RES["Reserva portal o vet para mascota propia: permiso del rol activo, jornada aprobada y disponibilidad"]
+  RES --> AUD["Auditoria de cita: actor, rol activo y coincidencia propietario/veterinario RN-G18"]
+```

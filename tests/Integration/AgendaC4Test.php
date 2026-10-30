@@ -68,12 +68,12 @@ final class AgendaC4Test extends TestCase
         $r = $this->agenda->evaluar($this->entrada);
         $this->assertTrue($r['revision']);
         $this->assertTrue($r['reservable']);
-        $this->assertCount(1, $this->agenda->horas($r['id_solicitud'], $this->entrada));
+        $this->assertGreaterThan(1, count($this->agenda->horas($r['id_solicitud'], $this->entrada)));
         $this->assertSame('Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.', $r['message']);
         $this->assertSame(1, $this->cuenta("SELECT COUNT(*) FROM eventos_agenda WHERE tipo='REVISION_TRIAGE' AND estado='enviado'"));
         $revisada = $this->agenda->revisar($r['id_solicitud'], 'amarillo', 'Evaluación veterinaria', $r['huella'], str_repeat('d', 64));
         $this->assertFalse($revisada['revision']);
-        $this->assertCount(1, $this->agenda->horas($r['id_solicitud'], $this->entrada));
+        $this->assertGreaterThan(1, count($this->agenda->horas($r['id_solicitud'], $this->entrada)));
         $this->db->exec("UPDATE mascotas SET fecha_nacimiento='2029-12-01' WHERE id_mascota=1");
         $this->expectException(InvalidArgumentException::class);
         $this->agenda->horas($r['id_solicitud'], $this->entrada);
@@ -147,7 +147,8 @@ final class AgendaC4Test extends TestCase
     {
         $this->entrada['sintomas'] = [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']];
         $r = $this->agenda->evaluar($this->entrada);
-        $guardada = $this->agenda->reservar($this->entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => '08:00', 'ignore_warning' => '1']);
+        $hora = $this->agenda->horas($r['id_solicitud'], $this->entrada)[0];
+        $guardada = $this->agenda->reservar($this->entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => $hora, 'ignore_warning' => '1']);
         $this->assertSame('pendiente', $this->agenda->obtener($r['id_solicitud'])['estado_revision']);
         return [$r, $guardada];
     }
@@ -222,14 +223,14 @@ final class AgendaC4Test extends TestCase
         $this->assertSame(2, $this->cuenta('SELECT COUNT(*) FROM citas'));
     }
 
-    /** RE-4.13.5: el amarillo toma el primer espacio aunque el cliente pida otra hora. */
-    public function testAmarilloTomaPrimerEspacioAunquePidaOtraHora(): void
+    /** RE-4.13.5: decisión del dueño 2026-10-29, amarillo también elige un horario compatible. */
+    public function testAmarilloEligeHorarioCompatiblePosterior(): void
     {
         $entrada = ['sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]] + $this->entrada;
         $r = $this->agenda->evaluar($entrada);
         $this->agenda->revisar($r['id_solicitud'], 'amarillo', 'Prioritario', $r['huella'], hash('sha256', 'n'));
         $guardada = $this->agenda->reservar($entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => '11:00', 'clave_operacion' => hash('sha256', 'o')]);
-        $this->assertSame('08:00', substr($guardada['hora'], 0, 5));
+        $this->assertSame('11:00', substr($guardada['hora'], 0, 5));
         $this->assertSame('amarillo', $this->db->query('SELECT prioridad FROM citas')->fetchColumn());
         $this->assertSame('amarillo', $this->db->query('SELECT nivel_aprobado FROM solicitudes_agenda')->fetchColumn());
     }

@@ -6,7 +6,7 @@ const raiz = path.resolve(__dirname, '../../..');
 const dependencias = path.join(__dirname, 'portal-dependencias');
 const php = argumento => execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'portal-movil-vista.php'), argumento], { encoding:'utf8', env:{ ...process.env, ZOOKI_TEST_MYSQL_HOST:'', ZOOKI_TEST_MYSQL_DB:'zooki_test_base_v2' } });
 
-async function servidorPortalMovil({ uno = false, reajuste = false, html = null, triage = null } = {}) {
+async function servidorPortalMovil({ uno = false, reajuste = false, html = null, triage = null, horas = null } = {}) {
     let pagina = html ?? php(reajuste ? 'reajuste' : uno ? 'uno' : '');
     const remotas = {
         'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css':'flatpickr.min.css',
@@ -45,7 +45,7 @@ async function servidorPortalMovil({ uno = false, reajuste = false, html = null,
                 get_cita_ajax:{ success:true, cita:{ id_cita:1, id_clinica:1, id_mascota:1, id_tipo_cita:1, id_veterinario:2, fecha } },
                 portal_get_vets_ajax:[{ id_usuario:2, nombre_completo:'Beto Norte' }],
                 portal_get_tipos_cita_ajax:{ success:true, tipos:[{ id_tipo_cita:1, nombre_tipo:'Consulta general', duracion_minutos:30 }] },
-                portal_get_sugerencias_ajax:{ success:true, sugerencias:['09:30:00','10:30:00'] },
+                portal_get_sugerencias_ajax:{ success:true, sugerencias:horas ?? ['09:30:00','10:30:00'] },
                 get_notificaciones_ajax:{ success:true, notificaciones:[] },
                 validar_cuenta_ajax:{ success:true, exists:false, error:null },
                 cambiar_documento_ajax:{ success:true, message:'Guardado simulado', documento:'1080361992' },

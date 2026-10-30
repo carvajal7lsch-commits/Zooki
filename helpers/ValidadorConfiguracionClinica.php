@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ValidadorClinica.php';
 require_once __DIR__ . '/CampoInvalido.php';
+require_once __DIR__ . '/ReglaCambioCita.php';
 
 /** HU-7.4: límites compartidos y topes de minutos aprobados por el dueño el 2026-10-26. */
 final class ValidadorConfiguracionClinica
@@ -46,18 +47,19 @@ final class ValidadorConfiguracionClinica
                 ? null : 'La duración debe ser de 1 a ' . self::DURACION_MAX . ' minutos.',
             'margen_minutos' => ctype_digit($valor) && strlen($valor) <= 3 && (int) $valor <= self::MARGEN_MAX
                 ? null : 'El margen debe ser de 0 a ' . self::MARGEN_MAX . ' minutos.',
-            'pausable', 'activo' => in_array($valor, ['0', '1'], true) ? null : 'Elige Sí o No.',
+            'anticipacion_cambios_min' => ctype_digit($valor) && strlen($valor) <= 4 && (int) $valor <= ReglaCambioCita::MAX ? null : 'Indica de 0 a 1440 minutos; 0 desactiva el plazo.',
+            'pausable', 'activo', 'solo_personal' => in_array($valor, ['0', '1'], true) ? null : 'Elige Sí o No.',
             default => 'Campo no válido.',
         };
     }
 
     public static function datos(array $entrada, bool $tipo = false): array
     {
-        $campos = $tipo ? ['nombre_tipo', 'duracion_minutos', 'margen_minutos', 'pausable']
+        $campos = $tipo ? ['nombre_tipo', 'duracion_minutos', 'margen_minutos', 'pausable', 'solo_personal']
             : ['nombre', 'direccion', 'telefono', 'telefono_urgencias', 'email_contacto', 'url_logo'];
         $datos = [];
         foreach ($campos as $campo) {
-            $valor = $entrada[$campo] ?? '';
+            $valor = $entrada[$campo] ?? ($campo === 'solo_personal' ? '0' : '');
             if (is_string($valor)) {
                 $valor = in_array($campo, ['nombre', 'nombre_tipo', 'direccion', 'telefono', 'telefono_urgencias'], true)
                     ? trim(preg_replace('/\s+/u', ' ', $valor)) : trim($valor);
@@ -66,7 +68,7 @@ final class ValidadorConfiguracionClinica
             if ($error !== null) {
                 throw new CampoInvalido($campo, $error, $error);
             }
-            $datos[$campo] = in_array($campo, ['duracion_minutos', 'margen_minutos', 'pausable'], true)
+            $datos[$campo] = in_array($campo, ['duracion_minutos', 'margen_minutos', 'pausable', 'solo_personal'], true)
                 ? (int) $valor : ($valor === '' ? null : $valor);
         }
         return $datos;

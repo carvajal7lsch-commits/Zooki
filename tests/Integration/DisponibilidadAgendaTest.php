@@ -19,6 +19,8 @@ final class DisponibilidadAgendaTest extends TestCase
         DosClinicas::crearCatalogosSqlite($this->db);
         DosClinicas::crearHistoriaSqlite($this->db);
         DosClinicas::poblarAgenda($this->db);
+        // Esta clase prueba capacidad y precisión temporal; RN-430 se verifica en CorreccionesDueno230Test.
+        $this->db->exec('UPDATE clinicas SET anticipacion_cambios_min=0');
         (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $_SESSION = ['id_usuario' => 2];
         Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
@@ -301,18 +303,18 @@ final class DisponibilidadAgendaTest extends TestCase
         $this->assertStringContainsString('La clínica no atiende ese día', $this->citas->motivoSinHoras(2, 1, '2030-01-07'));
     }
 
-    public function testCompletadaReconstruyeMargenUnicoConPausaSinModificarSellos(): void
+    public function testCompletadaLiberaFinRealConPausaSinModificarSellos(): void
     {
         $id = $this->reservar('09:00');
         $this->db->exec("UPDATE citas SET estado='completada',hora_inicio_real='2030-01-07 09:00:00',hora_fin_real='2030-01-07 09:50:00',duracion_activa_objetivo_segundos=1800");
         $this->db->exec("INSERT INTO pausas_cita (id_clinica,id_cita,inicio,fin) VALUES (1,$id,'2030-01-07 09:10:00','2030-01-07 09:30:00')");
         $antes = $this->citas->getById($id);
-        $this->rechaza(fn () => $this->reservar('09:59:59'));
+        $this->rechaza(fn () => $this->reservar('09:49:59'));
         $horas = $this->citas->sugerencias(2, 1, 1, '2030-01-07');
         $this->assertContains('10:00', $horas);
         $this->assertSame($horas, $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
         $this->assertSame($antes, $this->citas->getById($id));
-        $this->reservar('10:00');
+        $this->reservar('09:50');
     }
 
     public function testOcupacionDeOtraFechaUsaDatetimesCompletos(): void

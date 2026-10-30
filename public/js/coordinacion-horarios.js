@@ -118,6 +118,7 @@
                 opcion.value = vet.id_usuario;
             }
             select.value = elegido;
+            semana.apertura?.(admin ? null : datos.apertura);
             pintarSemana(datos.franjas);
             for (const [nombre, filas] of [['propuestas', datos.propuestas], ['cierres', datos.cierres], ['afectadas', datos.afectadas]]) {
                 const contenedor = raiz.querySelector(`[data-${nombre}]`);

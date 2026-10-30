@@ -190,8 +190,8 @@ final class PortalPropietarioTest extends TestCase
         $this->assertSame('1', (string) $this->db->query('SELECT id_especie FROM mascotas WHERE id_mascota = 1')->fetchColumn());
     }
 
-    /** Alta desde el portal: ficha global, sin clínica, hasta agendar o ser atendida (RE-5.13.2). */
-    public function testRegistrarMascotaLaDejaSinClinica(): void
+    /** RN-110 (2026-10-29): ficha global, vinculada a las clínicas activas del propietario desde el alta. */
+    public function testRegistrarMascotaLaVinculaASusClinicasActivas(): void
     {
         $id = (new MascotaPropietario($this->db))->registrar([
             'nombre' => 'Toby', 'id_especie' => 1, 'id_raza' => 49, 'raza_indicada' => null,
@@ -202,7 +202,7 @@ final class PortalPropietarioTest extends TestCase
         $this->assertSame(6, (int) $fila['id_propietario']);
         $this->assertNull($fila['id_clinica_registro']);
         $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D', $fila['token_carnet']);
-        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM mascota_clinica WHERE id_mascota = $id")->fetchColumn());
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM mascota_clinica WHERE id_mascota = $id")->fetchColumn());
     }
 
     // ── Decisión C6: contacto ───────────────────────────────────────────

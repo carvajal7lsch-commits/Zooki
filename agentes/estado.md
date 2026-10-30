@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Correcciones de la prueba del dueño (2.3.0) — revisada y aprobada (2026-10-29)
+
+- **Revisión de Claude:** los nueve puntos con pruebas; JS 465/465 y PHP con MySQL 8 en verde tras actualizar dos expectativas de migración (BaseV2Mysql, AgendaB2Mysql). Anexo al final de specs/M4-agenda-grafo-ii.md. Sigue: commit, push, CI, prueba del dueño; luego conocimiento grande (Claude) y semilla de demo.
+
+- **Escribe Codex; revisa Claude.** Desde `379515f`, nueve puntos del encargo adjunto registrados al principio del plan M4. Reproducción inicial: PHP 7 fallos y Chrome 12 fallos a390/1366 antes del arreglo; primeros cambios PHP 7/7 correctos. No hay planes separados M1/M7 en este checkout; contratos en M4/M5 y documentación.
+- Decisiones confirmadas: amarillo elige cualquier horario, cercano recomendado; N de0 a1440/default30/0 desactiva; completada libera desde fin real sin margen; decisión clínica de Llegadas queda exenta del plazo, igual que urgencias/cascada. Migración15 en preparación; no ejecutar en base de trabajo. Falta UI, ampliar aislamiento/casos, migración doble, suites completas, diagramas/exportación y anexo final. Sin conocimiento, tratamientos ni demo; no hacer Git de escritura.
+
 ### Triage que no frena: RN-418 nueva y vacunación desde registros — entregada, pendiente de revisión (2026-10-29)
 
 - **Escribió Codex; revisa Claude (arquitecto).** Rama `release/v2.3.0`, a partir de `e4e5ec7` (conocimiento de Claude). Decisión del dueño: revisión pendiente o inmediata permite reservar con nivel provisional; rojo conserva derivación sin horarios. Revisión posterior usa la reclasificación de la cita con auditoría; vacunación sin declarar sale de los registros de esa mascota en cualquier clínica. Alcance, riesgos y resultado en el anexo del plan M4; M2 referencia este ajuste. Sin tocar `database/conocimiento`, tratamientos ni demo.

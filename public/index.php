@@ -482,6 +482,8 @@ switch ($action) {
         break;
 
     case "vet_agenda":
+        require_once '../controllers/CitaController.php';
+        $contextoAgenda = (new CitaController())->contextoAgenda();
         $content_view = "../views/vet/calendario.php";
         require_once "../views/vet/layout.php";
         break;

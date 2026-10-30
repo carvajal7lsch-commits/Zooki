@@ -2043,3 +2043,9 @@ select.mascota-extra__control:focus,
         padding-top: 0;
     }
 }
+.mascota-obligatorios {
+    margin: 0 0 .7rem;
+    color: var(--z-text-muted);
+    font-size: .75rem;
+}
+

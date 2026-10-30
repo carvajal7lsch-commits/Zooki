@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/OperacionAgenda.php';
+require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/ValidadorHorarioVeterinario.php';
 
@@ -91,7 +92,10 @@ final class CoordinacionHorarios extends ModeloClinica
             $this->veterinario($id);
         }
         $propias = Contexto::rolActivo() === Roles::VETERINARIO ? ' AND id_veterinario=' . (int) Contexto::idUsuario() : '';
+        $parametros = $this->consultar('SELECT anticipacion_cambios_min FROM clinicas WHERE id_clinica=?', [$this->clinica()])[0];
         return ['id_clinica' => $this->clinica(), 'id_veterinario' => $id, 'veterinarios' => $vets,
+            'anticipacion_cambios_min' => (int) $parametros['anticipacion_cambios_min'],
+            'apertura' => $this->apertura(),
             'franjas' => $this->consultar('SELECT dia_semana,hora_inicio,hora_fin FROM horarios_veterinario WHERE id_clinica=? AND id_veterinario=? AND activo=1 ORDER BY dia_semana,hora_inicio', [$this->clinica(), $id]),
             'propuestas' => $this->consultar('SELECT * FROM propuestas_horario WHERE id_clinica=?' . $propias . ' ORDER BY id_propuesta DESC', [$this->clinica()]),
             'cierres' => $this->consultar('SELECT * FROM cierres_clinica WHERE id_clinica=? ORDER BY inicio,id_cierre', [$this->clinica()]),
@@ -179,6 +183,9 @@ final class CoordinacionHorarios extends ModeloClinica
             $this->validarActual($id, $franjas);
             $this->conn->prepare('INSERT INTO propuestas_horario (id_clinica,id_veterinario,franjas) VALUES (?,?,?)')->execute([$this->clinica(), $id, json_encode($franjas, JSON_THROW_ON_ERROR)]);
             $idPropuesta = (int) $this->conn->lastInsertId();
+            if (!(new NotificacionInterna($this->conn))->crearParaRol($this->clinica(), Roles::ADMIN, 'PROPUESTA_HORARIO', 'Horario pendiente de aprobación', 'Un veterinario propuso su horario de trabajo.', 'index.php?action=admin_horarios')) {
+                throw new RuntimeException('No se pudo avisar la propuesta de horario.');
+            }
             $resultado = ['id_propuesta' => $idPropuesta, 'estado' => 'pendiente'];
             $this->auditar('propuestas_horario', $idPropuesta, null, $resultado);
             return $resultado;

@@ -168,7 +168,8 @@ final class LlegadaAgenda extends ServicioAgendaClinica
                     $fecha = $cita['fecha'];
                     $hora = $opciones['siguiente_hueco'][0] ?? '';
                 }
-                (new Cita($this->conn, $this->reloj))->reprogramar($cita, $vet, $fecha, $hora);
+                // RN-430: decisión clínica de una llegada acreditada, nunca un parámetro HTTP de excepción.
+                (new Cita($this->conn, $this->reloj))->reprogramar($cita, $vet, $fecha, $hora, null, true);
                 $this->recalcular($cita, 'Decisión por llegada tarde');
             } else {
                 throw new InvalidArgumentException('Selecciona una decisión válida.');

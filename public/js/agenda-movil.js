@@ -44,7 +44,7 @@
             boton.dataset.agendaMesFecha = clave;
             boton.setAttribute('aria-label', dia.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }));
             boton.setAttribute('aria-pressed', String(clave === (destinoFecha === 'cita' ? val('modal_fecha') : local(_selectedDate || new Date()))));
-            boton.disabled = destinoFecha === 'cita' && esDiaPasado(dia);
+            boton.disabled = diaNoReservable(dia) && (destinoFecha === 'cita' || !puntos.has(clave));
             if (puntos.has(clave)) boton.append(nodo('span', '', 'inicio-semana__punto'));
             cont.append(boton);
         }
@@ -283,7 +283,7 @@
             if (e.target.closest('[data-accion="volver"], [data-accion="reprogramar"]')) document.getElementById('agendaDetalleMovil').close();
         });
         document.addEventListener('click', e => {
-            if (e.target.closest('[data-agenda-nueva]')) abrirCitaModal(esDiaPasado(_selectedDate) ? new Date() : _selectedDate || new Date());
+            if (e.target.closest('[data-agenda-nueva]')) abrirCitaModal(_selectedDate && diaNoReservable(_selectedDate) ? new Date() : _selectedDate || new Date());
             if (e.target.closest('[data-cita-cambiar-dia]')) abrirMes('cita');
             const paso = e.target.closest('[data-agenda-mes-paso]');
             if (paso) {

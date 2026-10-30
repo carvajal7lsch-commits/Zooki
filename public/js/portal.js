@@ -651,6 +651,7 @@ async function verDetalle(id, opciones = {}) {
                 }
 
                 if (c.cancelable) cancelBtn += `<button type="button" class="portal-btn-cancel" data-ui-detener data-reprogramar-cita="${Number(c.id_cita)}">Reprogramar</button>`;
+                if (c.cambio_vencido) cancelBtn = '<p class="portal-texto-muted">Ya no se puede cambiar: comunícate con la clínica</p>';
                 html += `
                 <div class="portal-list-item" data-id-clinica="${Number(c.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--cita"><i class="ri-calendar-check-line"></i></div>
@@ -1395,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         slots.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
             `<div class="slot-grid" data-franja="${clave}"${i ? ' hidden' : ''}>${hs.map(h =>
-                `<button type="button" class="slot-chip" data-hora="${escapeHtml(h)}" aria-pressed="false">${escapeHtml(hora12(h))}</button>`
+                `<button type="button" class="slot-chip" data-hora="${escapeHtml(h)}" aria-pressed="false">${escapeHtml(hora12(h))}${h === horas[0] ? '<span class="slot-recomendado">Recomendado</span>' : ''}</button>`
             ).join('')}</div>`
         ).join('');
     }
@@ -1461,6 +1462,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             renderSlots(horas);
+            if (triageC4.resultado?.()?.nivel === 'naranja') {
+                slots.querySelectorAll('.slot-chip').forEach((chip, i) => { chip.disabled = i > 0; });
+                slots.querySelector('.slot-chip')?.click();
+            }
         } catch (e) {
             console.error(e);
             if (miTurno === turno) estadoSlots('vacio', 'No se pudieron cargar los horarios. Revisa tu conexión e intenta de nuevo.');

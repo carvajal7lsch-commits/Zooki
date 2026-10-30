@@ -1071,3 +1071,12 @@
         margin-bottom: 0;
     }
 }
+.citas-cancelacion {
+    display: grid;
+    gap: .5rem;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.citas-cancelacion[hidden] {
+    display: none;
+}

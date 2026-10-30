@@ -11,6 +11,8 @@ require_once __DIR__ . '/../helpers/ValidadorContextoClinico.php';
 /** C4: evaluación/revisión con huella vigente, sin confundir solicitud con presencia. */
 final class SolicitudAgenda extends ModeloClinica
 {
+    /** HU-4.13: tres alternativas visibles; naranja se asigna siempre al primer hueco. */
+    public const SUGERENCIAS_NARANJA = 3;
     private Closure $reloj;
 
     public function __construct(PDO $db, ?callable $reloj = null)
@@ -264,7 +266,8 @@ final class SolicitudAgenda extends ModeloClinica
             'contagio' => (bool) $fila['contagio'], 'clinica_cerrada' => $cerrada, 'telefono_urgencias' => $q->fetchColumn() ?: '',
             'reservable' => $fila['estado'] === 'abierta' && !$cerrada && !empty($contexto['entrada']['id_veterinario']) && !empty($contexto['entrada']['id_tipo_cita']) && $nivel !== 'rojo', 'resultado' => $contexto['resultado'],
             'message' => ($cerrada ? 'Clínica cerrada. Contacta al teléfono de urgencias o a un servicio 24 horas. ' : '')
-                . ($nivel === 'rojo' ? 'Emergencia: contacta de inmediato a la clínica o a un servicio de urgencias 24 horas. Este aviso no es una reserva ni acredita llegada.' : ($fila['estado_revision'] === 'pendiente' ? 'Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.' : 'Evaluación lista para consultar disponibilidad.'))];
+                . ($nivel === 'rojo' ? 'Emergencia: contacta de inmediato a la clínica o a un servicio de urgencias 24 horas. Este aviso no es una reserva ni acredita llegada.' : ($fila['estado_revision'] === 'pendiente' ? 'Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.' : 'Evaluación lista para consultar disponibilidad.'))
+                . ($nivel === 'naranja' ? ' Nivel naranja: se le asigna el primer horario libre para atenderlo cuanto antes' : '')];
     }
 
     public function horas(int $id, array $seleccion): array
@@ -286,7 +289,7 @@ final class SolicitudAgenda extends ModeloClinica
             }
             $horas = $this->disponibilidad()->sugerir((int) $seleccion['id_veterinario'], (int) $seleccion['id_mascota'], $seleccion['fecha'], (int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos'], null, true);
         }
-        return ($fila['nivel_aprobado'] ?? $fila['nivel_calculado']) === 'verde' ? $horas : array_slice($horas, 0, 1);
+        return ($fila['nivel_aprobado'] ?? $fila['nivel_calculado']) === 'naranja' ? array_slice($horas, 0, self::SUGERENCIAS_NARANJA) : $horas;
     }
 
     public function reservar(array $datos): array
@@ -317,7 +320,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if ($nivel === 'rojo') {
                     return $this->respuesta($actual);
                 }
-                if ($entrada['fecha'] < ($this->reloj)()->format('Y-m-d') || ($nivel === 'verde' && IntervalosAgenda::fecha($entrada['fecha'] . ' ' . Cita::normalizarHora((string) ($datos['hora'] ?? ''))) <= ($this->reloj)())) {
+                if ($entrada['fecha'] < ($this->reloj)()->format('Y-m-d') || ($nivel !== 'naranja' && IntervalosAgenda::fecha($entrada['fecha'] . ' ' . Cita::normalizarHora((string) ($datos['hora'] ?? ''))) <= ($this->reloj)())) {
                     throw new InvalidArgumentException('La fecha y hora seleccionadas ya pasaron.');
                 }
                 $citas = $this->conMismoAlcance(new Cita($this->conn, $this->reloj));
@@ -342,7 +345,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if (!$horas) {
                     throw new HorarioOcupado('No hay horarios compatibles. Elige otra fecha o veterinario.');
                 }
-                $hora = $nivel === 'verde' ? Cita::normalizarHora((string) ($datos['hora'] ?? '')) : Cita::normalizarHora($horas[0]);
+                $hora = $nivel !== 'naranja' ? Cita::normalizarHora((string) ($datos['hora'] ?? '')) : Cita::normalizarHora($horas[0]);
                 $motivo = trim((string) ($datos['motivo'] ?? ''));
                 if (mb_strlen($motivo) > 255) {
                     throw new InvalidArgumentException('El motivo admite hasta 255 caracteres.');

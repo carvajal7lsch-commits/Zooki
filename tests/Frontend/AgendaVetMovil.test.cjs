@@ -10,6 +10,8 @@ async function conAgenda(ejecutar) {
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
         await nav.enviar('Page.navigate', { url: servidor.url });
         await nav.esperar("document.querySelectorAll('[data-agenda-evento]').length === 6");
+        // Estas regresiones verifican las hojas; RN-430 se prueba con su plazo en CorreccionesDueno230.
+        await nav.evaluar("const agenda = document.querySelector('.agenda'); const contexto = JSON.parse(agenda.dataset.contextoAgenda); contexto.anticipacion_cambios_min = 0; agenda.dataset.contextoAgenda = JSON.stringify(contexto)");
         await ejecutar(nav, servidor);
         assert.deepEqual(nav.errores, []);
     } finally {
@@ -54,7 +56,7 @@ test('Agenda móvil: pestañas, conteos, misma fuente y filtros, semana cruzando
         await nav.evaluar(`document.querySelector('#agendaPanel [data-accion="reprogramar"]').click()`);
         await nav.esperar("document.querySelector('#reprogramar_slots_container .slot-chip') !== null");
         const reprog = await nav.evaluar(`(()=>{const d=document.querySelector('#reprogramarModalOverlay .zk-modal').getBoundingClientRect();return {detalleCerrado:!document.getElementById('agendaDetalleMovil').open, hoja:d.bottom<=innerHeight&&d.width===innerWidth, hora:document.querySelector('#reprogramar_slots_container .slot-chip').textContent}})()`);
-        assert.deepEqual(reprog, { detalleCerrado: true, hoja: true, hora: '9:00 a. m.' });
+        assert.deepEqual(reprog, { detalleCerrado: true, hoja: true, hora: '9:00 a. m.Recomendado' });
         await nav.evaluar('cerrarModalReprogramar()');
     });
 });
@@ -110,7 +112,7 @@ test('Nueva cita móvil: tres pasos, cálculo real, volver, fecha, un primario y
         await nav.evaluar(`document.getElementById('cm_siguiente').click()`);
         assert.equal(await nav.evaluar('pasoCitaModal'), 2);
         await nav.esperar("document.querySelector('#modal_slots_container .slot-chip') !== null");
-        assert.equal(await nav.evaluar("document.querySelector('#modal_slots_container .slot-chip').textContent"), '9:00 a. m.');
+        assert.equal(await nav.evaluar("document.querySelector('#modal_slots_container .slot-chip').firstChild.textContent"), '9:00 a. m.');
         await nav.evaluar(`document.querySelector('#modal_slots_container .slot-chip').click()`);
         assert.match(await nav.evaluar("document.getElementById('cm_horario_resumen').textContent"), /Amarillo · 9:00 a\. m\./);
         assert.deepEqual(await primarios(), ['cm_submit']);
@@ -160,7 +162,7 @@ test('RNF-16: Agenda y hojas sin desborde a 360/390; composición de tableta/esc
             assert.equal(medidas.desborde, false, width);
             assert.equal(medidas.modalDentro, true, width);
             assert.equal(medidas.pieVisible, true, width);
-            assert.equal(medidas.hora, '9:00 a. m.');
+            assert.equal(medidas.hora, '9:00 a. m.Recomendado');
             assert.match(medidas.resumen, /Amarillo/);
             if (width >= 768) assert.equal(medidas.columnas, true, width);
             await nav.evaluar('closeCitaModal()');

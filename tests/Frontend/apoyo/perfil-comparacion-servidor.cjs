@@ -7,6 +7,7 @@ async function servidorPerfil(rol) {
         listar_ausencias_ajax: { success:true, ausencias:[] },
         get_horarios_ajax: { success:true, horarios:[] }
     };
+    respuestasVista.get_coordinacion_horarios_ajax.apertura = Array.from({ length: 7 }, (_, i) => ({ dia_semana: i + 1, activo: i < 5 ? 1 : 0, bloque_morning_activo: 1, bloque_afternoon_activo: 1, bloque_morning_inicio: '08:00:00', bloque_morning_fin: '12:00:00', bloque_afternoon_inicio: '14:00:00', bloque_afternoon_fin: '18:00:00' }));
     return servidorPacientes({htmlVista,respuestasVista});
 }
 module.exports={servidorPerfil};

@@ -9,6 +9,7 @@ $reglas = ['nombreMin' => ValidadorClinica::NOMBRE_MIN, 'nombreMax' => Validador
     'logoMax' => ValidadorConfiguracionClinica::LOGO_MAX, 'telefonoMin' => ValidadorTelefono::MIN,
     'telefonoMax' => ValidadorTelefono::MAX, 'correoMax' => ValidadorCuenta::CORREO_MAX,
     'duracionMax' => ValidadorConfiguracionClinica::DURACION_MAX, 'margenMax' => ValidadorConfiguracionClinica::MARGEN_MAX,
+    'cambiosMax' => ReglaCambioCita::MAX,
     'logoMaxBytes' => LogoClinica::MAX_BYTES, 'caracteresTexto' => ValidadorClinica::TEXTO_CARACTERES];
 $marca = $configuracion['marca'];
 $partesNombre = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
@@ -117,6 +118,11 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
                         <span class="validation-error" id="marca-error-logo_archivo" data-error-campo="logo_archivo" aria-live="polite"></span>
                     </div>
                 </div>
+                <label class="configuracion-campo">Anticipación para cambiar citas (minutos)
+                    <input name="anticipacion_cambios_min" value="<?= (int) ($marca['anticipacion_cambios_min'] ?? ReglaCambioCita::DEFECTO) ?>" placeholder="Ej. 30" data-config-campo required inputmode="numeric" maxlength="4" data-caracteres="0-9" data-maximo="<?= ReglaCambioCita::MAX ?>" aria-describedby="marca-ayuda-anticipacion_cambios_min marca-error-anticipacion_cambios_min">
+                    <span class="configuracion-ayuda" id="marca-ayuda-anticipacion_cambios_min">De 0 a <?= ReglaCambioCita::MAX ?> minutos. 0 desactiva la restricción. No limita urgencias ni decisiones clínicas.</span>
+                    <span class="validation-error" id="marca-error-anticipacion_cambios_min" data-error-campo="anticipacion_cambios_min" aria-live="polite"></span>
+                </label>
                 <p class="configuracion-aviso" data-aviso role="status" aria-live="polite"></p>
             </div>
             <footer class="zk-dialogo__pie">
@@ -153,6 +159,10 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
                     <label class="configuracion-campo configuracion-campo--ancho">¿Se puede pausar ante una urgencia?
                         <select name="pausable" required data-config-campo aria-describedby="tipo-error-pausable"><option value="">Elige una opción</option><option value="1">Sí, se puede pausar</option><option value="0">No, no se interrumpe</option></select>
                         <span class="validation-error" id="tipo-error-pausable" data-error-campo="pausable" aria-live="polite"></span>
+                    </label>
+                    <label class="configuracion-campo configuracion-campo--ancho">¿Solo puede reservarlo el personal?
+                        <select name="solo_personal" required data-config-campo aria-describedby="tipo-error-solo_personal"><option value="0">No, también se ofrece en el portal</option><option value="1">Sí, solo el personal</option></select>
+                        <span class="validation-error" id="tipo-error-solo_personal" data-error-campo="solo_personal" aria-live="polite"></span>
                     </label>
                 </div>
                 <p class="configuracion-aviso" data-aviso role="status" aria-live="polite"></p>

@@ -344,6 +344,7 @@ for (const reprogramar of [false, true]) {
 
 // C4: estos casos C3 parten de una evaluación previa válida; la puerta negativa se cubre aparte.
 function prepararContextoC4(contexto) {
+    contexto.diaNoReservable = contexto.esDiaPasado || (() => false);
     // Los casos de envío C3 parten del último paso, con la evaluación previa válida.
     contexto.pasoCitaModal = 1;
     contexto.citaEsMovil = () => false;

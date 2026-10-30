@@ -62,6 +62,39 @@ function esDiaPasado(date) {
     return inicioDelDia(date) < inicioDelDia(new Date());
 }
 
+function contextoDeAgenda() {
+    const texto = document.querySelector?.('.agenda')?.dataset.contextoAgenda;
+    return texto ? JSON.parse(texto) : null;
+}
+
+function diaNoReservable(date) {
+    if (esDiaPasado(date)) return true;
+    const datos = contextoDeAgenda();
+    if (!datos) return false;
+    const dia = date.getDay() || 7;
+    const apertura = (datos.apertura || []).find(f => Number(f.dia_semana) === dia && Number(f.activo));
+    if (!apertura) return true;
+    const fecha = toLocalDateStr(date);
+    let libres = ['morning', 'afternoon'].filter(p => Number(apertura['bloque_' + p + '_activo'])).map(p => [
+        new Date(fecha + 'T' + apertura['bloque_' + p + '_inicio']).getTime(),
+        new Date(fecha + 'T' + apertura['bloque_' + p + '_fin']).getTime()
+    ]);
+    for (const cierre of datos.cierres || []) {
+        if (!Number(cierre.activo)) continue;
+        const a = new Date(cierre.inicio.replace(' ', 'T')).getTime();
+        const b = new Date(cierre.fin.replace(' ', 'T')).getTime();
+        libres = libres.flatMap(([inicio, fin]) => b <= inicio || a >= fin ? [[inicio, fin]] : [[inicio, Math.min(a, fin)], [Math.max(b, inicio), fin]].filter(([x, y]) => x < y));
+    }
+    return libres.length === 0;
+}
+
+function cambioPermitidoCalendario(inicio, datos) {
+    if (datos.cambiable === false) return false;
+    if (datos.prioridad === 'rojo' || !isUsuarioVeterinario()) return true;
+    const minutos = Number(contextoDeAgenda()?.anticipacion_cambios_min || 0);
+    return minutos === 0 || inicio.getTime() - Date.now() >= minutos * 60000;
+}
+
 function esHoy(date) {
     return toLocalDateStr(date) === toLocalDateStr(new Date());
 }
@@ -242,6 +275,7 @@ async function cargarEventos(info, exito, fallo) {
                     fin_estimado: e.fin_estimado || '',
                     estado_reajuste: e.estado_reajuste || '',
                     prioridad: e.prioridad || '',
+                    cambiable: e.cambiable,
                     orden_sobrecupo: e.orden_sobrecupo
                 }
             };
@@ -255,7 +289,7 @@ async function cargarEventos(info, exito, fallo) {
 
 function mountDayAddButton(arg) {
     if (!isUsuarioVeterinario()) return;
-    if (arg.view.type !== 'dayGridMonth' || esDiaPasado(arg.date)) return;
+    if (arg.view.type !== 'dayGridMonth' || diaNoReservable(arg.date)) return;
     const top = arg.el.querySelector('.fc-daygrid-day-top');
     if (!top || top.querySelector('.fc-day-add-btn')) return;
 
@@ -318,14 +352,15 @@ function iniciarCalendario() {
         },
         dayCellDidMount: mountDayAddButton,
         // Conserva la selección cuando FullCalendar vuelve a pintar las celdas.
-        dayCellClassNames: arg => (
-            _selectedDate && toLocalDateStr(arg.date) === toLocalDateStr(_selectedDate) ? ['is-selected'] : []
-        ),
+        dayCellClassNames: arg => [
+            ...(_selectedDate && toLocalDateStr(arg.date) === toLocalDateStr(_selectedDate) ? ['is-selected'] : []),
+            ...(diaNoReservable(arg.date) && !esDiaPasado(arg.date) ? ['fc-day-past', 'agenda-dia-cerrado'] : [])
+        ],
         dateClick: info => {
             // Días pasados: solo consulta. Sin actividad no hay nada que mostrar
             // y el clic no hace nada (antes salía un aviso y la celda temblaba
             // en rojo, castigando un clic que la vista debía prevenir).
-            if (esDiaPasado(info.date) && !tieneEventos(info.date)) return;
+            if (diaNoReservable(info.date) && !tieneEventos(info.date)) return;
             seleccionarDia(info.date);
         },
         eventClick: info => {
@@ -344,7 +379,7 @@ function iniciarCalendario() {
             ].filter(Boolean).join(' · ');
         },
         // Arrastrar una cita a un día pasado se bloquea antes de soltarla.
-        eventAllow: drop => !esDiaPasado(drop.start),
+        eventAllow: (drop, evento) => !diaNoReservable(drop.start) && (!evento || cambioPermitidoCalendario(evento.start, evento.extendedProps)),
         eventDrop: reprogramarPorArrastre,
         datesSet: info => {
             const titulo = info.view.title.replace(' de ', ' ');
@@ -434,14 +469,14 @@ function renderPanelDia() {
     _panel = { modo: 'dia', eventoId: null };
 
     const date = _selectedDate;
-    const pasado = esDiaPasado(date);
+    const pasado = diaNoReservable(date);
     const todos = eventosDelDia(date);
     const visibles = todos.filter(ev => FilterManager.esVisible(ev));
     const citas = visibles.filter(ev => ev.extendedProps.tipo === 'cita');
     const otros = visibles.filter(ev => ev.extendedProps.tipo !== 'cita');
 
     const diaSemana = capitalizar(formatFecha(date, { weekday: 'long' }));
-    const eyebrow = pasado ? 'Día pasado · solo consulta' : (esHoy(date) ? `Hoy · ${diaSemana}` : diaSemana);
+    const eyebrow = pasado ? (esDiaPasado(date) ? 'Día pasado · solo consulta' : 'Clínica cerrada · solo consulta') : (esHoy(date) ? `Hoy · ${diaSemana}` : diaSemana);
 
     document.getElementById('agendaPanelHead').innerHTML = `
         <div class="agenda-panel__titles">
@@ -523,7 +558,7 @@ function mostrarDetalleCita(eventId) {
     const puedeContinuar = esSuCita && enAtencion;
     const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
     const puedeConfirmar = gestiona && estado === 'pendiente' && !pasada;
-    const puedeReprogramar = gestiona && abierta && !pasada;
+    const puedeReprogramar = gestiona && abierta && !pasada && cambioPermitidoCalendario(ev.start, p);
 
     // Una sola acción principal, según el estado; el resto, secundarias.
     const primaria = puedeIniciar ? ['iniciar', 'fa-play', 'Iniciar atención']
@@ -704,7 +739,7 @@ async function cancelarCita(idCita) {
  */
 function puedeArrastrar(tipo, evento) {
     const abierta = ['pendiente', 'confirmada'].includes(normalizarEstado(evento.estado));
-    return tipo === 'cita' && isUsuarioVeterinario() && abierta && String(evento.id_veterinario || '') === getUsuarioId();
+    return tipo === 'cita' && isUsuarioVeterinario() && abierta && evento.cambiable !== false && String(evento.id_veterinario || '') === getUsuarioId();
 }
 
 function reprogramarPorArrastre(info) {
@@ -786,7 +821,7 @@ function renderSlots(id, horas, alElegir) {
 
     cont.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
         `<div class="slot-grid" data-franja="${clave}" aria-label="${clave === 'manana' ? 'Mañana' : 'Tarde'}"${i ? ' hidden' : ''}>${hs.map(h =>
-            `<button type="button" class="slot-chip" data-hora="${esc(h)}" aria-pressed="false">${esc(formatearHoraReserva(h))}</button>`
+            `<button type="button" class="slot-chip" data-hora="${esc(h)}" aria-pressed="false">${esc(formatearHoraReserva(h))}${h === horas[0] ? '<span class="slot-recomendado">Recomendado</span>' : ''}</button>`
         ).join('')}</div>`
     ).join('');
 
@@ -913,10 +948,15 @@ function avanzarPasoCita() {
 }
 
 function abrirCitaModal(date) {
+    const contexto = contextoDeAgenda();
+    if (contexto && !contexto.franjas?.length) {
+        mostrarToast('Aún no tienes horario aprobado: propón tu horario en Mi perfil', 'info');
+        return;
+    }
     if (!isUsuarioVeterinario()) return;
     triageModalC4?.reiniciar();
     comandosC3.registrar_cita_ajax.reiniciar();
-    if (!date || esDiaPasado(date)) return;
+    if (!date || diaNoReservable(date)) return;
     const fecha = inicioDelDia(date);
     const esVet = isUsuarioVeterinario();
 
@@ -1151,6 +1191,10 @@ async function cargarSlotsModal() {
             ocultarErrorModal();
             actualizarResumenModal();
         });
+        if (triageModalC4?.resultado?.()?.nivel === 'naranja') {
+            document.querySelectorAll('#modal_slots_container .slot-chip').forEach((chip, i) => { chip.disabled = i > 0; });
+            document.querySelector('#modal_slots_container .slot-chip')?.click();
+        }
         marcarHoraPreferida('modal_slots_container');
     } catch (e) {
         if (turno !== _turnoSlotsCita) return;
@@ -1334,7 +1378,7 @@ async function cargarSlotsReprogramar() {
         setSlotsEstado(id, 'guia', 'Elige la nueva fecha y el veterinario para ver los horarios libres.');
         return;
     }
-    if (esDiaPasado(new Date(`${fecha}T12:00:00`))) {
+    if (diaNoReservable(new Date(`${fecha}T12:00:00`))) {
         setSlotsEstado(id, 'vacio', 'No se puede reprogramar a un día pasado.');
         return;
     }
@@ -1505,11 +1549,17 @@ function evitarEnvioCitaConEnter(evento) {
 
 function irAUrgenciasDesdeCita() {
     if (enviosC3.reserva || triageModalC4?.resultado?.()?.nivel !== 'rojo') return;
+    const detalle = {
+        id_solicitud: triageModalC4.resultado().id_solicitud,
+        id_mascota: val('modal_mascota'),
+        resumen: triageModalC4.resumen?.() || 'Evaluación roja confirmada al agendar'
+    };
     closeCitaModal();
     const pestana = document.querySelector('[data-agenda-tab="urgencias"]');
     pestana?.click();
     pestana?.focus();
     pestana?.scrollIntoView({ block: 'nearest' });
+    document.dispatchEvent(new CustomEvent('agenda:ingreso-rojo', { detail: detalle }));
 }
 
 // Clic o teclado (flechas, Enter y Esc con ZookiCombobox): Enter elige la mascota
