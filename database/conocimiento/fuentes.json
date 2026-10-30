@@ -382,5 +382,141 @@
     "url": "https://github.com/carvajal7lsch-commits/Zooki/blob/v2/m2-grafo/specs/M2-grafo-clinico.md",
     "fecha_consulta": "2026-10-14",
     "seccion": "B2 — Revisión: decisiones 1, 2 y 3 del usuario (2026-10-14); política del producto, no evidencia clínica"
+  },
+  {
+    "codigo": "msd.ehrlichiosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Ehrlichiosis in Dogs",
+    "url": "https://www.msdvetmanual.com/infectious-diseases/rickettsial-diseases-in-dogs/ehrlichiosis-in-dogs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Ehrlichiosis in Dogs; Treatment of Ehrlichiosis in Dogs"
+  },
+  {
+    "codigo": "msd.leptospirosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Leptospirosis in Dogs",
+    "url": "https://www.msdvetmanual.com/generalized-conditions/leptospirosis/leptospirosis-in-dogs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Signs and Test Results of Leptospirosis in Dogs; Treatment of Leptospirosis in Dogs"
+  },
+  {
+    "codigo": "msd.moquillo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Canine Distemper",
+    "url": "https://www.msdvetmanual.com/generalized-conditions/canine-distemper/canine-distemper-overview",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Canine Distemper; Treatment of Canine Distemper"
+  },
+  {
+    "codigo": "msd.giardiasis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Giardiasis in Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings and Lesions of Giardiasis; Treatment of Giardiasis"
+  },
+  {
+    "codigo": "msd.dapp",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Flea Allergy Dermatitis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/fleas-and-flea-allergy-dermatitis/flea-allergy-dermatitis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Diagnosis; Treatment and Control of Flea Allergy Dermatitis in Dogs and Cats"
+  },
+  {
+    "codigo": "msd.atopia",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Canine Atopic Dermatitis",
+    "url": "https://www.msdvetmanual.com/integumentary-system/atopic-dermatitis/canine-atopic-dermatitis",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Atopic Dermatitis in Dogs; Treatment of Atopic Dermatitis in Dogs"
+  },
+  {
+    "codigo": "msd.sarnas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Mange in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Sarcoptic Mange (Canine Scabies); Canine Demodicosis"
+  },
+  {
+    "codigo": "msd.cistitis_bacteriana",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Bacterial Cystitis in Small Animals",
+    "url": "https://www.msdvetmanual.com/urinary-system/infectious-diseases-of-the-urinary-system-in-small-animals/bacterial-cystitis-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Characteristics; Treatment of Bacterial Cystitis in Small Animals"
+  },
+  {
+    "codigo": "msd.pancreatitis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Pancreatitis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/digestive-system/the-exocrine-pancreas/pancreatitis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Pancreatitis in Dogs and Cats; Treatment"
+  },
+  {
+    "codigo": "msd.respiratorio_felino",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Feline Respiratory Disease Complex",
+    "url": "https://www.msdvetmanual.com/respiratory-system/respiratory-diseases-of-small-animals/feline-respiratory-disease-complex",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Treatment"
+  },
+  {
+    "codigo": "msd.hipertiroidismo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Hyperthyroidism in Animals",
+    "url": "https://www.msdvetmanual.com/endocrine-system/the-thyroid-gland/hyperthyroidism-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Feline Hyperthyroidism; Treatment of Hyperthyroidism in Animals"
+  },
+  {
+    "codigo": "msd.ascaridos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Roundworms in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-small-animals/roundworms-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Treatment and Control"
+  },
+  {
+    "codigo": "msd.dermatofitosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Dermatophytosis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/dermatophytosis/dermatophytosis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Dermatophytosis in Dogs and Cats; Treatment"
+  },
+  {
+    "codigo": "msd.periodontal",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Periodontal Disease in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/dentistry-in-small-animals/periodontal-disease-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings and Lesions; Treatment of Periodontal Disease in Small Animals"
+  },
+  {
+    "codigo": "msd.conjuntivitis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "The Conjunctiva in Animals",
+    "url": "https://merckvetmanual.com/eye-and-ear/ophthalmology/conjunctiva",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Conjunctivitis: clinical signs and treatment"
+  },
+  {
+    "codigo": "msd.obstruccion_gi",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Gastrointestinal Obstruction in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/diseases-of-the-stomach-and-intestines-in-small-animals/gastrointestinal-obstruction-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Gastrointestinal Obstruction in Small Animals; Treatment"
+  },
+  {
+    "codigo": "msd.hipotiroidismo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Hypothyroidism in Animals",
+    "url": "https://www.msdvetmanual.com/endocrine-system/the-thyroid-gland/hypothyroidism-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Signs of Canine Hypothyroidism; Treatment"
   }
 ]

@@ -2491,5 +2491,2307 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.ehrlichiosis_canina",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: fiebre en la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sangrado_nariz.ehrlichiosis_canina",
+    "origen": "sintoma.sangrado_nariz",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: epistaxis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.moretones_piel.ehrlichiosis_canina",
+    "origen": "sintoma.moretones_piel",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: petequias y equimosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ganglios_inflamados.ehrlichiosis_canina",
+    "origen": "sintoma.ganglios_inflamados",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: linfadenomegalia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.ehrlichiosis_canina",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: signos sistémicos de la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ojos_rojos.ehrlichiosis_canina",
+    "origen": "sintoma.ojos_rojos",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: uveítis anterior en la fase crónica",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ictericia.leptospirosis_canina",
+    "origen": "sintoma.ictericia",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: ictericia por compromiso hepático",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.leptospirosis_canina",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: vómito en el compromiso renal y hepático",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.leptospirosis_canina",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.leptospirosis_canina",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_muscular.leptospirosis_canina",
+    "origen": "sintoma.dolor_muscular",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor muscular, rigidez o resistencia a moverse",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sed_aumentada.leptospirosis_canina",
+    "origen": "sintoma.sed_aumentada",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: poliuria y polidipsia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.orina_mucho.leptospirosis_canina",
+    "origen": "sintoma.orina_mucho",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: poliuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.leptospirosis_canina",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: fiebre entre los signos adicionales",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.leptospirosis_canina",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor abdominal en la lesión renal aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.moquillo_canino",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: secreción ocular mucopurulenta",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_nasal.moquillo_canino",
+    "origen": "sintoma.secrecion_nasal",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: secreción nasal serosa",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.moquillo_canino",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: fiebre bifásica",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.moquillo_canino",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: diarrea e inapetencia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.moquillo_canino",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.tics_musculares.moquillo_canino",
+    "origen": "sintoma.tics_musculares",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: mioclonías",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.primera_convulsion_resuelta.moquillo_canino",
+    "origen": "sintoma.primera_convulsion_resuelta",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: convulsiones focales o generalizadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.almohadillas_duras.moquillo_canino",
+    "origen": "sintoma.almohadillas_duras",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: hiperqueratosis de almohadillas y plano nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.giardiasis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.giardiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Clinical Findings: diarrea crónica o intermitente, pálida, grasosa y maloliente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_peso.giardiasis",
+    "origen": "sintoma.perdida_peso",
+    "destino": "diagnostico.giardiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Clinical Findings: pérdida de peso",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.pulgas.dermatitis_alergica_pulgas",
+    "origen": "sintoma.pulgas",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Diagnosis: pulgas o sus heces con signos compatibles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatitis_alergica_pulgas",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: prurito en dorso caudal, base de la cola y muslos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.dermatitis_alergica_pulgas",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: alopecia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.dermatitis_alergica_pulgas",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: lesiones papulocostrosas; dermatitis miliar en gatos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatitis_atopica_canina",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: el prurito es el signo característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.lame_patas.dermatitis_atopica_canina",
+    "origen": "sintoma.lame_patas",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: patas entre las zonas más afectadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.mal_olor_oidos.dermatitis_atopica_canina",
+    "origen": "sintoma.mal_olor_oidos",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: otitis crónica o recurrente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sacude_cabeza.dermatitis_atopica_canina",
+    "origen": "sintoma.sacude_cabeza",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: otitis recurrente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.sarna_sarcoptica",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: prurito intenso característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.sarna_sarcoptica",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: costras gruesas amarillas y excoriaciones",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.sarna_sarcoptica",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: alopecia en orejas, codos, tarsos y abdomen",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.demodicosis_canina",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.demodicosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: áreas de alopecia bien delimitadas, eritema y descamación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.demodicosis_canina",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.demodicosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: costras y seborrea en la forma generalizada",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_orinar.cistitis_bacteriana",
+    "origen": "sintoma.dolor_orinar",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: disuria y estranguria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sangre_orina.cistitis_bacteriana",
+    "origen": "sintoma.sangre_orina",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: hematuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.intentos_orinar_minimo.cistitis_bacteriana",
+    "origen": "sintoma.intentos_orinar_minimo",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: polaquiuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.orina_fuera_caja.cistitis_bacteriana",
+    "origen": "sintoma.orina_fuera_caja",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: periuria e incontinencia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.pancreatitis",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: vómito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.pancreatitis",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: dolor abdominal (posición de rezo)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.pancreatitis",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.pancreatitis",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: debilidad y letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.pancreatitis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: diarrea",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.estornudos.complejo_respiratorio_felino",
+    "origen": "sintoma.estornudos",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: estornudos frecuentes",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_nasal.complejo_respiratorio_felino",
+    "origen": "sintoma.secrecion_nasal",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: secreción nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.complejo_respiratorio_felino",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: conjuntivitis y epífora",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.complejo_respiratorio_felino",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: fiebre fluctuante",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.llagas_boca.complejo_respiratorio_felino",
+    "origen": "sintoma.llagas_boca",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: úlceras orales del calicivirus",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.babeo.complejo_respiratorio_felino",
+    "origen": "sintoma.babeo",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: hipersalivación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.complejo_respiratorio_felino",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_peso.hipertiroidismo_felino",
+    "origen": "sintoma.perdida_peso",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: pérdida de peso pese a buen apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.hambre_aumentada.hipertiroidismo_felino",
+    "origen": "sintoma.hambre_aumentada",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: apetito voraz",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.hiperactividad.hipertiroidismo_felino",
+    "origen": "sintoma.hiperactividad",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: hiperactividad y vocalización",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sed_aumentada.hipertiroidismo_felino",
+    "origen": "sintoma.sed_aumentada",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: poliuria-polidipsia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.hipertiroidismo_felino",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: vómito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.gusanos_heces.ascaridiasis",
+    "origen": "sintoma.gusanos_heces",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: gusanos vomitados o en las heces",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.ascaridiasis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: diarrea con moco",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.abdomen_distendido.ascaridiasis",
+    "origen": "sintoma.abdomen_distendido",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: abdomen abultado en cachorros y gatitos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.tos.ascaridiasis",
+    "origen": "sintoma.tos",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.2,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: tos por migración larvaria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.dermatofitosis",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: pérdida de pelo",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.dermatofitosis",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: descamación y costras",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatofitosis",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.2,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: prurito variable",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.mal_aliento.enfermedad_periodontal",
+    "origen": "sintoma.mal_aliento",
+    "destino": "diagnostico.enfermedad_periodontal",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: halitosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.encias_inflamadas.enfermedad_periodontal",
+    "origen": "sintoma.encias_inflamadas",
+    "destino": "diagnostico.enfermedad_periodontal",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: encías rojas, inflamadas y sangrantes; placa y sarro",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ojos_rojos.conjuntivitis",
+    "origen": "sintoma.ojos_rojos",
+    "destino": "diagnostico.conjuntivitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: hiperemia y quemosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.conjuntivitis",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.conjuntivitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: secreción ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito_repetido.cuerpo_extrano_gi",
+    "origen": "sintoma.vomito_repetido",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: vómito, a menudo intratable",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.cuerpo_extrano_gi",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.cuerpo_extrano_gi",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: dolor abdominal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.cuerpo_extrano_gi",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_defeca.cuerpo_extrano_gi",
+    "origen": "sintoma.no_defeca",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: obstrucción gastrointestinal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.aumento_peso.hipotiroidismo_canino",
+    "origen": "sintoma.aumento_peso",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: aumento de peso sin más apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.hipotiroidismo_canino",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.cansancio_ejercicio.hipotiroidismo_canino",
+    "origen": "sintoma.cansancio_ejercicio",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: intolerancia al ejercicio",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.hipotiroidismo_canino",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: alopecia simétrica no pruriginosa del tronco",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

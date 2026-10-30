@@ -3601,5 +3601,1123 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.estornudos.estornuda",
+    "nodo": "sintoma.estornudos",
+    "texto": "estornuda",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.estornudos.estornudos",
+    "nodo": "sintoma.estornudos",
+    "texto": "estornudos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.estornudos.estornuda_mucho",
+    "nodo": "sintoma.estornudos",
+    "texto": "estornuda mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_nasal.moco",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "moco",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_nasal.mocos",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "mocos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_nasal.le_sale_moco",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "le sale moco",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_nasal.nariz_con_moco",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "nariz con moco",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_nasal.secrecion_nasal",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "secrecion nasal",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_ocular.laganas",
+    "nodo": "sintoma.secrecion_ocular",
+    "texto": "lagañas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_ocular.leganas",
+    "nodo": "sintoma.secrecion_ocular",
+    "texto": "legañas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_ocular.lagana",
+    "nodo": "sintoma.secrecion_ocular",
+    "texto": "lagaña",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_ocular.ojos_con_pus",
+    "nodo": "sintoma.secrecion_ocular",
+    "texto": "ojos con pus",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_ocular.le_lloran_los_ojos",
+    "nodo": "sintoma.secrecion_ocular",
+    "texto": "le lloran los ojos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ojos_rojos.ojo_rojo",
+    "nodo": "sintoma.ojos_rojos",
+    "texto": "ojo rojo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ojos_rojos.ojos_rojos",
+    "nodo": "sintoma.ojos_rojos",
+    "texto": "ojos rojos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ojos_rojos.ojos_irritados",
+    "nodo": "sintoma.ojos_rojos",
+    "texto": "ojos irritados",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ojos_rojos.conjuntivitis",
+    "nodo": "sintoma.ojos_rojos",
+    "texto": "conjuntivitis",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.se_rasca",
+    "nodo": "sintoma.picazon",
+    "texto": "se rasca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.rasquina",
+    "nodo": "sintoma.picazon",
+    "texto": "rasquiña",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.picazon",
+    "nodo": "sintoma.picazon",
+    "texto": "picazon",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.comezon",
+    "nodo": "sintoma.picazon",
+    "texto": "comezon",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.se_muerde",
+    "nodo": "sintoma.picazon",
+    "texto": "se muerde",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picazon.le_pica",
+    "nodo": "sintoma.picazon",
+    "texto": "le pica",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.perdida_pelo.se_le_cae_el_pelo",
+    "nodo": "sintoma.perdida_pelo",
+    "texto": "se le cae el pelo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.perdida_pelo.peladuras",
+    "nodo": "sintoma.perdida_pelo",
+    "texto": "peladuras",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.perdida_pelo.calvas",
+    "nodo": "sintoma.perdida_pelo",
+    "texto": "calvas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.perdida_pelo.zonas_sin_pelo",
+    "nodo": "sintoma.perdida_pelo",
+    "texto": "zonas sin pelo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.perdida_pelo.alopecia",
+    "nodo": "sintoma.perdida_pelo",
+    "texto": "alopecia",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.costras_piel.costras",
+    "nodo": "sintoma.costras_piel",
+    "texto": "costras",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.costras_piel.granitos",
+    "nodo": "sintoma.costras_piel",
+    "texto": "granitos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.costras_piel.caspa",
+    "nodo": "sintoma.costras_piel",
+    "texto": "caspa",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.costras_piel.heridas_en_la_piel",
+    "nodo": "sintoma.costras_piel",
+    "texto": "heridas en la piel",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.costras_piel.brotes",
+    "nodo": "sintoma.costras_piel",
+    "texto": "brotes",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lame_patas.se_lame_las_patas",
+    "nodo": "sintoma.lame_patas",
+    "texto": "se lame las patas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lame_patas.se_muerde_las_patas",
+    "nodo": "sintoma.lame_patas",
+    "texto": "se muerde las patas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lame_patas.lame_las_patas",
+    "nodo": "sintoma.lame_patas",
+    "texto": "lame las patas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.pulgas.pulgas",
+    "nodo": "sintoma.pulgas",
+    "texto": "pulgas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.pulgas.tiene_pulgas",
+    "nodo": "sintoma.pulgas",
+    "texto": "tiene pulgas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.pulgas.puntos_negros_en_el_pelo",
+    "nodo": "sintoma.pulgas",
+    "texto": "puntos negros en el pelo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.gusanos_heces.gusanos",
+    "nodo": "sintoma.gusanos_heces",
+    "texto": "gusanos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.gusanos_heces.lombrices",
+    "nodo": "sintoma.gusanos_heces",
+    "texto": "lombrices",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.gusanos_heces.parasitos_en_la_popo",
+    "nodo": "sintoma.gusanos_heces",
+    "texto": "parasitos en la popo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.gusanos_heces.bichos_en_la_popo",
+    "nodo": "sintoma.gusanos_heces",
+    "texto": "bichos en la popo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.mal_aliento.mal_aliento",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "mal aliento",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.mal_aliento.le_huele_la_boca",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "le huele la boca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.mal_aliento.halitosis",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "halitosis",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.mal_aliento.boca_con_mal_olor",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "boca con mal olor",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_inflamadas.sarro",
+    "nodo": "sintoma.encias_inflamadas",
+    "texto": "sarro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_inflamadas.encias_rojas",
+    "nodo": "sintoma.encias_inflamadas",
+    "texto": "encias rojas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_inflamadas.le_sangran_las_encias",
+    "nodo": "sintoma.encias_inflamadas",
+    "texto": "le sangran las encias",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_inflamadas.encias_inflamadas",
+    "nodo": "sintoma.encias_inflamadas",
+    "texto": "encias inflamadas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sangrado_nariz.sangra_la_nariz",
+    "nodo": "sintoma.sangrado_nariz",
+    "texto": "sangra la nariz",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sangrado_nariz.sangre_por_la_nariz",
+    "nodo": "sintoma.sangrado_nariz",
+    "texto": "sangre por la nariz",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sangrado_nariz.epistaxis",
+    "nodo": "sintoma.sangrado_nariz",
+    "texto": "epistaxis",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.moretones_piel.moretones",
+    "nodo": "sintoma.moretones_piel",
+    "texto": "moretones",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.moretones_piel.morados",
+    "nodo": "sintoma.moretones_piel",
+    "texto": "morados",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.moretones_piel.puntos_rojos_en_la_piel",
+    "nodo": "sintoma.moretones_piel",
+    "texto": "puntos rojos en la piel",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.moretones_piel.petequias",
+    "nodo": "sintoma.moretones_piel",
+    "texto": "petequias",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aumento_peso.engordo",
+    "nodo": "sintoma.aumento_peso",
+    "texto": "engordo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aumento_peso.subio_de_peso",
+    "nodo": "sintoma.aumento_peso",
+    "texto": "subio de peso",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aumento_peso.esta_gordo",
+    "nodo": "sintoma.aumento_peso",
+    "texto": "esta gordo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aumento_peso.aumento_de_peso",
+    "nodo": "sintoma.aumento_peso",
+    "texto": "aumento de peso",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ganglios_inflamados.ganglios",
+    "nodo": "sintoma.ganglios_inflamados",
+    "texto": "ganglios",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ganglios_inflamados.bolitas_en_el_cuello",
+    "nodo": "sintoma.ganglios_inflamados",
+    "texto": "bolitas en el cuello",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ganglios_inflamados.ganglios_inflamados",
+    "nodo": "sintoma.ganglios_inflamados",
+    "texto": "ganglios inflamados",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_muscular.le_duele",
+    "nodo": "sintoma.dolor_muscular",
+    "texto": "le duele",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_muscular.no_se_quiere_mover",
+    "nodo": "sintoma.dolor_muscular",
+    "texto": "no se quiere mover",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_muscular.tiembla",
+    "nodo": "sintoma.dolor_muscular",
+    "texto": "tiembla",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_muscular.adolorido",
+    "nodo": "sintoma.dolor_muscular",
+    "texto": "adolorido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.babeo.babea",
+    "nodo": "sintoma.babeo",
+    "texto": "babea",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.babeo.babeo",
+    "nodo": "sintoma.babeo",
+    "texto": "babeo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.babeo.saliva_mucho",
+    "nodo": "sintoma.babeo",
+    "texto": "saliva mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.babeo.le_cae_baba",
+    "nodo": "sintoma.babeo",
+    "texto": "le cae baba",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.llagas_boca.llagas_en_la_boca",
+    "nodo": "sintoma.llagas_boca",
+    "texto": "llagas en la boca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.llagas_boca.ulceras_en_la_lengua",
+    "nodo": "sintoma.llagas_boca",
+    "texto": "ulceras en la lengua",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.llagas_boca.heridas_en_la_boca",
+    "nodo": "sintoma.llagas_boca",
+    "texto": "heridas en la boca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.tics_musculares.tics",
+    "nodo": "sintoma.tics_musculares",
+    "texto": "tics",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.tics_musculares.sacudidas",
+    "nodo": "sintoma.tics_musculares",
+    "texto": "sacudidas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.tics_musculares.brinca_solo",
+    "nodo": "sintoma.tics_musculares",
+    "texto": "brinca solo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.tics_musculares.contracciones",
+    "nodo": "sintoma.tics_musculares",
+    "texto": "contracciones",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hiperactividad.hiperactivo",
+    "nodo": "sintoma.hiperactividad",
+    "texto": "hiperactivo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hiperactividad.maulla_mucho",
+    "nodo": "sintoma.hiperactividad",
+    "texto": "maulla mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hiperactividad.muy_acelerado",
+    "nodo": "sintoma.hiperactividad",
+    "texto": "muy acelerado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.almohadillas_duras.almohadillas_duras",
+    "nodo": "sintoma.almohadillas_duras",
+    "texto": "almohadillas duras",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.almohadillas_duras.patas_agrietadas",
+    "nodo": "sintoma.almohadillas_duras",
+    "texto": "patas agrietadas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.almohadillas_duras.nariz_reseca",
+    "nodo": "sintoma.almohadillas_duras",
+    "texto": "nariz reseca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

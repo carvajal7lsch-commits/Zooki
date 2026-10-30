@@ -1996,6 +1996,240 @@
     "estado_validacion": "pendiente"
   },
   {
+    "codigo": "diagnostico.ehrlichiosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Ehrlichiosis canina",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Ehrlichiosis in Dogs",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.leptospirosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Leptospirosis canina",
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Leptospirosis in Dogs",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.moquillo_canino",
+    "tipo": "diagnostico",
+    "etiqueta": "Moquillo canino (distemper)",
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Canine Distemper",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.giardiasis",
+    "tipo": "diagnostico",
+    "etiqueta": "Giardiasis",
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Giardiasis in Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatitis alérgica a la pulga",
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Flea Allergy Dermatitis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatitis_atopica_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatitis atópica canina",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Canine Atopic Dermatitis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.sarna_sarcoptica",
+    "tipo": "diagnostico",
+    "etiqueta": "Sarna sarcóptica",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange (Canine Scabies)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.demodicosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Demodicosis canina",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.cistitis_bacteriana",
+    "tipo": "diagnostico",
+    "etiqueta": "Cistitis bacteriana (infección urinaria)",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Bacterial Cystitis in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.pancreatitis",
+    "tipo": "diagnostico",
+    "etiqueta": "Pancreatitis",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Pancreatitis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.complejo_respiratorio_felino",
+    "tipo": "diagnostico",
+    "etiqueta": "Complejo respiratorio felino (rinotraqueítis y calicivirus)",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Feline Respiratory Disease Complex",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.hipertiroidismo_felino",
+    "tipo": "diagnostico",
+    "etiqueta": "Hipertiroidismo felino",
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Feline Hyperthyroidism",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.ascaridiasis",
+    "tipo": "diagnostico",
+    "etiqueta": "Parásitos intestinales (lombrices redondas)",
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Roundworms in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatofitosis",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatofitosis (tiña)",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Dermatophytosis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.enfermedad_periodontal",
+    "tipo": "diagnostico",
+    "etiqueta": "Enfermedad periodontal",
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Periodontal Disease in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.conjuntivitis",
+    "tipo": "diagnostico",
+    "etiqueta": "Conjuntivitis",
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.cuerpo_extrano_gi",
+    "tipo": "diagnostico",
+    "etiqueta": "Cuerpo extraño u obstrucción intestinal",
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Gastrointestinal Obstruction in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.hipotiroidismo_canino",
+    "tipo": "diagnostico",
+    "etiqueta": "Hipotiroidismo canino",
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Canine Hypothyroidism",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
     "codigo": "sintoma.parto_esfuerzo_menos_30",
     "tipo": "sintoma",
     "etiqueta": "Parto con esfuerzo sin cría: menos de 30 minutos",
@@ -2009,6 +2243,425 @@
       {
         "codigo": "zooki.decisiones_b21",
         "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): menos de 30 minutos implica naranja con revisión; no declara un parto seguro",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.estornudos",
+    "tipo": "sintoma",
+    "etiqueta": "Estornuda seguido",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: estornudos frecuentes como signo temprano",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.secrecion_nasal",
+    "tipo": "sintoma",
+    "etiqueta": "Secreción o moco por la nariz",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: secreción nasal serosa o mucopurulenta",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.secrecion_ocular",
+    "tipo": "sintoma",
+    "etiqueta": "Lagañas o secreción en los ojos",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: secreción ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.ojos_rojos",
+    "tipo": "sintoma",
+    "etiqueta": "Ojos rojos o irritados",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: hiperemia conjuntival y molestia ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.picazon",
+    "tipo": "sintoma",
+    "etiqueta": "Se rasca o se muerde mucho la piel",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: el prurito es el signo característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.perdida_pelo",
+    "tipo": "sintoma",
+    "etiqueta": "Se le cae el pelo o tiene zonas peladas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: pérdida de pelo, descamación y costras",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.costras_piel",
+    "tipo": "sintoma",
+    "etiqueta": "Costras, granitos o caspa en la piel",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: erupciones papulocostrosas con costras gruesas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.lame_patas",
+    "tipo": "sintoma",
+    "etiqueta": "Se lame o muerde las patas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: patas entre las zonas más afectadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.pulgas",
+    "tipo": "sintoma",
+    "etiqueta": "Tiene pulgas o puntitos negros en el pelo",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Diagnosis: observación de pulgas o de sus heces (puntos negro rojizos)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.gusanos_heces",
+    "tipo": "sintoma",
+    "etiqueta": "Gusanos en la popó o en el vómito",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: los gusanos pueden vomitarse y salir en las heces",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.mal_aliento",
+    "tipo": "sintoma",
+    "etiqueta": "Mal aliento",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: halitosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.encias_inflamadas",
+    "tipo": "sintoma",
+    "etiqueta": "Encías rojas, inflamadas o que sangran; sarro",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: encías rojas, inflamadas y sangrantes; placa y sarro",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.sangrado_nariz",
+    "tipo": "sintoma",
+    "etiqueta": "Le sangra la nariz",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: tendencia al sangrado (epistaxis) en la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.moretones_piel",
+    "tipo": "sintoma",
+    "etiqueta": "Manchas moradas o puntitos rojos en piel o encías",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: petequias y equimosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.aumento_peso",
+    "tipo": "sintoma",
+    "etiqueta": "Sube de peso sin comer más",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: aumento de peso sin más apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.ganglios_inflamados",
+    "tipo": "sintoma",
+    "etiqueta": "Bolitas o ganglios inflamados (cuello, detrás de las rodillas)",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: linfadenomegalia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.dolor_muscular",
+    "tipo": "sintoma",
+    "etiqueta": "Dolor al tocarlo, no quiere moverse o tiembla",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor muscular, rigidez, debilidad, temblor o resistencia a moverse",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.babeo",
+    "tipo": "sintoma",
+    "etiqueta": "Babea mucho más de lo normal",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: anorexia e hipersalivación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.llagas_boca",
+    "tipo": "sintoma",
+    "etiqueta": "Llagas o úlceras en la boca o la lengua",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: úlceras orales características del calicivirus",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.tics_musculares",
+    "tipo": "sintoma",
+    "etiqueta": "Tics o sacudidas musculares que no para",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: mioclonías y otros signos neurológicos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.hiperactividad",
+    "tipo": "sintoma",
+    "etiqueta": "Muy inquieto, maúlla o ladra mucho más",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: hiperactividad y vocalización excesiva",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.almohadillas_duras",
+    "tipo": "sintoma",
+    "etiqueta": "Almohadillas o nariz endurecidas y agrietadas",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: hiperqueratosis de almohadillas y plano nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
         "fundamento": "politica"
       }
     ],
