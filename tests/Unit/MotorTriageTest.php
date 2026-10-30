@@ -87,9 +87,25 @@ final class MotorTriageTest extends TestCase
         }
     }
 
+    /** RN-418 (decisión del dueño, 2026-10-29): en especies con cobertura ningún síntoma cae en P6 por falta de nivel propio. */
+    public function testTodoSintomaTieneNivelBaseYNoPideRevisionSinDatosDecisivos(): void
+    {
+        $grafo = ConocimientoRealPrueba::instantanea();
+        $paciente = ['especie' => 'especie.canino', 'edad_meses' => 24, 'sexo' => 'Macho', 'esterilizado' => false, 'vacunacion' => 'completa', 'alertas_activas' => [], 'raza' => ['codigo' => 'raza.labrador', 'atributos' => $grafo->nodos['raza.labrador']['metadatos']]];
+        foreach ($grafo->nodos as $codigo => $nodo) {
+            if ($nodo['tipo'] !== 'sintoma' || $codigo === 'sintoma.otro_no_se') {
+                continue;
+            }
+            $this->assertTrue(isset($nodo['nivel_triage']) || ($nodo['alarma_universal'] ?? false), $codigo . ' sin nivel base');
+            $resultado = MotorTriage::calcular([$codigo => ['minutos' => 120]], [], $paciente, $grafo, new DateTimeImmutable('2026-10-15T12:00:00-05:00'));
+            $this->assertNotContains('P6', $resultado['reglas_aplicadas'], $codigo);
+        }
+        $this->assertSame('naranja', $this->calcular(['ictericia'])['nivel']);
+    }
+
     public function testP6ReservasNuncaTerminanEnVerdeYConservanRevisionInmediata(): void
     {
-        foreach ([[], ['otro_no_se'], ['ictericia']] as $marcas) {
+        foreach ([[], ['otro_no_se']] as $marcas) {
             $resultado = $this->calcular($marcas);
             $this->assertSame('amarillo', $resultado['nivel']);
             $this->assertTrue($resultado['revision']);

@@ -596,6 +596,7 @@
     "codigo": "sintoma.intentos_orinar_minimo",
     "tipo": "sintoma",
     "etiqueta": "Intenta orinar muchas veces y sale poco o nada",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "cornell.flutd",
@@ -606,6 +607,16 @@
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: dificultad para orinar en gatos machos",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Difficulty urinating», potencialmente mortal sin tratamiento",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -614,11 +625,18 @@
     "codigo": "sintoma.dolor_orinar",
     "tipo": "sintoma",
     "etiqueta": "Dolor o quejido al orinar",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «crying out while urinating», micción dolorosa",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -627,6 +645,7 @@
     "codigo": "sintoma.arcadas_improductivas",
     "tipo": "sintoma",
     "etiqueta": "Arcadas: intenta vomitar y no sale nada",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "msd.dtg",
@@ -637,6 +656,16 @@
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: «nonproductive retching»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Bloated abdomen with dry-heaving»",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -645,10 +674,21 @@
     "codigo": "sintoma.abdomen_distendido",
     "tipo": "sintoma",
     "etiqueta": "Barriga hinchada o distendida",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "msd.dtg",
         "localizador": "Signos clínicos: distensión abdominal aguda o progresiva",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Bloated abdomen with dry-heaving»",
         "fundamento": "clinico"
       }
     ],
@@ -658,10 +698,22 @@
     "codigo": "sintoma.inquietud",
     "tipo": "sintoma",
     "etiqueta": "Inquietud, no encuentra posición",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.dtg",
         "localizador": "Signos clínicos: «restlessness»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Signs of severe pain or distress»",
         "fundamento": "clinico"
       }
     ],
@@ -671,6 +723,7 @@
     "codigo": "sintoma.sed_aumentada",
     "tipo": "sintoma",
     "etiqueta": "Toma mucha más agua de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.piometra",
@@ -686,6 +739,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: polidipsia",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -719,10 +777,21 @@
     "codigo": "sintoma.secrecion_genital",
     "tipo": "sintoma",
     "etiqueta": "Flujo o secreción por la vulva",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.piometra",
         "localizador": "Signos: exudado vaginal (cérvix abierto)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Difficult labor or unexplained vaginal bleeding»",
         "fundamento": "clinico"
       }
     ],
@@ -772,6 +841,7 @@
     "codigo": "sintoma.exposicion_calor",
     "tipo": "sintoma",
     "etiqueta": "Estuvo expuesto a calor fuerte (sol, carro cerrado, día caluroso)",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -781,6 +851,16 @@
       {
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: «heatstroke»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Heatstroke symptoms»: jadeo excesivo, babeo, debilidad, vómito o colapso",
         "fundamento": "clinico"
       }
     ],
@@ -955,11 +1035,18 @@
     "codigo": "sintoma.se_esconde",
     "tipo": "sintoma",
     "etiqueta": "Se esconde o se aísla",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.lipidosis",
         "localizador": "Signos: el gato se vuelve retraído y evita el plato",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -968,6 +1055,8 @@
     "codigo": "sintoma.fiebre",
     "tipo": "sintoma",
     "etiqueta": "Fiebre referida (se siente caliente)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.panleucopenia",
@@ -978,6 +1067,11 @@
         "codigo": "msd.parvovirus",
         "localizador": "Signos iniciales: fiebre",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1005,6 +1099,7 @@
     "codigo": "sintoma.convulsion_habitual_resuelta",
     "tipo": "sintoma",
     "etiqueta": "Convulsión que ya pasó, corta y como las de siempre",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.epilepsia",
@@ -1015,6 +1110,11 @@
         "codigo": "zooki.reglas_negocio",
         "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
         "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1023,6 +1123,8 @@
     "codigo": "sintoma.no_defeca",
     "tipo": "sintoma",
     "etiqueta": "No hace popó (no defeca)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1033,6 +1135,11 @@
         "codigo": "msd.conejos_no_infecciosas",
         "localizador": "Gastric Stasis: estasis digestiva en conejos",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1041,11 +1148,17 @@
     "codigo": "sintoma.plumaje_erizado",
     "tipo": "sintoma",
     "etiqueta": "Plumas erizadas o esponjadas (ave)",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.aves_enfermedad",
         "localizador": "How Can I Tell If My Pet Bird Is Sick?: «fluffed-up feathers»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1068,10 +1181,16 @@
     "codigo": "sintoma.control_preventivo",
     "tipo": "sintoma",
     "etiqueta": "Control preventivo o vacunación, sin síntomas",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
         "localizador": "§2.G «No sobre-clasificar»: consulta preventiva, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
         "fundamento": "politica"
       }
     ],
@@ -1081,6 +1200,7 @@
     "codigo": "sintoma.picor_oidos_leve_estable",
     "tipo": "sintoma",
     "etiqueta": "Se rasca las orejas, leve, y come y juega normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1091,6 +1211,11 @@
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: sacudir la cabeza y prurito ótico",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1099,6 +1224,7 @@
     "codigo": "sintoma.cojera_leve_estable",
     "tipo": "sintoma",
     "etiqueta": "Cojea un poco, estable, y mantiene su actividad",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1109,6 +1235,11 @@
         "codigo": "msd.osteoartritis",
         "localizador": "Signos clínicos: cojera",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1117,6 +1248,7 @@
     "codigo": "sintoma.orina_mucho",
     "tipo": "sintoma",
     "etiqueta": "Orina mucho más de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.renal",
@@ -1127,6 +1259,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: poliuria",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1135,6 +1272,7 @@
     "codigo": "sintoma.perdida_peso",
     "tipo": "sintoma",
     "etiqueta": "Pérdida de peso",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.renal",
@@ -1145,6 +1283,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: pérdida de peso",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1153,11 +1296,17 @@
     "codigo": "sintoma.hambre_aumentada",
     "tipo": "sintoma",
     "etiqueta": "Come mucho más de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: polifagia",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1166,11 +1315,18 @@
     "codigo": "sintoma.tos",
     "tipo": "sintoma",
     "etiqueta": "Tos",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.tos_perreras",
         "localizador": "Signos clínicos: tos «goose honk»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1179,11 +1335,17 @@
     "codigo": "sintoma.sacude_cabeza",
     "tipo": "sintoma",
     "etiqueta": "Sacude la cabeza",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: «head shaking»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1192,11 +1354,17 @@
     "codigo": "sintoma.mal_olor_oidos",
     "tipo": "sintoma",
     "etiqueta": "Mal olor o secreción en los oídos",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: «malodor, otic discharge or exudate»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1205,11 +1373,18 @@
     "codigo": "sintoma.sangre_orina",
     "tipo": "sintoma",
     "etiqueta": "Sangre en la orina",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «blood in the urine»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1218,11 +1393,17 @@
     "codigo": "sintoma.orina_fuera_caja",
     "tipo": "sintoma",
     "etiqueta": "Orina fuera de la caja de arena",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «inappropriate urination (outside of the litter box)»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1231,10 +1412,21 @@
     "codigo": "sintoma.rigidez",
     "tipo": "sintoma",
     "etiqueta": "Rigidez o le cuesta levantarse",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.osteoartritis",
         "localizador": "Signos clínicos: «slowness to rise, especially after extended rest»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Sudden collapse, weakness, or trouble using limbs»",
         "fundamento": "clinico"
       }
     ],
@@ -1244,11 +1436,17 @@
     "codigo": "sintoma.ictericia",
     "tipo": "sintoma",
     "etiqueta": "Piel, encías u ojos amarillos (ictericia)",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "cornell.lipidosis",
         "localizador": "Signos: ictericia en orejas y encías",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1257,6 +1455,8 @@
     "codigo": "sintoma.dolor_abdominal",
     "tipo": "sintoma",
     "etiqueta": "Dolor de barriga",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.gastritis",
@@ -1266,6 +1466,16 @@
       {
         "codigo": "cornell.panleucopenia",
         "localizador": "Signos clínicos: dolor abdominal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Signs of severe pain or distress»",
         "fundamento": "clinico"
       }
     ],
