@@ -518,5 +518,21 @@
     "url": "https://www.msdvetmanual.com/endocrine-system/the-thyroid-gland/hypothyroidism-in-animals",
     "fecha_consulta": "2026-10-30",
     "seccion": "Clinical Signs of Canine Hypothyroidism; Treatment"
+  },
+  {
+    "codigo": "msd.aine_tabla",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "NSAIDs Used for Pain Management in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/multimedia/table/nsaids-used-for-pain-management-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Tabla: dosis de meloxicam y carprofeno en perros y gatos"
+  },
+  {
+    "codigo": "msd.antiepilepticos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Antiepileptic Drugs",
+    "url": "https://merckvetmanual.com/multimedia/table/antiepileptic-drugs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Tabla: dosis de fenobarbital y levetiracetam"
   }
 ]

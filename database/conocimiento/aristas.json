@@ -4793,5 +4793,1145 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ehrlichiosis_canina.doxiciclina.canino",
+    "origen": "diagnostico.ehrlichiosis_canina",
+    "destino": "farmaco.doxiciclina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 28,
+      "indicacion": "Fármaco de elección; también 10 mg/kg cada 24 h. Completar 28 días."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Treatment: doxiciclina 5 mg/kg cada 12 h o 10 mg/kg cada 24 h, VO o IV, 28 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.leptospirosis_canina.doxiciclina.canino",
+    "origen": "diagnostico.leptospirosis_canina",
+    "destino": "farmaco.doxiciclina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Primera línea; elimina también el estado de portador."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Treatment: doxiciclina 5 mg/kg VO cada 12 h, 2 semanas",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.fenbendazol.canino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Primera línea; 3 a 5 días."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3–5 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.fenbendazol.felino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Primera línea; 3 a 5 días."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3–5 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.metronidazol.canino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.metronidazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 10,
+        "maximo": 25
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 5,
+      "indicacion": "Alternativa; dosis altas o uso prolongado pueden dar signos neurológicos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: metronidazol 10–25 mg/kg cada 12 h, 5–8 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_alergica_pulgas.oclacitinib.canino",
+    "origen": "diagnostico.dermatitis_alergica_pulgas",
+    "destino": "farmaco.oclacitinib",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.4,
+        "maximo": 0.6
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Control del prurito; no reemplaza el control de pulgas."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment: oclacitinib 0,4–0,6 mg/kg VO cada 12 h, 14 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_alergica_pulgas.prednisolona.felino",
+    "origen": "diagnostico.dermatitis_alergica_pulgas",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 14,
+      "indicacion": "Dosis inicial y luego reducir; suspender al controlar las pulgas."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment: prednisolona en gatos 0,5–1 mg/kg VO cada 24 h, 7–14 días, luego reducir",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_atopica_canina.oclacitinib.canino",
+    "origen": "diagnostico.dermatitis_atopica_canina",
+    "destino": "farmaco.oclacitinib",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.4,
+        "maximo": 0.6
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Cada 12 h por 2 semanas y luego cada 24 h. Perros de 12 meses o más."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment: oclacitinib 0,4–0,6 mg/kg VO cada 12 h por 2 semanas, luego cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_atopica_canina.prednisolona.canino",
+    "origen": "diagnostico.dermatitis_atopica_canina",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1.1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Para brotes agudos; reducir a 0,25–0,5 mg/kg cada 48 h."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment: prednisona/prednisolona 0,5–1,1 mg/kg VO cada 24 h, luego reducir",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.sarna_sarcoptica.selamectina.canino",
+    "origen": "diagnostico.sarna_sarcoptica",
+    "destino": "farmaco.selamectina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 6,
+        "maximo": 12
+      },
+      "dosis_texto": null,
+      "via": "topica",
+      "frecuencia_horas": null,
+      "duracion_dias": null,
+      "indicacion": "Spot-on; algunos perros necesitan una segunda dosis al mes. Tratar a los perros en contacto."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: selamectina 6–12 mg/kg tópica, una vez",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.sarna_sarcoptica.milbemicina.canino",
+    "origen": "diagnostico.sarna_sarcoptica",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 168,
+      "duracion_dias": 28,
+      "indicacion": "Una vez por semana durante 3 a 4 semanas."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: milbemicina oxima 2 mg/kg VO semanal, 3–4 semanas",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.demodicosis_canina.milbemicina.canino",
+    "origen": "diagnostico.demodicosis_canina",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Hasta resolver y tener dos raspados negativos con un mes de diferencia."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: milbemicina oxima 0,5–1 mg/kg/día VO",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.cistitis_bacteriana.trimetoprim_sulfa.canino",
+    "origen": "diagnostico.cistitis_bacteriana",
+    "destino": "farmaco.trimetoprim_sulfa",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 15,
+        "maximo": 15
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 3,
+      "indicacion": "Cistitis esporádica: curso corto de 3 a 5 días; idealmente con urocultivo."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: trimetoprim-sulfametoxazol 15 mg/kg VO cada 12 h, 3 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.maropitant.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 1,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Antiemético; también IV."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.maropitant.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 1,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Antiemético; también IV."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.buprenorfina.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.buprenorfina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.005,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 6,
+      "duracion_dias": null,
+      "indicacion": "Analgesia según dolor (5–30 mcg/kg), también IV o IM."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: buprenorfina 5–30 mcg/kg IV, IM o SC cada 4–6 h según necesidad",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.buprenorfina.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.buprenorfina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.005,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 6,
+      "duracion_dias": null,
+      "indicacion": "Analgesia según dolor (5–30 mcg/kg), también IV o IM."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: buprenorfina 5–30 mcg/kg IV, IM o SC cada 4–6 h según necesidad",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.ondansetron.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.ondansetron",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Antiemético alternativo; cada 8 a 12 h."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: ondansetrón 0,5–1 mg/kg IV o VO cada 8–12 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.ondansetron.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.ondansetron",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Antiemético alternativo; cada 8 a 12 h."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: ondansetrón 0,5–1 mg/kg IV o VO cada 8–12 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.complejo_respiratorio_felino.lisina.felino",
+    "origen": "diagnostico.complejo_respiratorio_felino",
+    "destino": "farmaco.lisina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "250 mg por gato",
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Puede reducir la gravedad de la rinotraqueítis; 2 a 3 veces al día."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Treatment: lisina 250 mg VO 2 a 3 veces al día",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.hipertiroidismo_felino.metimazol.felino",
+    "origen": "diagnostico.hipertiroidismo_felino",
+    "destino": "farmaco.metimazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "1,25–2,5 mg por gato",
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Ajustar cada 2 semanas según T4; de por vida si es el único tratamiento."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Treatment: metimazol 1,25–2,5 mg/gato VO o transdérmico cada 12 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ascaridiasis.pirantel.canino",
+    "origen": "diagnostico.ascaridiasis",
+    "destino": "farmaco.pirantel",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": null,
+      "duracion_dias": null,
+      "indicacion": "Dosis única (10 mg/kg si pesa 2,3 kg o menos); repetir según el esquema del plan."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment: pamoato de pirantel 5 mg/kg VO una vez",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ascaridiasis.fenbendazol.canino",
+    "origen": "diagnostico.ascaridiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 3,
+      "indicacion": "Alternativa de 3 días."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.itraconazol.felino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.itraconazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Semana sí, semana no; la mayoría resuelve en 3 o 4 ciclos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: gatos, itraconazol 5 mg/kg VO cada 24 h semana sí/semana no",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.itraconazol.canino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.itraconazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Perros pequeños; acompañar con baños antifúngicos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: perros pequeños, itraconazol 5 mg/kg VO cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.terbinafina.canino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.terbinafina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 30,
+        "maximo": 40
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Perros grandes."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: perros grandes, terbinafina 30–40 mg/kg cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.hipotiroidismo_canino.levotiroxina.canino",
+    "origen": "diagnostico.hipotiroidismo_canino",
+    "destino": "farmaco.levotiroxina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.022,
+        "maximo": 0.022
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "En ayunas, de por vida; puede dividirse en dos tomas (22 mcg/kg)."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Treatment: levotiroxina 22 mcg/kg VO en ayunas cada 24 h, de por vida",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.gastritis_aguda.maropitant.canino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Hasta 5 días; inyectable 1 mg/kg SC o IV cada 24 h."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h, o 2 mg/kg VO cada 24 h hasta 5 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.gastritis_aguda.maropitant.felino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Hasta 5 días; inyectable 1 mg/kg SC o IV cada 24 h."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h, o 2 mg/kg VO cada 24 h hasta 5 días",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.meloxicam.canino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.meloxicam",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.1,
+        "maximo": 0.1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "AINE de uso prolongado; vigilar función renal y digestiva."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: meloxicam perros 0,1 mg/kg IV, SC o VO cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.carprofeno.canino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.carprofeno",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 4.4,
+        "maximo": 4.4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Alternativa: 2,2 mg/kg cada 12 h. No se recomienda en gatos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: carprofeno perros 2,2 mg/kg cada 12 h o 4,4 mg/kg cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.meloxicam.felino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.meloxicam",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.01,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Dosis felina mucho menor que la canina."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: meloxicam gatos 0,01–0,03 mg/kg VO cada 24 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.epilepsia_idiopatica.fenobarbital.canino",
+    "origen": "diagnostico.epilepsia_idiopatica",
+    "destino": "farmaco.fenobarbital",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Dosis inicial; ajustar según niveles séricos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital 2–4 mg/kg VO cada 12 h (inicial)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.epilepsia_idiopatica.fenobarbital.felino",
+    "origen": "diagnostico.epilepsia_idiopatica",
+    "destino": "farmaco.fenobarbital",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Dosis inicial; ajustar según niveles séricos."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital 2–4 mg/kg VO cada 12 h (inicial)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.diabetes_mellitus.insulina_nph.canino",
+    "origen": "diagnostico.diabetes_mellitus",
+    "destino": "farmaco.insulina_nph",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "0,25–0,5 U/kg",
+      "via": "subcutanea",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Insulina NPH o lenta; ajustar según curva de glucosa."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: perros, NPH o lenta 0,25–0,5 U/kg SC cada 12 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.diabetes_mellitus.insulina_glargina.felino",
+    "origen": "diagnostico.diabetes_mellitus",
+    "destino": "farmaco.insulina_glargina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "0,25–0,5 U/kg (1–2 U por gato, máx. 2 U)",
+      "via": "subcutanea",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Calcular con el peso ideal, no el actual; inicio conservador."
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: gatos, glargina 0,25–0,5 U/kg (1–2 U/gato) SC cada 12 h",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

@@ -1775,9 +1775,281 @@
     "estado_validacion": "pendiente"
   },
   {
+    "codigo": "farmaco.doxiciclina",
+    "tipo": "farmaco",
+    "etiqueta": "Doxiciclina",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Treatment of Ehrlichiosis in Dogs: la doxiciclina es el fármaco de elección",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.fenbendazol",
+    "tipo": "farmaco",
+    "etiqueta": "Fenbendazol",
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment of Giardiasis: fenbendazol de primera línea",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metronidazol",
+    "tipo": "farmaco",
+    "etiqueta": "Metronidazol",
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment of Giardiasis: metronidazol en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.prednisolona",
+    "tipo": "farmaco",
+    "etiqueta": "Prednisolona",
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment and Control: glucocorticoides (prednisolona)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.oclacitinib",
+    "tipo": "farmaco",
+    "etiqueta": "Oclacitinib",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment of Atopic Dermatitis in Dogs: oclacitinib",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.selamectina",
+    "tipo": "farmaco",
+    "etiqueta": "Selamectina",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: selamectina spot-on",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.milbemicina",
+    "tipo": "farmaco",
+    "etiqueta": "Milbemicina oxima",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange y Canine Demodicosis: milbemicina oxima",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.itraconazol",
+    "tipo": "farmaco",
+    "etiqueta": "Itraconazol",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: itraconazol en gatos y perros pequeños",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.terbinafina",
+    "tipo": "farmaco",
+    "etiqueta": "Terbinafina",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: terbinafina en perros grandes",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.trimetoprim_sulfa",
+    "tipo": "farmaco",
+    "etiqueta": "Trimetoprim-sulfametoxazol",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: trimetoprim-sulfonamida en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.maropitant",
+    "tipo": "farmaco",
+    "etiqueta": "Maropitant",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: antiemético antagonista NK-1",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.ondansetron",
+    "tipo": "farmaco",
+    "etiqueta": "Ondansetrón",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: antiemético antagonista 5-HT3",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.buprenorfina",
+    "tipo": "farmaco",
+    "etiqueta": "Buprenorfina",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: analgesia para dolor leve a moderado",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.lisina",
+    "tipo": "farmaco",
+    "etiqueta": "L-lisina",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Treatment: la lisina puede reducir la gravedad de la rinotraqueítis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metimazol",
+    "tipo": "farmaco",
+    "etiqueta": "Metimazol",
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Treatment of Hyperthyroidism in Animals: metimazol",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.pirantel",
+    "tipo": "farmaco",
+    "etiqueta": "Pamoato de pirantel",
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment and Control: pamoato de pirantel",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.levotiroxina",
+    "tipo": "farmaco",
+    "etiqueta": "Levotiroxina",
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Treatment: levotiroxina de por vida",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.fenobarbital",
+    "tipo": "farmaco",
+    "etiqueta": "Fenobarbital",
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital, dosis inicial",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.insulina_nph",
+    "tipo": "farmaco",
+    "etiqueta": "Insulina NPH o lenta",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: insulina inicial en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.insulina_glargina",
+    "tipo": "farmaco",
+    "etiqueta": "Insulina glargina",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: insulina inicial en gatos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
     "codigo": "diagnostico.gastritis_aguda",
     "tipo": "diagnostico",
     "etiqueta": "Gastritis aguda",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química si persiste",
+          "Radiografía si se sospecha cuerpo extraño"
+        ],
+        "recomendaciones": [
+          "Agua en pequeñas cantidades y con frecuencia",
+          "Comida en porciones pequeñas y volver a la dieta habitual en 3 a 5 días"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.gastritis",
@@ -1804,6 +2076,19 @@
     "codigo": "diagnostico.parvovirosis_canina",
     "tipo": "diagnostico",
     "etiqueta": "Parvovirosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Antígeno de parvovirus en heces",
+          "Hemograma"
+        ],
+        "recomendaciones": [
+          "Hospitalizar y aislar",
+          "Fluidoterapia y control del vómito",
+          "Desinfectar con productos eficaces contra parvovirus"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.parvovirus",
@@ -1830,6 +2115,18 @@
     "codigo": "diagnostico.dilatacion_torsion_gastrica",
     "tipo": "diagnostico",
     "etiqueta": "Dilatación y torsión gástrica",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografía abdominal",
+          "Lactato y electrolitos"
+        ],
+        "recomendaciones": [
+          "Emergencia quirúrgica: estabilizar y descomprimir",
+          "Gastropexia para evitar recurrencia"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.dtg",
@@ -1843,6 +2140,19 @@
     "codigo": "diagnostico.obstruccion_uretral_felina",
     "tipo": "diagnostico",
     "etiqueta": "Obstrucción uretral felina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Uroanálisis",
+          "Potasio y función renal",
+          "Radiografía o ecografía urinaria"
+        ],
+        "recomendaciones": [
+          "Emergencia: desobstruir y estabilizar",
+          "Dieta húmeda y más agua después del alta"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "cornell.flutd",
@@ -1869,6 +2179,18 @@
     "codigo": "diagnostico.piometra",
     "tipo": "diagnostico",
     "etiqueta": "Piometra",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Ecografía abdominal",
+          "Hemograma y química"
+        ],
+        "recomendaciones": [
+          "Ovariohisterectomía tras estabilizar",
+          "Fluidoterapia y antibióticos según el caso"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.piometra",
@@ -1895,6 +2217,18 @@
     "codigo": "diagnostico.epilepsia_idiopatica",
     "tipo": "diagnostico",
     "etiqueta": "Epilepsia idiopática",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química",
+          "Fenobarbital sérico a las 2 semanas"
+        ],
+        "recomendaciones": [
+          "Llevar un diario de convulsiones",
+          "No suspender el tratamiento de golpe"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.epilepsia",
@@ -1921,6 +2255,17 @@
     "codigo": "diagnostico.golpe_de_calor",
     "tipo": "diagnostico",
     "etiqueta": "Golpe de calor",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma, química y coagulación"
+        ],
+        "recomendaciones": [
+          "Enfriamiento activo moderado, sin hielo",
+          "Fluidoterapia y vigilancia de órganos"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.emergencias_propietarios",
@@ -1934,6 +2279,19 @@
     "codigo": "diagnostico.otitis_externa",
     "tipo": "diagnostico",
     "etiqueta": "Otitis externa",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Otoscopia",
+          "Citología del oído antes de limpiar"
+        ],
+        "recomendaciones": [
+          "Limpieza del oído según la secreción",
+          "Producto ótico combinado según la etiqueta, de 7 a 10 días",
+          "Citología de control cada 1 a 2 semanas"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
@@ -1947,6 +2305,19 @@
     "codigo": "diagnostico.osteoartritis",
     "tipo": "diagnostico",
     "etiqueta": "Osteoartritis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografías de las articulaciones afectadas",
+          "Química renal antes de AINE prolongado"
+        ],
+        "recomendaciones": [
+          "Control del peso",
+          "Ejercicio moderado y regular",
+          "Superficies antideslizantes en casa"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.osteoartritis",
@@ -1973,6 +2344,20 @@
     "codigo": "diagnostico.diabetes_mellitus",
     "tipo": "diagnostico",
     "etiqueta": "Diabetes mellitus",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Glucosa y fructosamina",
+          "Uroanálisis y urocultivo",
+          "Curva de glucosa"
+        ],
+        "recomendaciones": [
+          "Insulina con las comidas, a la misma hora",
+          "Perros: dieta alta en fibra; gatos: alta en proteína y baja en carbohidratos",
+          "Enseñar a reconocer la hipoglucemia"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.diabetes",
@@ -1986,6 +2371,16 @@
     "codigo": "diagnostico.tos_perreras",
     "tipo": "diagnostico",
     "etiqueta": "Traqueobronquitis infecciosa canina (tos de las perreras)",
+    "metadatos": {
+      "plan": {
+        "examenes": [],
+        "recomendaciones": [
+          "Antibiótico solo si hay signos de neumonía",
+          "Reposo y evitar collares que presionen la tráquea",
+          "Aislar de otros perros"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.tos_perreras",
@@ -1999,6 +2394,19 @@
     "codigo": "diagnostico.ehrlichiosis_canina",
     "tipo": "diagnostico",
     "etiqueta": "Ehrlichiosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma con conteo de plaquetas",
+          "Prueba serológica o PCR de Ehrlichia",
+          "Química sanguínea"
+        ],
+        "recomendaciones": [
+          "Control de garrapatas en todos los animales de la casa",
+          "Repetir hemograma al terminar el tratamiento"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.ehrlichiosis",
@@ -2012,6 +2420,20 @@
     "codigo": "diagnostico.leptospirosis_canina",
     "tipo": "diagnostico",
     "etiqueta": "Leptospirosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química renal y hepática",
+          "Uroanálisis",
+          "PCR o serología de Leptospira"
+        ],
+        "recomendaciones": [
+          "Riesgo zoonótico: usar guantes al manipular orina",
+          "Fluidoterapia según hidratación y función renal",
+          "Vacunar a los perros en contacto"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.leptospirosis",
@@ -2025,6 +2447,19 @@
     "codigo": "diagnostico.moquillo_canino",
     "tipo": "diagnostico",
     "etiqueta": "Moquillo canino (distemper)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma",
+          "PCR de moquillo (sangre, orina o hisopado conjuntival)"
+        ],
+        "recomendaciones": [
+          "Aislar al paciente",
+          "Tratamiento de soporte: hidratación, nutrición y control de infecciones secundarias",
+          "Revisar vacunación de los perros en contacto"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.moquillo",
@@ -2038,6 +2473,17 @@
     "codigo": "diagnostico.giardiasis",
     "tipo": "diagnostico",
     "etiqueta": "Giardiasis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Coprológico seriado o antígeno de Giardia en heces"
+        ],
+        "recomendaciones": [
+          "Bañar al paciente al terminar el tratamiento",
+          "Limpiar y secar bien el entorno"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.giardiasis",
@@ -2051,6 +2497,18 @@
     "codigo": "diagnostico.dermatitis_alergica_pulgas",
     "tipo": "diagnostico",
     "etiqueta": "Dermatitis alérgica a la pulga",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Búsqueda de pulgas o sus heces con peine fino"
+        ],
+        "recomendaciones": [
+          "Control de pulgas en todos los animales de la casa",
+          "Tratar también el ambiente",
+          "Mantener el antipulgas de forma continua"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.dapp",
@@ -2064,6 +2522,19 @@
     "codigo": "diagnostico.dermatitis_atopica_canina",
     "tipo": "diagnostico",
     "etiqueta": "Dermatitis atópica canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Citología de piel y oídos",
+          "Descartar pulgas y sarna"
+        ],
+        "recomendaciones": [
+          "Tratar infecciones secundarias de piel y oídos",
+          "Control de pulgas permanente",
+          "Revisión en 2 a 4 semanas"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.atopia",
@@ -2077,6 +2548,18 @@
     "codigo": "diagnostico.sarna_sarcoptica",
     "tipo": "diagnostico",
     "etiqueta": "Sarna sarcóptica",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Raspado cutáneo profundo"
+        ],
+        "recomendaciones": [
+          "Tratar a todos los perros en contacto",
+          "Riesgo zoonótico: puede causar picazón en personas",
+          "Lavar camas y mantas"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.sarnas",
@@ -2090,6 +2573,19 @@
     "codigo": "diagnostico.demodicosis_canina",
     "tipo": "diagnostico",
     "etiqueta": "Demodicosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Raspados cutáneos profundos",
+          "Tricograma"
+        ],
+        "recomendaciones": [
+          "No usar corticoides",
+          "Buscar enfermedad de base en adultos",
+          "Repetir raspados cada mes hasta dos negativos"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.sarnas",
@@ -2103,6 +2599,18 @@
     "codigo": "diagnostico.cistitis_bacteriana",
     "tipo": "diagnostico",
     "etiqueta": "Cistitis bacteriana (infección urinaria)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Uroanálisis completo",
+          "Urocultivo con antibiograma"
+        ],
+        "recomendaciones": [
+          "Asegurar acceso permanente al agua",
+          "Control en 1 a 2 semanas si persisten los signos"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.cistitis_bacteriana",
@@ -2116,6 +2624,20 @@
     "codigo": "diagnostico.pancreatitis",
     "tipo": "diagnostico",
     "etiqueta": "Pancreatitis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Lipasa pancreática específica (cPL o fPL)",
+          "Ecografía abdominal",
+          "Hemograma y química sanguínea"
+        ],
+        "recomendaciones": [
+          "Fluidoterapia según deshidratación",
+          "Reiniciar alimentación temprano, en porciones pequeñas",
+          "Dieta baja en grasa en perros"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.pancreatitis",
@@ -2129,6 +2651,19 @@
     "codigo": "diagnostico.complejo_respiratorio_felino",
     "tipo": "diagnostico",
     "etiqueta": "Complejo respiratorio felino (rinotraqueítis y calicivirus)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Examen oral y ocular",
+          "PCR respiratoria si es grave o recurrente"
+        ],
+        "recomendaciones": [
+          "Limpiar secreciones nasales y oculares",
+          "Ofrecer comida tibia y aromática",
+          "Aislar de otros gatos"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.respiratorio_felino",
@@ -2142,6 +2677,19 @@
     "codigo": "diagnostico.hipertiroidismo_felino",
     "tipo": "diagnostico",
     "etiqueta": "Hipertiroidismo felino",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "T4 total",
+          "Química renal",
+          "Presión arterial"
+        ],
+        "recomendaciones": [
+          "Control de T4 y función renal a las 2 semanas",
+          "Valorar yodo radiactivo o dieta restringida en yodo"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.hipertiroidismo",
@@ -2155,6 +2703,18 @@
     "codigo": "diagnostico.ascaridiasis",
     "tipo": "diagnostico",
     "etiqueta": "Parásitos intestinales (lombrices redondas)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Coprológico"
+        ],
+        "recomendaciones": [
+          "Desparasitar cada 2 semanas hasta los 3 meses y luego cada mes hasta los 6",
+          "Tratar también a la madre lactante",
+          "Riesgo zoonótico: recoger las heces"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.ascaridos",
@@ -2168,6 +2728,19 @@
     "codigo": "diagnostico.dermatofitosis",
     "tipo": "diagnostico",
     "etiqueta": "Dermatofitosis (tiña)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Lámpara de Wood",
+          "Cultivo micológico o PCR"
+        ],
+        "recomendaciones": [
+          "Baños o enjuagues antifúngicos dos veces por semana",
+          "Limpiar el ambiente",
+          "Riesgo zoonótico"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.dermatofitosis",
@@ -2181,6 +2754,18 @@
     "codigo": "diagnostico.enfermedad_periodontal",
     "tipo": "diagnostico",
     "etiqueta": "Enfermedad periodontal",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Examen oral completo bajo anestesia",
+          "Radiografías dentales"
+        ],
+        "recomendaciones": [
+          "Limpieza profesional bajo anestesia general",
+          "Cepillado diario o al menos cada dos días"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.periodontal",
@@ -2194,6 +2779,18 @@
     "codigo": "diagnostico.conjuntivitis",
     "tipo": "diagnostico",
     "etiqueta": "Conjuntivitis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Prueba de fluoresceína",
+          "Prueba de Schirmer"
+        ],
+        "recomendaciones": [
+          "Limpiar secreciones con suero fisiológico",
+          "Antibiótico tópico si la secreción es purulenta"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.conjuntivitis",
@@ -2207,6 +2804,20 @@
     "codigo": "diagnostico.cuerpo_extrano_gi",
     "tipo": "diagnostico",
     "etiqueta": "Cuerpo extraño u obstrucción intestinal",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografías abdominales",
+          "Ecografía abdominal"
+        ],
+        "recomendaciones": [
+          "Ayuno hasta definir el manejo",
+          "Extracción por endoscopia o cirugía",
+          "Corregir líquidos y electrolitos antes de la cirugía",
+          "En gatos, revisar debajo de la lengua; no jalar un hilo"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.obstruccion_gi",
@@ -2220,6 +2831,19 @@
     "codigo": "diagnostico.hipotiroidismo_canino",
     "tipo": "diagnostico",
     "etiqueta": "Hipotiroidismo canino",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "T4 total y T4 libre",
+          "TSH canina",
+          "Perfil de colesterol"
+        ],
+        "recomendaciones": [
+          "Control de T4 de 4 a 6 semanas después de iniciar",
+          "Ajustar la dieta para bajar de peso"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.hipotiroidismo",
