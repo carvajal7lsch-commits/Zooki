@@ -251,7 +251,7 @@ Las solicitudes no urgentes en espera se ordenan amarillo antes de verde y, dent
 flowchart TD
   A([Agendar o registrar llegada]) --> R{"Veterinario o propietario en contexto legitimo?"}
   R -- No --> DEN[/"403; admin no crea citas"/]
-  R -- Si --> CAP["Mascota propia/vinculada, marcas confirmadas y tiempos por evento; nota fuera del calculo"]
+  R -- Si --> CAP["Mascota propia/vinculada, marcas y tiempos; vacunacion declarada o registros de esa mascota en cualquier clinica; nota fuera del calculo"]
   CAP --> G["Grafo I: maximo, version y banderas; conservar 26 T"]
   G --> RO{Rojo?}
   RO -- Si --> HOR{Clinica abierta segun horario y cierres?}
@@ -260,17 +260,13 @@ flowchart TD
   CERR --> AV
   DER --> AV["Guardar caso/aviso idempotente sin cuotas; presencia real va a §6"]
   RO -- No --> REV{Requiere revision?}
-  REV -- Si --> PEN["Guardar solicitud pendiente y avisar al veterinario; sin horario reservable"]
-  PEN --> VET{"Veterinario confirma o ajusta con motivo?"}
-  VET -- No --> PEN
-  VET -- Si --> VAL["Revalidar entrada/contexto/version; conservar calculado y ajustado"]
-  VAL --> ROV{Nivel aprobado rojo?}
-  ROV -- Si --> HOR
+  REV -- Si --> PEN["Guardar nivel provisional y avisar REVISION_TRIAGE; marcar inmediato si procede; permite reservar"]
+  PEN --> LIM
   REV -- No --> LIM
-  ROV -- No --> LIM{Limite del plan permite?}
+  LIM{Limite del plan permite?}
   LIM -- No --> MS[/"Portal: mensaje neutral; personal: motivo del limite"/]
   LIM -- Si --> DISP["Disponibilidad unica completa; sin horario no hay huecos"]
-  DISP --> NIV{Nivel aprobado?}
+  DISP --> NIV{Nivel aprobado o provisional?}
   NIV -- Naranja --> TOP{"Cupo en franja original/fecha? Default 2; cuentan todos los naranjas del bloque"}
   TOP -- No --> TOPE[/"Avisar sin insertar; ausencia parcial no multiplica cupos"/]
   TOP -- Si --> ORD["Primer hueco ordinario o, si no hay, sobrecupo; cola por fecha_registro/id_cita; cambio solo vet con motivo"]
@@ -287,6 +283,18 @@ flowchart TD
   OK -- No --> DISP
   OK -- Si --> RES["Cita unica con tipo/duracion/margen/nivel/origen; llegada conserva origen"]
   RES --> COR["Despachar avisos tras commit; fallo SMTP no revierte cita"]
+  PEN -. "Antes o despues de reservar" .-> VET["Veterinario confirma o ajusta con motivo"]
+  VET --> VAL["Revalidar entrada/contexto/version; calculado y aprobado separados; autor, fecha y auditoria"]
+  VAL --> VIG{Evaluacion y huella vigentes?}
+  VIG -- No --> OBS[/"Revision obsoleta; reevaluar sin modificar la reserva"/]
+  VIG -- Si --> CITA{Ya tiene cita?}
+  CITA -- No --> ROV{Nivel aprobado rojo?}
+  ROV -- Si --> HOR
+  ROV -- No --> LIM
+  CITA -- Si --> REC["Reclasificacion existente en la misma transaccion: rojo a cola de Urgencias; naranja con tope RN-422; confirmar o bajar conserva espacio RN-423"]
+  REC --> ROK{Reclasificacion valida y con cupo?}
+  ROK -- No --> RB[/"Rollback; conservar reserva y revision pendiente; mostrar el rechazo"/]
+  ROK -- Si --> AUD["Auditar cita y solicitud; cerrar origen si paso a Urgencias para evitar duplicar cola; avisos tras commit"]
 ```
 
 ---

@@ -1,5 +1,7 @@
 # M4 — Agenda inteligente y Grafo II
 
+> **Subetapa vigente, 2026-10-29 — entregada, pendiente de revisión:** «Triage que no frena: RN-418 nueva y vacunación desde registros», en `release/v2.3.0`. Escribió Codex; revisa Claude (arquitecto). Decisión aprobada en el encargo del dueño: la revisión, incluida la inmediata, permite reservar con nivel provisional; sustituye la puerta previa de 2026-10-17 en los contratos/anexos históricos de este plan y de M2. Rojo conserva derivación sin horarios. Resultado de esta subetapa al final del plan.
+
 > Estado: **D-F hecho por Claude (2026-10-21): M4 completo, versión `2.0.0-alpha.5` preparada. Falta la prueba manual consolidada del dueño y su despliegue** (ver «D-F — Resultado» al final). Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
@@ -37,8 +39,8 @@ Los rangos incluyen cada RE consecutivo del intervalo. La evidencia indicada es 
 | HU-7.4 | RE-7.4.1–RE-7.4.6 | RN-009, RN-415, RN-421, RN-701, RN-427 | C1, C7, F | Marca y teléfono en configuración/portal/correos/documentos; tipos aislados con duración, margen y pausable; auditoría y JS de formulario. |
 | HU-4.11 | RE-4.11.1–RE-4.11.5 | RN-706, RN-703, RN-415, RNF-11 | C2, C3, C5 | Franjas válidas; rechazo de solapes incluso entre clínicas sin revelar horarios ajenos; propuesta vet pendiente y aprobación admin; citas afectadas para reajuste. |
 | HU-4.12 | RE-4.12.1–RE-4.12.5 | RN-414, RN-415 | C3, C6 | Ausencia de día completo/parcial y extremos; cobertura sin veto, alternativa pendiente del propietario, avisos y auditoría. |
-| HU-4.13 | RE-4.13.1–RE-4.13.7 | RN-401, RN-402, RN-411, RN-415, RN-420, RN-422 | C3, C4a, C4b, C7 | Cuatro ramas; bloqueo real concurrente; tipo/duración/margen/prioridad; tope 2 por defecto y orden por fecha/ID; rojo antes del límite. |
-| HU-2.11 | RE-2.11.1–RE-2.11.7 (cierre operativo) | RN-209, RN-411, RN-416–RN-418, RN-424, RN-425, RN-113 | C4a, C4b, C7 | Marcas/tiempos/nota persistidos; nota sola rechazada; 26/26 sin alterar esperados; T-20 sin horario antes de revisión; T-11 avisa aislamiento. |
+| HU-4.13 | RE-4.13.1–RE-4.13.7 | RN-401, RN-402, RN-411, RN-415, RN-418, RN-419, RN-420, RN-422, RN-423 | C3, C4a, C4b, C7; ajuste 2.3.0 | Cuatro ramas; bloqueo real concurrente; revisión provisional reservable y revisión posterior auditada; tipo/duración/margen/prioridad; tope 2 por defecto y orden por fecha/ID; rojo antes del límite. |
+| HU-2.11 | RE-2.11.1–RE-2.11.7 (cierre operativo) | RN-209, RN-411, RN-416–RN-418, RN-424, RN-425, RN-113 | C4a, C4b, C7; ajuste 2.3.0 | Marcas/tiempos/nota persistidos; nota sola rechazada; 26/26 sin alterar esperados; T-16/T-20/T-22 reservables con revisión, inmediata en T-20; T-11 avisa aislamiento. |
 | HU-4.14 | RE-4.14.1–RE-4.14.7 | RN-412, RN-413, RN-415, RN-428, RN-429 | C5a, C5b | Reloj controlado: margen exacto, cascada, fin de franja, aceptación/rechazo/vencimiento de propuestas; avisos acumulados y como máximo dos por hora en el caso de aceptación. |
 | HU-4.15 | RE-4.15.1–RE-4.15.10 | RN-411, RN-415, RN-420, RN-421, RN-427; RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | C4a, C7a, C7b | O-01/O-02/O-09/O-10; libre → pausable → espera; sin cuotas/mora; ficha y cuenta existentes o provisional; conciliación transaccional sin perder actos. |
 | HU-4.18 | RE-4.18.1–RE-4.18.4 | RN-419, RN-209 | C4b, C8 | Ajuste solo vet con motivo; calculado y ajustado separados; reubicación y aviso; historial de reclasificaciones visible a la clínica con aislamiento. O-07/O-08. |
@@ -3278,3 +3280,22 @@ README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mj
 ### Cierre de HU-4.7 en 2.1.0 (2026-10-26)
 
 **Autor: Claude (arquitecto). Solo documentación.** RE-4.7.3 (tasa de ausentismo), que esta entrega dejó para v2.1, se cumple con el porcentaje de no asistencia del mes del Inicio del administrador (HU-6.2, RE-6.2.12; `Panel::asistenciaDelPeriodo` y `InicioAdministradorTest::testEsteMesPropietariosNuevosYNoAsistencia`). Por decisión del dueño no se construye un reporte aparte; HU-4.7 queda «Implementada (2.1.0)». HU-4.10, HU-4.16 y HU-4.17 siguen planificadas, fuera de la entrega de la presentación.
+
+## Anexo — Triage que no frena: RN-418 nueva y vacunación desde registros — Resultado (2026-10-29)
+
+**Escribió Codex; revisa Claude (arquitecto). Entregada, pendiente de revisión.** Rama `release/v2.3.0`, desde `e4e5ec7` de Claude.
+
+- **Mayor riesgo, RN-419:** revisión de solicitud y reclasificación de cita comparten transacción/candados de la cascada. Rojo reutiliza Urgencias y retira el origen para evitar duplicar la cola; conserva la cita cancelada y su auditoría. Naranja respeta RN-422; un rechazo revierte también la revisión. Confirmar o bajar conserva espacio, bloque y sobrecupo (RN-423); HU-4.17 sigue fuera.
+- **RN-418, decisión del dueño (2026-10-29):** revisión pendiente o inmediata permite reservar con nivel provisional; REVISION_TRIAGE se conserva y el inmediato se identifica en título/mensaje. Rojo sigue sin horarios. La bandeja incluye las solicitudes ya asignadas; portal y Nueva cita conservan sus validaciones en vivo y diseño.
+- **RN-416/RN-113:** primero se autoriza la mascota y luego se agregan solo sus vacunas de cualquier clínica; próxima dosis anterior al día evaluado → incompleta; alguna vacuna sin vencidas → completa; ninguna → null. Lo declarado, incluso desconocida, manda.
+
+| RE / regla | Evidencia |
+|---|---|
+| RE-2.11.5, RE-4.13.3 / RN-418 | AgendaC4Test: provisional e inmediata reservables, aviso enviado/inmediato y rojo derivado sin horas; TriageSinFreno: componente y formularios reales, seis casos Chrome. |
+| RE-4.18.1/2/3, RE-4.13.7 / RN-419/422/423 | AgendaC4Test: reserva → rojo/cola sin duplicados, descenso/confirmación, motivo, auditoría, replay y rollback por tope. AgendaC8Test: bajar conserva las 10:00 aunque las 08:00 estén libres. BaseV2MysqlTest: mismo recorrido con esquema nativo. |
+| RE-2.11.3 / RN-416/113 | DiagnosticoTest: ocho variantes, otra clínica, vencida/vigente/hoy/sin fecha/sin registros, declaración prioritaria, vacuna ajena sin influencia y acceso ajeno denegado; BaseV2MysqlTest con vacunas reales. |
+| RE-2.11.7 / RN-416/424/425 | MotorTriageTest y TriageTest: batería de 26 casos y motor sin cambiar esperados ni conocimiento. |
+
+**Verificación:** dirigidas PHP finales 86/584; suite sin host 1223/9861, 95 omitidas de motor; JS completo 439/439 sin omitidas. Suite completa con host 127.0.0.1 y MariaDB 10.4.32: 1223 recorridas sin omitidas, 15 errores iniciales exclusivamente por omitir la variable DB que seis clases exigen explícita; esas 15 más el recorrido nativo nuevo se repitieron con `ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2`: 16/370 correctas. Sin fallos pendientes; no se debilitó la guarda. Logs/JUnit `scratch/triage-sin-freno-*`; sintaxis PHP/JS y diff correctos.
+**Documentación:** RN/HU/RE, matrices, T-16/T-20/T-22 y Modelos §4 alineados; Mermaid renderizado (39 nodos). PDF/Word regenerados y revisión de descargas al día. Siguen 96 HU, 464 RE y 126 RN, sin revisión documental nueva. App/Historial 2.3.0 incluye el commit de conocimiento de Claude; sin migraciones, cambios en conocimiento, tratamientos ni demo.
+**Pendientes:** revisión de Claude y comprobación del dueño: reservar provisional/inmediato en ambos formularios, revisar una reserva a rojo y a menor nivel, y comparar vacunación registrada con la declarada. El dueño guarda desde `e4e5ec7` con un solo commit; comandos en la entrega. Sin commit ni push del ejecutor.

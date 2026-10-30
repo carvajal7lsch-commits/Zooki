@@ -505,13 +505,13 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-2.11.1 | El formulario captura al menos un síntoma confirmado del catálogo o «Otro / no sé», nota libre opcional y tiempo por evento. El buscador solo sugiere y la nota no calcula el nivel. | Funcional | Solo texto no permite calcular. Se acepta tiempo conocido, «No sé» con revisión cuando sea decisivo o «No aplica» para preventivo; no se inventan datos ausentes. | Alta |
 | RE-2.11.2 | El nivel final debe ser el máximo de los síntomas y combinaciones; los datos tranquilizadores no deben bajarlo. | Cálculo | T-04 y T-18 de la batería dan el nivel esperado. | Alta |
-| RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. | Alta |
+| RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. Sin declaración de vacunación, solo se leen las vacunas de esa mascota en cualquier clínica: próxima dosis vencida → incompleta; alguna vacuna y ninguna vencida → completa; sin registros → null. Lo declarado manda, incluso «desconocida»; una mascota ajena no aporta datos (RN-416/RN-113). | Alta |
 | RE-2.11.4 | Las señales de alarma universales deben dar 🔴 en cualquier especie. | Restricción | T-21 (loro con dificultad respiratoria) da 🔴. | Alta |
-| RE-2.11.5 | Todo resultado que requiera revisión humana debe resolverlo un veterinario antes de ofrecer horario reservable; el rojo conserva derivación inmediata. | Restricción | T-20/T-22/T-16 con revisión no ofrecen ni aceptan reserva antes de confirmar/ajustar con motivo cuando corresponda; cambio de marcas/contexto/versión invalida resolución. El propietario no se autoriza a sí mismo. | Alta |
+| RE-2.11.5 | Todo resultado con revisión conserva nivel provisional y permite reservar; la revisión inmediata tampoco bloquea. El rojo conserva derivación inmediata sin horarios. | Restricción | T-20/T-22/T-16 mantienen revisión y ofrecen/aceptan reserva según el nivel provisional, con el mensaje de RN-418 y aviso REVISION_TRIAGE al veterinario, marcado inmediato en T-20. El veterinario confirma/ajusta con motivo y auditoría antes o después de reservar; el propietario no se autoriza a sí mismo. Cambio de marcas/contexto/versión invalida resolución. | Alta |
 | RE-2.11.6 | Ante una posible enfermedad contagiosa, el sistema debe avisar a la clínica. | Funcional | T-11 genera el aviso de aislamiento. | Media |
 | RE-2.11.7 | La batería de casos de triage debe ejecutarse como prueba automatizada del cálculo. | Verificación | Los 26 casos clínicos coinciden con su nivel esperado o la diferencia queda justificada. | Alta |
 
-**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209
+**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113
 
 ### HU-2.12 — Explorar el mapa del conocimiento clínico
 
@@ -734,13 +734,13 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.13.1 | El Grafo I debe calcular el nivel de triage a partir de los síntomas; el propietario no lo elige. | Funcional | El nivel se asigna automáticamente. | Alta |
 | RE-4.13.2 | El sistema debe verificar el límite del plan antes de reservar, salvo en los casos 🔴. | Restricción | Con la clínica al límite, un 🟡 se rechaza y un 🔴 se deriva a urgencia igual. | Alta |
-| RE-4.13.3 | Tras la revisión veterinaria que proceda, el sistema debe ubicar por nivel: rojo a derivación, naranja a sobrecupo, amarillo primer espacio y verde elección. | Funcional | Revisión pendiente no ofrece horario; rojo avisa/deriva de inmediato sin acreditar presencia ni pausar; naranja respeta bloque/tope, amarillo primer intervalo completo y verde elige. | Alta |
+| RE-4.13.3 | El sistema debe ubicar por nivel, provisional mientras haya revisión pendiente: rojo a derivación, naranja a sobrecupo, amarillo primer espacio y verde elección. | Funcional | Revisión pendiente o inmediata permite ofrecer y reservar horario con aviso al veterinario (RN-418). Rojo avisa/deriva de inmediato sin horarios, sin acreditar presencia ni pausar; naranja respeta bloque/tope, amarillo primer intervalo completo y verde elige. Si se revisa después de reservar, la reclasificación existente aplica el nivel aprobado con motivo/auditoría a la cita: rojo a Urgencias, naranja con RN-422 y descenso conserva espacio (RN-419/RN-423). | Alta |
 | RE-4.13.4 | La disponibilidad debe ser horario clínica ∩ horario veterinario, menos cierres puntuales, ausencias aprobadas y ocupación, por duración más margen. | Cálculo | Sugerencias y guardado restan exactamente esos intervalos; contactos o calendarios ajenos no se exponen. | Alta |
 | RE-4.13.5 | La reserva debe bloquear recursos estables y revalidar el hueco; si se ocupó, buscar alternativas. | Restricción | Amarillo recalcula primer compatible y naranja bloque/tope; verde recibe alternativas para elegir, sin confirmar otra hora unilateralmente. | Alta |
 | RE-4.13.6 | Al crear la cita, el sistema debe registrar el tipo, la duración, el margen y la prioridad, notificar y auditar. | Funcional | La cita queda creada y notificada. | Alta |
 | RE-4.13.7 | Cada franja continua original del veterinario por fecha admite el tope naranja de clínica (default 2), sin multiplicarlo por ausencias parciales. | Restricción | El tercero excedente avisa sin insertarse; dividir la franja no duplica cupos; completadas consumen y canceladas/no_asistio liberan. Orden fecha_registro/id_cita; cambio veterinario exige motivo/auditoría. | Alta |
 
-**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-420, RN-422
+**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423
 
 ### HU-4.14 — Reajuste de agenda en vivo (efecto cascada)
 
@@ -1225,7 +1225,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-2.8 | RN-209, RN-210, RN-212, RN-202 | RE-2.8.1, RE-2.8.2, RE-2.8.3, RE-2.8.4, RE-2.8.5 |
 | HU-2.9 | RN-209, RN-211, RN-212, RN-113 | RE-2.9.1, RE-2.9.2, RE-2.9.3, RE-2.9.4 |
 | HU-2.10 | RN-112, RN-113 | RE-2.10.1, RE-2.10.2, RE-2.10.3, RE-2.10.4 |
-| HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
+| HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
 | HU-2.12 | RN-212, RN-209, RN-004, RN-G13 | RE-2.12.1, RE-2.12.2, RE-2.12.3, RE-2.12.4, RE-2.12.5, RE-2.12.6 |
 | HU-3.1 | RN-301, RN-306 | RE-3.1.1, RE-3.1.2, RE-3.1.3 |
 | HU-3.2 | RN-303, RN-304, RN-305 | RE-3.2.1, RE-3.2.2, RE-3.2.3, RE-3.2.4, RE-3.2.5 |
@@ -1245,7 +1245,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-4.10 | RN-404, RN-405 | RE-4.10.1, RE-4.10.2, RE-4.10.3 |
 | HU-4.11 | RN-706, RN-703, RN-415 | RE-4.11.1, RE-4.11.2, RE-4.11.3, RE-4.11.4, RE-4.11.5 |
 | HU-4.12 | RN-414, RN-415 | RE-4.12.1, RE-4.12.2, RE-4.12.3, RE-4.12.4, RE-4.12.5 |
-| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-420, RN-422 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
+| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
 | HU-4.14 | RN-412, RN-413, RN-415, RN-428, RN-429 | RE-4.14.1, RE-4.14.2, RE-4.14.3, RE-4.14.4, RE-4.14.5, RE-4.14.6, RE-4.14.7 |
 | HU-4.15 | RN-411, RN-415, RN-420, RN-421, RN-427, RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | RE-4.15.1, RE-4.15.2, RE-4.15.3, RE-4.15.4, RE-4.15.5, RE-4.15.6, RE-4.15.7, RE-4.15.8, RE-4.15.9, RE-4.15.10 |
 | HU-4.16 | RN-803 | RE-4.16.1, RE-4.16.2 |

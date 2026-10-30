@@ -178,6 +178,19 @@ final class LlegadaAgenda extends ServicioAgendaClinica
         });
     }
 
+    /** RN-419: revisión y reclasificación comparten los recursos de la cascada y una sola transacción. */
+    public function conRevisionDeSolicitud(array $entrada, callable $revisar): array
+    {
+        $this->autorizar([Roles::VETERINARIO]);
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(),
+                fn () => $this->recursos([(int) $entrada['id_mascota']], [], [$entrada['fecha'], $entrada['fecha']]),
+                $revisar);
+        } catch (AccesoDenegado $error) {
+            $this->denegarAcceso('solicitudes_agenda', null, 'Revisión denegada tras rollback');
+        }
+    }
+
     public function ajustar(int $id, string $nivel, string $motivo, ?string $clave): array
     {
         $motivo = trim($motivo);
@@ -190,9 +203,12 @@ final class LlegadaAgenda extends ServicioAgendaClinica
             }
             [$duracion, $margen] = $this->tiempos($cita);
             $hora = $cita['hora'];
-            $bloque = null;
-            $sobrecupo = false;
-            if (in_array($nivel, ['amarillo', 'naranja'], true)) {
+            $orden = ['verde' => 0, 'amarillo' => 1, 'naranja' => 2, 'rojo' => 3];
+            // RN-423: confirmar o bajar conserva exactamente el espacio, incluso si era un sobrecupo.
+            $conservar = $orden[$nivel] <= $orden[$cita['prioridad']];
+            $bloque = $conservar ? $cita['id_bloque'] : null;
+            $sobrecupo = $conservar && (bool) $cita['es_sobrecupo'];
+            if (!$conservar && in_array($nivel, ['amarillo', 'naranja'], true)) {
                 $disponibilidad = new DisponibilidadAgenda($this->conn, $this->reloj);
                 $horas = $disponibilidad->sugerir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $duracion, $margen, $id);
                 if ($nivel === 'naranja') {
@@ -213,18 +229,6 @@ final class LlegadaAgenda extends ServicioAgendaClinica
                 } else {
                     if (!$horas) {
                         throw new HorarioOcupado('Sin primer espacio compatible; reprograma con el propietario.');
-                    }
-                    $hora = Cita::normalizarHora($horas[0]);
-                }
-            } elseif ($nivel === 'verde') {
-                // O-07/O-08: bajar el nivel no conserva un sobrecupo naranja sin capacidad ordinaria.
-                $d = new DisponibilidadAgenda($this->conn, $this->reloj);
-                $horas = $d->sugerir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $duracion, $margen, $id);
-                try {
-                    $d->exigir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $hora, $duracion, $margen, $id);
-                } catch (HorarioOcupado $error) {
-                    if (!$horas) {
-                        throw $error;
                     }
                     $hora = Cita::normalizarHora($horas[0]);
                 }

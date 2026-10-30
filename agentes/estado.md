@@ -6,6 +6,11 @@
 
 ## Ahora
 
+### Triage que no frena: RN-418 nueva y vacunación desde registros — entregada, pendiente de revisión (2026-10-29)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Rama `release/v2.3.0`, a partir de `e4e5ec7` (conocimiento de Claude). Decisión del dueño: revisión pendiente o inmediata permite reservar con nivel provisional; rojo conserva derivación sin horarios. Revisión posterior usa la reclasificación de la cita con auditoría; vacunación sin declarar sale de los registros de esa mascota en cualquier clínica. Alcance, riesgos y resultado en el anexo del plan M4; M2 referencia este ajuste. Sin tocar `database/conocimiento`, tratamientos ni demo.
+- PHP dirigido final 86/584; completo sin host 1223/9861 (95 omitidas de motor). Completo con host 127.0.0.1/MariaDB 10.4.32: 1223 recorridas sin omitidas; 15 guardas rechazaron la primera invocación por no declarar DB explícita, y esas clases más el recorrido nativo nuevo pasaron 16/370 con `ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2`. JS completo 439/439, incluidos seis casos reales nuevos de ambos formularios; sin fallos pendientes. Diagrama renderizado, PDF/Word al día, App/Historial 2.3.0 con el commit de Claude. Sigue revisión de Claude y comprobación del dueño; el dueño hace Git y despliegue.
+
 ### Portal: retoques del dueño antes de desplegar 2.2.0 — revisada y aprobada (2026-10-29)
 
 - **Cierre de Claude:** Codex se quedó sin uso antes del anexo; Claude verificó en Linux JS 433/433 y PHP con MySQL 8 1209/10954 sin omitidas, y escribió «Portal: retoques — Resultado y revisión» en specs/pulido-interfaz.md. Sigue: commit, push, CI verde, prueba del dueño y despliegue de 2.2.0 (reconstruir la imagen).
@@ -840,7 +845,7 @@ Las líneas «siguiente» y «pendiente» de estos antecedentes no reabren decis
 
 ## Agentes
 
-- **Asignación vigente de M4 (2026-10-17):** escribe Codex; revisa Codex en otra sesión independiente, por corrección expresa del usuario. Los roles siguientes describen el reparto histórico de módulos anteriores y no sustituyen esta asignación.
+- **Asignación vigente (reafirmada por el dueño, 2026-10-29):** escribe Codex; revisa Claude (arquitecto), conforme al modo acelerado de `metodo.md` §11. La asignación de revisión por Codex de 2026-10-17 queda como historial.
 - **Arquitecto y revisor:** sesión de Claude con acceso a la carpeta del proyecto.
 - **Ejecutor:** **Codex** escribe el código desde el 2026-10-10 (decisión del usuario); GPT-6.1 Sol, razonamiento medio, alto en subetapas de seguridad. Claude Code queda de respaldo.
 - **Revisor:** la sesión de Claude revisa el código, corre las suites (PHP y JS) y compara con los diagramas; no escribe la subetapa.

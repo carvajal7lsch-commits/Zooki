@@ -1437,7 +1437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const solicitud = triageC4.consulta();
         if (!solicitud) {
-            estadoSlots('guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+            estadoSlots('guia', 'Calcula el triage para consultar horarios. Si el nivel es rojo, contacta a urgencias.');
             return;
         }
         const fecha = dateInput.value;

@@ -234,7 +234,7 @@
                 if (!estado.recibir(numero, r)) return;
                 const revision = buscar('[data-triage-revision]');
                 // Quien puede revisar lo hace ahí mismo: no necesita «Comprobar si ya fue revisado».
-                pintarResultado(r, revision && r.revision ? 'Confirma el nivel abajo para ver los horarios.' : (r.message || ''));
+                pintarResultado(r, r.message || '');
                 comprobar.hidden = !r.revision || Boolean(revision);
                 if (revision) {
                     if (r.revision && revision.hidden) {

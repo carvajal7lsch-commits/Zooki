@@ -833,19 +833,19 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
-- Todo resultado con revisión humana se resuelve por veterinario antes de horario reservable; confirma nivel o ajusta con motivo. Cambios de entrada/contexto/versión invalidan la resolución. Rojo conserva aviso y derivación inmediata.
+- Un resultado con revisión, incluida la inmediata, conserva nivel provisional y permite reservar; el veterinario recibe el aviso y confirma o ajusta con motivo, incluso después de reservar (RN-418/RN-419). Cambios de entrada/contexto/versión invalidan la resolución. Rojo conserva aviso y derivación inmediata sin horarios.
 
 - Los síntomas se confirman desde el catálogo o con «Otro / no sé»; la nota libre es opcional y nunca interviene en el cálculo.
 - El buscador tolera errores y solo sugiere opciones; el usuario las confirma, sin selección automática.
 - El tiempo se declara por evento: conocido, «No sé» con revisión si es decisivo, o «No aplica» para atención preventiva; no se inventan edades ni horas.
 - El nivel final es el más alto que dispare cualquier síntoma o combinación; los datos tranquilizadores no bajan una alarma.
-- Las combinaciones escalan, y la raza, la edad, el estado, el historial (incluidas alergias de otras clínicas) y el tiempo modifican el nivel.
+- Las combinaciones escalan, y la raza, la edad, el estado, el historial (incluidas alergias de otras clínicas) y el tiempo modifican el nivel. Sin vacunación declarada, se usan las vacunas de esa mascota en cualquier clínica: alguna próxima dosis vencida implica «incompleta»; al menos una vacuna y ninguna vencida, «completa»; sin registros, sin dato. Lo declarado manda (RN-416/RN-113).
 - Las señales de alarma universales dan 🔴 en cualquier especie.
 - Sin cobertura específica, con «Otro / no sé» o sin regla aplicable a las marcas, el caso queda en 🟡 con revisión del personal; las alarmas universales siguen dando 🔴.
 - Si el caso indica una posible enfermedad contagiosa, se avisa a la clínica para preparar el aislamiento.
 - Los casos de la batería de triage (`documentacion/CasosTriage.md`) se usan como pruebas de aceptación.
 
-**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 · **Requisitos:** RF-2.12 · **Dependencias:** HU-2.8, HU-2.10
+**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113 · **Requisitos:** RF-2.12 · **Dependencias:** HU-2.8, HU-2.10
 
 ---
 ---
@@ -1266,7 +1266,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
-- Todo resultado con revisión se resuelve antes de ofrecer/guardar horario; rojo se deriva inmediatamente sin acreditar presencia física.
+- La revisión, incluida la inmediata, no bloquea ofrecer ni guardar horario según el nivel provisional (RN-418). El aviso REVISION_TRIAGE llega al veterinario, marcado inmediato si corresponde; rojo se deriva inmediatamente sin horario ni presencia física acreditada. Tras reservar, el nivel confirmado o ajustado con motivo y auditoría pasa a la cita (RN-419); rojo entra a Urgencias, naranja respeta RN-422 y si baja conserva el espacio (RN-423).
 - Tope naranja por franja continua original/fecha, no multiplicado por ausencias parciales; completadas consumen, canceladas/no_asistio liberan; excedente avisa sin insertarse.
 
 - Al describir el motivo y los síntomas, el **Grafo I** calcula el nivel de triage (🔴 rojo, 🟠 naranja, 🟡 amarillo, 🟢 verde); el propietario no lo elige.
@@ -1278,7 +1278,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - La disponibilidad se calcula como `horario clínica ∩ horario del veterinario − ausencias`, por duración + margen del tipo de cita (RN-415).
 - La reserva se concreta con bloqueo (si el espacio se ocupó antes, se busca otro); al crear se registran tipo, duración, margen y prioridad, se notifica y queda en auditoría.
 
-**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-420, RN-422 · **Requisitos:** RF-4.7 · **Dependencias:** HU-4.1, HU-4.11, HU-2.8
+**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423 · **Requisitos:** RF-4.7 · **Dependencias:** HU-4.1, HU-4.11, HU-2.8
 
 ### HU-4.14 — Reajuste de agenda en vivo (efecto cascada)
 
@@ -2170,7 +2170,7 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-4.15, HU-5.3, HU-5.10, HU-5.13 |
 | RN-111 | HU-1.1, HU-1.5 |
 | RN-112 | HU-2.1, HU-2.10 |
-| RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-5.12 |
+| RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-2.11, HU-5.12 |
 | RN-114 | HU-5.5, HU-5.9 |
 | RN-115 | HU-5.12, HU-5.13 |
 | RN-116 | HU-5.13 |
@@ -2210,12 +2210,12 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-6.1, HU-6.2, HU-7.4 |
 | RN-416 | HU-2.11 |
 | RN-417 | HU-2.11 |
-| RN-418 | HU-2.11 |
-| RN-419 | HU-4.18 |
+| RN-418 | HU-2.11, HU-4.13 |
+| RN-419 | HU-4.13, HU-4.18 |
 | RN-420 |HU-0.4, HU-4.13, HU-4.15, HU-0.5 |
 | RN-421 | HU-4.15, HU-7.4, HU-7.5 |
 | RN-422 | HU-4.13, HU-7.5 |
-| RN-423 | HU-4.17 |
+| RN-423 | HU-4.13, HU-4.17 |
 | RN-424 | HU-2.11 |
 | RN-425 | HU-2.11 |
 | RN-426 | HU-4.19, HU-6.1, HU-7.5 |

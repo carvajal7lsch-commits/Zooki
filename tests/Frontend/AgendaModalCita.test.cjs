@@ -183,7 +183,7 @@ test('los pasos exigen paciente y triage, conservan los datos al volver y bloque
     valores.modal_tipo_cita = '1';
     ventana.avanzarPasoCita();
     assert.equal(paneles[1].hidden, false);
-    assert.equal(submit.disabled, true, 'No salta revisión pendiente ni derivación roja');
+    assert.equal(submit.disabled, true, 'Exige evaluación reservable y conserva la derivación roja');
     solicitud = '123';
     ventana.actualizarPasosCita();
     assert.equal(paneles[1].hidden, false);

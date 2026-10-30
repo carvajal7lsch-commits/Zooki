@@ -6,7 +6,7 @@ const raiz = path.resolve(__dirname, '../../..');
 const dependencias = path.join(__dirname, 'portal-dependencias');
 const php = argumento => execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'portal-movil-vista.php'), argumento], { encoding:'utf8', env:{ ...process.env, ZOOKI_TEST_MYSQL_HOST:'', ZOOKI_TEST_MYSQL_DB:'zooki_test_base_v2' } });
 
-async function servidorPortalMovil({ uno = false, reajuste = false, html = null } = {}) {
+async function servidorPortalMovil({ uno = false, reajuste = false, html = null, triage = null } = {}) {
     let pagina = html ?? php(reajuste ? 'reajuste' : uno ? 'uno' : '');
     const remotas = {
         'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css':'flatpickr.min.css',
@@ -40,6 +40,7 @@ async function servidorPortalMovil({ uno = false, reajuste = false, html = null 
             llamadas.push({ accion, cuerpo, consulta:url.search, metodo:req.method });
             const fecha = new Date(Date.now() + 86400000).toLocaleDateString('en-CA');
             const respuestas = {
+                calcular_triage_ajax: triage ?? { success: true, message: 'Guardado simulado' },
                 ver_detalle_mascota_propietario_ajax:detalle,
                 get_cita_ajax:{ success:true, cita:{ id_cita:1, id_clinica:1, id_mascota:1, id_tipo_cita:1, id_veterinario:2, fecha } },
                 portal_get_vets_ajax:[{ id_usuario:2, nombre_completo:'Beto Norte' }],

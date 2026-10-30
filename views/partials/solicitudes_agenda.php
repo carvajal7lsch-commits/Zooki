@@ -3,7 +3,7 @@
     <header class="ah-head">
         <div>
             <h3>Revisión de triage</h3>
-            <p><?= Contexto::rolActivo() === Roles::VETERINARIO ? 'Confirma o ajusta el nivel calculado antes de agendar.' : 'Solicitudes que esperan la revisión del veterinario.' ?></p>
+            <p><?= Contexto::rolActivo() === Roles::VETERINARIO ? 'Confirma o ajusta el nivel provisional, también después de reservar.' : 'Solicitudes que esperan la revisión del veterinario.' ?></p>
         </div>
         <div class="ah-acciones">
             <label class="ah-filtro"><span class="ah-oculto">Mostrar</span>

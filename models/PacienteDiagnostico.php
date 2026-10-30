@@ -44,11 +44,23 @@ final class PacienteDiagnostico extends ModeloHistoria
             'edad_meses' => self::edadMeses($ficha['fecha_nacimiento'], $fecha),
             'sexo' => $ficha['sexo'] === 'Desconocido' ? null : $ficha['sexo'],
             'esterilizado' => $ficha['esterilizado'] === null ? null : (bool) $ficha['esterilizado'],
-            'vacunacion' => $declarados['vacunacion'] ?? null,
+            'vacunacion' => $declarados['vacunacion'] ?? $this->vacunacionRegistrada($idMascota, $fecha),
             'dias_desde_celo' => $declarados['dias_desde_celo'] ?? null,
             'alertas_activas' => array_values(array_unique($codigos)),
             'exposiciones' => null,
         ];
+    }
+
+    /** RN-416/RN-113: después de autorizar la mascota, sus vacunas son globales entre clínicas. */
+    private function vacunacionRegistrada(int $idMascota, DateTimeImmutable $fecha): ?string
+    {
+        $consulta = $this->conn->prepare('SELECT COUNT(*) AS total, MAX(CASE WHEN fecha_proxima_dosis < ? THEN 1 ELSE 0 END) AS vencida FROM vacunas WHERE id_mascota = ?');
+        $consulta->execute([$fecha->format('Y-m-d'), $idMascota]);
+        $vacunas = $consulta->fetch(PDO::FETCH_ASSOC);
+        if ((int) $vacunas['total'] === 0) {
+            return null;
+        }
+        return (int) $vacunas['vencida'] === 1 ? 'incompleta' : 'completa';
     }
 
     private static function edadMeses(?string $nacimiento, DateTimeImmutable $fecha): ?int

@@ -8,7 +8,7 @@ const fecha = desplazamiento => {
     dia.setDate(dia.getDate() + desplazamiento);
     return `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
 };
-async function servidorAgendaVet({ iconos = true } = {}) {
+async function servidorAgendaVet({ iconos = true, triage = null } = {}) {
     const html = execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'agenda-vet-vista.php')], { encoding: 'utf8', env: { ...process.env, ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' } });
     const citas = Array.from({ length: 6 }, (_, i) => ({ id_cita: i + 1, fecha: fecha(0), hora: `${String(8 + i).padStart(2, '0')}:30:00`, tipo: ['cita', 'cita', 'cita', 'cita', 'vacunacion', 'desparasitacion'][i], mascota_nombre: ['Toby', 'Mia', 'Luna', 'Max', 'Rocky', 'Kira'][i], propietario_nombre: 'Fabio Propietario', id_veterinario: 2, veterinario_nombre: 'Beto Norte', tipo_cita_nombre: 'Consulta general', estado: i < 2 ? 'completada' : 'pendiente', prioridad: ['verde', 'verde', 'naranja', 'amarillo', '', ''][i] }));
     const solicitudes = [{ id_solicitud: 7, nombre: 'Luna', huella_entrada: 'huella-original-prueba', nivel_calculado: 'naranja', nivel_aprobado: null, contexto_triage: JSON.stringify({ entrada: { sintomas: [{ codigo: 'vomito', tiempo: 'conocido', minutos: 20 }] }, paciente: { edad_meses: 24, sexo: 'Hembra' }, declarados: { vacunacion: 'completa' } }) }];
@@ -59,7 +59,7 @@ async function servidorAgendaVet({ iconos = true } = {}) {
                 req.on('data', parte => { cuerpo += parte; });
                 req.on('end', () => {
                     llamadas.push({ accion, cuerpo });
-                    const respuesta = accion === 'registrar_llegada_ajax' ? { success: true, message: 'Llegada registrada', resultado: { opciones: { segundos_restantes: 1200, dentro_tolerancia: true, reducida: true, otro_veterinario: [] } } } : accion === 'calcular_triage_ajax' ? { success: true, id_solicitud: 123, huella: 'huella-calculo', reservable: true, nivel: 'amarillo' } : { success: true, message: 'Guardado simulado' };
+                    const respuesta = accion === 'registrar_llegada_ajax' ? { success: true, message: 'Llegada registrada', resultado: { opciones: { segundos_restantes: 1200, dentro_tolerancia: true, reducida: true, otro_veterinario: [] } } } : accion === 'calcular_triage_ajax' ? (triage ?? { success: true, id_solicitud: 123, huella: 'huella-calculo', reservable: true, nivel: 'amarillo' }) : { success: true, message: 'Guardado simulado' };
                     const enviar = () => res.end(JSON.stringify(respuesta));
                     if (retener) pendientes.push(enviar);
                     else enviar();

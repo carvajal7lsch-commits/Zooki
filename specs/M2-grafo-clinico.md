@@ -1,5 +1,7 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
+> **Ajuste vigente, 2026-10-29:** RN-418 permite reservar con nivel provisional aunque la revisión sea inmediata; sustituye la revisión previa a horario de los anexos históricos. RN-416 deriva vacunación de los registros globales de esa mascota si no se declara. Encargo aprobado del dueño en `release/v2.3.0`; escribe Codex, revisa Claude. Contrato y resultado en la subetapa «Triage que no frena» del plan M4; sin modificar `database/conocimiento`.
+
 > Estado: F entregada, pendiente de revisión (Codex, 2026-10-16); pruebas del usuario de C5a/C5b/C7 y despliegue pendientes
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4, F) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)

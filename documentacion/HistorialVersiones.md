@@ -1,12 +1,21 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.2.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.3.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.2.0 (Actual)
+### Versión 2.3.0 (Actual)
+
+Preparada el 29 de octubre de 2026 en `release/v2.3.0`; entregada, pendiente de revisión de Claude e integración/despliegue del dueño.
+
+* **Triage que no frena (RN-418, HU-4.13):** el nivel provisional permite elegir horario y reservar en el portal y en Nueva cita del veterinario, incluso con revisión inmediata. El veterinario recibe REVISION_TRIAGE, marcado inmediato cuando corresponde. Rojo conserva aviso y derivación de inmediato, sin horario reservable.
+* **Revisión después de reservar (RN-419):** confirmar o ajustar aplica el nivel a la cita con motivo y auditoría; rojo entra a Urgencias, naranja respeta el tope y al bajar se conserva el espacio. La solicitud y la cita cambian en una sola transacción.
+* **Vacunación desde registros (RN-416, RN-113):** si no se declara en el formulario, cualquier próxima dosis vencida de esa mascota determina vacunación incompleta; con vacunas y ninguna vencida, completa; sin registros, sin dato. Lo declarado manda, incluidas las vacunas de otras clínicas.
+* **Conocimiento de Claude, commit `e4e5ec7`:** nivel base con fuente para los 27 síntomas que no lo tenían; los síntomas que piden revisión bajan de 27/50 a 3/50. El conocimiento mantiene su validación veterinaria pendiente. Esta subetapa de Codex no modifica `database/conocimiento`.
+
+### Versión 2.2.0
 
 * **Portal, retoques antes de publicar (2026-10-29, HU-5.1/5.3/5.5/5.6):** foto de mascota por elección o arrastre, triage con campos completos y Agendar móvil a todo el ancho. Inicio conserva su identidad con tarjetas compactas y botón de patita; ficha con raza junto al nombre, acceso al PDF y HC de la clínica elegida. La respuesta existente aporta el número por clínica solo al propietario de la mascota (RN-G02). Historial clínico A4 con paciente, HC, alertas, vacunas, desparasitación y consultas identificadas por clínica/veterinario (RN-114), numeración y regreso a la ficha o a Vacunas. Sin esquema ni endpoints nuevos; versión aún sin publicar.
 

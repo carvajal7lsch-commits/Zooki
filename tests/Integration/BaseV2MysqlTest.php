@@ -22,6 +22,42 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testTriageProvisionalReservaYRevisionPosteriorConVacunasGlobales(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/LlegadaAgenda.php';
+        DosClinicas::poblarAgenda($this->db);
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $reloj = static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00');
+        $agenda = new SolicitudAgenda($this->db, $reloj);
+        $entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07',
+            'sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]];
+        foreach (['verde', 'naranja', 'rojo'] as $nivel) {
+            $r = $agenda->evaluar($entrada);
+            $this->assertTrue($r['reservable']);
+            $guardada = $agenda->reservar($entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => '08:00', 'ignore_warning' => '1']);
+            $antes = (new Cita($this->db))->getById($guardada['id_cita']);
+            $agenda->revisar($r['id_solicitud'], $nivel, 'Valoración posterior a reservar', $r['huella'], null);
+            $cita = (new Cita($this->db))->getById($guardada['id_cita']);
+            $this->assertSame($nivel, $cita['prioridad']);
+            $this->assertSame('amarillo', $cita['prioridad_calculada']);
+            if ($nivel === 'verde') {
+                $this->assertSame($antes['hora'], $cita['hora']);
+            }
+        }
+        $this->assertCount(1, (new UrgenciaAgenda($this->db, $reloj))->listar());
+        $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='citas' AND descripcion LIKE 'Reclasificación veterinaria%'")->fetchColumn());
+        $grafo = (new GrafoConocimiento($this->db))->instantanea();
+        $paciente = new PacienteDiagnostico($this->db);
+        $this->assertNull($paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->db->exec("INSERT INTO vacunas (id_mascota,id_clinica,nombre_vacuna,fecha_aplicacion,fecha_proxima_dosis) VALUES (1,2,'Rabia','2029-01-01','2031-01-01')");
+        $this->assertSame('completa', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->db->exec("UPDATE vacunas SET fecha_proxima_dosis='2029-01-02'");
+        $this->assertSame('incompleta', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->assertSame('completa', $paciente->contexto(1, $grafo, $reloj(), ['vacunacion' => 'completa'])['vacunacion']);
+    }
+
     public static function carrerasCheckout(): array
     {
         return [['checkout_workers', 0, 'cancelado'], ['checkout_evento_primero', 1, 'confirmado'], ['checkout_cierre_primero', 0, 'revision']];

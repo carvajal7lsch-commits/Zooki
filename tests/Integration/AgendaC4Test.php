@@ -55,6 +55,8 @@ final class AgendaC4Test extends TestCase
         $r = $this->agenda->evaluar($this->entrada);
         $this->assertSame('rojo', $r['nivel']);
         $this->assertFalse($r['reservable']);
+        $this->assertSame('derivada', $this->agenda->obtener($r['id_solicitud'])['estado']);
+        $this->assertSame([], $this->agenda->horas($r['id_solicitud'], $this->entrada));
         $this->agenda->evaluar($this->entrada);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
         $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM eventos_agenda WHERE tipo='DERIVACION_ROJA'")->fetchColumn());
@@ -65,12 +67,10 @@ final class AgendaC4Test extends TestCase
         $this->entrada['sintomas'] = [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']];
         $r = $this->agenda->evaluar($this->entrada);
         $this->assertTrue($r['revision']);
-        try {
-            $this->agenda->horas($r['id_solicitud'], $this->entrada);
-            $this->fail('Una revisión pendiente no puede ofrecer horarios.');
-        } catch (InvalidArgumentException $e) {
-            $this->assertStringContainsString('revisión', $e->getMessage());
-        }
+        $this->assertTrue($r['reservable']);
+        $this->assertCount(1, $this->agenda->horas($r['id_solicitud'], $this->entrada));
+        $this->assertSame('Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.', $r['message']);
+        $this->assertSame(1, $this->cuenta("SELECT COUNT(*) FROM eventos_agenda WHERE tipo='REVISION_TRIAGE' AND estado='enviado'"));
         $revisada = $this->agenda->revisar($r['id_solicitud'], 'amarillo', 'Evaluación veterinaria', $r['huella'], str_repeat('d', 64));
         $this->assertFalse($revisada['revision']);
         $this->assertCount(1, $this->agenda->horas($r['id_solicitud'], $this->entrada));
@@ -78,6 +78,80 @@ final class AgendaC4Test extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->agenda->horas($r['id_solicitud'], $this->entrada);
     }
+    public function testRevisionInmediataPermiteReservarYMarcaElAviso(): void
+    {
+        $this->db->exec('UPDATE mascotas SET id_especie=3, id_raza=NULL WHERE id_mascota=1');
+        $this->entrada['sintomas'] = [
+            ['codigo' => 'sintoma.no_come', 'tiempo' => 'conocido', 'minutos' => 1440],
+            ['codigo' => 'sintoma.no_defeca', 'tiempo' => 'conocido', 'minutos' => 1440],
+        ];
+        $r = $this->agenda->evaluar($this->entrada);
+        $this->assertTrue($r['resultado']['revision_inmediata']);
+        $this->assertTrue($r['reservable']);
+        $this->assertStringContainsString('inmediata', $this->db->query("SELECT titulo FROM notificaciones_internas WHERE tipo='REVISION_TRIAGE'")->fetchColumn());
+        $guardada = $this->agenda->reservar($this->entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => '08:00']);
+        $this->assertArrayHasKey('id_cita', $guardada);
+    }
+
+    public function testRevisionPosteriorARojoDerivaLaCitaYConservaAuditoriaYReplay(): void
+    {
+        [$r, $guardada] = $this->reservarProvisional();
+        $clave = hash('sha256', 'revision-posterior-roja');
+        $revisada = $this->agenda->revisar($r['id_solicitud'], 'rojo', 'Empeoramiento confirmado', $r['huella'], $clave);
+        $this->assertSame($revisada, $this->agenda->revisar($r['id_solicitud'], 'rojo', 'Empeoramiento confirmado', $r['huella'], $clave));
+        $cita = (new Cita($this->db))->getById($guardada['id_cita']);
+        $this->assertSame('rojo', $cita['prioridad']);
+        $this->assertSame('amarillo', $cita['prioridad_calculada']);
+        $this->assertSame('cancelada', $cita['estado']);
+        require_once __DIR__ . '/../../models/UrgenciaAgenda.php';
+        $urgencias = (new UrgenciaAgenda($this->db))->listar();
+        $this->assertCount(1, $urgencias);
+        $this->assertSame('resuelta', $this->agenda->obtener($r['id_solicitud'])['estado_revision']);
+        $this->assertSame(1, $this->cuenta("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='citas' AND descripcion LIKE 'Reclasificación veterinaria%'"));
+    }
+
+    public function testRevisionPosteriorBajaOConfirmaYConservaElEspacio(): void
+    {
+        foreach (['verde', 'amarillo'] as $nivel) {
+            [$r, $guardada] = $this->reservarProvisional();
+            $antes = (new Cita($this->db))->getById($guardada['id_cita']);
+            $this->assertContains($r['id_solicitud'], array_map('intval', array_column($this->agenda->listar()['solicitudes'], 'id_solicitud')));
+            $this->agenda->revisar($r['id_solicitud'], $nivel, 'Valoración posterior', $r['huella'], null);
+            $despues = (new Cita($this->db))->getById($guardada['id_cita']);
+            foreach (['hora', 'hora_fin', 'fecha', 'id_veterinario', 'duracion_minutos', 'margen_minutos'] as $campo) {
+                $this->assertSame($antes[$campo], $despues[$campo], $campo);
+            }
+            $this->assertSame($nivel, $despues['prioridad']);
+            $this->assertSame('Valoración posterior', $despues['motivo_ajuste_prioridad']);
+            $this->assertSame('asignada', $this->agenda->obtener($r['id_solicitud'])['estado']);
+        }
+    }
+
+    public function testRevisionPosteriorNaranjaRespetaTopeYRevierteLaResolucion(): void
+    {
+        [$r, $guardada] = $this->reservarProvisional();
+        $this->db->exec('UPDATE clinicas SET tope_sobrecupos=0 WHERE id_clinica=1');
+        try {
+            $this->agenda->revisar($r['id_solicitud'], 'naranja', 'Dolor confirmado', $r['huella'], null);
+            $this->fail('El tope también se exige al revisar una reserva.');
+        } catch (HorarioOcupado) {
+        }
+        $this->assertSame('pendiente', $this->agenda->obtener($r['id_solicitud'])['estado_revision']);
+        $this->assertSame('amarillo', (new Cita($this->db))->getById($guardada['id_cita'])['prioridad']);
+        $this->db->exec('UPDATE clinicas SET tope_sobrecupos=2 WHERE id_clinica=1');
+        $this->agenda->revisar($r['id_solicitud'], 'naranja', 'Dolor confirmado', $r['huella'], null);
+        $this->assertSame('naranja', (new Cita($this->db))->getById($guardada['id_cita'])['prioridad']);
+    }
+
+    private function reservarProvisional(): array
+    {
+        $this->entrada['sintomas'] = [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']];
+        $r = $this->agenda->evaluar($this->entrada);
+        $guardada = $this->agenda->reservar($this->entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => '08:00', 'ignore_warning' => '1']);
+        $this->assertSame('pendiente', $this->agenda->obtener($r['id_solicitud'])['estado_revision']);
+        return [$r, $guardada];
+    }
+
     /** Copia la ficha de Luna como otra mascota de Fabio vinculada a Norte. */
     private function mascota(int $id, int $propietario = DosClinicas::PROPIETARIO, int $clinica = DosClinicas::NORTE): void
     {

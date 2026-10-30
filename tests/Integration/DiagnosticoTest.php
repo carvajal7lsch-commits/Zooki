@@ -21,6 +21,7 @@ final class DiagnosticoTest extends TestCase
         ConocimientoRealPrueba::taxonomia($this->db);
         (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $this->db->exec('CREATE TABLE alertas_medicas (id_alerta INTEGER PRIMARY KEY AUTOINCREMENT, id_mascota INTEGER, id_clinica INTEGER, id_veterinario INTEGER, tipo TEXT, id_nodo INTEGER, descripcion TEXT, activa INTEGER, fecha TEXT)');
+        $this->db->exec('CREATE TABLE vacunas (id_vacuna INTEGER PRIMARY KEY, id_mascota INTEGER, id_clinica INTEGER, fecha_proxima_dosis TEXT)');
         $usuarios = new Usuario($this->db);
         Security::definirFuenteDeContextos(fn (int $id): ?array => $usuarios->contextosDe($id));
         $this->fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
@@ -59,7 +60,7 @@ final class DiagnosticoTest extends TestCase
         return json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
     }
 
-    public function testContextoSaleDeLaFichaYVacunacionNoSeInfiere(): void
+    public function testContextoSaleDeLaFichaYSinVacunasQuedaSinDato(): void
     {
         $this->db->exec("UPDATE mascotas SET fecha_nacimiento = '2026-07-15', sexo = 'Macho', esterilizado = 0 WHERE id_mascota = 1");
         // Estos valores de identidad no son datos que la API permita sobrescribir.
@@ -104,6 +105,38 @@ final class DiagnosticoTest extends TestCase
             }
         }
         $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion = 'OTHER' AND tabla_afectada = 'mascotas' AND id_clinica = 2")->fetchColumn());
+    }
+
+    public static function vacunaciones(): array
+    {
+        return [
+            'sin registros propios, ajena vencida' => [[], [], null],
+            'vencida en otra clínica' => [['2026-10-14', '2026-11-01'], [], 'incompleta'],
+            'vigente en otra clínica' => [['2026-11-01'], [], 'completa'],
+            'vence hoy' => [['2026-10-15'], [], 'completa'],
+            'sin próxima dosis' => [[null], [], 'completa'],
+            'declarada completa manda' => [['2026-10-14'], ['vacunacion' => 'completa'], 'completa'],
+            'declarada incompleta manda' => [['2026-11-01'], ['vacunacion' => 'incompleta'], 'incompleta'],
+            'declarada desconocida manda' => [['2026-10-14'], ['vacunacion' => 'desconocida'], 'desconocida'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('vacunaciones')]
+    public function testVacunacionRegistradaGlobalSoloDeLaMascotaAutorizada(array $fechas, array $declarados, ?string $esperado): void
+    {
+        $this->db->exec("INSERT INTO vacunas VALUES (99, 999, 1, '2020-01-01')");
+        $insertar = $this->db->prepare('INSERT INTO vacunas (id_mascota,id_clinica,fecha_proxima_dosis) VALUES (1,2,?)');
+        foreach ($fechas as $fecha) {
+            $insertar->execute([$fecha]);
+        }
+        $grafo = (new GrafoConocimiento($this->db))->instantanea();
+        $contexto = (new PacienteDiagnostico($this->db))->contexto(1, $grafo, $this->fecha, $declarados);
+        $this->assertSame($esperado, $contexto['vacunacion']);
+        $this->como(DosClinicas::PROPIETARIO, Contexto::dePropietario());
+        $portal = (new PacienteDiagnostico($this->db))->enClinicaDelPropietario(1);
+        $this->assertSame($esperado, $portal->contexto(1, $grafo, $this->fecha, $declarados)['vacunacion']);
+        $this->expectException(AccesoDenegado::class);
+        $portal->contexto(999, $grafo, $this->fecha, []);
     }
 
     public function testLosOtrosRolesNoEntranYSinCsrfSeRechaza(): void

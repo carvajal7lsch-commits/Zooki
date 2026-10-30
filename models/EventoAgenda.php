@@ -35,7 +35,18 @@ final class EventoAgenda
         $avisos = new NotificacionInterna($this->db);
         $enlace = 'index.php?action=' . ($rol === Roles::ADMIN ? 'admin_citas' : 'vet_agenda');
         $mensaje = $solicitud ? 'Solicitud de agenda #' . $solicitud . '. Consulta la revisión en la agenda.' : 'Hay un cambio en la cita #' . $cita . '.';
+        $inmediata = false;
+        if ($tipo === 'REVISION_TRIAGE' && $solicitud !== null) {
+            $consulta = $this->db->prepare('SELECT contexto_triage FROM solicitudes_agenda WHERE id_solicitud=? AND id_clinica=?');
+            $consulta->execute([$solicitud, $this->clinica]);
+            $contexto = json_decode((string) $consulta->fetchColumn(), true, 512, JSON_THROW_ON_ERROR);
+            $inmediata = !empty($contexto['resultado']['revision_inmediata']);
+            if ($inmediata) {
+                $mensaje = 'Revisión inmediata. ' . $mensaje;
+            }
+        }
         $titulo = match ($tipo) {
+            'REVISION_TRIAGE' => $inmediata ? 'Revisión inmediata de triage' : 'Revisión de triage',
             'CITA_REASIGNADA' => 'Cambio de veterinario confirmado',
             'REPROGRAMAR_NECESARIO' => 'Cita pendiente de reprogramar',
             default => str_starts_with($tipo, 'PROPUESTA_REASIGNACION_') ? 'Propuesta de reasignación' : $tipo,

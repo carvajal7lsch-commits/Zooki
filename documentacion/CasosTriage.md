@@ -16,7 +16,7 @@ Incluye pruebas adicionales de P1–P6, tóxicos, ventanas temporales y decision
 > ⚠️ **Validación clínica pendiente.** Los niveles esperados son orientativos para probar el software. Por decisión del usuario (2026-10-14), se permite construir y cargar conocimiento pendiente desde fuentes reconocidas, identificadas por elemento.
 Eso no constituye aprobación clínica: la validación veterinaria del conjunto sigue pendiente. El sistema apoya la decisión; no la reemplaza (RN-209).
 
-**Caso T-20 pendiente:** el motor aplica el valor de reserva 🟡 de RN-418 y solicita revisión inmediata antes de ofrecer un horario. El nivel 🟠 propuesto para el conejo no es una regla automática aprobada: requiere validación de un veterinario con experiencia en esa especie y, si procede, una regla documentada de cobertura para conejos. La batería clínica completa no queda aprobada hasta cerrar esta revisión.
+**Caso T-20 pendiente:** el motor aplica el valor de reserva 🟡 de RN-418 y solicita revisión inmediata, sin impedir ofrecer ni reservar horario con nivel provisional (decisión del dueño, 2026-10-29). El aviso al veterinario se marca inmediato. El nivel 🟠 propuesto para el conejo no es una regla automática aprobada: requiere validación de un veterinario con experiencia en esa especie y, si procede, una regla documentada de cobertura para conejos. La batería clínica completa no queda aprobada hasta cerrar esta revisión.
 
 **Niveles:** 🔴 Rojo (crítico: no se agenda, va a urgencias) · 🟠 Naranja (urgente: sobrecupo) · 🟡 Amarillo (prioritario: primer espacio) · 🟢 Verde (no urgente: el actor elige).
 
@@ -100,7 +100,7 @@ Pares de casos con el mismo texto y distinto paciente: si salen igual, los modif
 
 | ID | Paciente | Relato ilustrativo (no calcula) | Nivel | Por qué | Qué pone a prueba |
 |---|---|---|---|---|---|
-| T-20 | Conejo, 2 años | «No ha comido ni ha hecho popó desde ayer» | 🟡 + revisión inmediata del personal; 🟠 propuesto, pendiente de validación veterinaria | El grafo aún no cubre conejos: aplica el valor de reserva de RN-418. La falta de apetito y heces exige valoración veterinaria pronta; el color definitivo requiere revisión clínica. | El motor no puede asignar 🟠 sin una regla validada para conejos ni agendar este caso sin revisión humana. |
+| T-20 | Conejo, 2 años | «No ha comido ni ha hecho popó desde ayer» | 🟡 provisional + revisión inmediata del personal; permite reservar; 🟠 propuesto, pendiente de validación veterinaria | El grafo aún no cubre conejos: aplica el valor de reserva de RN-418. La falta de apetito y heces exige valoración veterinaria pronta; el color definitivo requiere revisión clínica. | El motor no puede asignar 🟠 sin una regla validada para conejos. La revisión inmediata genera aviso inmediato y no bloquea el horario provisional. |
 | T-21 | Loro | «Respira moviendo mucho la cola y está esponjado» | 🔴 | Dificultad respiratoria: alarma universal (P1). | Las alarmas universales funcionan aunque la especie no tenga cobertura. |
 | T-22 | Perro | «Está raro» | 🟡 + revisión del personal | No hay síntomas reconocibles. | Un texto vago no debe terminar en 🟢 (P6). |
 | T-23 | Gato | «bomita sangre i esta desaido» | 🟠 | Vómito con sangre y decaimiento. | Que el buscador sugiera opciones ante errores, y que el usuario confirme Vómito con sangre y Decaimiento antes de calcular. |
@@ -126,6 +126,8 @@ T-22 marca «Otro / no sé»; T-23 prueba primero el buscador y luego las dos ma
 Buscar «bomita» no añade sangre ni selecciona un síntoma.
 T-16 y T-20 son esperados provisionales con las limitaciones expresas de sus filas.
 
+**Agenda, RN-418 (2026-10-29):** T-16, T-20 y T-22 conservan revisión, pero no bloquean la reserva según el nivel provisional; T-20 avisa revisión inmediata. Rojo sigue sin horarios y se deriva de inmediato. El motor y los esperados clínicos no cambian.
+
 | Caso | Marcas del catálogo y atributos cerrados del episodio | Tiempo declarado | Paciente y estado aportados | Esperado | Conocimiento mínimo |
 |---|---|---|---|---|---|
 | T-01 | Dificultad para respirar; encías azuladas/moradas. | En curso; inicio sin dato. | Perro mestizo, 6 años; resto sin dato. | 🔴 | P1 universal; dos alarmas no se promedian. |
@@ -147,7 +149,7 @@ T-16 y T-20 son esperados provisionales con las limitaciones expresas de sus fil
 | T-17 | Vómito repetido; no bebe; decaimiento marcado; encías secas/deshidratación. | 4 vómitos hoy. | Perro, 10 años; raza/tamaño sin dato. | 🟠 | P3 sube una vez la evidencia moderada; no sumar sucesivamente deshidratación, número de síntomas y una geriatría inventada hasta rojo. |
 | T-18 | Episodio convulsivo ya finalizado; primera crisis. | Ayer; recuperado ahora. | Perro, 4 años, activo y come. | 🟠 | Primera crisis resuelta es distinta de convulsión en curso; recuperación no borra esa regla. |
 | T-19 | Episodio convulsivo finalizado, único, corto y habitual; recuperado. | Pasado, duración exacta sin dato. | Perro con epilepsia conocida y tratamiento; edad/raza sin dato. | 🟡 | Alerta global de epilepsia + medicación conocida, o historia autorizada; no interpretar una consulta protegida; sin evidencia de patrón habitual, revisión. |
-| T-20 | No come; no defeca. | Desde ayer. | Conejo, 2 años. | 🟡 + revisión inmediata antes de agendar | P6: conejo sin cobertura específica; no cargar naranja como regla aprobada; ninguna respuesta tranquilizadora elimina la revisión. |
+| T-20 | No come; no defeca. | Desde ayer. | Conejo, 2 años. | 🟡 provisional + revisión inmediata; reservable | P6: conejo sin cobertura específica; no cargar naranja como regla aprobada; ninguna respuesta tranquilizadora elimina la revisión ni su aviso inmediato. |
 | T-21 | Dificultad para respirar, con ayuda visible «mueve mucho la cola al respirar»; plumaje erizado. | Sin dato. | Loro; edad/raza sin dato. | 🔴 | P1 universal; la marca explícita sustituye la interpretación automática del relato, aunque aves no tengan cobertura específica. |
 | T-22 | «Otro / no sé»; nota opcional «está raro». | «No sé». | Perro; resto sin dato. | 🟡 + revisión | P6; una nota sola no satisface la captura ni calcula un nivel. |
 | T-23 | Buscar «bomita sangre» y «desaido»; confirmar Vómito con sangre y Decaimiento. | «No sé» si no se conoce. | Gato; resto sin dato. | 🟠 | Búsqueda tolerante + selección explícita; sangre en vómito no equivale por sí sola a hemorragia incontrolable P1; P3/combinación. |
