@@ -354,6 +354,11 @@
         });
 
         capturaActual = {
+            // RN-431: prellenar reutiliza la evaluación vigente; nunca fija un color desde el cliente.
+            ponerControl() {
+                capturaActual.consulta();
+                controles.sintomas.poner([{ codigo: 'sintoma.control_preventivo', etiqueta: 'Control preventivo' }]);
+            },
             resumen() {
                 return [...controles.sintomas.marcados(), ...controles.exposiciones.marcados()].map(e => e.etiqueta).filter(Boolean).join(' · ');
             },

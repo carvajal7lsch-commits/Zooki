@@ -27,6 +27,7 @@
             if (!/^\d{1,3}$/.test(valor) || Number(valor) < (nombre === 'duracion_minutos' ? 1 : 0) || Number(valor) > maximo) return nombre === 'duracion_minutos' ? `La duración debe ser de 1 a ${maximo} minutos.` : `El margen debe ser de 0 a ${maximo} minutos.`;
         }
         if (nombre === 'anticipacion_cambios_min' && (!/^\d{1,4}$/.test(valor) || Number(valor) > reglas.cambiosMax)) return `Indica de 0 a ${reglas.cambiosMax} minutos; 0 desactiva el plazo.`;
+        if (['control_busqueda_dias', 'control_dias_sin_duracion'].includes(nombre) && (!/^\d{1,3}$/.test(valor) || Number(valor) < 1 || Number(valor) > reglas.controlMax)) return `Indica de 1 a ${reglas.controlMax} días.`;
         if (['pausable', 'activo', 'solo_personal'].includes(nombre) && !['0', '1'].includes(valor)) return 'Elige Sí o No.';
         return '';
     }

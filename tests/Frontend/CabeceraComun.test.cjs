@@ -14,6 +14,11 @@ test('RNF-16: las 13 cabeceras comparten posición y contenido a 1366; sin desbo
                     await nav.enviar('Page.navigate', { url: servidor.url });
                     const medida = await medirCabecera(nav);
                     assert.ok(medida.ancho <= medida.ventana + 1, pantalla[0] + ' sin desborde a ' + width);
+                    if (pantalla[0] === 'Vet · Atención') {
+                        assert.match(medida.texto, /Atención de/);
+                        assert.equal(await nav.evaluar("document.querySelectorAll('#atencionApp h1').length"), 1, 'Una cabecera propia según mockup');
+                        continue;
+                    }
                     if (width !== 1366) continue;
                     const cerca = (actual, esperado, nombre) => assert.ok(Math.abs(actual - esperado) <= 2, pantalla[0] + ' ' + nombre + ': ' + actual);
                     cerca(medida.cabecera.y, 22, 'cabecera arriba');

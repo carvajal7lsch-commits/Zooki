@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Consulta.php';
+require_once __DIR__ . '/../models/ControlConsulta.php';
 require_once __DIR__ . '/../models/Mascota.php';
 require_once __DIR__ . '/../models/Vacuna.php';
 require_once __DIR__ . '/../models/Desparasitacion.php';
@@ -15,7 +16,6 @@ require_once __DIR__ . '/../helpers/RespuestaJson.php';
 class ConsultaController
 {
     private const CARPETA_ADJUNTOS = __DIR__ . '/../public/uploads/clinicos/';
-    private const TAMANO_MAXIMO_ADJUNTO = 10 * 1024 * 1024;
 
     private PDO $db;
     private Consulta $consultaModel;
@@ -27,12 +27,14 @@ class ConsultaController
     /** @var callable(string, string): bool mueve un archivo subido; las pruebas lo reemplazan */
     private $moverArchivo;
     private string $carpetaAdjuntos;
+    private $reloj;
 
     /** $moverArchivo y $carpetaAdjuntos existen para las pruebas, que no escriben en public/uploads. */
-    public function __construct(?PDO $db = null, ?callable $moverArchivo = null, ?string $carpetaAdjuntos = null)
+    public function __construct(?PDO $db = null, ?callable $moverArchivo = null, ?string $carpetaAdjuntos = null, ?callable $reloj = null)
     {
         $this->db = $db ?? (new Database())->getConnection();
-        $this->consultaModel = new Consulta($this->db);
+        $this->reloj = $reloj;
+        $this->consultaModel = new Consulta($this->db, $reloj);
         $this->mascotaModel = new Mascota($this->db);
         $this->vacunaModel = new Vacuna($this->db);
         $this->desparasitacionModel = new Desparasitacion($this->db);
@@ -90,9 +92,28 @@ class ConsultaController
             return;
         }
 
+        // RN-431: la consulta ya tiene commit. El control nunca comparte su rollback.
+        $control = null;
+        if (($_POST['control_activo'] ?? '') === '1') {
+            try {
+                $fecha = $_POST['control_fecha'] ?? null;
+                if ($fecha !== null && (!is_string($fecha) || $fecha === '')) {
+                    throw new InvalidArgumentException('Selecciona una fecha válida para el control.');
+                }
+                $control = (new ControlConsulta($this->db, $this->reloj))->programar($idConsulta, $fecha);
+            } catch (Throwable $error) {
+                $control = [
+                    'creado' => false,
+                    'message' => 'La consulta quedó guardada. No se pudo agendar el control; abre Nueva cita para elegirlo.',
+                    'url_agendar' => 'index.php?' . http_build_query(['action' => 'vet_agenda', 'control_mascota' => (int) $_POST['id_mascota'], 'control_veterinario' => Contexto::idUsuario(), 'control_fecha' => is_string($_POST['control_fecha'] ?? null) ? $_POST['control_fecha'] : '']),
+                ];
+                error_log('Próximo control no reservado después del commit: ' . $error->getMessage());
+            }
+        }
         RespuestaJson::enviar([
+            'control' => $control,
             'success' => true,
-            'id_consulta' => $idConsulta,
+            'id_consulta'  => $idConsulta,
             // C5a (hallazgo de A.1): la pantalla se pone al día con esto, sin recargar.
             'consulta' => $this->consultaModel->filaDelListado($idConsulta),
             'adjuntos_guardados' => count($adjuntos),
@@ -177,7 +198,7 @@ class ConsultaController
                 $rechazados[] = ['archivo' => $nombre, 'motivo' => 'está vacío'];
                 continue;
             }
-            if ($tamano > self::TAMANO_MAXIMO_ADJUNTO) {
+            if ($tamano > ValidadorClinico::ADJUNTO_BYTES_MAX) {
                 $rechazados[] = ['archivo' => $nombre, 'motivo' => 'supera los 10 MB permitidos'];
                 continue;
             }
@@ -231,7 +252,7 @@ class ConsultaController
         }
         $movidos[] = $destino;
 
-        $tipos = ['pdf' => 'application/pdf', 'png' => 'image/png', 'jpg' => 'image/jpeg'];
+        $tipos = ValidadorClinico::TIPOS_ADJUNTO;
         return [
             'nombre_original' => $adjunto['nombre_original'],
             'nombre_servidor' => $nombreServidor,

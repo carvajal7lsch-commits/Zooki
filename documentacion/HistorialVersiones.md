@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Atención en3 pasos (Codex, 2026-10-30, RE-2.1.6/7, RE-2.8.6, RN-431):** formulario compartido con el modal, paciente en franja, panel vivo, tarjetas y cierre según mockups aprobados; sugerencias ligadas al diagnóstico y borrador por cita/veterinario. Referencias vitales informativas y azules, con fuente y validación veterinaria pendiente. Próximo control después del commit clínico, disponibilidad real, reserva/eventos/aviso existentes y fallback sin perder consulta; horizonte por clínica de30 días. Migración17 repetible; 96 HU,472 RE,128 RN,65 tablas.
+
 * **Consulta que se llena sola (Codex, 2026-10-30, HU-2.8/2.9):** Usar agrega diagnóstico, plan y pautas como sugerencias editables, con Deshacer y recálculo según peso solo en dosis sin editar. Motor de seguridad existente excluye bloqueos y conserva advertencias sin evidencia protegida; endpoint exclusivo de veterinario con vínculo activo. Migración 16 repetible: pauta JSON, carga idempotente y versión sensible a pauta/plan. Datos clínicos reales a cargo de Claude.
 
 Preparada el 29 de octubre de 2026 en `release/v2.3.0`; entregada, pendiente de revisión de Claude e integración/despliegue del dueño.

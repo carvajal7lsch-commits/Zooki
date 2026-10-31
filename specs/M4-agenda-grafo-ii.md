@@ -11,6 +11,10 @@
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
 
+## Atención en 3 pasos — control posterior (2026-10-30)
+
+Encargo aprobado del dueño; escribe Codex y revisa Claude. Contrato de esta entrega en la sección «Atención en 3 pasos» del plan M2: RN-431, RE-4.3.10/11. Reserva posterior al commit clínico, con disponibilidad/eventos/avisos existentes y fallback sin deshacer la consulta; horizonte por clínica30 días y plazo sin duración7 días. Sin cambiar el motor de triage ni los flujos anteriores de agenda. Migración17 repetible y configuración por clínica. Parámetros1–365 días confirmados. Excepción de apertura confirmada solo para el enlace Agendar control: formulario prellenado sin horario, con aviso y reserva aún sujeta a disponibilidad; la entrada ordinaria conserva su bloqueo. Estado: **entregada, pendiente de revisión** (Codex,2026-10-31; revisa Claude). Resultado y evidencia final en el anexo de Atención en3 pasos del plan M2.
+
 ## 1. Resultado y límites
 
 **Resultado:** la clínica configura cuándo trabaja cada veterinario y qué duración, margen y posibilidad de pausa tiene cada servicio. Solo el propietario y el veterinario agendan, con síntomas confirmados y prioridad calculada por el motor de M2; el administrador no agenda. La agenda ofrece disponibilidad real, reserva sin carreras, atiende sobrecupos naranjas y deriva los rojos. Refleja retrasos, ausencias, cobertura, pausas por emergencia y llegadas tarde, conservando consultas, identidad y auditoría.

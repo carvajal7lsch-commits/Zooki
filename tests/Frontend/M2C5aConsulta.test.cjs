@@ -422,9 +422,11 @@ test('el historial muestra los síntomas marcados de cada consulta, escapados, y
 test('las dos entradas de consulta usan los mismos componentes, sin eventos ni estilos en línea', () => {
     const modal = leer('views/vet/modal_consulta.php');
     const atencion = leer('views/vet/atencion.php');
-    for (const vista of [modal, atencion]) {
-        assert.match(vista, /partials\/consulta_sintomas\.php/);
-        assert.match(vista, /partials\/consulta_diagnosticos\.php/);
+    for (const entrada of [modal, atencion]) {
+        assert.match(entrada, /partials\/consulta_pasos\.php/);
+        const vista = leer('views/partials/consulta_pasos.php');
+        assert.match(vista, /consulta_sintomas\.php/);
+        assert.match(vista, /consulta_diagnosticos\.php/);
         assert.match(vista, /data-consulta-campo="motivo"[^>]*data-aviso-requerido/);
         assert.match(vista, /data-consulta-campo="diagnostico"[^>]*data-aviso-requerido/);
         // M2 C8 (H5): el obligatorio lo marca el asterisco; el aviso empieza vacío.
@@ -437,7 +439,7 @@ test('las dos entradas de consulta usan los mismos componentes, sin eventos ni e
 
     const parciales = leer('views/partials/consulta_sintomas.php') + leer('views/partials/consulta_diagnosticos.php');
     assert.doesNotMatch(parciales, /\son[a-z]+=|style=|<script/);
-    assert.match(parciales, /Sugerencia de apoyo · pendiente de validación veterinaria/);
+    assert.match(parciales, /Apoyo a la decisión · pendiente de validación veterinaria/);
 
     const layout = leer('views/vet/layout.php');
     const orden = ['js/medical-module.js', 'js/consulta-sintomas.js', 'js/consulta-diagnosticos.js', 'js/consulta-formulario.js', 'js/atencion.js'].map(archivo => layout.indexOf(archivo));

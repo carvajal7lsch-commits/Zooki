@@ -22,6 +22,18 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testControlMigracion17DosVecesConservaParametros(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN control_busqueda_dias');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN control_dias_sin_duracion');
+        $this->cargar('17_control_consulta.sql');
+        $this->db->exec("INSERT INTO clinicas (id_clinica,nombre,nit,estado,control_busqueda_dias,control_dias_sin_duracion) VALUES (99,'Control','900123999','activa',365,1)");
+        $this->cargar('17_control_consulta.sql');
+        $this->assertSame(['365', '1'], array_map('strval', array_values($this->db->query('SELECT control_busqueda_dias,control_dias_sin_duracion FROM clinicas WHERE id_clinica=99')->fetch(PDO::FETCH_ASSOC))));
+    }
+
     public function testPautaMigracion16DobleConservaContenido(): void
     {
         $this->cargar('01_schema.sql');
@@ -1628,7 +1640,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

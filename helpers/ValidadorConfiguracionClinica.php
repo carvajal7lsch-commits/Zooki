@@ -2,6 +2,7 @@
 require_once __DIR__ . '/ValidadorClinica.php';
 require_once __DIR__ . '/CampoInvalido.php';
 require_once __DIR__ . '/ReglaCambioCita.php';
+require_once __DIR__ . '/ValidadorControlConsulta.php';
 
 /** HU-7.4: límites compartidos y topes de minutos aprobados por el dueño el 2026-10-26. */
 final class ValidadorConfiguracionClinica
@@ -48,6 +49,7 @@ final class ValidadorConfiguracionClinica
             'margen_minutos' => ctype_digit($valor) && strlen($valor) <= 3 && (int) $valor <= self::MARGEN_MAX
                 ? null : 'El margen debe ser de 0 a ' . self::MARGEN_MAX . ' minutos.',
             'anticipacion_cambios_min' => ctype_digit($valor) && strlen($valor) <= 4 && (int) $valor <= ReglaCambioCita::MAX ? null : 'Indica de 0 a 1440 minutos; 0 desactiva el plazo.',
+            'control_busqueda_dias', 'control_dias_sin_duracion' => ValidadorControlConsulta::diasValidos($valor) ? null : 'Indica de 1 a ' . ValidadorControlConsulta::DIAS_MAX . ' días.',
             'pausable', 'activo', 'solo_personal' => in_array($valor, ['0', '1'], true) ? null : 'Elige Sí o No.',
             default => 'Campo no válido.',
         };

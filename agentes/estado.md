@@ -2,9 +2,23 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-30
+**Actualizado:** 2026-10-31
 
 ## Ahora
+
+### Atención en 3 pasos (2.3.0) — revisada: aprobada en funcionamiento, retoques visuales pendientes (2026-10-31)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Base `7446c29`, rama `release/v2.3.0`; incluye `specs/referencias/atencion/`.
+  Control separado después del commit, con relectura de identidad/vínculo e idempotencia; si falla, conserva la consulta y abre el fallback confirmado sin saltar disponibilidad.
+  Formulario compartido, sugerencias con procedencia (también sustitución manual), borrador verificado por contexto/cita, adjuntos validados en vivo e inline; migración17 y parámetros1–365 días.
+  Rangos informativos pendientes de validación veterinaria; decisiones del dueño en M2/M4.
+- **Verificación final:** PHP completo con host127.0.0.1/puerto33311, MariaDB10.4.32 temporal y `zooki_test_base_v2`:1259/12434, sin omitidas.
+  Sin host:1259/11111,98 omitidas de motor; JS completo468/468, afectados finales46/46, PHP cierre29/148 y guardas9/33.
+  Capturas360/390/1366 en `scratch/r/atencion-3-pasos`; consulta72 nodos/MER65 entidades renderizados y PDF/Word al día.
+- **Sigue:** revisión de Claude y prueba del dueño; anexo con autor, riesgos y evidencia al final de M2.
+  Sin JSON de `database/conocimiento`, demo, cambio de motor de triage, `.env`, base de trabajo, commit ni push.
+  El dueño recibe un bloque de commit desde `7446c29`; no se empezó otra subetapa.
+
 
 ### Consulta que se llena sola: tratamientos y plan sugeridos (2.3.0) — revisada y aprobada (2026-10-30)
 

@@ -169,6 +169,21 @@
         if (global.ZookiPacienteCompacto) global.ZookiPacienteCompacto.actualizarAlertas(contenedor, activas);
         contenedor.replaceChildren();
         contenedor.hidden = false;
+        if (Object.prototype.hasOwnProperty.call(contenedor.dataset, 'alertasChips')) {
+            for (const alerta of activas) {
+                const chip = el('span', 'consulta-chip consulta-chip--alerta', (alerta.tipo_nombre || alerta.tipo) + ': ' + alerta.descripcion);
+                chip.title = alerta.descripcion;
+                contenedor.append(chip);
+            }
+            if (!activas.length) contenedor.append(el('span', 'consulta-chip', 'Sin alertas registradas'));
+            if (escritura) {
+                const registrar = el('button', 'consulta-chip', '+ Alerta');
+                registrar.type = 'button';
+                registrar.addEventListener('click', () => abrirFormulario(contenedor.dataset.idMascota, ajustes.nombreMascota));
+                contenedor.append(registrar);
+            }
+            return;
+        }
         contenedor.classList.toggle('alertas-medicas--con-alertas', activas.length > 0);
         const cabeza = el('div', 'alertas-medicas__barra');
         const titulo = el('h4', 'alertas-medicas__titulo');

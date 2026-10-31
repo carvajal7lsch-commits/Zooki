@@ -172,7 +172,7 @@ test('los pasos exigen paciente y triage, conservan los datos al volver y bloque
     const ventana = { document: documento, window: { matchMedia: () => ({ matches: false }) }, enviosC3: { reserva: false }, val: id => valores[id], getVetModal: () => '2',
         triageModalC4: { consulta: () => solicitud }, ocultarErrorModal() {}, actualizarResumenModal() { ventana.actualizarPasosCita(); } };
     vm.createContext(ventana);
-    vm.runInContext(tramo(leer('public/js/calendario.js'), 'let pasoCitaModal = 0;', 'function abrirCitaModal(date)'), ventana);
+    vm.runInContext(tramo(leer('public/js/calendario.js'), 'let pasoCitaModal = 0;', 'function abrirCitaModal(date, opciones = {})'), ventana);
     ventana.mostrarPasoCita(0);
     assert.equal(siguiente.disabled, true);
     assert.equal(anterior.hidden, true);

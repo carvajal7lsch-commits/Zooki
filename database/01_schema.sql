@@ -56,6 +56,8 @@ CREATE TABLE `clinicas` (
   `umbral_aviso_min` INT NOT NULL DEFAULT 15,
   `tope_sobrecupos` INT NOT NULL DEFAULT 2,
   `anticipacion_cambios_min` INT NOT NULL DEFAULT 30,
+  `control_busqueda_dias` INT NOT NULL DEFAULT 30,
+  `control_dias_sin_duracion` INT NOT NULL DEFAULT 7,
   `email_contacto` VARCHAR(255) DEFAULT NULL,
   `url_logo` VARCHAR(255) DEFAULT NULL,
   `id_plan` INT DEFAULT NULL,

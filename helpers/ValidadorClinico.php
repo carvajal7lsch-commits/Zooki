@@ -14,6 +14,8 @@
  */
 class ValidadorClinico
 {
+    public const ADJUNTO_BYTES_MAX = 10 * 1024 * 1024;
+    public const TIPOS_ADJUNTO = ['pdf' => 'application/pdf', 'png' => 'image/png', 'jpg' => 'image/jpeg'];
     /** Rangos fisiologicos plausibles, acotados ademas por el tipo de columna. */
     public const PESO_MIN = 0.01;
     public const PESO_MAX = 200.0;      // decimal(5,2) admite hasta 999.99

@@ -58,6 +58,8 @@
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/consulta-pasos.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
 
@@ -92,6 +94,7 @@
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
         <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
 
+            <?php if ($__action !== 'vet_atencion'): ?>
             <!-- Header superior -->
             <header class="top-header<?= $__action === 'vet_pacientes' ? ' top-header--pacientes' : '' ?>">
                 <div class="header-left">
@@ -124,6 +127,7 @@
                 </div>
                 <?php require __DIR__ . '/../partials/cabecera_cuenta.php'; ?>
             </header>
+            <?php endif; ?>
 
             <!-- Cuerpo del contenido -->
             <div class="content-body">
@@ -148,6 +152,10 @@
     <script src="js/cabecera-cuenta.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php if ($__action !== 'vet_pacientes'): ?>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <?php endif; ?>
     <script src="js/selector-fechas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/medical-module.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C8 (H6): flechas, Enter y Esc en los buscadores con lista (síntomas, fármacos y nodos de alergias). ?>
@@ -156,6 +164,7 @@
     <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-tratamientos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-pasos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-formulario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C1: sección «Alergias y alertas» de la historia y su formulario. ?>
     <script src="js/paciente-compacto.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

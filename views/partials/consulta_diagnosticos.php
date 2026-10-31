@@ -8,10 +8,11 @@
 ?>
 <section class="consulta-sugerencias" data-diagnosticos aria-live="polite" aria-label="Diagnósticos sugeridos">
     <div class="consulta-sugerencias__cabecera">
-        <span class="<?= htmlspecialchars($claseEtiqueta ?? '', ENT_QUOTES, 'UTF-8') ?> consulta-sugerencias__titulo">Diagnósticos sugeridos</span>
-        <span class="consulta-sugerencias__apoyo">Sugerencia de apoyo · pendiente de validación veterinaria</span>
+        <div class="consulta-collage"><div><strong>Zooki sugiere</strong><small>Se actualiza mientras marcas síntomas</small></div><img src="img/portal-bienvenida.png" alt=""></div>
     </div>
+    <div class="consulta-panel__sintomas" data-sintomas-panel></div>
     <p class="consulta-sugerencias__estado" data-diagnosticos-estado></p>
+    <img class="consulta-perro-vacio" src="img/portal-bienvenida.png" alt="">
     <ol class="consulta-sugerencias__lista" data-diagnosticos-lista hidden></ol>
     <div class="consulta-sugerencias__datos" data-diagnosticos-datos hidden>
         <span class="consulta-sugerencias__datos-titulo">Ayudaría saber (opcional, no se guarda):</span>
@@ -30,4 +31,5 @@
             <input type="text" inputmode="numeric" maxlength="4" data-caracteres="0-9" data-dato-campo="dias_desde_celo" placeholder="Ej. 20">
         </label>
     </div>
+    <small class="consulta-sugerencias__apoyo">Apoyo a la decisión · pendiente de validación veterinaria</small>
 </section>

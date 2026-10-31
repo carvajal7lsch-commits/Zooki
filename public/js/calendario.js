@@ -947,16 +947,16 @@ function avanzarPasoCita() {
     mostrarPasoCita(pasoCitaModal + 1);
 }
 
-function abrirCitaModal(date) {
+function abrirCitaModal(date, opciones = {}) {
     const contexto = contextoDeAgenda();
-    if (contexto && !contexto.franjas?.length) {
+    if (contexto && !contexto.franjas?.length && !opciones.control) {
         mostrarToast('Aún no tienes horario aprobado: propón tu horario en Mi perfil', 'info');
         return;
     }
     if (!isUsuarioVeterinario()) return;
     triageModalC4?.reiniciar();
     comandosC3.registrar_cita_ajax.reiniciar();
-    if (!date || diaNoReservable(date)) return;
+    if (!date || (diaNoReservable(date) && !opciones.control)) return;
     const fecha = inicioDelDia(date);
     const esVet = isUsuarioVeterinario();
 
@@ -998,18 +998,37 @@ function closeCitaModal() {
 // (?agendar=AAAA-MM-DD&hora=HH:MM) y, cuando aparecen los horarios, marca esa hora si sigue libre.
 let _horaPreferidaCita = null;
 
-function abrirAgendarDesdeEnlace() {
+async function abrirAgendarDesdeEnlace() {
     const parametros = new URLSearchParams(window.location.search);
-    const fecha = parametros.get('agendar') || '';
+    const control = parametros.has('control_mascota');
+    const mascota = parametros.get('control_mascota');
+    if (control && parametros.get('control_veterinario') !== String(getUsuarioId())) return;
+    const fecha = parametros.get(control ? 'control_fecha' : 'agendar') || '';
     const hora = parametros.get('hora') || '';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !isUsuarioVeterinario()) return;
     parametros.delete('agendar');
     parametros.delete('hora');
+    for (const nombre of ['control_mascota', 'control_veterinario', 'control_fecha']) parametros.delete(nombre);
     // Al recargar la agenda no se vuelve a abrir el modal.
     window.history.replaceState(null, '', `${window.location.pathname}?${parametros}${window.location.hash}`);
     const [anio, mes, dia] = fecha.split('-').map(Number);
-    abrirCitaModal(new Date(anio, mes - 1, dia));
+    abrirCitaModal(new Date(anio, mes - 1, dia), { control });
     _horaPreferidaCita = /^\d{2}:\d{2}$/.test(hora) ? hora : null;
+    if (!control) return;
+    try {
+        const [mascotas, tipos] = await Promise.all([obtenerMascotas(), obtenerTipos()]);
+        const paciente = mascotas.find(m => String(m.id) === mascota);
+        if (!paciente) throw new Error('La mascota no tiene vínculo activo en esta clínica.');
+        const tipo = tipos.find(t => /control/i.test(t.data.nombre)) || tipos.find(t => t.data.nombre.toLowerCase() === 'consulta general');
+        if (tipo) val('modal_tipo_cita', tipo.value);
+        seleccionarMascota(paciente.id, paciente.nombre, paciente.propietario);
+        val('modal_motivo', 'Control posterior a consulta');
+        triageModalC4?.ponerControl();
+        actualizarResumenModal();
+        if (!contextoDeAgenda()?.franjas?.length) mostrarErrorModal('Falta tu horario aprobado. Puedes revisar los datos; la reserva necesita disponibilidad.');
+    } catch (error) {
+        mostrarErrorModal(error.message || 'No se pudo prellenar el control.');
+    }
 }
 
 function marcarHoraPreferida(idContenedor) {

@@ -25,6 +25,8 @@ Los **propietarios** también son **identidades globales**: un único registro p
 
 Escrito en Mermaid; se versiona junto al código y se renderiza a cualquier nivel de zoom. Las líneas continuas representan relaciones con clave foránea declarada; las punteadas, vínculos lógicos que el esquema no obliga.
 
+La migración17 agrega `clinicas.control_busqueda_dias` (default30) y `control_dias_sin_duracion` (default7), enteros configurables de1 a365 días (RN-431). El control usa las tablas de agenda y sus operaciones/eventos existentes después del commit clínico; no hay una segunda fuente de reservas.
+
 ```mermaid
 erDiagram
     fuentes_pago {
@@ -168,6 +170,8 @@ erDiagram
         int umbral_aviso_min
         int tope_sobrecupos
         int anticipacion_cambios_min
+        int control_busqueda_dias
+        int control_dias_sin_duracion
         int suscripcion_gracia_dias
         int aviso_vencimiento_1_dias
         int aviso_vencimiento_2_dias

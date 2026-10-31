@@ -167,6 +167,7 @@ La **Revisión 2.5 (23/10/2026)** prepara 2.0.0: RN-502–505 aplicadas al carne
 | RN-428 | El veterinario destino tiene un plazo para confirmar una reasignación en vivo (configurable, por defecto 10 minutos). Si no responde o la rechaza, se propone al siguiente veterinario con disponibilidad; si ninguno la toma, la cita se reprograma con el propietario. | Proceso | Planificada (v2) |
 | RN-429 | Los cambios de hora estimada se avisan al propietario solo cuando la diferencia acumulada supera un umbral (configurable, por defecto 15 minutos), y como máximo un aviso cada 30 minutos por cita. La reasignación de veterinario y la reprogramación se avisan siempre. | Restricción | Planificada (v2) |
 | RN-430 | Propietario y veterinario no pueden cancelar ni reprogramar ordinariamente cuando faltan menos de N minutos para la hora pactada original. N pertenece a la clínica: entero 0–1440, por defecto 30; 0 desactiva esta ventana y el límite exacto N permite cambiar. El portal sustituye acciones por «Ya no se puede cambiar: comunícate con la clínica» y el veterinario las oculta. El administrador conserva cancelar con motivo obligatorio auditado. Urgencias, cascada automática y decisión clínica de Llegadas quedan exentas; no se alteran las otras reglas de estado, permisos y disponibilidad. | Restricción | Aplicada (2.3.0 preparada) |
+| RN-431 | Al cerrar una consulta, el veterinario puede pedir un control de la misma mascota y profesional. La consulta y el cierre se confirman primero (RN-406); el control se reserva después en una operación separada e idempotente, por disponibilidad y flujo de agenda, con eventos y aviso. Fecha propuesta: fin conocido más lejano o plazo por clínica de7 días por defecto; primer hueco del día o siguiente hábil dentro del horizonte por clínica de30 días por defecto. Ambos parámetros admiten enteros de1 a365 días. Si no se puede, conserva la consulta y ofrece Nueva cita prellenada; solo ese enlace puede abrirse sin horario aprobado, manteniendo bloqueada la reserva hasta tener disponibilidad. RN-407 y RN-430 conservan sus permisos y alcance. | Proceso | Preparada (2.3.0), pendiente de revisión |
 
 ## Módulo 5 — Portal del propietario (multi-clínica)
 
@@ -202,11 +203,11 @@ La **Revisión 2.5 (23/10/2026)** prepara 2.0.0: RN-502–505 aplicadas al carne
 | RN-807 | Los tiempos de envío de los recordatorios y alertas (días de anticipación y hora) son configurables por la clínica. | Estructura | Planificada (v2) |
 | RN-808 | La clínica dispone de una bitácora de los correos y notificaciones enviados, con su estado (enviado/fallido). | Proceso | Planificada (v2) |
 
-> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
 
 ## Resumen
 
-El catálogo reúne **127 reglas de negocio**, sin contar de nuevo sus equivalencias históricas del apéndice.
+El catálogo reúne **128 reglas de negocio**, sin contar de nuevo sus equivalencias históricas del apéndice.
 El estado de cada fila distingue lo aplicado en la versión preparada **2.0.0-alpha.4**, lo parcial y lo pendiente de M4 o de otras entregas; una regla de cálculo aplicada no significa que el conocimiento esté validado por un veterinario.
 RN-307 conserva su evolución futura y RN-410 conserva la derogación prevista para la agenda de la v2.
 A partir de este catálogo se elaboran las Historias de Usuario y sus requisitos específicos.

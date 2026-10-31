@@ -21,7 +21,8 @@ function buscarChrome() {
 
 async function abrirChrome(ruta) {
     const perfil = mkdtempSync(join(tmpdir(), 'zooki-cdp-'));
-    const argumentos = ['--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + perfil, '--no-first-run', '--no-default-browser-check'];
+    // El arnés usa software y plazos de respuesta para que una captura pendiente no detenga la suite.
+    const argumentos = ['--headless=new', '--disable-gpu', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--remote-debugging-port=0', '--user-data-dir=' + perfil, '--no-first-run', '--no-default-browser-check'];
     // En contenedores Linux corriendo como root Chrome exige desactivar su sandbox.
     if (process.platform === 'linux' && process.getuid && process.getuid() === 0) argumentos.push('--no-sandbox');
     // Pruebas herméticas: sin red externa. En el CI sí hay internet y las páginas cargaban
@@ -48,10 +49,18 @@ async function abrirChrome(ruta) {
     let secuencia = 0;
     const pendientes = new Map();
     const errores = [];
+    ws.onclose = () => {
+        for (const { rechazar, limite } of pendientes.values()) {
+            clearTimeout(limite);
+            rechazar(new Error('Chrome cerró la conexión durante la prueba'));
+        }
+        pendientes.clear();
+    };
     ws.onmessage = mensaje => {
         const dato = JSON.parse(mensaje.data);
         if (pendientes.has(dato.id)) {
-            const { resolver, rechazar } = pendientes.get(dato.id);
+            const { resolver, rechazar, limite } = pendientes.get(dato.id);
+            clearTimeout(limite);
             pendientes.delete(dato.id);
             if (dato.error) rechazar(new Error(dato.error.message));
             else resolver(dato.result);
@@ -61,7 +70,12 @@ async function abrirChrome(ruta) {
     };
     const enviar = (method, params = {}) => new Promise((resolver, rechazar) => {
         secuencia += 1;
-        pendientes.set(secuencia, { resolver, rechazar });
+        const id = secuencia;
+        const limite = setTimeout(() => {
+            pendientes.delete(id);
+            rechazar(new Error('Chrome no respondió a ' + method + ' en 45 segundos'));
+        }, 45000);
+        pendientes.set(id, { resolver, rechazar, limite });
         ws.send(JSON.stringify({ id: secuencia, method, params }));
     });
     const evaluar = async expression => {

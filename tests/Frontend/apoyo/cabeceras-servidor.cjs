@@ -32,7 +32,7 @@ async function servidorCabecera(pantalla) {
 async function medirCabecera(nav) {
     await nav.esperar("document.readyState==='complete'");
     return nav.evaluar(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        const cabecera=document.querySelector('.top-header');
+        const cabecera=document.querySelector('.top-header, .atencion__barra');
         const titulo=Array.from(cabecera.querySelectorAll('h1,h2')).find(e=>e.textContent.trim() && e.getBoundingClientRect().height);
         const cuerpo=document.querySelector('.content-body');
         const contenedor=cuerpo.querySelector('.content-wrapper') || cuerpo;

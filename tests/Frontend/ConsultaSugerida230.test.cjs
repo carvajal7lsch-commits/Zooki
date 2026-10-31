@@ -98,7 +98,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 const datos = await evaluar(`({ diagnostico: formPrueba.querySelector('[data-consulta-campo="diagnostico"]').value,
                     plan: formPrueba.querySelector('[name="plan_tratamiento"]').value,
                     filas: [...formPrueba.querySelectorAll('[data-tratamiento]')].map(f => ({ codigo: f.querySelector('[data-tratamiento-campo="farmaco"]').value, dosis: f.querySelector('[data-tratamiento-campo="dosis"]').value, fin: f.querySelector('[data-tratamiento-campo="fecha_fin"]').value, inicio: f.querySelector('[data-tratamiento-campo="fecha_inicio"]').value, marca: f.querySelector('[data-marca-sugerida]').textContent })),
-                    aviso: formPrueba.querySelector('[role="status"]').textContent })`);
+                    aviso: formPrueba.querySelector('[data-sugerencia-aviso] [role="status"]').textContent })`);
                 assert.equal(datos.diagnostico, 'Texto previo\nDiagnóstico sintético');
                 assert.equal(datos.plan, 'Plan previo\nExámenes sugeridos: Examen sintético\nRecomendaciones: Recomendación sintética');
                 assert.equal(datos.filas[0].dosis, '12 mg (0,5 mg/kg) cada 24 h');
@@ -122,8 +122,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                     sinPeso.checked = true;
                     sinPeso.dispatchEvent(new Event('change', { bubbles: true }));`);
                 await navegador.esperar("formPrueba.querySelectorAll('[data-tratamiento-campo=\"dosis\"]')[1].value.includes('calcula con el peso')");
-                if (accion === 'vet_atencion') await evaluar("document.querySelector('[data-paso=\"3\"]').click()");
-                else await evaluar("document.querySelector('[data-tab=\"tabResolucion\"]').click()");
+                await evaluar("formPrueba.querySelector('[data-consulta-ir=\"1\"]')?.click()");
                 await evaluar("formPrueba.querySelector('[data-marca-sugerida]').scrollIntoView({block: 'center'})");
                 const carpeta = path.join(raiz, 'scratch/r/consulta230');
                 fs.mkdirSync(carpeta, { recursive: true });

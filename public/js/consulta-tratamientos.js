@@ -394,6 +394,65 @@
                 actualizarVacio();
                 programar();
             });
+            if (raiz.closest('[data-consulta-tres]')) prepararTarjeta(fila);
+        }
+
+        function prepararTarjeta(fila) {
+            const campos = fila.querySelector('.consulta-tratamiento__campos');
+            const resumen = elemento('div', 'tratamiento-tarjeta');
+            const cabecera = elemento('div', 'tratamiento-tarjeta__cabecera');
+            const nombre = elemento('strong');
+            const dosis = elemento('strong', 'tratamiento-tarjeta__dosis');
+            const editar = elemento('button', 'consulta-boton consulta-boton--suave', 'Editar');
+            editar.type = 'button';
+            editar.dataset.editarTratamiento = '';
+            const quitar = fila.querySelector('[data-quitar-tratamiento]');
+            cabecera.append(nombre, dosis, editar, quitar);
+            const metadatos = elemento('div', 'tratamiento-tarjeta__metadatos');
+            const indicacion = elemento('p', 'tratamiento-tarjeta__indicacion');
+            resumen.append(cabecera, metadatos, indicacion);
+            fila.prepend(resumen);
+            const listo = elemento('button', 'consulta-boton consulta-boton--suave', 'Listo');
+            listo.type = 'button';
+            listo.dataset.cerrarTratamiento = '';
+            campos.append(listo);
+            const editarCampos = () => {
+                campos.hidden = false;
+                editar.hidden = true;
+                fila.dataset.editando = '1';
+            };
+            const actualizar = () => {
+                nombre.textContent = campoDe(fila, 'medicamento').value || 'Nuevo medicamento';
+                const valorDosis = campoDe(fila, 'dosis').value;
+                dosis.textContent = valorDosis.replace(/\s*\([^)]*mg\/kg\)/, '').replace(/ cada \d+ h$/, '');
+                const porKg = valorDosis.match(/\(([^)]+mg\/kg)\)/)?.[1];
+                const frecuencia = valorDosis.match(/cada \d+ h|dosis única/)?.[0];
+                const fin = campoDe(fila, 'fecha_fin').value;
+                const duracion = campoDe(fila, 'duracion').value;
+                const textos = [porKg, campoDe(fila, 'via_administracion').value, frecuencia, duracion + (fin ? ' · hasta ' + fin.slice(8, 10) + '/' + fin.slice(5, 7) : '')].filter(Boolean);
+                metadatos.replaceChildren(...textos.map(t => elemento('span', 'consulta-chip', t)));
+                indicacion.textContent = campoDe(fila, 'observaciones').value;
+                indicacion.hidden = !indicacion.textContent;
+            };
+            const cerrar = () => {
+                const primero = OBLIGATORIOS.find(n => errorDe(fila, n));
+                if (primero) {
+                    pintarAviso(fila, primero, errorDe(fila, primero));
+                    campoDe(fila, primero).focus();
+                    return;
+                }
+                actualizar();
+                campos.hidden = true;
+                editar.hidden = false;
+                fila.dataset.editando = '0';
+            };
+            editar.addEventListener('click', editarCampos);
+            listo.addEventListener('click', cerrar);
+            fila.addEventListener('input', actualizar);
+            fila.addEventListener('change', actualizar);
+            fila._tarjeta = { actualizar, editar: editarCampos, cerrar };
+            editarCampos();
+            actualizar();
         }
 
         function agregar() {
@@ -427,10 +486,13 @@
                 fila._sugerenciaEditada = true;
                 if (evento.target === campoDe(fila, 'dosis') || evento.target === campoDe(fila, 'medicamento')) fila._dosisEditada = true;
             });
-            fila.addEventListener('change', () => { fila._sugerenciaEditada = true; });
+            fila.addEventListener('change', () => {
+                fila._sugerenciaEditada = true;
+            });
             proponerFin(fila);
             pintarPrescripcion(fila, pauta.seguridad);
             for (const nombre of OBLIGATORIOS) pintarAviso(fila, nombre, errorDe(fila, nombre));
+            fila._tarjeta?.cerrar();
             programar();
             return fila;
         }
@@ -438,6 +500,11 @@
         function retirarSugeridas(sugeridas) {
             for (const fila of sugeridas) {
                 if (!fila._sugerenciaEditada) fila.remove();
+                else {
+                    delete fila.dataset.pautaSugerida;
+                    fila.querySelector('[data-marca-sugerida]')?.remove();
+                    fila._dosisEditada = true;
+                }
             }
             actualizarVacio();
             programar();
@@ -454,6 +521,7 @@
                 if (!fila._dosisEditada && campoDe(fila, 'farmaco').value === fila._farmacoSugerido && campoDe(fila, 'dosis').value === fila._dosisSugerida) {
                     campoDe(fila, 'dosis').value = pauta.dosis;
                     fila._dosisSugerida = pauta.dosis;
+                    fila._tarjeta?.actualizar();
                     pintarAviso(fila, 'dosis', errorDe(fila, 'dosis'));
                 }
             }
@@ -477,6 +545,7 @@
                 marcar(fila, 'decision', evaluacion.requiere_decision && !casilla.checked ? TEXTOS.confirmar : '', casilla);
                 marcar(fila, 'conciliacion', evaluacion.requiere_conciliacion && campoDe(fila, 'conciliacion').value.trim() === '' ? TEXTOS.conciliar : '');
             }
+            if (primero) primero.closest('[data-tratamiento]')?._tarjeta?.editar();
             return primero;
         }
 
@@ -486,6 +555,7 @@
             if (partes[0] !== 'tratamientos') return null;
             const fila = filasEnviadas(filas())[Number(partes[1])];
             if (!fila) return null;
+            fila._tarjeta?.editar();
             if (respuesta.prescripcion) pintarPrescripcion(fila, respuesta.prescripcion);
             const nombre = partes[2] || 'fila';
             pintarAviso(fila, nombre, respuesta.aviso || respuesta.message);
@@ -517,6 +587,50 @@
             listo,
             mostrarErrorServidor,
             filas,
+            exportar() {
+                return filas().map(fila => ({
+                    campos: Object.fromEntries(['medicamento', 'farmaco', 'dosis', 'via_administracion', 'duracion', 'fecha_inicio', 'fecha_fin', 'observaciones', 'conciliacion'].map(n => [n, campoDe(fila, n).value])),
+                    pauta: fila.dataset.pautaSugerida || null,
+                    dosisSugerida: fila._dosisSugerida,
+                    farmacoSugerido: fila._farmacoSugerido,
+                    dosisEditada: Boolean(fila._dosisEditada),
+                    editada: Boolean(fila._sugerenciaEditada),
+                    finManual: fila.dataset.finManual || '',
+                }));
+            },
+            restaurar(datos) {
+                lista.replaceChildren();
+                for (const dato of Array.isArray(datos) ? datos : []) {
+                    const fila = agregar();
+                    for (const [nombre, valor] of Object.entries(dato.campos || {})) {
+                        if (!['medicamento', 'farmaco', 'dosis', 'via_administracion', 'duracion', 'fecha_inicio', 'fecha_fin', 'observaciones', 'conciliacion'].includes(nombre) || typeof valor !== 'string') continue;
+                        campoDe(fila, nombre).value = valor;
+                    }
+                    if (dato.pauta) {
+                        fila.dataset.pautaSugerida = dato.pauta;
+                        const marca = elemento('small', 'consulta-ayuda', 'Sugerido por Zooki · verifica la dosis');
+                        marca.dataset.marcaSugerida = '';
+                        fila.prepend(marca);
+                        fila.addEventListener('input', evento => {
+                            fila._sugerenciaEditada = true;
+                            if (evento.target === campoDe(fila, 'dosis') || evento.target === campoDe(fila, 'medicamento')) fila._dosisEditada = true;
+                        });
+                        fila.addEventListener('change', () => {
+                fila._sugerenciaEditada = true;
+            });
+                    }
+                    fila._dosisSugerida = dato.dosisSugerida;
+                    fila._farmacoSugerido = dato.farmacoSugerido;
+                    fila._dosisEditada = Boolean(dato.dosisEditada);
+                    fila._sugerenciaEditada = Boolean(dato.editada);
+                    fila.dataset.finManual = dato.finManual || '';
+                    campoDe(fila, 'decision').value = '';
+                    campoDe(fila, 'huella').value = '';
+                    proponerFin(fila);
+                    fila._tarjeta?.cerrar();
+                }
+                programar();
+            },
             limpiar() {
                 peticion++;
                 clearTimeout(temporizador);

@@ -66,6 +66,7 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/14_aviso_pago_confirmado.sql');
         $this->cargar('database/15_correcciones_agenda.sql');
         $this->cargar('database/16_pautas_tratamiento.sql');
+        $this->cargar('database/17_control_consulta.sql');
     }
 
     private function instalar(bool $anterior = false): void
@@ -173,6 +174,7 @@ final class AgendaB2MysqlTest extends TestCase
                 $previas[$t] = array_map(static fn (array $c): array => $c + ['suscripcion_gracia_dias' => 3, 'aviso_vencimiento_1_dias' => 7, 'aviso_vencimiento_2_dias' => 1], $previas[$t]);
                 // 2.3.0 (RN-430): la 15 agrega el plazo de cambios tardíos detrás de tope_sobrecupos.
                 $previas[$t] = array_map(static fn (array $c): array => self::despues($c, 'tope_sobrecupos', ['anticipacion_cambios_min' => 30]), $previas[$t]);
+                $previas[$t] = array_map(static fn (array $c): array => self::despues($c, 'anticipacion_cambios_min', ['control_busqueda_dias' => 30, 'control_dias_sin_duracion' => 7]), $previas[$t]);
             }
             if ($t === 'tipos_cita') {
                 // 2.3.0 (HU-7.4): solo_personal detrás de pausable y una cirugía programada por clínica no pendiente.

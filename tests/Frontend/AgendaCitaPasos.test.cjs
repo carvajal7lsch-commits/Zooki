@@ -62,7 +62,7 @@ test('Nueva cita de escritorio: dos pasos, guía, resumen, Enter, rojo y horario
             };
             ${tramo('function setSlotsEstado(', '/** Si la fecha es hoy')}
             ${tramo('function renderSlots(', '// ═')}
-            ${tramo('function textoGuiaSlots(', 'function abrirCitaModal(date)')}
+            ${tramo('function textoGuiaSlots(', 'function abrirCitaModal(date, opciones = {})')}
             ${tramo('function onModalTipoCitaChange(', '// ═')}
             ${tramo('function conectarFormulariosC3(', '// Clic o teclado')}
             conectarFormulariosC3();

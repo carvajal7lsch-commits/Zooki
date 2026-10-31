@@ -56,6 +56,17 @@ final class MarcaTiposClinicaTest extends TestCase
         return ['nombre_tipo' => 'Cirugía de prueba', 'duracion_minutos' => '45', 'margen_minutos' => '0', 'pausable' => '0'];
     }
 
+    public function testParametrosControlSeValidanYNoCambianOtraClinica(): void
+    {
+        $modelo = new ConfiguracionClinica($this->db);
+        $r = $modelo->guardarMarca($this->marca() + ['control_busqueda_dias' => '365', 'control_dias_sin_duracion' => '1']);
+        $this->assertSame(365, (int) $r['control_busqueda_dias']);
+        $this->assertSame(1, (int) $r['control_dias_sin_duracion']);
+        $this->assertSame(30, (int) $this->db->query('SELECT control_busqueda_dias FROM clinicas WHERE id_clinica=2')->fetchColumn());
+        $this->expectException(CampoInvalido::class);
+        $modelo->guardarMarca($this->marca() + ['control_busqueda_dias' => '366']);
+    }
+
     public function testMarcaYTiposSoloCambianEnClinicaActivaConAuditoria(): void
     {
         $sur = $this->db->query('SELECT * FROM clinicas WHERE id_clinica=2')->fetch(PDO::FETCH_ASSOC);

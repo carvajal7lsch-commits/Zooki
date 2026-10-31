@@ -2,7 +2,7 @@
 
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
-> **Revisión 3.6** · 467 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.6** · 472 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
 
@@ -20,7 +20,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia final de M2 en su plan, §2; peso desconocido explícito, alergias y alertas compartidas, diagnósticos sugeridos, alertas de prescripción y mapa de conocimiento. RE-2.11.1–7 quedan verificados en cálculo, buscador y batería; la captura de agenda, las urgencias, revisión previa a asignar horario, el aviso de aislamiento y ajuste veterinario se completan en M4. El conocimiento sigue pendiente de validación veterinaria._
 
-> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
@@ -400,6 +400,8 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.1.3 | El sistema debe impedir guardar una consulta sin diagnóstico. | Restricción | Guardar sin diagnóstico es rechazado. | Alta |
 | RE-2.1.4 | El sistema debe vincular la consulta a la mascota y mostrarla en su historial. | Funcional | La consulta aparece en el historial cronológico. | Alta |
 | RE-2.1.5 | _(v2.0)_ El veterinario debe poder registrar y desactivar alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua), enlazadas al nodo del Grafo I cuando exista. | Funcional | Una alerta registrada aparece en la ficha de toda clínica vinculada; al desactivarla deja de mostrarse, pero queda en el historial. _Implementado en M2 (2.0.0-alpha.4) en ficha, portal e impresión; la presentación en el carnet sigue para el final de la v2.0._ | Alta |
+| RE-2.1.6 | Atención y modal deben compartir Evaluación, Diagnóstico y tratamiento y Cierre con validación en vivo y antes de avanzar. | Usabilidad | Se conserva todo al ir/volver; Finalizar solo aparece en Cierre; franja del paciente, sugerencias en vivo y tarjetas según mockups. Azul/neutros, rojo solo alertas; referencia vital informativa por especie sin bloquear fuera de normalidad; perro solo en escritorio≥1024; sin desborde360/390/1366. | Alta |
+| RE-2.1.7 | El borrador de Atención debe conservarse localmente por cita y veterinario, incluyendo tratamientos y procedencia de las sugerencias. | Funcional | Guarda periódicamente y al salir con try/catch; muestra Recuperamos tu borrador y Descartar, conserva qué se editó, limpia al descartar o finalizar y evita restauración silenciosa del navegador. No persiste borradores en servidor. | Alta |
 
 **Reglas de negocio:** RN-201, RN-202, RN-203, RN-112, RN-113
 
@@ -476,6 +478,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.8.3 | Si el grafo no encuentra coincidencias, el sistema debe permitir escribir el diagnóstico libremente, y debe exigirlo. | Validación | Sin diagnóstico no se continúa. | Alta |
 | RE-2.8.4 | La sugerencia debe ser de apoyo y no diagnosticar ni guardar por sí sola (RN-209). | Restricción | El veterinario revisa y edita antes de guardar. La dosis muestra mg/kg y, con peso de la consulta, mg calculados y rango redondeados; sin peso dice «calcula con el peso». Cambiar peso recalcula solo dosis sugeridas aún no editadas. | Alta |
 | RE-2.8.5 | El conocimiento clínico debe ser global y compartido entre clínicas, con pautas declarativas y plan opcional del diagnóstico. | Funcional | El grafo no pertenece a una clínica. El cargador valida la lista cerrada de pauta, especie y fuente clínica con localizador, y los límites del plan; conserva IDs en recargas y cambia la versión ante cambios de pauta o plan. | Media |
+| RE-2.8.6 | Plan, exámenes, recomendaciones y tratamientos sugeridos deben conservar el diagnóstico de origen. | Funcional | Cambiar a este reemplaza lo sugerido sin editar y conserva como propio lo editado; borrar el diagnóstico retira sus sugerencias sin editar. Deshacer solo existe con contenido sugerido; borrador restaura esos vínculos. Usar desde Evaluación abre el paso2 lleno; panel marca En uso y los síntomas confirmados. | Alta |
 
 **Reglas de negocio:** RN-209, RN-210, RN-212, RN-202
 
@@ -632,8 +635,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.3.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
 | RE-4.3.8 | _(Derogado en v2.0: RN-410 se deroga.)_ En v1.11.0 el veterinario asignado podía cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | En v2.0 no existe la acción: una atención iniciada solo se completa con su consulta. | Media |
 | RE-4.3.9 | El sistema debe revisar las atenciones abiertas con una tarea programada al menos cada 5 minutos, además de al cargar el calendario. | Integración | Sin que nadie abra el calendario, el aviso llega a más tardar 15 minutos después de la hora de fin. | Alta |
+| RE-4.3.10 | Al finalizar, el veterinario puede solicitar un control posterior al commit de la consulta, en la misma petición y como operación separada e idempotente (RN-431). | Funcional | Conserva misma mascota/veterinario/clínica; tipo Control existente o Consulta general, control preventivo verde y flujo de reserva/eventos/correo existente. Un error del control conserva la consulta y devuelve Agendar control con Nueva cita prellenada. El enlace permite abrir el formulario sin horario aprobado, avisándolo; la reserva conserva la disponibilidad obligatoria. Otro rol/clínica/veterinario no puede forzarlo. | Alta |
+| RE-4.3.11 | El próximo control debe proponer el fin conocido más lejano o el plazo supletorio de la clínica (default7 días), con fecha editable y disponibilidad real. | Funcional | Selector excluye días cerrados o sin jornada por cierres/ausencias. Al cerrar reserva el primer hueco del día o siguiente hábil y avisa el cambio; busca hasta el horizonte de la clínica (default30 días), ambos parámetros enteros de1 a365 días, configurables junto al plazo RN-430. Sin hueco, usa el fallback de RE-4.3.10; no pierde la consulta. | Alta |
 
-**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410
+**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410, RN-431
 
 ### HU-4.4 — Confirmación automática de cita por correo
 
@@ -1118,9 +1123,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-7.5.1 | El sistema debe permitir configurar la duración de cita por defecto y el buffer entre citas. | Funcional | Los valores se guardan y se aplican. | Media |
 | RE-7.5.2 | El sistema debe aplicar los parámetros en la agenda y en los recordatorios. | Restricción | Agenda y cron usan los parámetros configurados. | Media |
 | RE-7.5.3 | _(v2.1)_ El administrador debe poder configurar la tolerancia de llegada, el plazo de reasignación, el umbral de aviso, el tope de sobrecupos y el teléfono de urgencias. Los valores por defecto y el teléfono registrado como dato de la clínica funcionan desde v2.0. | Funcional | En v2.0 la agenda aplica los valores por defecto; en v2.1, al cambiarlos desde configuración, aplica los nuevos valores. | Media |
-| RE-7.5.4 | El administrador debe configurar la anticipación mínima de cambios ordinarios de su clínica. | Validación | Entero de 0 a 1440 minutos, por defecto 30; 0 desactiva. Formulario restringe/valida en vivo y servidor repite; guardar queda auditado sin afectar otra clínica. | Alta |
+| RE-7.5.4 | El administrador debe configurar la anticipación mínima de cambios ordinarios de su clínica. | Validación | Entero de 0 a 1440 minutos, por defecto 30; 0 desactiva. Formulario restringe/valida en vivo y servidor repite; guardar queda auditado sin afectar otra clínica.  Próximo control configura horizonte de búsqueda (30 días por defecto) y plazo sin duración conocida (7 por defecto), ambos enteros de1 a365; validación en vivo/servidor y auditoría aislada por clínica (RN-431). | Alta |
 
-**Reglas de negocio:** RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429
+**Reglas de negocio:** RN-431, RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429
 
 ## Módulo 8 — Reputación y comunicaciones *(v2.0)*
 
@@ -1220,14 +1225,14 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |
-| HU-2.1 | RN-201, RN-202, RN-203, RN-112, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5 |
+| HU-2.1 | RN-201, RN-202, RN-203, RN-112, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5, RE-2.1.6, RE-2.1.7 |
 | HU-2.2 | RN-102, RN-203, RN-208, RN-411, RN-415 | RE-2.2.1, RE-2.2.2, RE-2.2.3, RE-2.2.4, RE-2.2.5 |
 | HU-2.3 | RN-204, RN-205 | RE-2.3.1, RE-2.3.2, RE-2.3.3, RE-2.3.4 |
 | HU-2.4 | RN-205 | RE-2.4.1, RE-2.4.2, RE-2.4.3 |
 | HU-2.5 | RN-206, RN-113 | RE-2.5.1, RE-2.5.2, RE-2.5.3, RE-2.5.4 |
 | HU-2.6 | RN-204, RN-206 | RE-2.6.1, RE-2.6.2, RE-2.6.3 |
 | HU-2.7 | RN-201, RN-207, RN-208, RN-G02 | RE-2.7.1, RE-2.7.2, RE-2.7.3 |
-| HU-2.8 | RN-209, RN-210, RN-212, RN-202 | RE-2.8.1, RE-2.8.2, RE-2.8.3, RE-2.8.4, RE-2.8.5 |
+| HU-2.8 | RN-209, RN-210, RN-212, RN-202 | RE-2.8.1, RE-2.8.2, RE-2.8.3, RE-2.8.4, RE-2.8.5, RE-2.8.6 |
 | HU-2.9 | RN-209, RN-211, RN-212, RN-113 | RE-2.9.1, RE-2.9.2, RE-2.9.3, RE-2.9.4 |
 | HU-2.10 | RN-112, RN-113 | RE-2.10.1, RE-2.10.2, RE-2.10.3, RE-2.10.4 |
 | HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
@@ -1240,7 +1245,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-3.6 | RN-303, RN-304, RN-305 | RE-3.6.1, RE-3.6.2, RE-3.6.3, RE-3.6.4 |
 | HU-4.1 | RN-401, RN-402, RN-403, RN-404, RN-G18 | RE-4.1.1, RE-4.1.2, RE-4.1.3, RE-4.1.4, RE-4.1.5 |
 | HU-4.2 | RN-405, RN-430 | RE-4.2.1, RE-4.2.2, RE-4.2.3, RE-4.2.4, RE-4.2.5 |
-| HU-4.3 | RN-406, RN-407, RN-409, RN-410 | RE-4.3.1, RE-4.3.2, RE-4.3.3, RE-4.3.4, RE-4.3.5, RE-4.3.6, RE-4.3.7, RE-4.3.8, RE-4.3.9 |
+| HU-4.3 | RN-406, RN-407, RN-409, RN-410, RN-431 | RE-4.3.1, RE-4.3.2, RE-4.3.3, RE-4.3.4, RE-4.3.5, RE-4.3.6, RE-4.3.7, RE-4.3.8, RE-4.3.9, RE-4.3.10, RE-4.3.11 |
 | HU-4.4 | RN-404 | RE-4.4.1, RE-4.4.2, RE-4.4.3, RE-4.4.4 |
 | HU-4.5 | RN-401, RN-412 | RE-4.5.1, RE-4.5.2, RE-4.5.3 |
 | HU-4.6 | RN-401, RN-403, RN-415 | RE-4.6.1, RE-4.6.2 |
@@ -1280,7 +1285,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-7.2 | RN-702 | RE-7.2.1, RE-7.2.2, RE-7.2.3 |
 | HU-7.3 | RN-705, RN-009, RN-701 | RE-7.3.1, RE-7.3.2, RE-7.3.3, RE-7.3.4, RE-7.3.5 |
 | HU-7.4 | RN-009, RN-415, RN-421, RN-701, RN-427 | RE-7.4.1, RE-7.4.2, RE-7.4.3, RE-7.4.4, RE-7.4.5, RE-7.4.6, RE-7.4.7 |
-| HU-7.5 | RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429, RN-430 | RE-7.5.1, RE-7.5.2, RE-7.5.3, RE-7.5.4 |
+| HU-7.5 | RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429, RN-430, RN-431 | RE-7.5.1, RE-7.5.2, RE-7.5.3, RE-7.5.4 |
 | HU-8.1 | RN-801, RN-804, RN-805, RN-G18 | RE-8.1.1, RE-8.1.2, RE-8.1.3, RE-8.1.4, RE-8.1.5, RE-8.1.6, RE-8.1.7 |
 | HU-8.2 | RN-802 | RE-8.2.1, RE-8.2.2 |
 | HU-8.3 | RN-806 | RE-8.3.1, RE-8.3.2, RE-8.3.3 |

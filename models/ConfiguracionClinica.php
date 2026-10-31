@@ -7,7 +7,7 @@ require_once __DIR__ . '/../helpers/Transaccion.php';
 /** RE-7.4.5, RN-701: gestión de marca/tipos exclusivamente en el contexto administrativo. */
 final class ConfiguracionClinica extends ModeloClinica
 {
-    private const CAMPOS_MARCA = 'id_clinica, nombre, direccion, telefono, telefono_urgencias, email_contacto, url_logo, anticipacion_cambios_min';
+    private const CAMPOS_MARCA = 'id_clinica, nombre, direccion, telefono, telefono_urgencias, email_contacto, url_logo, anticipacion_cambios_min, control_busqueda_dias, control_dias_sin_duracion';
 
     private function exigirAdministrador(): void
     {
@@ -89,6 +89,16 @@ final class ConfiguracionClinica extends ModeloClinica
                     throw new CampoInvalido('anticipacion_cambios_min', $error, $error);
                 }
                 $this->conn->prepare('UPDATE clinicas SET anticipacion_cambios_min=? WHERE id_clinica=?')->execute([(int) $entrada['anticipacion_cambios_min'], $this->clinica()]);
+            }
+            foreach (['control_busqueda_dias', 'control_dias_sin_duracion'] as $campo) {
+                if (!array_key_exists($campo, $entrada)) {
+                    continue;
+                }
+                $error = ValidadorConfiguracionClinica::campo($campo, $entrada[$campo]);
+                if ($error !== null) {
+                    throw new CampoInvalido($campo, $error, $error);
+                }
+                $this->conn->prepare('UPDATE clinicas SET ' . $campo . '=? WHERE id_clinica=?')->execute([(int) $entrada[$campo], $this->clinica()]);
             }
             $despues = $this->marca();
             $this->auditar('clinicas', $this->clinica(), $antes, $despues);

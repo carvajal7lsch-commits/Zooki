@@ -43,7 +43,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 > **Preparación M4/B1 — 2026-10-17:** criterios confirmados de destino pendientes de implementación funcional; no se cambia revisión. El ejecutable sigue en alpha.4 y los estados históricos no acreditan los nuevos flujos.
 
-> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
@@ -712,7 +712,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 - Campos: medicamento, dosis, vía de administración, duración y observaciones.
 - El tratamiento queda vinculado a la consulta.
-- Se pueden registrar múltiples tratamientos por consulta.
+- Se pueden registrar múltiples tratamientos por consulta, como tarjetas editables con los mismos campos y evaluación de seguridad.
 - Visible en el resumen de la historia clínica.
 
 **Reglas de negocio:** RN-205 · **Dependencias:** HU-2.1
@@ -785,7 +785,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Con el contexto del paciente (especie, raza, edad, historia) y los síntomas registrados, el Grafo I ordena los diagnósticos probables por peso.
 - Los diagnósticos se muestran rankeados; el veterinario puede aceptarlos o escribir el suyo. Usar agrega como sugerencia editable el plan disponible y las pautas aplicables, sin borrar ni duplicar; indica qué se llenó y permite Deshacer solo lo agregado. Cada fila pide verificar la dosis; al cambiar peso solo recalcula dosis aún no editadas (decisión del dueño, 2026-10-29).
 - Si el grafo no encuentra coincidencias, el veterinario escribe el diagnóstico libremente; el diagnóstico es obligatorio para continuar (RN-202).
-- La sugerencia es de apoyo: nunca diagnostica ni prescribe por sí sola.
+- La sugerencia es de apoyo: nunca diagnostica ni prescribe por sí sola. El panel vive desde Evaluación; Usar abre Diagnóstico y tratamiento y marca En uso. Cada agregado conserva su diagnóstico de origen; cambiar o borrar retira solo lo no editado y lo editado queda propio, también al recuperar el borrador.
 - El conocimiento clínico es global y compartido entre clínicas; no pertenece a ninguna en particular.
 
 **Reglas de negocio:** RN-209, RN-210, RN-212, RN-202 · **Requisitos:** RF-2.8 · **Dependencias:** HU-2.1
@@ -1064,7 +1064,9 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - La revisión de atenciones abiertas corre sola cada 5 minutos, así que el aviso llega aunque nadie abra el calendario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
-**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410 · **Dependencias:** HU-4.1, HU-2.1
+- Atención y modal comparten3 pasos con validación: Evaluación, Diagnóstico y tratamiento, Cierre. Al cerrar se puede reservar Próximo control después del commit, sin perder la consulta si falla; usa misma mascota/veterinario, disponibilidad y eventos existentes, con fallback Nueva cita prellenada (RN-431).
+
+**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410, RN-431 · **Dependencias:** HU-4.1, HU-2.1
 
 > _Nota: hasta v1.8.0 la cita se completaba con un botón aparte, sin consulta, y la podían iniciar recepción y administración. Como la pantalla de atención es solo del veterinario, esas citas quedaban "en curso" sin nadie que las atendiera, y una cita de un día anterior perdía todos los botones del calendario. Ver el Módulo 4 de `AuditoriaModulos.md`._
 
@@ -1920,13 +1922,14 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
+- Configuro horizonte de búsqueda del control (30 días por defecto) y plazo sin duración conocida (7 por defecto): ambos enteros de1 a365, con validación en vivo, servidor y auditoría por clínica (RN-431).
 - Configuro N de anticipación mínima para cambios ordinarios: entero 0–1440 minutos, 30 por defecto, 0 desactiva, con validación en vivo, servidor y auditoría aislada (RN-430).
 
 - Puedo definir la duración de cita por defecto y el buffer entre citas.
 - _(v2.0)_ La agenda usa valores por defecto para tolerancia de llegada tarde, plazo de confirmación de reasignación, umbral de aviso y tope de sobrecupos. El teléfono de urgencias se captura en los datos de la clínica (HU-7.4). En v2.1 el administrador puede configurar estos parámetros.
 - Los cambios se aplican en la agenda. Los tiempos de los recordatorios se configuran en HU-8.4.
 
-**Reglas de negocio:** RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 · **Requisitos:** RF-7.5 · **Dependencias:** HU-7.1
+**Reglas de negocio:** RN-431, RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 · **Requisitos:** RF-7.5 · **Dependencias:** HU-7.1
 
 > _Nota: Función deseable propuesta; sería el hogar natural del buffer (HU-4.6) y las ventanas de recordatorio (HU-3.6)._
 
@@ -2245,6 +2248,7 @@ Auditoría automática de la Fase 3: de **127 reglas de negocio**, **127** está
 | RN-428 | HU-4.14, HU-7.5 |
 | RN-429 | HU-4.14, HU-7.5 |
 | RN-430 | HU-4.2, HU-5.6, HU-7.5 |
+| RN-431 | HU-4.3, HU-7.5 |
 | RN-501 | HU-5.2, HU-5.3 |
 | RN-502 | HU-5.10, HU-5.11 |
 | RN-503 | HU-5.10, HU-5.11 |

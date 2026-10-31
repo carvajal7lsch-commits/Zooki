@@ -29,13 +29,7 @@
     let consulta = null;
 
     // ── Alto disponible (sin scroll de página) ──────────────────────────
-    function ajustarAlto() {
-        const cuerpo = document.querySelector('.content-body');
-        const paddingInferior = cuerpo ? parseFloat(getComputedStyle(cuerpo).paddingBottom) || 0 : 0;
-        const arriba = app.getBoundingClientRect().top + window.scrollY;
-        const alto = Math.max(window.innerHeight - arriba - paddingInferior, 560);
-        app.style.setProperty('--atencion-alto', `${Math.floor(alto)}px`);
-    }
+    // El alto y los cortes responsive se resuelven en consulta-pasos.css.
 
     // ── Utilidades ──────────────────────────────────────────────────────
     const fechaCorta = (iso) => {
@@ -114,16 +108,7 @@
     let pasoActual = 0;
 
     function mostrarPaso(indice) {
-        if (!pasos.length) return;
-        pasoActual = Math.max(0, Math.min(indice, pasos.length - 1));
-        pasos.forEach((paso, i) => paso.classList.toggle('is-active', i === pasoActual));
-        botonesPaso.forEach((boton, i) => {
-            boton.classList.toggle('is-active', i === pasoActual);
-            boton.classList.toggle('is-hecho', i < pasoActual);
-        });
-        if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches && botonesPaso[pasoActual]) botonesPaso[pasoActual].scrollIntoView({ block: 'nearest', inline: 'nearest' });
-        if (btnAnterior) btnAnterior.disabled = pasoActual === 0;
-        if (btnSiguiente) btnSiguiente.hidden = pasoActual === pasos.length - 1;
+        if (consulta?.pasos) consulta.pasos.ir(indice, false);
     }
 
     // Lleva al paso del campo, lo marca y lo enfoca.
@@ -153,78 +138,9 @@
         return false;
     }
 
-    // ── Borrador automático ─────────────────────────────────────────────
-    // Solo los campos de texto y números: archivos y medicamentos no se
-    // pueden guardar en el navegador (por eso sigue el aviso al salir).
-    const CLAVE_BORRADOR = `zooki_atencion_borrador_${idCita}`;
-    const CAMPOS_BORRADOR = [
-        'motivo', 'anamnesis', 'peso', 'temperatura', 'frecuencia_cardiaca',
-        'frecuencia_respiratoria', 'diagnostico', 'plan_tratamiento', 'observaciones',
-    ];
-    const estadoBorrador = document.getElementById('estadoBorrador');
-    let temporizadorBorrador = null;
-
-    function mostrarEstadoBorrador(marcaTiempo) {
-        if (!estadoBorrador || !marcaTiempo) return;
-        const hora = new Date(marcaTiempo).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-        estadoBorrador.textContent = `Borrador guardado ${hora}`;
-    }
-
-    function guardarBorrador() {
-        try {
-            const datos = {};
-            CAMPOS_BORRADOR.forEach((nombre) => {
-                const campo = formConsulta.elements[nombre];
-                if (campo) datos[nombre] = campo.value;
-            });
-            // C5a: los síntomas marcados también son datos editables del borrador.
-            if (consulta && consulta.sintomas) datos.sintomas = consulta.sintomas.marcados();
-            // C5b: «No se pudo pesar» se recuerda como lo que es, no como un peso.
-            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
-            if (sinPeso) datos.sin_peso = sinPeso.checked;
-            const ahora = Date.now();
-            localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ datos, guardado: ahora }));
-            mostrarEstadoBorrador(ahora);
-        } catch (e) {
-            // Sin almacenamiento disponible (modo privado, etc.): no pasa nada.
-        }
-    }
-
-    function restaurarBorrador() {
-        try {
-            const crudo = localStorage.getItem(CLAVE_BORRADOR);
-            if (!crudo) return;
-            const { datos, guardado } = JSON.parse(crudo);
-            let restaurado = false;
-            CAMPOS_BORRADOR.forEach((nombre) => {
-                const campo = formConsulta.elements[nombre];
-                if (campo && datos[nombre] && campo.value !== datos[nombre]) {
-                    campo.value = datos[nombre];
-                    restaurado = true;
-                }
-            });
-            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
-            if (sinPeso && datos.sin_peso === true && !sinPeso.checked) {
-                sinPeso.checked = true;
-                sinPeso.dispatchEvent(new Event('change'));
-                restaurado = true;
-            }
-            if (consulta && consulta.sintomas && Array.isArray(datos.sintomas) && datos.sintomas.length) {
-                consulta.sintomas.poner(datos.sintomas);
-                restaurado = true;
-            }
-            if (restaurado) {
-                hayCambiosSinGuardar = true;
-                zookiToast('Recuperamos el borrador que no alcanzaste a guardar.', 'info');
-            }
-            mostrarEstadoBorrador(guardado);
-        } catch (e) {
-            // Borrador ilegible: se ignora.
-        }
-    }
-
+    // RE-2.1.7: el componente común conserva la procedencia de cada sugerencia.
     function borrarBorrador() {
-        try { localStorage.removeItem(CLAVE_BORRADOR); } catch (e) { /* sin almacenamiento */ }
+        consulta?.pasos?.borrar(true);
     }
 
     // ── Iniciar atención ────────────────────────────────────────────────
@@ -270,13 +186,10 @@
         // C5b: las alertas de prescripción deben estar al día antes de validar.
         if (!consultaRegistrada && consulta) await consulta.listo();
         if (!consultaRegistrada && formConsulta && !validarConsulta()) return;
-
-        const mensaje = consultaRegistrada
-            ? 'La cita quedará marcada como completada.'
-            : 'Se guardará la consulta en la historia clínica y la cita quedará completada. Después no se puede editar.';
-        if (!(await zookiConfirmarCorto(mensaje, 'Sí, finalizar'))) return;
+        if (!consultaRegistrada && consulta?.pasos && !consulta.pasos.validarPaso(2)) return;
 
         finalizando = true;
+        let destinoCierre = null;
         textoBotonFinalizar(true);
 
         try {
@@ -286,7 +199,7 @@
                 const res = await postJson('index.php?action=registrar_consulta_ajax', new FormData(formConsulta));
                 if (!res.success) {
                     finalizando = false;
-                    if (avisarAdjuntosRechazados(res)) return;
+                    if (avisarAdjuntosRechazados(res, formConsulta)) return;
                     // C5a: el error de un campo va junto a ese campo, en su paso.
                     const campo = consulta ? consulta.mostrarErrorServidor(res) : null;
                     if (campo) {
@@ -299,6 +212,7 @@
                 app.dataset.consultaRegistrada = '1';
                 hayCambiosSinGuardar = false;
                 borrarBorrador();
+                if (window.ZookiCierreConsulta) destinoCierre = await window.ZookiCierreConsulta.mostrar(res, formConsulta);
             } else {
                 // La consulta ya existía pero la cita quedó abierta (datos de
                 // antes de v1.9.0, cuando eran dos pasos): solo falta cerrarla.
@@ -310,7 +224,8 @@
                 }
             }
 
-            zookiRecargarConAviso('Atención finalizada. La consulta quedó en la historia clínica.', 'success');
+            if (window.ZookiCierreConsulta) window.location.href = destinoCierre || 'index.php?action=vet_agenda';
+            else zookiRecargarConAviso('Atención registrada', 'success');
         } catch (e) {
             console.error('finalizarAtencion', e);
             finalizando = false;
@@ -411,12 +326,6 @@
 
     // ── Arranque ────────────────────────────────────────────────────────
     function iniciar() {
-        ajustarAlto();
-        // El layout entra con una animación de 0.5 s que desplaza el contenido:
-        // se vuelve a medir cuando termina.
-        setTimeout(ajustarAlto, 600);
-        window.addEventListener('resize', ajustarAlto);
-
         const foto = document.getElementById('atencionFoto');
         if (foto) foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
 
@@ -424,11 +333,6 @@
             boton.addEventListener('click', () => activarPestana(boton.dataset.tab));
         });
 
-        botonesPaso.forEach((boton) => {
-            boton.addEventListener('click', () => mostrarPaso(Number(boton.dataset.paso)));
-        });
-        if (btnAnterior) btnAnterior.addEventListener('click', () => mostrarPaso(pasoActual - 1));
-        if (btnSiguiente) btnSiguiente.addEventListener('click', () => mostrarPaso(pasoActual + 1));
         mostrarPaso(0);
 
         const btnIniciar = document.getElementById('btnIniciarAtencion');
@@ -441,17 +345,14 @@
                     idMascota: () => idMascota,
                     alCambiarSintomas: () => {
                         hayCambiosSinGuardar = true;
-                        clearTimeout(temporizadorBorrador);
-                        temporizadorBorrador = setTimeout(guardarBorrador, 600);
+
                     },
                 });
             }
-            restaurarBorrador();
             formConsulta.addEventListener('input', (e) => {
                 if (e.target.type === 'file') return;
                 hayCambiosSinGuardar = true;
-                clearTimeout(temporizadorBorrador);
-                temporizadorBorrador = setTimeout(guardarBorrador, 600);
+
             });
             // Enter en un input no debe enviar nada: se finaliza con el botón.
             formConsulta.addEventListener('submit', (e) => e.preventDefault());

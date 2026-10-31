@@ -1,6 +1,6 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
-> **Actualización 2.3.0 preparada (2026-10-29):** correcciones de la prueba del dueño, 96 HU, 467 RE, 127 RN y 65 tablas; migración 15 repetible. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
 
 
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.

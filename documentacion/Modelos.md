@@ -149,6 +149,7 @@ Continuar/guardar relee paciente, titularidad, vínculos, datos clínicos permit
 Un formulario o acuse idempotente anterior no sustituye esa validación; una atención completada no se reabre ni el propietario obtiene HU-4.17.
 
 Actores: Veterinario. Entrada desde una cita del calendario o sin reserva vía Atención/Urgencias; toda nueva atención crea/enlaza antes su cita de llegada, conservando origen. Si la alerta roja se originó en el portal autenticado, ya están identificados el propietario de la sesión y la mascota que seleccionó; la verificación rápida y la ficha provisional corresponden solo a una llegada presencial sin identidad comprobada. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
+El borrador local se guarda por clínica, cita y veterinario, con procedencia de sugerencias; al volver se avisa y ofrece Descartar. Los adjuntos deben elegirse otra vez. Se elimina al descartar o guardar, con protección frente a restauración silenciosa del navegador (RE-2.1.7).
 
 ```mermaid
 flowchart TD
@@ -178,10 +179,11 @@ flowchart TD
   CA -- Si --> CTX
 
   CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas a la vista, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso o No se pudo pesar: NULL, nunca 0)<br/>y sintomas confirmados del catalogo; nota libre fuera del calculo"]
-  H --> I{Captura inicial y rangos validos?}
+  H --> EV["Paso 1 Evaluacion: validacion en vivo de limites de captura;<br/>referencias informativas azules, nunca bloquean; panel vivo de sintomas"]
+  EV --> I{Captura inicial valida?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
-  I -- Si --> J["Grafo I: ranking por peso y cobertura al cambiar los sintomas;<br/>maximo 5 candidatos positivos, sin porcentajes ni elegir por el vet;<br/>datos que ayudarian con nombre legible y campos opcionales"]
+  I -- Si --> J["Grafo I: ranking por peso y cobertura al cambiar los sintomas;<br/>maximo 5 candidatos positivos, barra de cobertura sin elegir por el vet;<br/>datos que ayudarian con nombre legible y campos opcionales"]
   J --> K{El grafo encontro coincidencias?}
   K -- No --> L[El veterinario escribe el diagnostico]
   K -- Si --> M[Mostrar diagnosticos probables rankeados]
@@ -192,7 +194,8 @@ flowchart TD
   ME --> M
   MA -- Si --> MS["Filtrar trata por especie y condiciones; excluir bloqueos de toxicidad o alergia;<br/>advertencias publicas sin evidencia protegida; ordenar por preferencia"]
   MS --> ML["Agregar sin duplicar: diagnostico, examenes, recomendaciones y filas editables;<br/>mg calculados o mg/kg con calcula con el peso; marca verifica la dosis"]
-  ML --> MD["Aviso de lo agregado y Deshacer que conserva texto previo y ediciones;<br/>peso recalcula solo dosis sugeridas aun no editadas; validacion en tiempo real"]
+  ML --> CAM["Usar abre paso 2 Diagnostico y tratamiento;<br/>Cambiar o borrar diagnostico retira solo sus sugerencias sin editar;<br/>lo revisado se conserva como propio"]
+  CAM --> MD["Aviso de lo agregado y Deshacer que conserva texto previo y ediciones;<br/>peso recalcula solo dosis sugeridas aun no editadas; validacion en tiempo real"]
   MD --> L
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
@@ -214,12 +217,13 @@ flowchart TD
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
   AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
-  AL1 --> V
-  AL -- No --> V{Adjuntar archivos?}
+  AL1 --> V0
+  AL -- No --> V0["Paso 3 Cierre: adjuntos arrastrables, observaciones,<br/>resumen y proximo control opcional con dia habilitado"]
+  V0 --> V{Adjuntar archivos?}
   V -- Si --> W{"Tipo y tamaño validos? (JPG/PNG/PDF, max 10MB, RN-204)"}
   W -- No --> W1[/"Mensaje: archivo no permitido o demasiado grande"/]
   W1 --> V
-  W -- Si --> X[Confirmar y guardar]
+  W -- Si --> X[Finalizar atencion]
   V -- No --> X
   X --> IV["Coordinador: clinica, usuarios y mascotas; resolver identidad actual y HC sin GET_LOCK"]
   IV --> IA{"Acceso actual al paciente/recurso en este contexto?"}
@@ -238,7 +242,15 @@ flowchart TD
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
   Y1 -- Si --> Z1[Registrar en auditoria]
-  Z1 --> Z2{Fue registro rapido de emergencia?}
+  Z1 --> CO{Solicito control?}
+  CO -- Si --> CP["Tras commit clinico: operacion agenda separada e idempotente;<br/>releer identidad y vinculo tras bloquear;<br/>mismo vet y mascota; Control o Consulta general;<br/>primer hueco, preventivo verde, RN-430, eventos y aviso"]
+  CP --> CE{Contexto vigente y hueco dentro del horizonte?}
+  CE -- No --> CF["Consulta conservada; aviso y Agendar control prellenado;<br/>excepcion: abre sin horario aprobado, reserva bloqueada hasta tener disponibilidad"]
+  CE -- Si --> CS["Cita de control creada; avisar si cambio al siguiente dia habil"]
+  CF --> CR
+  CS --> CR
+  CO -- No --> CR["Borrar borrador y mostrar Atencion registrada; volver a agenda"]
+  CR --> Z2{Fue registro rapido de emergencia?}
   Z2 -- Si --> Z3[Dejar tarea pendiente: completar la ficha del paciente]
   Z2 -- No --> ZF
   Z3 --> ZF

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Atención · paso 1</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 22px 36px;display:flex;flex-direction:column;gap:14px}
+/* Una sola fila arriba: volver, quién y qué cita; sin el título doble de hoy. */
+.top{display:flex;align-items:center;gap:12px;height:52px;flex:none}
+.volver{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;flex:none}
+.ttl{margin-right:auto;min-width:0}
+h1{margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.curso{height:24px;border-radius:12px;padding:0 10px;background:rgba(0,82,255,.1);color:#0052FF;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.curso i{width:7px;height:7px;border-radius:50%;background:#0052FF}
+.clinica{height:40px;border-radius:20px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;font:600 13px Inter,sans-serif;color:#0F172A}
+.cn{width:28px;height:28px;border-radius:50%;background:rgba(0,82,255,.1);color:#0052FF;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+/* Franja del paciente: identidad del portal (anillo, chips) y los 3 pasos a la derecha. */
+.paciente{flex:none;background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);padding:12px 16px;display:flex;align-items:center;gap:14px}
+.ring{width:56px;height:56px;border-radius:50%;padding:3px;background:linear-gradient(135deg,#0052FF,#93C5FD);flex:none}
+.ring span{width:100%;height:100%;border-radius:50%;border:3px solid #fff;background:#DBEAFE;color:#0052FF;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center}
+.quien strong{font-size:17px;display:block}
+.quien small{font-size:13px;color:#64748B}
+.datos{display:flex;gap:6px;flex-wrap:wrap;margin-left:6px}
+.chip{height:26px;border-radius:13px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:#F1F5F9;color:#334155;white-space:nowrap}
+.chip.azul{background:rgba(0,82,255,.08);color:#0052FF}
+.chip.rojo{background:#FEF2F2;color:#B91C1C}
+.pasos{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.paso{display:flex;align-items:center;gap:8px;height:36px;border-radius:18px;padding:0 14px 0 6px;font-size:13px;font-weight:600;color:#64748B}
+.paso b{width:24px;height:24px;border-radius:50%;background:#F1F5F9;color:#64748B;font-size:12px;display:flex;align-items:center;justify-content:center}
+.paso.hecho b{background:#0052FF;color:#fff}
+.paso.on{background:rgba(0,82,255,.08);color:#0052FF}
+.paso.on b{background:#0052FF;color:#fff}
+.linea{width:18px;height:2px;background:#E2E8F0;border-radius:1px}
+/* Cuerpo: formulario a la izquierda, «Zooki sugiere» fijo a la derecha. */
+.cuerpo{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px}
+.hoja{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;flex-direction:column;min-height:0}
+.form{flex:1;min-height:0;overflow:hidden;padding:18px 22px 6px;display:flex;flex-direction:column;gap:14px}
+.lleno{display:flex;align-items:center;gap:10px;height:40px;border-radius:12px;background:#F0F5FF;color:#1E3A8A;font-size:13px;padding:0 8px 0 12px}
+.lleno svg{color:#0052FF;flex:none}
+.lleno span{margin-right:auto}
+.lleno button{height:30px;border-radius:9px;border:1px solid #BFD3FF;background:#fff;color:#0052FF;font:600 12px Inter,sans-serif;padding:0 10px}
+.et{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#475569;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.et .req{color:#0052FF}
+.campo{min-height:44px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px}
+.sug{height:22px;border-radius:11px;padding:0 8px;background:rgba(0,82,255,.08);color:#0052FF;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap}
+.dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.examenes{display:flex;gap:6px;flex-wrap:wrap}
+.examen{height:30px;border-radius:15px;border:1px solid #E2E8F0;background:#fff;padding:0 10px 0 6px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#334155}
+.check{width:18px;height:18px;border-radius:6px;background:#0052FF;color:#fff;display:flex;align-items:center;justify-content:center}
+.examen.no .check{background:#fff;border:1.5px solid #CBD5E1}
+.area{border-radius:12px;border:1px solid #E2E8F0;padding:10px 12px;font-size:13px;line-height:1.5;color:#334155;min-height:66px}
+.area li{margin-left:16px}
+.area ul{margin:0;padding:0}
+.trats{display:flex;flex-direction:column;gap:8px}
+.trat{border:1px solid #E2E8F0;border-radius:16px;padding:12px 14px;display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center}
+.trat.sugerido{border-color:#BFD3FF;background:#FAFCFF}
+.pill{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+.trat strong{font-size:15px}
+.trat .dosis{font-size:15px;font-weight:700;color:#0052FF;margin-left:6px}
+.meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.meta .chip{height:24px;font-weight:500}
+.nota{font-size:12px;color:#64748B;margin-top:6px}
+.acc{display:flex;gap:6px}
+.ib{width:34px;height:34px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.agregar{height:40px;border-radius:12px;border:1px dashed #BFD3FF;background:#fff;color:#0052FF;font:600 13px Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+.pie{flex:none;border-top:1px solid #EEF2F7;padding:12px 22px;display:flex;align-items:center;gap:10px}
+.pie small{margin-right:auto;font-size:12px;color:#64748B;display:flex;align-items:center;gap:6px}
+.sec{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:600 14px Inter,sans-serif;color:#0F172A;padding:0 16px;display:flex;align-items:center;gap:8px}
+.prim{height:40px;border-radius:12px;border:0;background:#0052FF;color:#fff;font:600 14px Inter,sans-serif;padding:0 18px;display:flex;align-items:center;gap:8px}
+/* Panel del grafo */
+.zooki{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);padding:18px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.zcab{display:flex;align-items:center;gap:10px}
+.zico{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#0052FF,#3B82F6);color:#fff;display:flex;align-items:center;justify-content:center}
+.zcab h2{margin:0;font-size:16px}
+.zcab small{display:block;font-size:12px;color:#64748B}
+.desde{display:flex;gap:6px;flex-wrap:wrap}
+.desde .chip{height:24px;font-weight:500}
+.cand{border:1px solid #E2E8F0;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cand.usado{border-color:#0052FF;background:#F5F8FF}
+.cfila{display:flex;align-items:center;gap:10px}
+.cfila strong{font-size:14px;margin-right:auto}
+.usar{height:30px;border-radius:9px;border:0;background:#0052FF;color:#fff;font:600 12px Inter,sans-serif;padding:0 12px}
+.usar.sec2{background:#fff;border:1px solid #E2E8F0;color:#0F172A}
+.usado-tag{height:26px;border-radius:13px;background:#0052FF;color:#fff;font-size:12px;font-weight:700;padding:0 10px;display:inline-flex;align-items:center;gap:5px}
+.barra{height:6px;border-radius:3px;background:#EEF2F7;overflow:hidden}
+.barra i{display:block;height:100%;background:#0052FF;border-radius:3px}
+.cobertura{font-size:12px;color:#64748B}
+.zpie{margin-top:auto;font-size:11px;color:#94A3B8;line-height:1.4}
+/* Franja del collage del portal (Idea 2) en miniatura: el perro asoma desde abajo, patas en la línea. */
+.zbanda{display:flex;align-items:flex-end;gap:8px;height:88px;flex:none}
+.f-txt{flex:1;min-width:0;height:88px;background:#DBEAFE;border-radius:0 0 0 36px;display:flex;align-items:center;gap:10px;padding:0 14px}
+.f-txt h2{margin:0;font-size:16px;color:#0F172A}
+.f-txt small{display:block;font-size:12px;color:#3B5BA9}
+.f-perro{width:96px;height:88px;background:#3B82F6;border-radius:0 50% 0 0;position:relative;flex:none}
+.f-perro img{position:absolute;left:-2px;bottom:-8px;width:100px;height:auto;filter:drop-shadow(0 3px 5px rgba(15,23,42,.18))}
+
+.sint{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.st{height:30px;border-radius:15px;background:#F1F5F9;color:#0F172A;font-size:13px;font-weight:600;padding:0 6px 0 12px;display:inline-flex;align-items:center;gap:8px}
+.st b{width:20px;height:20px;border-radius:50%;background:#fff;color:#64748B;font-size:12px;display:flex;align-items:center;justify-content:center}
+.vitales{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.vital{border:1px solid #E2E8F0;border-radius:14px;padding:10px 12px}
+.vital.alto{border-color:#0052FF;background:#F5F8FF}
+.vital small{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748B}
+.vital.alto div{color:#0052FF}
+.vital div{font-size:20px;font-weight:700;margin-top:4px}
+.vital div em{font-style:normal;font-size:13px;color:#64748B;font-weight:600;margin-left:3px}
+.vital p{margin:2px 0 0;font-size:11px;font-weight:600;color:#0052FF}
+.vital p.gris{color:#94A3B8}
+.area.alta{min-height:92px}
+.prev{border:1px solid #E2E8F0;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.prev strong{font-size:14px;margin-right:auto}
+.prev .cobertura{font-size:12px}
+.zayuda{font-size:12px;color:#475569;background:#F8FAFC;border-radius:12px;padding:10px 12px}
+.zona{border:1.5px dashed #BFD3FF;border-radius:14px;background:#FAFCFF;height:86px;display:flex;align-items:center;justify-content:center;gap:10px;color:#0052FF;font-size:13px;font-weight:600}
+.archivos{display:flex;gap:8px;margin-top:8px}
+.arch{height:34px;border-radius:10px;border:1px solid #E2E8F0;padding:0 10px;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#334155}
+.control{border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.control strong{display:block;font-size:14px}
+.control small{font-size:12px;color:#64748B}
+.tg{width:40px;height:24px;border-radius:12px;background:#0052FF;position:relative;flex:none;margin-left:auto}
+.tg::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.res{display:flex;flex-direction:column;gap:0}
+.rfila{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid #F1F5F9;font-size:13px}
+.rfila:first-child{border-top:0}
+.rfila span{color:#64748B}
+.rfila b{font-weight:600}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú principal">
+    <img class="logo" src="/_blob/9a706094b16871564b26168bd83be148" alt="Zooki">
+    <a class="nav" href="#" aria-label="Inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11h14V9"/></svg></a>
+    <a class="nav" href="#" aria-label="Pacientes"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="5.5" r="2.2"/><circle cx="14" cy="5.5" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg></a>
+    <a class="nav on" href="#" aria-label="Agenda" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></a>
+    <a class="nav" href="#" aria-label="Mi perfil"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.3-2 3.2-3 5.5-3s4.2 1 5.5 3"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+  <main class="main">
+    <header class="top">
+      <button class="volver" type="button" aria-label="Volver a la agenda"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="ttl"><h1>Atención de Luna <span class="curso">En curso</span></h1><div class="sub">Hoy 08:00 · Consulta general · Cita #5</div></div>
+      <button class="clinica" type="button"><span class="cn">CN</span>Clínica Norte</button>
+      <button class="redondo" type="button" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">BN</button>
+    </header>
+
+    <section class="paciente" aria-label="Paciente">
+      <div class="ring"><span>L</span></div>
+      <div class="quien"><strong>Luna</strong><small>Canino · Mestizo · Hembra · 4 años</small></div>
+      <div class="datos">
+        <span class="chip">9 kg</span>
+        <span class="chip">HC-000001</span>
+        <span class="chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>Fabio · 300 112 2333</span>
+        <span class="chip rojo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Alergia: penicilina</span>
+      </div>
+      <nav class="pasos" aria-label="Pasos de la atención">
+        <span class="paso on" aria-current="step"><b>1</b>Evaluación</span>
+        <span class="linea"></span>
+        <span class="paso"><b>2</b>Diagnóstico y tratamiento</span>
+        <span class="linea"></span>
+        <span class="paso"><b>3</b>Cierre</span>
+      </nav>
+    </section>
+
+    <div class="cuerpo">
+      <section class="hoja" aria-label="Evaluación">
+        <div class="form">
+          <div>
+            <div class="et">Motivo de la consulta <span class="req">*</span></div>
+            <div class="campo">Decaída desde hace 3 días y le sangró la nariz</div>
+          </div>
+          <div>
+            <div class="et">Síntomas</div>
+            <div class="campo" style="color:#94A3B8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Busca y marca: vómito, tos, no come…</div>
+            <div class="sint">
+              <span class="st">Fiebre<b>×</b></span>
+              <span class="st">Le sangra la nariz<b>×</b></span>
+              <span class="st">Decaído<b>×</b></span>
+              <span class="st">Moretones o puntitos rojos<b>×</b></span>
+            </div>
+          </div>
+          <div>
+            <div class="et">Signos vitales</div>
+            <div class="vitales">
+              <div class="vital"><small>Peso <span class="req">*</span></small><div>9<em>kg</em></div><p class="gris">Último: 9 kg</p></div>
+              <div class="vital alto"><small>Temperatura</small><div>39,8<em>°C</em></div><p>↑ Por encima de lo normal</p></div>
+              <div class="vital"><small>Frec. cardiaca</small><div>110<em>lpm</em></div></div>
+              <div class="vital"><small>Frec. respiratoria</small><div>26<em>rpm</em></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="et">Anamnesis</div>
+            <div class="area alta">El propietario cuenta que la encontró decaída, sin ganas de comer desde el lunes. Ayer le sangró la nariz un rato. Tuvo garrapatas el mes pasado.</div>
+          </div>
+        </div>
+        <footer class="pie">
+          <small><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Borrador guardado hace un momento</small>
+          <button class="prim" type="button">Siguiente: Diagnóstico y tratamiento<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </footer>
+      </section>
+
+      <aside class="zooki" aria-label="Zooki sugiere">
+        <div class="zbanda"><div class="f-txt"><span class="zico"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg></span><div><h2>Zooki sugiere</h2><small>Se actualiza mientras marcas síntomas</small></div></div><span class="f-perro"><img src="/_blob/67b7aa663d1d06bae31aa0c302e4209a" alt=""></span></div>
+        <div class="zayuda">Con lo que llevas, estos son los más probables. Elige uno y pasas al paso 2 con todo lleno.</div>
+        <article class="prev"><div style="flex:1"><strong>Ehrlichiosis canina</strong><div class="barra" style="margin:6px 0 4px"><i style="width:67%"></i></div><div class="cobertura">Coinciden 4 de 6</div></div><button class="usar" type="button">Usar</button></article>
+        <article class="prev"><div style="flex:1"><strong>Leptospirosis canina</strong><div class="barra" style="margin:6px 0 4px"><i style="width:22%"></i></div><div class="cobertura">Coinciden 2 de 9</div></div><button class="usar sec2" type="button">Usar</button></article>
+        <article class="prev"><div style="flex:1"><strong>Parvovirosis canina</strong><div class="barra" style="margin:6px 0 4px"><i style="width:17%"></i></div><div class="cobertura">Coincide 1 de 6</div></div><button class="usar sec2" type="button">Usar</button></article>
+        <div class="zpie">Apoyo a la decisión, pendiente de validación veterinaria.</div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

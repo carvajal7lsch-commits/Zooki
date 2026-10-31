@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Atención · paso 2 en celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+/* Cabecera de una sola fila con el paciente: lo de arriba no gasta espacio. */
+.cab{background:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;border-radius:0 0 22px 22px;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.volver{width:36px;height:36px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;justify-content:center;color:#334155;flex:none}
+.ring{width:42px;height:42px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#0052FF,#93C5FD);flex:none}
+.ring span{width:100%;height:100%;border-radius:50%;border:2px solid #fff;background:#DBEAFE;color:#0052FF;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center}
+.quien{min-width:0;margin-right:auto}
+.quien strong{font-size:16px;display:flex;align-items:center;gap:6px}
+.quien small{font-size:12px;color:#64748B;white-space:nowrap}
+.rojo{height:22px;border-radius:11px;padding:0 8px;background:#FEF2F2;color:#B91C1C;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.pasos{display:flex;gap:6px;padding:12px 14px 0}
+.pasos span{flex:1;height:4px;border-radius:2px;background:#CBD5E1}
+.pasos span.ok{background:#0052FF}
+.paso-txt{padding:6px 14px 0;font-size:12px;color:#64748B;display:flex;justify-content:space-between}
+.paso-txt b{color:#0052FF}
+.cuerpo{padding:10px 14px 110px;display:flex;flex-direction:column;gap:10px}
+.zooki{background:linear-gradient(135deg,#0052FF,#3B82F6);color:#fff;border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;position:relative}
+.zfila{display:flex;align-items:center;gap:8px}
+.zfila strong{font-size:14px;margin-right:auto}
+.zfila small{font-size:12px;opacity:.85}
+.zcand{background:rgba(255,255,255,.14);border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:13px}
+.zcand span{margin-right:auto}
+.zcand em{font-style:normal;font-size:11px;opacity:.85}
+.zcand button{height:28px;border-radius:8px;border:0;background:#fff;color:#0052FF;font:700 12px Inter,sans-serif;padding:0 10px}
+.zcand.on button{background:rgba(255,255,255,.25);color:#fff}
+.lleno{background:#F0F5FF;border-radius:12px;padding:8px 10px;font-size:12px;color:#1E3A8A;display:flex;align-items:center;gap:8px}
+.lleno span{margin-right:auto}
+.lleno button{height:28px;border-radius:8px;border:1px solid #BFD3FF;background:#fff;color:#0052FF;font:600 12px Inter,sans-serif;padding:0 8px}
+.hoja{background:#fff;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.et{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#475569;margin-bottom:6px}
+.campo{min-height:44px;border-radius:12px;border:1px solid #E2E8F0;display:flex;align-items:center;padding:0 12px;font-size:15px;gap:8px}
+.sug{margin-left:auto;height:20px;border-radius:10px;padding:0 7px;background:rgba(0,82,255,.08);color:#0052FF;font-size:10px;font-weight:700;display:inline-flex;align-items:center}
+.examenes{display:flex;gap:6px;flex-wrap:wrap}
+.examen{height:30px;border-radius:15px;border:1px solid #E2E8F0;padding:0 10px 0 6px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#334155}
+.check{width:18px;height:18px;border-radius:6px;background:#0052FF;color:#fff;display:flex;align-items:center;justify-content:center}
+.examen.no .check{background:#fff;border:1.5px solid #CBD5E1}
+.trat{border:1px solid #BFD3FF;background:#FAFCFF;border-radius:14px;padding:12px}
+.trat .fila{display:flex;align-items:baseline;gap:6px}
+.trat strong{font-size:15px}
+.trat .dosis{font-size:15px;font-weight:700;color:#0052FF;margin-right:auto}
+.meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.chip{height:22px;border-radius:11px;padding:0 8px;display:inline-flex;align-items:center;font-size:11px;font-weight:500;background:#F1F5F9;color:#334155}
+.chip.azul{background:rgba(0,82,255,.08);color:#0052FF;font-weight:700}
+.mas{font-size:12px;color:#0052FF;font-weight:600}
+.barra{position:absolute;left:0;right:0;bottom:0;background:#fff;padding:12px 14px 22px;display:flex;gap:8px;box-shadow:0 -4px 16px rgba(15,23,42,.08);border-radius:22px 22px 0 0}
+.barra button{height:46px;border-radius:14px;font:600 14px Inter,sans-serif}
+.sec{width:46px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;justify-content:center;color:#334155}
+.prim{flex:1;border:0;background:#0052FF;color:#fff}
+</style>
+</helmet>
+<div class="tel">
+  <header class="cab">
+    <button class="volver" type="button" aria-label="Volver"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="ring"><span>L</span></div>
+    <div class="quien"><strong>Luna <span class="rojo">Penicilina</span></strong><small>Canino · 4 años · 9 kg · HC-000001</small></div>
+  </header>
+  <div class="pasos" aria-hidden="true"><span class="ok"></span><span class="ok"></span><span></span></div>
+  <div class="paso-txt"><span>Paso 2 de 3 · <b>Diagnóstico y tratamiento</b></span><span>Cierre</span></div>
+
+  <div class="cuerpo">
+    <section class="zooki" aria-label="Zooki sugiere">
+      <div class="zfila"><strong>Zooki sugiere</strong><small>4 síntomas</small></div>
+      <div class="zcand on"><span>Ehrlichiosis canina <em>· 4 de 6</em></span><button type="button">En uso</button></div>
+      <div class="zcand"><span>Leptospirosis canina <em>· 2 de 9</em></span><button type="button">Cambiar</button></div>
+    </section>
+
+    <div class="lleno"><span><b>Zooki llenó</b> diagnóstico, plan y 1 tratamiento</span><button type="button">Deshacer</button></div>
+
+    <section class="hoja" aria-label="Diagnóstico y plan">
+      <div><div class="et">Diagnóstico *</div><div class="campo">Ehrlichiosis canina <span class="sug">Zooki</span></div></div>
+      <div><div class="et">Exámenes</div>
+        <div class="examenes">
+          <span class="examen"><span class="check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>Hemograma</span>
+          <span class="examen"><span class="check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>PCR de Ehrlichia</span>
+          <span class="examen no"><span class="check"></span>Química</span>
+        </div>
+      </div>
+      <div><div class="et">Tratamiento</div>
+        <article class="trat">
+          <div class="fila"><strong>Doxiciclina</strong><span class="dosis">45 mg</span><span class="mas">Editar</span></div>
+          <div class="meta"><span class="chip">Oral</span><span class="chip">Cada 12 h</span><span class="chip">28 días</span><span class="chip azul">Zooki</span></div>
+        </article>
+      </div>
+      <div><div class="et">Recomendaciones</div><div class="campo" style="font-size:13px;color:#334155">Control de garrapatas · Repetir hemograma</div></div>
+    </section>
+  </div>
+
+  <nav class="barra" aria-label="Pasos">
+    <button class="sec" type="button" aria-label="Volver a Evaluación"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button class="prim" type="button">Siguiente: Cierre</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ $reglas = ['nombreMin' => ValidadorClinica::NOMBRE_MIN, 'nombreMax' => Validador
     'telefonoMax' => ValidadorTelefono::MAX, 'correoMax' => ValidadorCuenta::CORREO_MAX,
     'duracionMax' => ValidadorConfiguracionClinica::DURACION_MAX, 'margenMax' => ValidadorConfiguracionClinica::MARGEN_MAX,
     'cambiosMax' => ReglaCambioCita::MAX,
+    'controlMax' => ValidadorControlConsulta::DIAS_MAX,
     'logoMaxBytes' => LogoClinica::MAX_BYTES, 'caracteresTexto' => ValidadorClinica::TEXTO_CARACTERES];
 $marca = $configuracion['marca'];
 $partesNombre = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
@@ -123,6 +124,12 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
                     <span class="configuracion-ayuda" id="marca-ayuda-anticipacion_cambios_min">De 0 a <?= ReglaCambioCita::MAX ?> minutos. 0 desactiva la restricción. No limita urgencias ni decisiones clínicas.</span>
                     <span class="validation-error" id="marca-error-anticipacion_cambios_min" data-error-campo="anticipacion_cambios_min" aria-live="polite"></span>
                 </label>
+                <?php foreach (['control_busqueda_dias' => ['Horizonte de búsqueda del control (días)', ValidadorControlConsulta::BUSQUEDA_DEFECTO], 'control_dias_sin_duracion' => ['Control sin duración conocida (días)', ValidadorControlConsulta::SIN_DURACION_DEFECTO]] as $campoControl => [$etiquetaControl, $defectoControl]): ?>
+                    <label class="configuracion-campo"><?= $e($etiquetaControl) ?>
+                        <input name="<?= $e($campoControl) ?>" value="<?= (int) ($marca[$campoControl] ?? $defectoControl) ?>" data-config-campo required placeholder="1–365 días" inputmode="numeric" maxlength="3" data-caracteres="0-9" data-maximo="<?= ValidadorControlConsulta::DIAS_MAX ?>" aria-describedby="marca-error-<?= $e($campoControl) ?>">
+                        <span class="validation-error" id="marca-error-<?= $e($campoControl) ?>" data-error-campo="<?= $e($campoControl) ?>" aria-live="polite"></span>
+                    </label>
+                <?php endforeach; ?>
                 <p class="configuracion-aviso" data-aviso role="status" aria-live="polite"></p>
             </div>
             <footer class="zk-dialogo__pie">
