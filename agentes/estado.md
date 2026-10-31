@@ -6,6 +6,20 @@
 
 ## Ahora
 
+### Atención en 3 pasos — retoques de revisión y prueba del dueño (2.3.0) — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Base `1a19312`, rama `release/v2.3.0`; anexo con riesgos y evidencia al final de M2.
+  Contexto fallido deja usable la consulta y la ficha, desactiva solo el control y ofrece Reintentar; el dueño confirmó que el error original era migración17 pendiente.
+  Mini ficha con permisos, validación y auditoría existentes; plan único por partes y borrador anterior conservado.
+  Datos/alertas, stepper, pestañas y procedimientos con validación en vivo, cabecera/vitales móviles, collage, resumen, control y pie ajustados; solo Atención y su formulario compartido.
+- **Verificación:** PHP completo con host127.0.0.1/puerto33314, MariaDB10.4.32 temporal y `zooki_test_base_v2`: **1274/12484, sin omitidas**.
+  Sin host **1274/11161**,98 omitidas de motor; JS completo final **469/469**, afectados finales3/3 y cabecera1/1.
+  Primer motor perdió conexión y se repitió completo; pruebas previas fallidas de Reintentar y borrador anterior documentadas.
+  Capturas antes/después390/1366 e índice comparativo en `scratch/r/atencion-retoques`; diagramas renderizados y PDF/Word al día.
+- **Sigue:** revisión de Claude y prueba del dueño; no quedan decisiones funcionales pendientes de este encargo.
+  Sin nueva migración, conocimiento, demo, `.env`, base de trabajo, commit ni push; el dueño recibe un bloque de commit desde `1a19312`.
+
+
 ### Atención en 3 pasos (2.3.0) — revisada: aprobada en funcionamiento, retoques visuales pendientes (2026-10-31)
 
 - **Escribió Codex; revisa Claude (arquitecto).** Base `7446c29`, rama `release/v2.3.0`; incluye `specs/referencias/atencion/`.

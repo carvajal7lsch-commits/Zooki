@@ -17,6 +17,14 @@
         const finalizar = area.querySelector('[data-consulta-finalizar], #btnFinalizarAtencion');
         const panel = form.querySelector('[data-diagnosticos]');
         const sitioPanel = form.querySelector('[data-panel-escritorio]');
+        const panelResumen = form.querySelector('[data-panel-resumen]');
+        const sitioResumen = panelResumen.parentElement;
+        const pie = area.querySelector('#accionesAtencion, .consulta-modal__pie');
+        if (pie) form.querySelector('[data-hoja-pie]').append(pie);
+        const avisoContexto = form.querySelector('[data-contexto-aviso]');
+        const reintentar = form.querySelector('[data-contexto-reintentar]');
+        let recuperacionIntentada = false;
+        let capturaEditada = false;
         const peso = form.querySelector('[name="peso"]');
         const control = form.querySelector('[data-control-activo]');
         const fechaControl = form.querySelector('[data-control-fecha]');
@@ -40,7 +48,10 @@
             const escritorio = window.matchMedia('(min-width: 1024px)').matches;
             if (escritorio) sitioPanel.append(panel);
             else pasos[Math.min(paso, 1)].querySelector('[data-panel-movil]')?.append(panel);
-            panel.hidden = !escritorio && paso === 2;
+            panel.hidden = paso === 2;
+            if (escritorio) sitioPanel.append(panelResumen);
+            else sitioResumen.append(panelResumen);
+            panelResumen.hidden = paso !== 2;
         }
 
         function validarPaso(indice) {
@@ -70,6 +81,7 @@
             botones.forEach((b, i) => {
                 b.classList.toggle('is-active', i === paso);
                 b.classList.toggle('is-hecho', i < paso);
+                b.querySelector('b').textContent = i < paso ? '✓' : String(i + 1);
                 b.setAttribute('aria-current', i === paso ? 'step' : 'false');
             });
             for (const b of anteriores) b.disabled = paso === 0;
@@ -164,9 +176,19 @@
         }
 
         function proponerControl() {
+            if (!contexto) {
+                control.checked = false;
+                form.querySelector('[data-control-contenido]').hidden = true;
+                return;
+            }
             if (control.dataset.editado !== '1') control.checked = Boolean(form.querySelector('[name="plan_tratamiento"]').value.trim() || consulta.tratamientos?.filas().length);
             form.querySelector('[data-control-contenido]').hidden = !control.checked;
             if (!fechaManual && fechaSugerida()) fechaControl.value = fechaSugerida();
+            const ultimaFila = (consulta.tratamientos?.filas() || []).filter(f => f.querySelector('[data-tratamiento-campo="fecha_fin"]').value === fechaSugerida()).pop();
+            const descripcion = form.querySelector('[data-control-descripcion]');
+            const medicamento = ultimaFila?.querySelector('[data-tratamiento-campo="medicamento"]').value;
+            const duracion = ultimaFila?.querySelector('[data-tratamiento-campo="duracion"]').value;
+            descripcion.textContent = medicamento && duracion ? `Al terminar los ${duracion} de ${medicamento} · Zooki propone la fecha` : `En ${contexto.control_dias_sin_duracion} días · Zooki propone la fecha`;
             if (control.checked) cargarCalendario(fechaControl.value);
         }
 
@@ -196,16 +218,27 @@
             }
         }
 
-        async function activar() {
+        async function activar(reintento = false) {
             const numero = ++contextoPeticion;
             finalizada = false;
-            fechaManual = false;
-            delete control.dataset.editado;
+            if (!reintento) {
+                fechaManual = false;
+                recuperacionIntentada = false;
+                capturaEditada = false;
+                delete control.dataset.editado;
+            }
             fechaControl.dataset.valida = '0';
             calendarioPeticion++;
             contexto = null;
             clave = null;
-            form.inert = true;
+            // RE-2.1.6: un fallo de contexto nunca impide documentar la consulta.
+            control.disabled = true;
+            control.checked = false;
+            fechaControl.disabled = true;
+            form.querySelector('[data-control-contenido]').hidden = true;
+            reintentar.disabled = true;
+            avisoContexto.hidden = false;
+            avisoContexto.querySelector('[data-contexto-mensaje]').textContent = 'Verificando el contexto del próximo control…';
             if (calendario) calendario.destroy();
             calendario = null;
             try {
@@ -216,6 +249,11 @@
                     throw new Error('Tu contexto cambió. Abre esta atención de nuevo desde la agenda.');
                 }
                 contexto = r;
+                control.disabled = false;
+                fechaControl.disabled = false;
+                avisoContexto.hidden = true;
+                reintentar.hidden = true;
+                consulta.diagnosticos?.actualizarFicha(r.ficha);
                 mesesAbiertos.clear();
                 aplicarReferencias();
                 if (window.flatpickr && !calendario) {
@@ -241,15 +279,30 @@
                 }
                 if (app) {
                     clave = `zooki_atencion_borrador_${r.id_clinica}_${r.id_veterinario}_${app.dataset.idCita}`;
-                    recuperar();
+                    if (!recuperacionIntentada && !reintento && !capturaEditada) recuperar();
+                    recuperacionIntentada = true;
                 }
                 if (paso === 2) proponerControl();
+                if (reintento) {
+                    const estado = area.querySelector('#estadoBorrador');
+                    if (estado) estado.textContent = 'Contexto verificado.';
+                    programarGuardado();
+                }
             } catch (error) {
+                if (numero !== contextoPeticion) return;
                 contexto = null;
+                control.disabled = true;
+                control.checked = false;
+                fechaControl.disabled = true;
+                form.querySelector('[data-control-contenido]').hidden = true;
+                avisoContexto.hidden = false;
+                avisoContexto.querySelector('[data-contexto-mensaje]').textContent = 'No se pudo verificar el contexto. Puedes completar la consulta; el próximo control está desactivado.';
+                reintentar.hidden = false;
+                consulta.diagnosticos?.cargarFicha();
                 const estado = area.querySelector('#estadoBorrador');
                 if (estado) estado.textContent = error.message || 'No se pudo verificar el borrador de esta atención.';
             } finally {
-                if (numero === contextoPeticion) form.inert = false;
+                if (numero === contextoPeticion) reintentar.disabled = false;
             }
         }
 
@@ -327,11 +380,13 @@
             mostrar(0);
             restaurando = false;
         };
+        reintentar.addEventListener('click', () => activar(true));
         avisoBorrador.querySelector('[data-descartar-borrador]').addEventListener('click', descartar);
         for (const boton of botones) boton.addEventListener('click', () => ir(Number(boton.dataset.consultaIr)));
         for (const boton of siguientes) boton.addEventListener('click', () => ir(paso + 1));
         for (const boton of anteriores) boton.addEventListener('click', () => ir(paso - 1));
         form.addEventListener('input', () => {
+            if (!restaurando && !contexto) capturaEditada = true;
             aplicarReferencias();
             programarGuardado();
             if (paso === 2) resumen();

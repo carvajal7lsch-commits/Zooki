@@ -54,6 +54,7 @@ final class ControlConsulta extends ModeloHistoria
             'aviso_referencias' => RangosVitales::AVISO,
             'ultimo_peso' => $ultimoPeso,
             'cambio_peso' => RangosVitales::CAMBIO_PESO,
+            'ficha' => array_intersect_key($ficha, array_flip(['sexo', 'esterilizado', 'fecha_nacimiento', 'identidad_editable'])),
         ];
     }
 

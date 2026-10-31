@@ -19,6 +19,11 @@ class AutorizacionRolTest extends TestCase
     private const PROPIETARIO = Roles::PROPIETARIO;
     private const SUPER_ADMIN = Roles::SUPER_ADMIN;
 
+    public function testCompletarFichaDesdeConsultaSoloPermiteVeterinario(): void
+    {
+        self::assertSame([Roles::VETERINARIO], self::matriz()['completar_ficha_consulta_ajax']);
+    }
+
     /** Matriz real, leida por reflexion (es privada a proposito). */
     private static function matriz(): array
     {

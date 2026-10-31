@@ -33,7 +33,7 @@ async function medirCabecera(nav) {
     await nav.esperar("document.readyState==='complete'");
     return nav.evaluar(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
         const cabecera=document.querySelector('.top-header, .atencion__barra');
-        const titulo=Array.from(cabecera.querySelectorAll('h1,h2')).find(e=>e.textContent.trim() && e.getBoundingClientRect().height);
+        const titulo=Array.from(cabecera.querySelectorAll('h1,h2,.atencion-cabecera-movil strong')).find(e=>e.textContent.trim() && e.getBoundingClientRect().height);
         const cuerpo=document.querySelector('.content-body');
         const contenedor=cuerpo.querySelector('.content-wrapper') || cuerpo;
         const hoja=Array.from(contenedor.children).find(e=>e.getBoundingClientRect().height>0 && !['fixed','absolute'].includes(getComputedStyle(e).position)) || cuerpo;

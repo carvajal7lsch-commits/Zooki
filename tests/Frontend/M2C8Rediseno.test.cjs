@@ -518,7 +518,7 @@ test('H7: en Atención cada paso es el único que desplaza y las etiquetas no se
     assert.match(consulta, /\.consulta-campo--crece \{\s*flex: 1 0 auto;/, 'El campo crece, pero no se encoge por debajo de su contenido');
     const vista = leer('views/partials/consulta_pasos.php');
     assert.match(vista, /Diagnóstico <span class="consulta-obligatorio"/);
-    assert.match(vista, /data-consulta-paso="1"[\s\S]*Plan \/ recomendaciones/);
+    assert.match(vista, /data-consulta-paso="1"[\s\S]*Otras indicaciones/);
     assert.match(vista, /data-consulta-paso="2"[\s\S]*Observaciones/);
     assert.doesNotMatch(vista, /class="campo campo--crece"[\s\S]*?name="diagnostico"/);
 });

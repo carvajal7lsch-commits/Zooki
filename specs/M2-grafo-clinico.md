@@ -2092,3 +2092,57 @@ Log del contenedor (completo, sin `--tail`):
 
 - **Revisó Claude (arquitecto): aprobada en funcionamiento, con retoques visuales pendientes.** PHP completo con MySQL 8 y zooki_test_base_v2 1259/12436 sin omitidas; JS completo con Chrome 468/468. Control después del commit, borrador local y sugerencias ligadas verificados por sus pruebas.
 - **Retoques frente al mockup aprobado (siguiente subetapa):** (1) franja del panel con las figuras del collage del portal (azul claro + azul con el perro asomando, patas en la línea), no banda degradada con círculo; (2) diagnóstico de una línea con la marca «Sugerido por Zooki»; (3) plan sin duplicar: exámenes en chips y recomendaciones en lista editables, con un solo campo libre «Otras indicaciones»; (4) en Cierre, el panel derecho es el Resumen con el perro (un solo perro en pantalla) y el control es un interruptor con la explicación de la fecha propuesta; zona de adjuntos más baja; (5) pie dentro de la hoja con «Borrador guardado hace un momento»; (6) sin ayudas grises permanentes; (7) celular: cabecera de una fila con el paciente y signos vitales en 2×2.
+
+
+## Atención en 3 pasos — retoques de revisión y prueba del dueño (2026-10-31)
+
+**Encargo aprobado del dueño; escribe Codex y revisa Claude (arquitecto).** Base `1a19312`, rama `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión**.
+Solo Atención y su formulario compartido con el modal.
+El encargo autoriza rojo para errores y Sin cerrar, además de alertas; amplía el LEEME anterior.
+
+- RE-2.1.6/7: contexto tolerante a ficha incompleta, fallo recuperable con Reintentar y solo control desactivado; no recuperar borrador sin identidad verificada.
+- RE-2.8.1/6 y RE-1.4.1/5, RN-110/113/115: completar solo sexo, esterilización y nacimiento que falten, con validación de Editar, permisos, auditoría y nuevo cálculo; vacunación sigue siendo evaluación.
+- RE-2.8.6: chips de exámenes, recomendaciones editables y Otras indicaciones componen el único plan persistido; procedencia, ediciones y Deshacer se conservan.
+- Presentación aprobada: datos en grilla, alertas verticales con +N, pestañas visibles, stepper, vitales 2×2 móvil, collage y un perro solo en escritorio; resumen en panel de Cierre, control con explicación y flatpickr, pie dentro de hoja.
+- Verificación: reproducir antes de corregir; PHP dirigido y completo sin/con host usando únicamente `zooki_test_base_v2`, Chrome completo y capturas antes/después de pasos y pestañas390/1366 en `scratch/r/atencion-retoques`.
+- Sin datos clínicos reales, demo, cambios de esquema, `.env`, base de trabajo ni Git de escritura.
+
+**Aclaración confirmada del dueño (2026-10-31):** el registro real indica `Unknown column 'control_busqueda_dias' in 'field list'` por migración17 no aplicada.
+No existe un fallo específico con mascotas incompletas; A.1 se acota a recuperación usable con control desactivado y Reintentar.
+La prueba de ficha incompleta pasa desde antes del arreglo y se conserva como regresión.
+La prueba de Chrome de recuperación falló antes: no existía Reintentar.
+
+
+### Anexo — Atención: retoques de revisión y prueba del dueño, resultado (2026-10-31)
+
+**Escribió Codex; revisa Claude (arquitecto).** Base `1a19312`, rama `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión**.
+
+- **Integridad de la ficha:** acción exclusiva del veterinario activo con vínculo activo, coordinador y protección de identidad de RN-110.
+  Reutiliza validación y escritura de Editar, con auditoría y aviso; completar los tres datos no exige inventar raza ni peso.
+- **Plan y borrador:** un único plan compuesto conserva procedencia, texto propio y ediciones al cambiar diagnóstico o Deshacer.
+  Convierte el borrador anterior sin perder contenido; fragmentos revisados o no reconocibles quedan propios.
+  La prueba de compatibilidad falló antes del arreglo y pasó después.
+- **Recuperación:** el dueño confirmó que faltaba migración17; la prueba de ficha incompleta ya pasaba y se conserva.
+  Chrome falló antes por ausencia de Reintentar; ahora consulta y ficha siguen utilizables, solo el control se desactiva y el reintento conserva lo escrito y limpia el aviso del pie.
+
+| Criterios | Evidencia |
+|---|---|
+| RE-1.4.1/5, RE-2.8.1, RN-110/113/115 | `ControlConsultaTest`: guardado de tres campos, desconocidos conservados, datos inválidos, rol/personal/vínculo, aislamiento, identidad protegida, auditoría y aviso; matriz en `AutorizacionRolTest`. Chrome guarda y recalcula en ambas entradas. |
+| RE-2.1.6/7 | `AtencionRetoques`: recuperación hasta Cierre, ficha y Reintentar, datos/alertas/+N, hover/foco, stepper, pestañas con Consulta oculta y validación en vivo de procedimientos, vitales2×2, rojo/azul, perro solo escritorio, resumen, flatpickr y pie completo. `CabeceraComun` mide el nombre visible en móvil. |
+| RE-2.8.6 | Plan compuesto, Deshacer con ediciones, procedencia y borrador anterior; regresiones `AtencionTresPasos` y `ConsultaSugerida230`: no duplicar, peso, seguridad y cambio manual. |
+
+**Verificación:** PHP completo sin host **1274/11161**,98 omisiones de motor.
+Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto33314 y base por defecto `zooki_test_base_v2`, MariaDB10.4.32 temporal: **1274/12484, sin fallos ni omitidas** (29m42s).
+JS completo final **469/469**, sin omitidas; afectados finales **3/3** y cabecera **1/1**.
+El primer motor perdió conexión:26 errores y72 omitidas; el caso inicial pasó1/3 en instancia nueva y la suite se repitió completa.
+La primera pasada JS encontró una expectativa de cabecera anterior, corregida; las capturas reforzaron el ocultamiento de Consulta en las otras pestañas móviles.
+
+**Evidencia:** registros finales `php-completo-sin-host.log`, `php-mysql-completo.log` y `js-completo-entrega.log` en `scratch/r/atencion-retoques`.
+Hay18 capturas antes y18 después390/1366 (ambas entradas y pestañas de Atención), con índice comparativo `indice.html`.
+Consulta80 nodos/MER65 entidades renderizados; HU/RE/historial y PDF/Word al día.
+
+**Sigue:** revisión de Claude y prueba del dueño.
+Versión2.3.0 conservada; sin nueva migración, JSON de conocimiento, demo, `.env`, base de trabajo ni Git de escritura.
+El dueño recibe los comandos de un solo commit desde `1a19312`; no se empezó otra subetapa.

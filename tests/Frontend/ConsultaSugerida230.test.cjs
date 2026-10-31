@@ -83,7 +83,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                     };
                     ponerPrueba('[data-consulta-campo="motivo"]', 'Prueba sintética');
                     ponerPrueba('[data-consulta-campo="diagnostico"]', 'Texto previo');
-                    ponerPrueba('[name="plan_tratamiento"]', 'Plan previo');
+                    ponerPrueba('[data-otras-indicaciones]', 'Plan previo');
                     ponerPrueba('[data-consulta-campo="peso"]', '24');
                     ponerPrueba('[data-sintomas-buscar]', 'prueba');`);
                 await navegador.esperar("formPrueba.querySelector('[data-codigo=\"sintoma.prueba\"]')");
@@ -100,7 +100,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                     filas: [...formPrueba.querySelectorAll('[data-tratamiento]')].map(f => ({ codigo: f.querySelector('[data-tratamiento-campo="farmaco"]').value, dosis: f.querySelector('[data-tratamiento-campo="dosis"]').value, fin: f.querySelector('[data-tratamiento-campo="fecha_fin"]').value, inicio: f.querySelector('[data-tratamiento-campo="fecha_inicio"]').value, marca: f.querySelector('[data-marca-sugerida]').textContent })),
                     aviso: formPrueba.querySelector('[data-sugerencia-aviso] [role="status"]').textContent })`);
                 assert.equal(datos.diagnostico, 'Texto previo\nDiagnóstico sintético');
-                assert.equal(datos.plan, 'Plan previo\nExámenes sugeridos: Examen sintético\nRecomendaciones: Recomendación sintética');
+                assert.equal(datos.plan, 'Exámenes sugeridos: Examen sintético\nRecomendaciones: Recomendación sintética\nPlan previo');
                 assert.equal(datos.filas[0].dosis, '12 mg (0,5 mg/kg) cada 24 h');
                 assert.equal(datos.filas[0].marca, 'Sugerido por Zooki · verifica la dosis');
                 assert.ok(datos.filas[0].fin >= datos.filas[0].inicio);
@@ -128,7 +128,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 fs.mkdirSync(carpeta, { recursive: true });
                 const captura = await navegador.enviar('Page.captureScreenshot', { format: 'png' });
                 fs.writeFileSync(path.join(carpeta, `${accion}-${ancho}.png`), Buffer.from(captura.data, 'base64'));
-                await evaluar(`ponerPrueba('[name="plan_tratamiento"]', formPrueba.querySelector('[name="plan_tratamiento"]').value + '\\nNota posterior');
+                await evaluar(`ponerPrueba('[data-otras-indicaciones]', formPrueba.querySelector('[data-otras-indicaciones]').value + '\\nNota posterior');
                     formPrueba.querySelector('[data-deshacer-sugerencia]').click();`);
                 assert.equal(await evaluar("formPrueba.querySelector('[data-consulta-campo=\"diagnostico\"]').value"), 'Texto previo');
                 assert.equal(await evaluar("formPrueba.querySelector('[name=\"plan_tratamiento\"]').value"), 'Plan previo\nNota posterior');

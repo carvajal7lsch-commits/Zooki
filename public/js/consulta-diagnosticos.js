@@ -128,6 +128,7 @@
         let peticion = 0;
         let enUso = null;
         let candidatosActuales = [];
+        const miniFicha = window.ZookiFichaConsulta?.crear(raiz.closest('form'), idMascota, programar);
 
         function datosDeclarados() {
             const datos = {};
@@ -147,7 +148,7 @@
                 const clave = envoltura.dataset.dato;
                 envoltura.hidden = !pedidos.includes(clave) && declarados[clave] === '';
             });
-            const deLaFicha = legibles.filter(dato => !dato.editable);
+            const deLaFicha = legibles.filter(dato => !dato.editable && (!miniFicha || !['sexo', 'edad_meses', 'esterilizado'].includes(dato.clave)));
             ficha.replaceChildren(...deLaFicha.map(dato => elemento('li', '', dato.etiqueta)));
             ficha.hidden = deLaFicha.length === 0;
             const algunCampo = [...raiz.querySelectorAll('[data-dato]')].some(envoltura => !envoltura.hidden);
@@ -275,6 +276,8 @@
         reiniciar();
 
         return {
+            actualizarFicha: datos => miniFicha?.actualizar(datos),
+            cargarFicha: () => miniFicha?.cargar(),
             marcarEnUso(codigo) {
                 enUso = codigo;
                 const etiquetas = Object.fromEntries(sintomas.map(s => [s.codigo, s.etiqueta]));
@@ -290,6 +293,7 @@
                 sintomas = [];
                 enUso = null;
                 candidatosActuales = [];
+                miniFicha?.actualizar(null);
                 campos.forEach(campo => { campo.value = ''; });
                 reiniciar();
             },
@@ -301,6 +305,8 @@
         const diagnostico = form.querySelector('[data-consulta-campo="diagnostico"]');
         const plan = form.querySelector('[name="plan_tratamiento"]');
         const peso = form.querySelector('[data-consulta-campo="peso"]');
+        const editorPlan = window.ZookiPlanConsulta?.crear(form);
+        const marca = form.querySelector('[data-diagnostico-marca]');
         const operaciones = new Map();
         const registros = [];
         let generacion = 0;
@@ -388,7 +394,8 @@
                 const partes = [];
                 if (respuesta.plan.examenes.length) partes.push('Exámenes sugeridos: ' + respuesta.plan.examenes.join('; '));
                 if (respuesta.plan.recomendaciones.length) partes.push('Recomendaciones: ' + respuesta.plan.recomendaciones.join('; '));
-                for (const parte of partes) agregarTexto(plan, parte, operacion);
+                if (editorPlan) editorPlan.agregar(respuesta.plan, candidato.codigo);
+                else for (const parte of partes) agregarTexto(plan, parte, operacion);
                 for (const pauta of respuesta.tratamientos) {
                     if (pauta.seguridad.bloqueada) continue;
                     if (tratamientos.filas().some(f => f.dataset.pautaSugerida === pauta.codigo)) continue;
@@ -404,7 +411,7 @@
                 pintarPlan();
                 const llenado = [];
                 if (operacion.textos.some(r => r.campo === diagnostico)) llenado.push('diagnóstico');
-                if (operacion.textos.some(r => r.campo === plan)) llenado.push('plan');
+                if (operacion.textos.some(r => r.campo === plan) || (editorPlan && partes.length)) llenado.push('plan');
                 if (operacion.filas.length) llenado.push(`${operacion.filas.length} tratamiento${operacion.filas.length === 1 ? '' : 's'}`);
                 const resumen = llenado.length > 1 ? llenado.slice(0, -1).join(', ') + ' y ' + llenado[llenado.length - 1] : llenado[0];
                 mensaje.textContent = llenado.length ? `Zooki llenó: ${resumen}. Revisa antes de guardar. ` : 'No hay contenido nuevo para agregar. ';
@@ -427,6 +434,8 @@
         }
 
         function pintarPlan() {
+            if (marca) marca.hidden = !ultima;
+            if (editorPlan) return;
             const envoltura = form.querySelector('[data-plan-elegible]');
             if (!envoltura) return;
             const examenes = form.querySelector('[data-examenes-elegibles]');
@@ -471,6 +480,7 @@
                     notificar(campo);
                 }
             }
+            editorPlan?.retirar(operacion.codigo);
             tratamientos.retirarSugeridas(operacion.filas);
             notificar(form);
             cambiando = cambioAnterior;
@@ -504,7 +514,7 @@
             if (!ultima) return;
             const textoPendiente = ultima.textos.some(r => !r.editado && r.campo.value.slice(r.inicio, r.inicio + r.texto.length) === r.texto);
             const filaPendiente = ultima.filas.some(f => tratamientos.filas().includes(f) && !f._sugerenciaEditada);
-            deshacer.hidden = !textoPendiente && !filaPendiente;
+            deshacer.hidden = !textoPendiente && !filaPendiente && !editorPlan?.pendiente(ultima.codigo);
         });
 
         async function recalcular() {
@@ -533,6 +543,7 @@
             exportar() {
                 return {
                     plan: planActual,
+                    editorPlan: editorPlan?.exportar(),
                     operaciones: [...operaciones.values()].filter(o => !o.cargando).map(o => ({
                         codigo: o.codigo,
                         etiqueta: o.etiqueta,
@@ -545,7 +556,7 @@
                 operaciones.clear();
                 registros.length = 0;
                 for (const o of datos?.operaciones || []) {
-                    const textos = (o.textos || []).filter(r => ['diagnostico', 'plan_tratamiento'].includes(r.campo) && Number.isInteger(r.inicio) && typeof r.texto === 'string').map(r => ({ ...r, campo: r.campo === 'diagnostico' ? diagnostico : plan }));
+                    const textos = (o.textos || []).filter(r => (r.campo === 'diagnostico' || (!editorPlan && r.campo === 'plan_tratamiento')) && Number.isInteger(r.inicio) && typeof r.texto === 'string').map(r => ({ ...r, campo: r.campo === 'diagnostico' ? diagnostico : plan }));
                     const filas = (o.filas || []).map(i => tratamientos.filas()[i]).filter(Boolean);
                     const operacion = { ...o, textos, filas, cargando: false };
                     operaciones.set(o.codigo, operacion);
@@ -553,6 +564,7 @@
                     ultima = operacion;
                 }
                 planActual = datos?.plan || null;
+                editorPlan?.restaurar(datos?.editorPlan, datos);
                 pintarPlan();
                 aviso.hidden = !ultima;
                 deshacer.hidden = !ultima;
@@ -567,6 +579,7 @@
                 ultima = null;
                 pendiente = null;
                 planActual = null;
+                editorPlan?.limpiar();
                 pintarPlan();
                 aviso.hidden = true;
             },

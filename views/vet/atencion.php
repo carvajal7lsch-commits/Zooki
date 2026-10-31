@@ -21,6 +21,7 @@ $abierta = in_array($estadoActual, ['pendiente', 'confirmada'], true);
 // ($esDiaDeLaCita viene del controlador con esa regla ya aplicada).
 $porIniciar = $abierta && $esDiaDeLaCita;
 $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);
+$nombrePropietario = (string) (($propietario['nombre_completo'] ?? '') ?: ($mascota['propietario_nombre'] ?? ''));
 $hoyIso = date('Y-m-d');
 // M2 C5a: límites y avisos de ValidadorClinico, los mismos del servidor (js/consulta-formulario.js).
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
@@ -51,7 +52,8 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
             <i class="fas fa-arrow-left"></i>
         </a>
         <div class="atencion__titulo">
-            <h1>Atención de <?= $e($mascota['nombre'] ?? 'la mascota') ?> <span class="atencion__estado estado--<?= $e($estadoActual) ?>" id="atencionEstado"><?= $e($estadoLabel[$estadoActual] ?? $estadoActual) ?></span></h1>
+            <div class="atencion-cabecera-movil"><span class="atencion-cabecera-movil__foto"><?php if ($tieneFoto): ?><img src="<?= $e($fotoMascota) ?>" alt=""><?php else: ?><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?><?php endif; ?></span><div><strong><?= $e($mascota['nombre'] ?? '') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $edadMascota, $pesoReferencia ? $pesoReferencia . ' kg' : 'Sin peso', $mascota['numero_historia_clinica'] ?? 'HC sin registrar']))) ?></small></div><button type="button" class="atencion-alerta-movil" data-abrir-alertas aria-label="Ver alertas"><i class="fas fa-exclamation-circle" aria-hidden="true"></i></button></div>
+            <h1>Atención de <?= $e($mascota['nombre'] ?? 'la mascota') ?> <span class="atencion__estado estado--<?= $e($estadoActual) ?>" id="atencionEstado"><i class="fas <?= $estadoActual === 'sin_cerrar' ? 'fa-exclamation-circle' : 'fa-circle' ?>" aria-hidden="true"></i> <?= $e($estadoLabel[$estadoActual] ?? $estadoActual) ?></span></h1>
             <p>
                 <?= $cita['fecha'] === $hoyIso ? 'Hoy' : $fechaCorta($cita['fecha']) ?> <?= $e(substr($cita['hora'], 0, 5)) ?>
                 <?php if ($tipoCitaNombre !== ''): ?> · <?= $e($tipoCitaNombre) ?><?php endif; ?> · Cita #<?= (int) $cita['id_cita'] ?>
@@ -67,14 +69,18 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
         <section class="atencion-franja" aria-label="Paciente">
             <div class="atencion-franja__anillo"><?php if ($tieneFoto): ?><img src="<?= $e($fotoMascota) ?>" alt="" id="atencionFoto"><?php else: ?><span><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?></span><?php endif; ?></div>
             <div class="atencion-franja__identidad"><strong><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $mascota['nombre_raza'] ?? '', $mascota['sexo'] ?? '', $edadMascota]))) ?></small></div>
-            <div class="atencion-franja__datos"><span><?= $textoPeso($pesoReferencia) ?></span><span><?= $e($mascota['numero_historia_clinica'] ?: 'Historia nueva') ?></span><?php if (!empty($propietario['telefono'])): ?><a href="tel:<?= $e(preg_replace('/[^0-9+]/', '', $propietario['telefono'])) ?>"><?= $e($propietario['telefono']) ?></a><?php endif; ?></div>
+            <section class="atencion-franja__datos" aria-label="Datos"><span class="atencion-franja__etiqueta">Datos</span><dl>
+                <div><dt>Peso</dt><dd class="<?= $pesoReferencia ? '' : 'sin-registrar' ?>"><?= $pesoReferencia ? $textoPeso($pesoReferencia) : 'Sin registrar' ?></dd></div>
+                <div><dt>Historia</dt><dd class="<?= empty($mascota['numero_historia_clinica']) ? 'sin-registrar' : '' ?>"><?= $e($mascota['numero_historia_clinica'] ?: 'Sin registrar') ?></dd></div>
+                <div><dt>Propietario</dt><dd class="<?= $nombrePropietario === '' ? 'sin-registrar' : '' ?>"><?= $e($nombrePropietario ?: 'Sin registrar') ?><?php if (!empty($propietario['telefono'])): ?><a href="tel:<?= $e(preg_replace('/[^0-9+]/', '', $propietario['telefono'])) ?>"><?= $e($propietario['telefono']) ?></a><?php else: ?><small class="sin-registrar">Sin registrar</small><?php endif; ?></dd></div>
+            </dl></section>
             <section class="atencion-franja__alertas" data-alertas-medicas data-cargar data-alertas-chips data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>" aria-label="Alergias y alertas"></section>
             <div class="atencion-franja__pasos" data-pasos-paciente></div>
         </section>
 
         <!-- ── Panel de atención ──────────────────────────────────── -->
         <main class="atencion__panel">
-            <details class="atencion-procedimientos"><summary>Consulta, historial y procedimientos</summary><nav class="atencion__tabs" role="tablist">
+            <nav class="atencion__tabs" role="tablist">
                 <button type="button" class="atencion__tab is-active" data-tab="consulta" role="tab" aria-selected="true">
                     <i class="fas fa-stethoscope"></i> Consulta
                 </button>
@@ -87,7 +93,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                 <button type="button" class="atencion__tab" data-tab="historial" role="tab" aria-selected="false">
                     <i class="fas fa-history"></i> Historial <span class="atencion__contador"><?= count($consultas) ?></span>
                 </button>
-            </nav></details>
+            </nav>
 
             <div class="atencion__contenido">
 

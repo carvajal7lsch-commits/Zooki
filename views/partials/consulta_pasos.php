@@ -1,6 +1,7 @@
 <?php
 // RE-2.1.6: un solo formulario para Atención y modal; campos y límites del servidor.
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../../helpers/ValidadorTratamiento.php';
 $escConsulta = fn($valor): string => htmlspecialchars((string) ($valor ?? ''), ENT_QUOTES, 'UTF-8');
 $prefijoCampos = !empty($consultaEnAtencion) ? 'atencion' : 'consulta';
@@ -14,6 +15,7 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
             <button type="button" class="atencion__paso-btn<?= $numero === 0 ? ' is-active' : '' ?>" data-paso="<?= $numero ?>" data-consulta-ir="<?= $numero ?>" aria-current="<?= $numero === 0 ? 'step' : 'false' ?>"><b><?= $numero + 1 ?></b><span><?= $escConsulta($nombrePaso) ?></span></button>
         <?php endforeach; ?>
     </nav>
+    <div class="consulta-contexto-aviso" data-contexto-aviso role="status" hidden><span data-contexto-mensaje></span><button type="button" class="consulta-boton consulta-boton--suave" data-contexto-reintentar hidden>Reintentar</button></div>
     <div class="consulta-borrador-aviso" data-borrador-aviso role="status" hidden><span>Recuperamos tu borrador</span><button type="button" data-descartar-borrador>Descartar</button></div>
     <div class="consulta-tres__contenido">
         <div class="atencion__paso is-active consulta-hoja" data-consulta-paso="0" id="<?= !empty($consultaEnAtencion) ? 'atencionEvaluacion' : 'tabMotivo' ?>">
@@ -27,7 +29,7 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
                 <?php foreach (['peso' => 'Peso', 'temperatura' => 'Temperatura', 'frecuencia_cardiaca' => 'Frec. cardiaca', 'frecuencia_respiratoria' => 'Frec. respiratoria'] as $campoVital => $etiquetaVital): ?>
                     <?php $idVital = $prefijoCampos . ['peso' => 'Peso', 'temperatura' => 'Temperatura', 'frecuencia_cardiaca' => 'FrecuenciaCardiaca', 'frecuencia_respiratoria' => 'FrecuenciaRespiratoria'][$campoVital]; ?>
                     <div class="consulta-vital" data-vital="<?= $campoVital ?>">
-                        <label for="<?= $idVital ?>"><?= $escConsulta($etiquetaVital) ?><?= $campoVital === 'peso' ? ' *' : '' ?></label>
+                        <label for="<?= $idVital ?>"><i class="fas fa-<?= ['peso' => 'weight', 'temperatura' => 'thermometer-half', 'frecuencia_cardiaca' => 'heartbeat', 'frecuencia_respiratoria' => 'lungs'][$campoVital] ?>" aria-hidden="true"></i> <?= $escConsulta($etiquetaVital) ?><?= $campoVital === 'peso' ? ' *' : '' ?></label>
                         <div class="consulta-vital__valor">
                             <input id="<?= $idVital ?>" name="<?= $campoVital ?>" <?= ValidadorClinico::atributosSigno($campoVital) ?> <?= $campoVital === 'peso' ? 'required' : '' ?> data-consulta-campo="<?= $campoVital ?>" data-aviso-rango="<?= $escConsulta(ValidadorClinico::AVISOS_CONSULTA[$campoVital]) ?>" data-aviso-requerido="<?= $campoVital === 'peso' ? $escConsulta(ValidadorClinico::AVISO_PESO_REQUERIDO) : '' ?>" placeholder="—">
                             <span><?= $escConsulta(ValidadorClinico::SIGNOS[$campoVital]['unidad']) ?></span>
@@ -52,16 +54,17 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
             <div data-sugerencia-aviso></div>
             <div class="consulta-campo">
                 <label for="<?= $prefijoCampos ?>Diagnostico" class="consulta-campo__etiqueta">Diagnóstico <span class="consulta-obligatorio">*</span></label>
-                <textarea id="<?= $prefijoCampos ?>Diagnostico" name="diagnostico" rows="2" required maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-consulta-campo="diagnostico" data-aviso-requerido="<?= $escConsulta(ValidadorClinico::AVISOS_CONSULTA['diagnostico']) ?>"></textarea>
-                <small class="cuenta-validacion" data-campo-aviso="diagnostico"></small>
+                <textarea id="<?= $prefijoCampos ?>Diagnostico" name="diagnostico" rows="1" class="consulta-diagnostico-linea" required maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-consulta-campo="diagnostico" data-aviso-requerido="<?= $escConsulta(ValidadorClinico::AVISOS_CONSULTA['diagnostico']) ?>"></textarea>
+                <small class="consulta-marca-sugerido" data-diagnostico-marca hidden>Sugerido por Zooki</small><small class="cuenta-validacion" data-campo-aviso="diagnostico"></small>
             </div>
             <div class="consulta-plan-elegible" data-plan-elegible hidden>
                 <div class="consulta-campo__etiqueta">Exámenes sugeridos</div><div class="consulta-examenes" data-examenes-elegibles></div>
-                <div class="consulta-campo__etiqueta">Recomendaciones</div><ul class="consulta-recomendaciones" data-recomendaciones-elegibles></ul>
+                <div class="consulta-campo__etiqueta">Recomendaciones</div><ul class="consulta-recomendaciones" data-recomendaciones-elegibles data-maximo="<?= ValidadorClinico::TEXTO_MAX ?>"></ul>
             </div>
             <div class="consulta-campo">
-                <label for="<?= $prefijoCampos ?>Plan" class="consulta-campo__etiqueta">Plan / recomendaciones</label>
-                <textarea id="<?= $prefijoCampos ?>Plan" name="plan_tratamiento" data-consulta-campo="plan_tratamiento" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
+                <label for="<?= $prefijoCampos ?>Plan" class="consulta-campo__etiqueta">Otras indicaciones</label>
+                <textarea id="<?= $prefijoCampos ?>Plan" data-otras-indicaciones data-consulta-campo="otras_indicaciones" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
+                <input type="hidden" name="plan_tratamiento" data-consulta-campo="plan_tratamiento" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"><small class="cuenta-validacion" data-campo-aviso="plan_tratamiento"></small>
             </div>
             <section class="consulta-tratamientos" data-tratamientos data-avisos="<?= $escConsulta(json_encode(ValidadorTratamiento::AVISOS, JSON_UNESCAPED_UNICODE)) ?>">
                 <div class="consulta-seccion__cabecera"><h3>Tratamientos</h3><button type="button" class="consulta-boton consulta-boton--suave" data-agregar-tratamiento id="<?= !empty($consultaEnAtencion) ? 'btnAgregarTratamiento' : 'consultaAgregarTratamiento' ?>">+ Agregar medicamento</button></div>
@@ -80,11 +83,13 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
             <div class="consulta-campo"><label for="<?= $prefijoCampos ?>Observaciones" class="consulta-campo__etiqueta">Observaciones</label><textarea id="<?= $prefijoCampos ?>Observaciones" name="observaciones" rows="3" data-consulta-campo="observaciones" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea></div>
             <section class="consulta-control" data-proximo-control>
                 <label class="consulta-control__cabecera"><strong>Próximo control</strong><input type="checkbox" name="control_activo" value="1" data-control-activo role="switch"></label>
-                <div class="consulta-control__fecha" data-control-contenido hidden><label for="<?= $prefijoCampos ?>FechaControl">Fecha del control</label><input id="<?= $prefijoCampos ?>FechaControl" type="date" name="control_fecha" data-control-fecha><small data-control-aviso role="status"></small></div>
+                <p data-control-descripcion></p>
+                <div class="consulta-control__fecha" data-control-contenido hidden><label for="<?= $prefijoCampos ?>FechaControl">Fecha del control</label><input id="<?= $prefijoCampos ?>FechaControl" type="text" readonly name="control_fecha" data-control-fecha><small data-control-aviso role="status"></small></div>
             </section>
-            <section class="consulta-resumen-cierre" aria-label="Resumen de la atención"><div class="consulta-collage"><strong>Todo listo para revisar</strong><img src="img/portal-bienvenida.png" alt="" loading="lazy"></div><dl data-resumen-cierre></dl></section>
+            <section class="consulta-resumen-cierre" data-panel-resumen aria-label="Resumen de la atención"><div class="consulta-collage"><strong>Todo listo para revisar</strong><img src="img/portal-bienvenida.png" alt="" loading="lazy"></div><dl data-resumen-cierre></dl></section>
         </div>
     </div>
+    <div class="consulta-hoja-pie" data-hoja-pie></div>
     <aside class="consulta-panel" data-panel-escritorio>
         <?php include __DIR__ . '/consulta_diagnosticos.php'; ?>
     </aside>

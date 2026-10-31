@@ -711,6 +711,10 @@ switch ($action) {
         require_once "../controllers/ControlConsultaController.php";
         (new ControlConsultaController())->contextoAjax();
         break;
+    case "completar_ficha_consulta_ajax":
+        require_once "../controllers/ControlConsultaController.php";
+        (new ControlConsultaController())->completarFichaAjax();
+        break;
     case "fechas_control_ajax":
         require_once "../controllers/ControlConsultaController.php";
         (new ControlConsultaController())->fechasAjax();

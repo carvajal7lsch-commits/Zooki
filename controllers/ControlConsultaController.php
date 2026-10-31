@@ -36,4 +36,17 @@ final class ControlConsultaController
             RespuestaJson::enviar(['success' => true, 'dias_abiertos' => $dias]);
         }, 'Calendario del próximo control');
     }
+
+    public function completarFichaAjax(): void
+    {
+        RespuestaJson::modificacion(function (): array {
+            $id = ValidadorClinico::id($_POST['id_mascota'] ?? null);
+            if ($id === null) {
+                throw new InvalidArgumentException('Mascota no válida.');
+            }
+            $datos = array_intersect_key($_POST, array_flip(['sexo', 'esterilizado', 'fecha_nacimiento']));
+            (new Mascota($this->db))->completarFichaConsulta($id, $datos);
+            return ['message' => 'Ficha actualizada.'];
+        }, 'Completar ficha desde la consulta');
+    }
 }

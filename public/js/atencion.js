@@ -65,8 +65,57 @@
         campo.addEventListener('input', () => campo.classList.remove('is-invalid'), { once: true });
     }
 
+    // RE-2.1.6: las tarjetas de procedimientos conservan sus límites y validan junto al campo.
+    function validarCampoProcedimiento(campo) {
+        if (!campo.willValidate) return null;
+        let mensaje = '';
+        if (campo.required && campo.value.trim() === '') mensaje = 'Este campo es obligatorio.';
+        else if (campo.maxLength > 0 && [...campo.value].length > campo.maxLength) mensaje = `Admite hasta ${campo.maxLength} caracteres.`;
+        else if (!campo.checkValidity()) mensaje = campo.type === 'date' ? 'Revisa la fecha indicada.' : 'Revisa este campo.';
+        let aviso = campo.parentElement.querySelector('[data-aviso-procedimiento]');
+        if (!aviso && mensaje) {
+            aviso = document.createElement('small');
+            aviso.dataset.avisoProcedimiento = '';
+            aviso.className = 'cuenta-validacion cuenta-validacion--error';
+            aviso.id = campo.form.id + '-' + campo.name + '-aviso';
+            aviso.setAttribute('aria-live', 'polite');
+            campo.setAttribute('aria-describedby', aviso.id);
+            campo.insertAdjacentElement('afterend', aviso);
+        }
+        if (aviso) aviso.textContent = mensaje;
+        campo.setAttribute('aria-invalid', String(Boolean(mensaje)));
+        campo.classList.toggle('is-invalid', Boolean(mensaje));
+        return mensaje ? campo : null;
+    }
+
+    function validarProcedimiento(form) {
+        const proxima = form.elements.fecha_proxima;
+        if (proxima) proxima.min = form.elements.fecha_aplicacion.value || form.elements.fecha_aplicacion.max;
+        const errores = [...form.querySelectorAll('input, select, textarea')].map(validarCampoProcedimiento);
+        return errores.find(Boolean) || null;
+    }
+
+    function iniciarValidacionProcedimiento(form) {
+        for (const campo of form.querySelectorAll('input:not([type="hidden"]), select, textarea')) {
+            const comprobar = () => {
+                validarCampoProcedimiento(campo);
+                if (campo.name === 'fecha_aplicacion' && form.elements.fecha_proxima) {
+                    form.elements.fecha_proxima.min = campo.value || campo.max;
+                    if (form.elements.fecha_proxima.value) validarCampoProcedimiento(form.elements.fecha_proxima);
+                }
+            };
+            campo.addEventListener('input', comprobar);
+            campo.addEventListener('change', comprobar);
+        }
+    }
+
     // ── Pestañas ────────────────────────────────────────────────────────
     const navPasos = document.getElementById('navPasos');
+    app.querySelector('[data-abrir-alertas]')?.addEventListener('click', () => {
+        const alertas = app.querySelector('.atencion-franja__alertas');
+        const abierta = alertas.classList.toggle('is-abierta');
+        app.querySelector('[data-abrir-alertas]').setAttribute('aria-expanded', String(abierta));
+    });
 
     function activarPestana(nombre) {
         app.querySelectorAll('.atencion__tab').forEach((boton) => {
@@ -78,6 +127,8 @@
             vista.classList.toggle('is-active', vista.dataset.vista === nombre);
         });
         if (navPasos) navPasos.hidden = nombre !== 'consulta';
+        const acciones = document.getElementById('accionesAtencion');
+        if (acciones && formConsulta) acciones.hidden = nombre !== 'consulta';
 
         if (nombre === 'historial') cargarHistorialCompacto();
         if (nombre === 'vacuna') cargarCatalogosVacuna();
@@ -147,7 +198,10 @@
     function marcarEnCurso() {
         app.dataset.estado = 'en_curso';
         const estado = document.getElementById('atencionEstado');
-        estado.textContent = 'En curso';
+        const punto = document.createElement('i');
+        punto.className = 'fas fa-circle';
+        punto.setAttribute('aria-hidden', 'true');
+        estado.replaceChildren(punto, document.createTextNode(' En curso'));
         estado.className = 'atencion__estado estado--en_curso';
         const aviso = document.getElementById('avisoIniciar');
         if (aviso) aviso.hidden = true;
@@ -248,11 +302,9 @@
         evento.preventDefault();
         const form = evento.currentTarget;
 
-        const error = primerCampoInvalido(form);
+        const error = validarProcedimiento(form);
         if (error) {
-            marcarInvalido(error.campo);
-            error.campo.focus();
-            zookiToast(error.mensaje, 'error');
+            error.focus();
             return;
         }
 
@@ -363,6 +415,7 @@
         }
 
         const formVacuna = document.getElementById('formVacunaAtencion');
+        if (formVacuna) iniciarValidacionProcedimiento(formVacuna);
         if (formVacuna) formVacuna.addEventListener('submit', (e) => registrarProcedimiento(e, {
             endpoint: 'index.php?action=registrar_vacuna_ajax',
             lista: 'listaVacunasAplicadas',
@@ -372,6 +425,7 @@
         }));
 
         const formDesp = document.getElementById('formDesparasitacionAtencion');
+        if (formDesp) iniciarValidacionProcedimiento(formDesp);
         if (formDesp) formDesp.addEventListener('submit', (e) => registrarProcedimiento(e, {
             endpoint: 'index.php?action=registrar_desparasitacion_ajax',
             lista: 'listaDesparasitacionesAplicadas',

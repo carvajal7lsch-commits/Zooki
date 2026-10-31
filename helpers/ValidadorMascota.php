@@ -88,11 +88,11 @@ final class ValidadorMascota
             return self::error('Elige la raza de la lista.', 'raza');
         }
 
-        $sexo = (string) ($entrada['sexo'] ?? '');
-        if (!in_array($sexo, self::SEXOS, true)) {
-            return self::error('Elige si la mascota es macho o hembra.', 'sexo');
+        $ficha = self::validarFicha(['sexo' => $entrada['sexo'] ?? ''], $hoy);
+        if ($ficha['error']) {
+            return $ficha;
         }
-        $datos['sexo'] = $sexo;
+        $datos['sexo'] = $ficha['datos']['sexo'];
 
         // Acepta coma decimal («8,5»), que es como se escribe en Colombia.
         $peso = str_replace(',', '.', trim((string) ($entrada['peso'] ?? '')));
@@ -101,23 +101,54 @@ final class ValidadorMascota
         }
         $datos['peso'] = $peso;
 
-        $nacimiento = trim((string) ($entrada['fecha_nacimiento'] ?? ''));
-        if ($nacimiento === '') {
-            $datos['fecha_nacimiento'] = null;
-        } else {
-            $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $nacimiento, $hoy->getTimezone());
-            if (!$fecha || $fecha->format('Y-m-d') !== $nacimiento) {
+        $ficha = self::validarFicha(['fecha_nacimiento' => $entrada['fecha_nacimiento'] ?? ''], $hoy);
+        if ($ficha['error']) {
+            return $ficha;
+        }
+        $datos['fecha_nacimiento'] = $ficha['datos']['fecha_nacimiento'];
+
+        return ['datos' => $datos, 'error' => null, 'campo' => null];
+    }
+
+    /** RE-2.8.1/RN-110: mismas reglas para Editar y completar datos desde la consulta. */
+    public static function validarFicha(array $entrada, DateTimeImmutable $hoy): array
+    {
+        $datos = [];
+        if (array_key_exists('sexo', $entrada)) {
+            if (!is_string($entrada['sexo']) || !in_array($entrada['sexo'], self::SEXOS, true)) {
+                return self::error('Elige si la mascota es macho o hembra.', 'sexo');
+            }
+            $datos['sexo'] = $entrada['sexo'];
+        }
+        if (array_key_exists('esterilizado', $entrada)) {
+            $valor = $entrada['esterilizado'];
+            if (!is_scalar($valor) || !in_array((string) $valor, ['0', '1'], true)) {
+                return self::error('Elige sí o no.', 'esterilizado');
+            }
+            $datos['esterilizado'] = (int) $valor;
+        }
+        if (array_key_exists('fecha_nacimiento', $entrada)) {
+            if (!is_string($entrada['fecha_nacimiento'])) {
                 return self::error('La fecha de nacimiento no es válida.', 'fecha_nacimiento');
             }
-            if ($fecha > $hoy) {
-                return self::error('La fecha de nacimiento no puede ser posterior a hoy.', 'fecha_nacimiento');
+            $nacimiento = trim((string) ($entrada['fecha_nacimiento'] ?? ''));
+            if ($nacimiento === '') {
+                $datos['fecha_nacimiento'] = null;
+            } else {
+                $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $nacimiento, $hoy->getTimezone());
+                if (!$fecha || $fecha->format('Y-m-d') !== $nacimiento) {
+                    return self::error('La fecha de nacimiento no es válida.', 'fecha_nacimiento');
+                }
+                if ($fecha > $hoy) {
+                    return self::error('La fecha de nacimiento no puede ser posterior a hoy.', 'fecha_nacimiento');
+                }
+                if ($fecha < $hoy->modify('-' . self::EDAD_MAX_ANIOS . ' years')) {
+                    return self::error('Revisa la fecha de nacimiento: la mascota tendría más de ' . self::EDAD_MAX_ANIOS . ' años.', 'fecha_nacimiento');
+                }
+                $datos['fecha_nacimiento'] = $nacimiento;
             }
-            if ($fecha < $hoy->modify('-' . self::EDAD_MAX_ANIOS . ' years')) {
-                return self::error('Revisa la fecha de nacimiento: la mascota tendría más de ' . self::EDAD_MAX_ANIOS . ' años.', 'fecha_nacimiento');
-            }
-            $datos['fecha_nacimiento'] = $nacimiento;
-        }
 
+        }
         return ['datos' => $datos, 'error' => null, 'campo' => null];
     }
 

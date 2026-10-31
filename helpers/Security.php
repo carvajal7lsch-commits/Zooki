@@ -408,7 +408,7 @@ class Security {
             // HU-2.1, RE-2.1.5: registrar y desactivar alergias y alertas es un acto clínico.
             'registrar_alerta_medica_ajax', 'desactivar_alerta_medica_ajax', 'buscar_nodo_alerta_ajax',
             'sugerir_diagnosticos_ajax',
-            'validar_prescripcion_ajax', 'buscar_farmaco_ajax', 'sugerir_tratamientos_ajax', 'consulta_contexto_ajax', 'fechas_control_ajax',
+            'validar_prescripcion_ajax', 'buscar_farmaco_ajax', 'sugerir_tratamientos_ajax', 'consulta_contexto_ajax', 'fechas_control_ajax', 'completar_ficha_consulta_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita

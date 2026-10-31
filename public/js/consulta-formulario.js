@@ -101,7 +101,7 @@
         camposDe(form).forEach(campo => {
             const mensaje = errorDe(campo);
             pintarAviso(form, campo, mensaje);
-            if (mensaje && primero === null) primero = campo;
+            if (mensaje && primero === null) primero = campo.type === 'hidden' ? form.querySelector('[data-otras-indicaciones]') || campo : campo;
         });
         for (const archivo of form.querySelectorAll('[data-consulta-archivos]')) {
             if (validarAdjuntos(archivo) && primero === null) primero = archivo;
@@ -121,7 +121,7 @@
         const campo = form.querySelector(`[data-consulta-campo="${respuesta.campo}"]`);
         if (!campo) return null;
         pintarAviso(form, campo, respuesta.aviso || respuesta.message);
-        return campo;
+        return campo.type === 'hidden' ? form.querySelector('[data-otras-indicaciones]') || campo : campo;
     }
 
     /**

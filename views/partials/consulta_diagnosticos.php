@@ -12,10 +12,19 @@
     </div>
     <div class="consulta-panel__sintomas" data-sintomas-panel></div>
     <p class="consulta-sugerencias__estado" data-diagnosticos-estado></p>
-    <img class="consulta-perro-vacio" src="img/portal-bienvenida.png" alt="">
+    <i class="fas fa-stethoscope consulta-vacio-icono" aria-hidden="true" data-diagnosticos-vacio></i>
     <ol class="consulta-sugerencias__lista" data-diagnosticos-lista hidden></ol>
+    <section class="consulta-ficha-mini" data-ficha-mini data-edad-maxima="<?= ValidadorMascota::EDAD_MAX_ANIOS ?>" hidden aria-label="Completar ficha">
+        <strong>Ayudaría a saber</strong><p>Completa la ficha para afinar las sugerencias.</p>
+        <div class="consulta-ficha-mini__campos">
+            <label data-ficha-fila="sexo" hidden>Sexo<select data-ficha-campo="sexo"><option value="">Elige</option><?php foreach (ValidadorMascota::SEXOS as $sexoFicha): ?><option value="<?= $escConsulta($sexoFicha) ?>"><?= $escConsulta($sexoFicha) ?></option><?php endforeach; ?></select><small data-ficha-error="sexo"></small></label>
+            <label data-ficha-fila="esterilizado" hidden>Esterilizado<select data-ficha-campo="esterilizado"><option value="">Elige</option><option value="1">Sí</option><option value="0">No</option></select><small data-ficha-error="esterilizado"></small></label>
+            <label data-ficha-fila="fecha_nacimiento" hidden>Nacimiento<input type="date" data-ficha-campo="fecha_nacimiento" min="<?= date('Y-m-d', strtotime('-' . ValidadorMascota::EDAD_MAX_ANIOS . ' years')) ?>" max="<?= date('Y-m-d') ?>"><small data-ficha-error="fecha_nacimiento"></small></label>
+        </div>
+        <button type="button" class="consulta-boton consulta-boton--suave" data-guardar-ficha>Guardar en la ficha</button><small data-ficha-aviso role="status"></small>
+    </section>
     <div class="consulta-sugerencias__datos" data-diagnosticos-datos hidden>
-        <span class="consulta-sugerencias__datos-titulo">Ayudaría saber (opcional, no se guarda):</span>
+        <span class="consulta-sugerencias__datos-titulo">Datos de esta evaluación (no se guardan en la ficha):</span>
         <ul class="consulta-sugerencias__ficha" data-diagnosticos-ficha hidden></ul>
         <label class="consulta-sugerencias__dato" data-dato="vacunacion" hidden>
             <span>Estado de vacunación</span>

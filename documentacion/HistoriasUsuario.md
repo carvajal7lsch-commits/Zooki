@@ -610,6 +610,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Marcar como inactiva la oculta de las búsquedas activas pero conserva su historial.
 - No se permite eliminar permanentemente una mascota con historial clínico.
 
+- Desde Atención y el modal se completan sexo, esterilización y nacimiento que falten, con las reglas, permisos y auditoría de Editar mascota; guardar esos datos recalcula las sugerencias. No exige inventar raza ni peso para completar otro dato.
+
 **Reglas de negocio:** RN-104, RN-105, RN-108, RN-110 · **Dependencias:** HU-1.1
 
 ### HU-1.5 — Vincular una mascota existente a la clínica
@@ -786,6 +788,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Los diagnósticos se muestran rankeados; el veterinario puede aceptarlos o escribir el suyo. Usar agrega como sugerencia editable el plan disponible y las pautas aplicables, sin borrar ni duplicar; indica qué se llenó y permite Deshacer solo lo agregado. Cada fila pide verificar la dosis; al cambiar peso solo recalcula dosis aún no editadas (decisión del dueño, 2026-10-29).
 - Si el grafo no encuentra coincidencias, el veterinario escribe el diagnóstico libremente; el diagnóstico es obligatorio para continuar (RN-202).
 - La sugerencia es de apoyo: nunca diagnostica ni prescribe por sí sola. El panel vive desde Evaluación; Usar abre Diagnóstico y tratamiento y marca En uso. Cada agregado conserva su diagnóstico de origen; cambiar o borrar retira solo lo no editado y lo editado queda propio, también al recuperar el borrador.
+- Exámenes seleccionables, recomendaciones editables y un campo Otras indicaciones componen el único plan guardado; las ediciones se conservan al cambiar diagnóstico o deshacer. Los datos faltantes de la ficha se completan según HU-1.4; la vacunación permanece en la evaluación.
 - El conocimiento clínico es global y compartido entre clínicas; no pertenece a ninguna en particular.
 
 **Reglas de negocio:** RN-209, RN-210, RN-212, RN-202 · **Requisitos:** RF-2.8 · **Dependencias:** HU-2.1

@@ -170,15 +170,33 @@
         contenedor.replaceChildren();
         contenedor.hidden = false;
         if (Object.prototype.hasOwnProperty.call(contenedor.dataset, 'alertasChips')) {
+            contenedor.append(el('strong', 'atencion-franja__etiqueta', 'Alertas'));
+            let indice = 0;
             for (const alerta of activas) {
                 const chip = el('span', 'consulta-chip consulta-chip--alerta', (alerta.tipo_nombre || alerta.tipo) + ': ' + alerta.descripcion);
                 chip.title = alerta.descripcion;
+                chip.hidden = indice++ >= 2;
                 contenedor.append(chip);
+            }
+            if (activas.length > 2) {
+                const mas = el('button', 'consulta-alertas-mas', '+' + (activas.length - 2) + ' más');
+                mas.type = 'button';
+                mas.dataset.alertasMas = '';
+                mas.setAttribute('aria-expanded', 'false');
+                mas.addEventListener('click', () => {
+                    const expandir = mas.getAttribute('aria-expanded') !== 'true';
+                    [...contenedor.querySelectorAll('.consulta-chip--alerta')].forEach((chip, i) => { chip.hidden = i >= 2 && !expandir; });
+                    mas.setAttribute('aria-expanded', String(expandir));
+                    mas.textContent = expandir ? 'Ver menos' : '+' + (activas.length - 2) + ' más';
+                });
+                contenedor.append(mas);
             }
             if (!activas.length) contenedor.append(el('span', 'consulta-chip', 'Sin alertas registradas'));
             if (escritura) {
-                const registrar = el('button', 'consulta-chip', '+ Alerta');
+                const registrar = el('button', 'consulta-agregar-alerta', ' Agregar alerta');
+                registrar.prepend(icono('fas fa-plus'));
                 registrar.type = 'button';
+                registrar.dataset.registrarAlerta = '';
                 registrar.addEventListener('click', () => abrirFormulario(contenedor.dataset.idMascota, ajustes.nombreMascota));
                 contenedor.append(registrar);
             }

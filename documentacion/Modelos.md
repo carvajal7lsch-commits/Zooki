@@ -180,10 +180,20 @@ flowchart TD
 
   CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas a la vista, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso o No se pudo pesar: NULL, nunca 0)<br/>y sintomas confirmados del catalogo; nota libre fuera del calculo"]
   H --> EV["Paso 1 Evaluacion: validacion en vivo de limites de captura;<br/>referencias informativas azules, nunca bloquean; panel vivo de sintomas"]
+  EV -. Contexto del control .-> CCX{Contexto disponible?}
+  CCX -- No --> CCF["Consulta usable, solo proximo control desactivado; Reintentar sin borrar lo escrito ni recuperar borrador sin verificar identidad"]
+  CCF -. Reintentar .-> CCX
+  CCX -- Si --> CCR["Referencias y parametros del control; ficha incompleta admite datos desconocidos"]
   EV --> I{Captura inicial valida?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
   I -- Si --> J["Grafo I: ranking por peso y cobertura al cambiar los sintomas;<br/>maximo 5 candidatos positivos, barra de cobertura sin elegir por el vet;<br/>datos que ayudarian con nombre legible y campos opcionales"]
+  J -. Completar datos faltantes .-> MFI["Mini formulario: sexo, esterilizacion y nacimiento; validacion de Editar, veterinario/vinculo activos y RN-110"]
+  MFI --> MFG{Guardar ficha autorizado y valido?}
+  MFG -- No --> MFE["Error junto al campo; conservar consulta"]
+  MFE --> MFI
+  MFG -- Si --> MFA["Actualizar solo los campos enviados; auditoria y aviso; recalcular sugerencias"]
+  MFA --> J
   J --> K{El grafo encontro coincidencias?}
   K -- No --> L[El veterinario escribe el diagnostico]
   K -- Si --> M[Mostrar diagnosticos probables rankeados]
@@ -218,14 +228,15 @@ flowchart TD
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
   AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
   AL1 --> V0
-  AL -- No --> V0["Paso 3 Cierre: adjuntos arrastrables, observaciones,<br/>resumen y proximo control opcional con dia habilitado"]
+  AL -- No --> V0["Paso 3 Cierre: adjuntos arrastrables, observaciones,<br/>panel de resumen con un solo perro en escritorio; control con explicacion,<br/>interruptor y flatpickr con dia habilitado"]
   V0 --> V{Adjuntar archivos?}
   V -- Si --> W{"Tipo y tamaño validos? (JPG/PNG/PDF, max 10MB, RN-204)"}
   W -- No --> W1[/"Mensaje: archivo no permitido o demasiado grande"/]
   W1 --> V
   W -- Si --> X[Finalizar atencion]
   V -- No --> X
-  X --> IV["Coordinador: clinica, usuarios y mascotas; resolver identidad actual y HC sin GET_LOCK"]
+  X --> PC["Componer un unico plan: examenes seleccionados, recomendaciones editadas y Otras indicaciones; validar longitud"]
+  PC --> IV["Coordinador: clinica, usuarios y mascotas; resolver identidad actual y HC sin GET_LOCK"]
   IV --> IA{"Acceso actual al paciente/recurso en este contexto?"}
   IA -- No --> IAN[/"403 sin datos ni redireccion a la ficha final"/]
   IAN --> ZF
