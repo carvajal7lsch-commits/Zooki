@@ -1,6 +1,28 @@
 # Atención en 3 pasos — mockups aprobados por el dueño
 
-Canvas «Zooki · Veterinario en celular y notificaciones», secciones 9 y 10.
+Canvas «Zooki · Veterinario en celular y notificaciones», secciones 9, 10 y 11.
+
+## Sección 11 · Cero scroll en escritorio (2026-10-31) — manda sobre la 10 en escritorio
+
+Decisión del dueño: en escritorio la Atención no tiene scroll, ni de la página ni dentro de las tarjetas. En celular y tableta (< 1024 px) sigue la sección 10: la página baja dentro del paso y la barra inferior queda fija (opción A del dueño).
+
+| Archivo | Pantalla |
+|---|---|
+| AtencionV3Eval.dc.html | Paso 1 · Evaluación |
+| AtencionV3Diag.dc.html | Paso 2 · peor caso: 8 exámenes y 6 recomendaciones (los topes del conocimiento) y 3 tratamientos |
+| AtencionV3Cierre.dc.html | Paso 3 · Cierre, con el resumen en el panel derecho |
+| AtencionV3Ayuda.dc.html | «Ayudaría a saber» abierto como recuadro flotante |
+| AtencionV3Vacuna.dc.html | Pestaña Vacuna (igual Desparasitación e Historial) |
+
+Reglas de la sección 11:
+- Medida de referencia: ventana de 1366 × 650 (portátil de 1366 × 768 con el navegador). Todo cabe ahí; en pantallas más grandes sobra aire, nunca se estira el contenido. Solo si la ventana mide menos de 650 de alto se permite el scroll de la página como respaldo.
+- La app mide el alto de la ventana: fila 1 = el paciente es la cabecera (volver, foto, nombre y estado, especie·raza, datos en columnas, alertas) y a la derecha clínica, campana y cuenta; fila 2 = pestañas · tipo de cita, hora y número · pasos; debajo, la hoja y el panel llenan lo que queda.
+- Cada paso va en dos columnas dentro de la hoja. Una columna lleva un campo que crece (síntomas, anamnesis, otras indicaciones u observaciones) y absorbe el espacio sobrante.
+- Paso 2: exámenes como chips; recomendaciones en una línea cada una (se recorta con «…» y se editan con un clic en la misma fila); tratamientos en filas compactas. Agregar o editar un medicamento abre un recuadro (ventana de Zooki), no alarga la lista. Caben 5 tratamientos; desde el 6.º se muestran 4 y «Ver N más».
+- El aviso «Zooki llenó… · Deshacer», el borrador y «Descartar» van en el pie, a la izquierda.
+- «Ayudaría a saber» es una línea en el panel («Faltan sexo… · Completar») que abre un recuadro flotante junto al panel; no empuja nada.
+- Panel derecho: franja con el perro, como máximo 3 diagnósticos en filas cortas; en el paso 3 el panel es el resumen.
+- Con una ventana de 1366 px, el paso del medio se rotula «Diagnóstico»; desde 1440 px vuelve a «Diagnóstico y tratamiento».
 
 ## Sección 10 · Atención corregida (2026-10-31) — manda en estructura y piezas
 
