@@ -5,6 +5,8 @@
         const raiz = form.querySelector('[data-ficha-mini]');
         if (!raiz) return null;
         const campos = [...raiz.querySelectorAll('[data-ficha-campo]')];
+        const representantes = [...new Map(campos.map(campo => [campo.dataset.fichaCampo, campo])).values()];
+        const valor = campo => campo.type === 'radio' ? raiz.querySelector(`[data-ficha-campo="${campo.dataset.fichaCampo}"]:checked`)?.value || '' : campo.value;
         const boton = raiz.querySelector('[data-guardar-ficha]');
         const aviso = raiz.querySelector('[data-ficha-aviso]');
         let generacion = 0;
@@ -12,12 +14,13 @@
         function validar(campo) {
             let error = '';
             const nombre = campo.dataset.fichaCampo;
-            if (!campo.value) error = 'Este campo es obligatorio.';
-            else if (nombre === 'sexo' && !['Macho', 'Hembra'].includes(campo.value)) error = 'Elige macho o hembra.';
-            else if (nombre === 'esterilizado' && !['0', '1'].includes(campo.value)) error = 'Elige sí o no.';
+            const dato = valor(campo);
+            if (!dato) error = 'Este campo es obligatorio.';
+            else if (nombre === 'sexo' && !['Macho', 'Hembra'].includes(dato)) error = 'Elige macho o hembra.';
+            else if (nombre === 'esterilizado' && !['0', '1'].includes(dato)) error = 'Elige sí o no.';
             else if (nombre === 'fecha_nacimiento' && (!/^\d{4}-\d{2}-\d{2}$/.test(campo.value) || campo.value < campo.min || campo.value > campo.max)) error = 'Entre hoy y hace ' + raiz.dataset.edadMaxima + ' años.';
             raiz.querySelector(`[data-ficha-error="${nombre}"]`).textContent = error;
-            campo.setAttribute('aria-invalid', String(Boolean(error)));
+            for (const miembro of campos.filter(c => c.dataset.fichaCampo === nombre)) miembro.setAttribute('aria-invalid', String(Boolean(error)));
             return !error;
         }
         function actualizar(datos, conservarAviso = false) {
@@ -30,7 +33,8 @@
                 const editable = nombre === 'esterilizado' || datos?.identidad_editable === true;
                 campo.closest('[data-ficha-fila]').hidden = !falta || !editable;
                 campo.disabled = !falta || !editable;
-                campo.value = '';
+                if (campo.type === 'radio') campo.checked = false;
+                else campo.value = '';
                 campo.removeAttribute('aria-invalid');
                 raiz.querySelector(`[data-ficha-error="${nombre}"]`).textContent = '';
                 if (falta && editable) visibles++;
@@ -44,7 +48,7 @@
             campo.addEventListener('change', () => validar(campo));
         }
         boton.addEventListener('click', async () => {
-            const activos = campos.filter(c => !c.disabled);
+            const activos = representantes.filter(c => !c.disabled);
             const validaciones = activos.map(validar);
             if (validaciones.includes(false)) {
                 activos[validaciones.indexOf(false)].focus();
@@ -53,7 +57,7 @@
             const vigente = generacion;
             const mascota = String(idMascota());
             boton.disabled = true;
-            const datos = Object.fromEntries(activos.map(c => [c.dataset.fichaCampo, c.value]));
+            const datos = Object.fromEntries(activos.map(c => [c.dataset.fichaCampo, valor(c)]));
             try {
                 const r = await (await fetch('index.php?action=completar_ficha_consulta_ajax', { method: 'POST', body: new URLSearchParams({ id_mascota: mascota, ...datos }) })).json();
                 if (vigente !== generacion || mascota !== String(idMascota())) return;
@@ -61,7 +65,7 @@
                     const campo = activos.find(c => c.dataset.fichaCampo === r.campo);
                     if (campo) {
                         raiz.querySelector(`[data-ficha-error="${r.campo}"]`).textContent = r.aviso || r.message;
-                        campo.setAttribute('aria-invalid', 'true');
+                        for (const miembro of campos.filter(c => c.dataset.fichaCampo === r.campo)) miembro.setAttribute('aria-invalid', 'true');
                         campo.focus();
                     }
                     throw new Error(r.message || 'No se pudo actualizar la ficha.');

@@ -98,6 +98,7 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
                 if (!process.env.ZOOKI_CAPTURAS_ANTES) {
                     await e("poner('[name=peso]','');ZookiConsultaForm.validarTodo(f.querySelector('[data-consulta-paso=\"0\"]'))");
                     assert.equal(await e("getComputedStyle(f.querySelector('[data-campo-aviso=peso]')).color"),'rgb(185, 28, 28)','Error rojo');
+                    if (a === 'vet_atencion') assert.notEqual(await e("getComputedStyle(f.querySelector('[data-campo-aviso=peso]'),'::before').content"), 'none', 'Error con icono debajo del campo');
                     await e("poner('[name=peso]','9');poner('[name=temperatura]','40')");
                     await n.esperar("f.querySelector('[data-vital=temperatura]').classList.contains('consulta-vital--fuera')");
                     assert.equal(await e("getComputedStyle(f.querySelector('[data-vital=temperatura] input')).color"),'rgb(0, 82, 255)','Referencia azul');
@@ -112,7 +113,12 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
                     assert.equal(await e("f.querySelectorAll('[data-vital] label i').length"),4);
                     if (ancho === 390) assert.equal(await e("getComputedStyle(f.querySelector('.consulta-vitales')).gridTemplateColumns.split(' ').length"),2);
                     const antes = calculos;
-                    await e("poner('[data-ficha-campo=sexo]','Hembra');poner('[data-ficha-campo=esterilizado]','0');poner('[data-ficha-campo=fecha_nacimiento]','2022-01-01');f.querySelector('[data-guardar-ficha]').click()");
+                    await e("f.querySelector('[data-guardar-ficha]').click()");
+                    assert.equal(await e("f.querySelector('[data-ficha-error=sexo]').textContent.length>0"), true, 'Sexo sigue siendo obligatorio en la mini ficha');
+                    if (a === 'vet_atencion') assert.equal(await e("[...f.querySelectorAll('[data-ficha-campo=sexo]')].every(c=>c.getAttribute('aria-invalid')==='true')"), true, 'El error se aplica al grupo de radios');
+                    if (a === 'vet_atencion') await e("f.querySelector('[data-ficha-campo=sexo][value=Hembra]').click();f.querySelector('[data-ficha-campo=esterilizado][value=\"0\"]').click()");
+                    else await e("poner('[data-ficha-campo=sexo]','Hembra');poner('[data-ficha-campo=esterilizado]','0')");
+                    await e("poner('[data-ficha-campo=fecha_nacimiento]','2022-01-01');f.querySelector('[data-guardar-ficha]').click()");
                     await n.esperar("f.querySelector('[data-ficha-aviso]').textContent.includes('actualizada')");
                     assert.ok(guardados > 0);
                     await n.esperar(`f.querySelector('[data-ficha-mini]').hidden`);
@@ -188,6 +194,7 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
             await n.enviar('Page.navigate',{url:`http://127.0.0.1:${servidor.address().port}/index.php?action=vet_atencion`});
             await n.esperar("document.readyState==='complete' && document.querySelector('#estadoBorrador').textContent.includes('No se pudo')");
             assert.equal(await e("Boolean(document.querySelector('[data-contexto-reintentar]'))"),true,'Ofrece Reintentar si falla el contexto');
+            assert.equal(await e("getComputedStyle(document.querySelector('[data-contexto-aviso]')).color"), 'rgb(185, 28, 28)', 'La carga fallida se avisa en rojo');
             assert.equal(await e("document.querySelector('#formConsultaAtencion').inert"),false);
             assert.equal(await e("document.querySelector('[data-control-activo]').disabled"),true);
             await n.esperar("!document.querySelector('[data-ficha-mini]').hidden");
@@ -213,6 +220,8 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
             await n.enviar('Page.addScriptToEvaluateOnNewDocument',{source:`localStorage.setItem('zooki_atencion_borrador_1_2_5',${JSON.stringify(JSON.stringify(legado))});`});
             await n.enviar('Page.navigate',{url:`http://127.0.0.1:${servidor.address().port}/index.php?action=vet_atencion`});
             await n.esperar("document.readyState==='complete' && !document.querySelector('[data-borrador-aviso]').hidden");
+            assert.equal(await e("Boolean(document.querySelector('[data-borrador-aviso]').closest('[data-hoja-pie]'))"), true, 'El borrador recuperado se informa en el pie');
+            assert.equal(await e("getComputedStyle(document.querySelector('[data-descartar-borrador]')).borderTopStyle"), 'none', 'Descartar es una acción de texto');
             assert.equal(await e("document.querySelector('[data-otras-indicaciones]').value"),anterior,'Conserva el texto propio del borrador anterior');
             assert.equal(await e("document.querySelector('[data-examenes-elegibles] input').checked"),true,'Recupera la procedencia del examen anterior');
             await e("document.querySelector('[data-deshacer-sugerencia]').click()");

@@ -163,6 +163,11 @@
         const activas = (datos && datos.activas) || [];
         const historial = (datos && datos.historial) || [];
         const escritura = !ajustes.lectura && !(datos && datos.solo_lectura);
+        const resumenMovil = contenedor.closest('#atencionApp')?.querySelector('[data-alerta-resumen]');
+        if (resumenMovil) {
+            resumenMovil.textContent = activas.length === 1 ? activas[0].descripcion : activas.length ? activas.length + ' alertas' : '';
+            resumenMovil.parentElement.title = activas.length === 1 ? activas[0].descripcion : 'Ver alergias y alertas';
+        }
         const iconos = ICONOS[ajustes.iconos] || ICONOS.fa;
         contenedor.dataset.idMascota = String(ajustes.idMascota ?? contenedor.dataset.idMascota ?? '');
         contenedor._alertas = { opciones: ajustes };
@@ -193,7 +198,7 @@
             }
             if (!activas.length) contenedor.append(el('span', 'consulta-chip', 'Sin alertas registradas'));
             if (escritura) {
-                const registrar = el('button', 'consulta-agregar-alerta', ' Agregar alerta');
+                const registrar = el('button', 'consulta-agregar-alerta', ' Agregar');
                 registrar.prepend(icono('fas fa-plus'));
                 registrar.type = 'button';
                 registrar.dataset.registrarAlerta = '';

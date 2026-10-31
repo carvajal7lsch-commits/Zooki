@@ -1,7 +1,7 @@
 /*
  * Pantalla de atención de una cita (views/vet/atencion.php).
  *
- * La página no hace scroll: la vista ocupa el alto disponible y el trabajo se
+ * La página desplaza las tarjetas completas y el trabajo se
  * reparte en pestañas (Consulta, Vacuna, Desparasitación, Historial) y, dentro
  * de la consulta, en pasos. "Finalizar atención" guarda la consulta y completa
  * la cita en un solo paso. Nada recarga la página salvo al terminar.
@@ -27,9 +27,6 @@
     let finalizando = false;
     // M2 C5a: síntomas, diagnósticos sugeridos y avisos junto al campo, los mismos del modal.
     let consulta = null;
-
-    // ── Alto disponible (sin scroll de página) ──────────────────────────
-    // El alto y los cortes responsive se resuelven en consulta-pasos.css.
 
     // ── Utilidades ──────────────────────────────────────────────────────
     const fechaCorta = (iso) => {
@@ -127,6 +124,8 @@
             vista.classList.toggle('is-active', vista.dataset.vista === nombre);
         });
         if (navPasos) navPasos.hidden = nombre !== 'consulta';
+        const progreso = app.querySelector('[data-pasos-paciente]');
+        if (progreso) progreso.hidden = nombre !== 'consulta';
         const acciones = document.getElementById('accionesAtencion');
         if (acciones && formConsulta) acciones.hidden = nombre !== 'consulta';
 

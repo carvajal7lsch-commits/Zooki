@@ -6,6 +6,20 @@
 
 ## Ahora
 
+### Atención — estructura corregida (2.3.0) — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Base `fcc803e`, rama `release/v2.3.0`; contrato y anexo al final de M2.
+  Referencias de la sección10 aplicadas a la estructura; contenido de pasos de la sección9 conservado.
+  Scroll de página, tres filas superiores, pestañas/pasos juntos en escritorio, panel y pie sticky, borrador en el pie, mini ficha segmentada y móvil sin perro.
+  Riesgo principal: pasos compartidos con Pacientes; conserva hooks, selects y diseño del modal, con sus regresiones en verde.
+- **Verificación:** PHP completo con host127.0.0.1/puerto33317, MariaDB10.4.32 temporal y `zooki_test_base_v2`: **1274/12484, sin omitidas** (13m30s).
+  Sin host **1274/11161**,98 omitidas; JS completo **470/470**, afectadas20/20, Atención/modal finales3/3 y estructura/errores finales1/1 cada una.
+  Primer motor bloqueado internamente y detenido; repetición completa correcta. Motores de esta tarea detenidos.
+  Chrome CDP1366×768/390×844 verifica los tres pasos y Vacuna;32 imágenes lado a lado con los mockups, mediciones y registros en `scratch/r/atencion-v2/`.
+  Historial y PDF/Word al día; versión2.3.0 conservada.
+- **Sigue:** revisión de Claude y prueba del dueño; no quedan decisiones de alcance pendientes.
+  Sin cambios de motores, endpoints, migraciones o conocimiento; sin `.env`, base de trabajo ni Git de escritura. No se empezó otra subetapa.
+
 ### Atención en 3 pasos — retoques de revisión y prueba del dueño (2.3.0) — entregada, pendiente de revisión (2026-10-31)
 
 - **Escribió Codex; revisa Claude (arquitecto).** Base `1a19312`, rama `release/v2.3.0`; anexo con riesgos y evidencia al final de M2.

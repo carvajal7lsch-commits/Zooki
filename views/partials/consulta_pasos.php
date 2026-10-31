@@ -12,11 +12,10 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
 <div class="consulta-tres" data-consulta-tres>
     <nav class="consulta-progreso" data-consulta-navegacion aria-label="Pasos de la consulta">
         <?php foreach (['Evaluación', 'Diagnóstico y tratamiento', 'Cierre'] as $numero => $nombrePaso): ?>
-            <button type="button" class="atencion__paso-btn<?= $numero === 0 ? ' is-active' : '' ?>" data-paso="<?= $numero ?>" data-consulta-ir="<?= $numero ?>" aria-current="<?= $numero === 0 ? 'step' : 'false' ?>"><b><?= $numero + 1 ?></b><span><?= $escConsulta($nombrePaso) ?></span></button>
+            <button type="button" class="atencion__paso-btn<?= $numero === 0 ? ' is-active' : '' ?>" data-paso="<?= $numero ?>" data-consulta-ir="<?= $numero ?>" aria-label="<?= $escConsulta($nombrePaso) ?>" aria-current="<?= $numero === 0 ? 'step' : 'false' ?>"><b><?= $numero + 1 ?></b><span class="consulta-progreso__nombre"><?= $escConsulta($nombrePaso) ?></span><?php if ($numero === 1): ?><span class="consulta-progreso__corto" aria-hidden="true">Diagnóstico</span><?php endif; ?></button>
         <?php endforeach; ?>
     </nav>
-    <div class="consulta-contexto-aviso" data-contexto-aviso role="status" hidden><span data-contexto-mensaje></span><button type="button" class="consulta-boton consulta-boton--suave" data-contexto-reintentar hidden>Reintentar</button></div>
-    <div class="consulta-borrador-aviso" data-borrador-aviso role="status" hidden><span>Recuperamos tu borrador</span><button type="button" data-descartar-borrador>Descartar</button></div>
+    <div class="consulta-contexto-aviso" data-contexto-aviso role="status" hidden><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span data-contexto-mensaje></span><button type="button" class="consulta-boton consulta-boton--suave" data-contexto-reintentar hidden>Reintentar</button></div>
     <div class="consulta-tres__contenido">
         <div class="atencion__paso is-active consulta-hoja" data-consulta-paso="0" id="<?= !empty($consultaEnAtencion) ? 'atencionEvaluacion' : 'tabMotivo' ?>">
             <div class="consulta-campo">
@@ -89,7 +88,7 @@ $claseEtiqueta = 'consulta-campo__etiqueta';
             <section class="consulta-resumen-cierre" data-panel-resumen aria-label="Resumen de la atención"><div class="consulta-collage"><strong>Todo listo para revisar</strong><img src="img/portal-bienvenida.png" alt="" loading="lazy"></div><dl data-resumen-cierre></dl></section>
         </div>
     </div>
-    <div class="consulta-hoja-pie" data-hoja-pie></div>
+    <div class="consulta-hoja-pie" data-hoja-pie><div class="consulta-borrador-aviso" data-borrador-aviso role="status" hidden><i class="far fa-clock" aria-hidden="true"></i><span>Recuperamos tu borrador</span><button type="button" data-descartar-borrador>Descartar</button></div></div>
     <aside class="consulta-panel" data-panel-escritorio>
         <?php include __DIR__ . '/consulta_diagnosticos.php'; ?>
     </aside>

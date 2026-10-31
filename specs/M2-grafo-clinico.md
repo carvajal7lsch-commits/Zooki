@@ -28,6 +28,17 @@ Estado: **entregada, pendiente de revisión** (Codex, 2026-10-30; revisa Claude)
 - **Decisiones adicionales confirmadas:** ambos plazos de control admiten1–365 días. Excepción solo en el enlace Agendar control: Nueva cita puede abrir prellenada sin horario aprobado, con aviso y reserva bloqueada hasta disponer de un hueco. Borrador guarda campos y procedencia; los adjuntos se vuelven a elegir y se informa al recuperarlo.
 - Fuera: JSON clínicos, motor de triage de agenda y demo. Nuevos endpoints en Security solo veterinario con vínculo activo; no evidencias protegidas al cliente. Estado: **entregada, pendiente de revisión** (Codex,2026-10-31; revisa Claude).
 
+## Atención — estructura corregida (2.3.0)
+
+**Encargo aprobado del dueño (2026-10-31). Escribe Codex; revisa Claude (arquitecto).** Base `fcc803e`, rama `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión**. Solo interfaz sobre la lógica existente; versión 2.3.0 sin publicar.
+
+- **Decisión del dueño:** la sección 10 (`AtencionV2*.dc.html`) manda en estructura y piezas; el contenido de cada paso sigue la sección 9. Sustituye el scroll por tarjetas y la distribución anterior de cabecera/paciente/pasos de los anexos históricos.
+- RE-2.1.6/7, RE-2.8.1/6 y RNF-16: scroll de página; tres filas superiores; pestañas/pasos juntos en escritorio y pasos ocultos en procedimientos/historial; panel sticky a20px, pie sticky abajo con borrador/Descartar; acciones de una línea; errores rojos con icono y Reintentar, referencias azules.
+- Mini ficha: solo los datos faltantes; radios segmentados en Atención conservando los selects y diseño del modal. En móvil, ficha y sugerencias como tarjetas; vitales2×2 y sin perro. Azul/neutros, rojo solo alertas, validación y Sin cerrar.
+- Fuera: motores, endpoints, migraciones, conocimiento, contenido de los pasos y rediseño del modal de Pacientes. Sin `.env`, base de trabajo ni Git de escritura.
+- Verificación: Chrome CDP1366×768/390×844 en los tres pasos y Vacuna (geometría, scroll y colores), regresiones de Atención/modal, suites PHP completas sin/con motor aislado usando únicamente `zooki_test_base_v2`, JS completo y capturas lado a lado con las referencias en `scratch/r/atencion-v2/`.
+
 ## 1. Resultado y límites
 
 **Resultado:** al atender, el veterinario marca los síntomas del paciente y Zooki le sugiere los diagnósticos probables ordenados por peso; al prescribir, bloquea un fármaco tóxico para la especie o raza o al que la mascota es alérgica, y advierte una interacción con su medicación vigente; las alergias y alertas médicas se registran y se ven en toda clínica vinculada y en el portal; existe el motor de triage de 4 niveles, probado con la batería de casos, listo para que la agenda lo use en el módulo 4; y el superadministrador ve el grafo completo como un mapa interactivo de nodos para revisar el conocimiento. Todo es de apoyo: la decisión es siempre del veterinario (RN-209).
@@ -2146,3 +2157,20 @@ Consulta80 nodos/MER65 entidades renderizados; HU/RE/historial y PDF/Word al dí
 **Sigue:** revisión de Claude y prueba del dueño.
 Versión2.3.0 conservada; sin nueva migración, JSON de conocimiento, demo, `.env`, base de trabajo ni Git de escritura.
 El dueño recibe los comandos de un solo commit desde `1a19312`; no se empezó otra subetapa.
+
+### Anexo — Resultado: Atención — estructura corregida (2026-10-31)
+
+**Escribió Codex; revisa Claude (arquitecto).** Base `fcc803e`, rama `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión**.
+
+- **Riesgo principal: componente compartido con Pacientes.** Se conservan `data-consulta-ir`/`data-paso`, selects de su mini ficha y diseño del modal; los radios, la redistribución del apoyo y las reglas nuevas de estructura quedan limitados a Atención. La mini ficha no entra en el borrador clínico.
+- Página con scroll, tres filas superiores sin duplicados, pestañas/pasos juntos en escritorio, panel sticky a20px y pie sticky con borrador/Descartar. Signos con iconos, referencia azul, errores rojos con icono/Reintentar, procedimientos con lista lateral y móvil sin perro. Se conserva el contenido de los pasos y la lógica existente.
+
+| Criterios | Evidencia |
+|---|---|
+| RE-2.1.6/7, RNF-16 | `AtencionEstructura`: Chrome CDP1366×768/390×844, tres pasos y Vacuna; página más alta que la ventana, cero scroll vertical interno recortado, anclaje real a20px/pie visible, misma fila, botones de una línea, azul/neutros/rojo y cero perros móviles. Falló antes con página768px y dos scrolls internos. |
+| RE-2.8.1/6, regresión del modal | `AtencionRetoques`/`AtencionTresPasos`: radios obligatorios y guardado/recalcular, selects del modal, sugerencias, errores con icono, recuperación en el pie/Descartar, procedencia y plan conservados. Cabecera común y M2C8 actualizan únicamente las expectativas del diseño sustituido. |
+
+- **Verificación:** PHP completo sin host **1274/11161**,98 omitidas de motor; con host127.0.0.1/puerto33317, MariaDB10.4.32 temporal y base predeterminada `zooki_test_base_v2`: **1274/12484, sin omitidas**,13m30s. JS completo **470/470**; afectadas20/20, Atención/modal finales3/3 y comprobaciones finales de estructura y errores1/1 cada una. Primer motor detenido por bloqueo interno de InnoDB; repetición completa con E/S no nativa y log ampliado correcta. Motores de esta tarea detenidos.
+- **Evidencia:** `scratch/r/atencion-v2/indice.html`,32 imágenes comparativas, `medidas.json`, `php-sin-host-final.log`, `php-mysql-completo.log`, `js-completo-final.log`, `atencion-modal-final.log`, `estructura-entrega.log` y `errores-borrador-final.log`. Historial2.3.0 actualizado; PDF/Word regenerados y `--revisar` al día. Sin cambios de motores, endpoints, esquema o conocimiento; versión conservada.
+- **Pendientes:** revisión de Claude y prueba del dueño. No quedan decisiones de alcance pendientes; no se inició otra subetapa. El dueño hace commit/push.

@@ -15,7 +15,8 @@ test('RNF-16: las 13 cabeceras comparten posición y contenido a 1366; sin desbo
                     const medida = await medirCabecera(nav);
                     assert.ok(medida.ancho <= medida.ventana + 1, pantalla[0] + ' sin desborde a ' + width);
                     if (pantalla[0] === 'Vet · Atención') {
-                        assert.match(medida.texto, width < 768 ? /Luna/ : /Atención de/);
+                        assert.match(medida.texto, width < 768 ? /Luna/ : /Consulta general/);
+                        if (width >= 768) assert.doesNotMatch(medida.texto, /Luna/, 'El paciente solo se nombra en su tarjeta');
                         assert.equal(await nav.evaluar("document.querySelectorAll('#atencionApp h1').length"), 1, 'Una cabecera propia según mockup');
                         continue;
                     }

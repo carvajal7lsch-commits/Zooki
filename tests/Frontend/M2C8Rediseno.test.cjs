@@ -507,11 +507,11 @@ test('H7: los diagnósticos sugeridos son filas compactas que se expanden con lo
     assert.ok(campo.enfocado, 'Y deja editarlo');
 });
 
-test('H7: en Atención cada paso es el único que desplaza y las etiquetas no se montan', () => {
+test('RE-2.1.6: en Atención desplaza la página y las etiquetas no se montan', () => {
     const css = leer('public/css/atencion.css');
     const paso = css.match(/\n\.atencion__paso \{[^}]*\}/)[0];
-    assert.match(paso, /overflow-y: auto;/);
-    assert.match(paso, /overscroll-behavior: contain;/);
+    assert.doesNotMatch(paso, /overflow-y:\s*(auto|scroll)/);
+    assert.doesNotMatch(paso, /overscroll-behavior:\s*contain/);
     assert.doesNotMatch(css, /tratamientos__lista/, 'La lista de tratamientos ya no tiene su propio scroll');
     const consulta = leer('public/css/consulta-clinica.css');
     assert.doesNotMatch(consulta.match(/\n\.consulta-sugerencias__lista \{[^}]*\}/)[0], /overflow|max-height/);

@@ -16,11 +16,15 @@
         const anteriores = [...area.querySelectorAll('[data-consulta-anterior], #btnPasoAnterior')];
         const finalizar = area.querySelector('[data-consulta-finalizar], #btnFinalizarAtencion');
         const panel = form.querySelector('[data-diagnosticos]');
+        const fichaMini = app ? panel.querySelector('[data-ficha-mini]') : null;
+        const sitioFicha = fichaMini ? document.createComment('Ficha antes de sugerencias') : null;
+        if (sitioFicha) fichaMini.before(sitioFicha);
         const sitioPanel = form.querySelector('[data-panel-escritorio]');
         const panelResumen = form.querySelector('[data-panel-resumen]');
         const sitioResumen = panelResumen.parentElement;
         const pie = area.querySelector('#accionesAtencion, .consulta-modal__pie');
         if (pie) form.querySelector('[data-hoja-pie]').append(pie);
+        if (app && pie) pie.querySelector('.atencion__borrador').before(form.querySelector('[data-borrador-aviso]'));
         const avisoContexto = form.querySelector('[data-contexto-aviso]');
         const reintentar = form.querySelector('[data-contexto-reintentar]');
         let recuperacionIntentada = false;
@@ -46,8 +50,17 @@
 
         function moverPanel() {
             const escritorio = window.matchMedia('(min-width: 1024px)').matches;
+            if (app && paso < 2) {
+                const siguiente = window.matchMedia('(max-width: 767px)').matches && paso === 0 ? 'Diagnóstico' : NOMBRES[paso + 1];
+                for (const boton of siguientes) boton.textContent = 'Siguiente: ' + siguiente;
+            }
             if (escritorio) sitioPanel.append(panel);
             else pasos[Math.min(paso, 1)].querySelector('[data-panel-movil]')?.append(panel);
+            if (fichaMini) {
+                if (escritorio) sitioFicha.after(fichaMini);
+                else panel.before(fichaMini);
+                fichaMini.classList.toggle('consulta-ficha-mini--cierre', paso === 2);
+            }
             panel.hidden = paso === 2;
             if (escritorio) sitioPanel.append(panelResumen);
             else sitioResumen.append(panelResumen);
@@ -309,7 +322,7 @@
         function exportar() {
             const campos = {};
             for (const campo of form.querySelectorAll('[name]')) {
-                if (campo.type === 'file' || campo.name.endsWith('[]') || ['csrf_token', 'id_mascota', 'id_cita'].includes(campo.name)) continue;
+                if (campo.type === 'file' || campo.name.startsWith('ficha_') || campo.name.endsWith('[]') || ['csrf_token', 'id_mascota', 'id_cita'].includes(campo.name)) continue;
                 campos[campo.name] = campo.type === 'checkbox' ? campo.checked : campo.value;
             }
             return { version: 3, campos, paso, fechaManual, tratamientos: consulta.tratamientos?.exportar(), sugerencias: consulta.sugerencias?.exportar(), sintomas: consulta.sintomas?.marcados(), adjuntos: [...form.querySelectorAll('[type="file"]')].some(c => c.files.length > 0) };

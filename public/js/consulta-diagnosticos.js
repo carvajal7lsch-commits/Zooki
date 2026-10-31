@@ -197,6 +197,14 @@
                 usar.textContent = 'Cambiar a este';
             }
             fila.append(abrir, usar);
+            if (raiz.closest('#atencionApp')) {
+                // RE-2.1.6: la acción ocupa una línea; cobertura y barra son información aparte.
+                const contenido = elemento('div', 'consulta-sugerencia__contenido');
+                const textoCobertura = abrir.querySelector('.consulta-sugerencia__cobertura');
+                abrir.title = candidato.etiqueta;
+                abrir.before(contenido);
+                contenido.append(abrir, coincidencia, textoCobertura);
+            }
 
             const coinciden = (candidato.sintomas_coincidentes || []).map(codigo => etiquetas[codigo]).filter(Boolean);
             if (coinciden.length) detalle.append(elemento('p', 'consulta-sugerencia__sintomas', `Coinciden: ${coinciden.join(', ')}`));
