@@ -8,7 +8,7 @@ const { createServer } = require('node:http');
 const { abrirChrome, buscarChrome } = require('./apoyo/chrome-cdp.cjs');
 const raiz = path.resolve(__dirname, '../..');
 
-test('Atención: scroll de página, cabecera, piezas y pie sticky en 1366/390', { skip: buscarChrome() ? false : 'Sin Chrome' }, async () => {
+test('Atención: tableta y móvil conservan scroll de página y pie sticky en 900/390', { skip: buscarChrome() ? false : 'Sin Chrome' }, async () => {
     const vista = execFileSync('php', ['tests/Frontend/apoyo/c81-vistas.php', 'vet_atencion'], { cwd: raiz, encoding: 'utf8' });
     const carpeta = path.join(raiz, 'scratch/r/atencion-v2');
     const assets = path.join(raiz, 'scratch/r/atencion-retoques/assets');
@@ -56,7 +56,7 @@ test('Atención: scroll de página, cabecera, piezas y pie sticky en 1366/390', 
     const medidas = [];
     try {
         await n.enviar('Page.addScriptToEvaluateOnNewDocument', { source: 'localStorage.clear()' });
-        for (const ancho of [1366, 390]) {
+        for (const ancho of [900, 390]) {
             await n.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: ancho === 1366 ? 768 : 844, deviceScaleFactor: 1, mobile: ancho < 768 });
             await n.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/index.php?action=vet_atencion` });
             await n.esperar("document.readyState==='complete' && document.querySelector('[data-consulta-tres]')?.dataset.pasoActual==='0'");

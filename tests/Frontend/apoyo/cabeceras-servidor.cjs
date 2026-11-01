@@ -25,7 +25,7 @@ async function servidorCabecera(pantalla) {
         env: { ...process.env, ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' },
     });
     // Se mide el layout de PHP/CSS; las regresiones funcionales tienen sus propios servidores AJAX.
-    const htmlVista = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+    const htmlVista = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, etiqueta => pantalla[0] === 'Vet · Atención' && etiqueta.includes('js/atencion-escritorio.js') ? etiqueta : '');
     return servidorPacientes({ htmlVista });
 }
 
@@ -33,7 +33,7 @@ async function medirCabecera(nav) {
     await nav.esperar("document.readyState==='complete'");
     return nav.evaluar(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
         const cabecera=document.querySelector('.top-header, .atencion__barra');
-        const titulo=Array.from(cabecera.querySelectorAll('h1,h2,.atencion-cabecera-movil strong')).find(e=>e.textContent.trim() && e.getBoundingClientRect().height);
+        const titulo=Array.from(cabecera.querySelectorAll('h1,h2,.atencion-cabecera-movil strong,.atencion-franja__identidad strong')).find(e=>e.textContent.trim() && e.getBoundingClientRect().height);
         const cuerpo=document.querySelector('.content-body');
         const contenedor=cuerpo.querySelector('.content-wrapper') || cuerpo;
         const hoja=Array.from(contenedor.children).find(e=>e.getBoundingClientRect().height>0 && !['fixed','absolute'].includes(getComputedStyle(e).position)) || cuerpo;

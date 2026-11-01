@@ -47,7 +47,8 @@ async function conPacientes(ejecutar) {
     try {
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
         await nav.enviar('Page.navigate', { url: servidor.url });
-        await nav.esperar('typeof openOwnerDossier === "function"');
+        // Los eventos de edición se enlazan en DOMContentLoaded, después de declarar la función.
+        await nav.esperar('document.readyState === "complete" && typeof openOwnerDossier === "function"');
         await ejecutar(nav, servidor);
         assert.deepEqual(nav.errores, []);
     } finally {

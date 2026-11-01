@@ -1,0 +1,895 @@
+/* RE-2.1.6/7, RNF-16: V3 solo en Atención de escritorio. */
+#atencionApp .atencion-contexto,
+#atencionApp .atencion-ficha-resumen,
+#atencionApp .atencion-flotante__cabecera,
+#atencionApp .atencion-tratamientos-mas,
+#atencionApp .atencion-tratamiento-aviso,
+#atencionApp [data-ver-tratamientos] {
+    display: none;
+}
+@media (min-width: 1024px) {
+    body:has(#atencionApp) .dashboard-layout {
+        height: 100dvh;
+        min-height: 0;
+    }
+    body:has(#atencionApp) .main-content {
+        height: 100%;
+        min-height: 0;
+    }
+    body:has(#atencionApp) .content-body {
+        height: 100%;
+        min-height: 0;
+        padding: 12px 24px;
+        box-sizing: border-box;
+    }
+    body:has(#atencionApp) .content-wrapper {
+        height: 100%;
+        min-height: 0;
+    }
+    #atencionApp {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        height: 100%;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        gap: 10px;
+    }
+    #atencionApp .atencion__barra {
+        gap: 10px;
+        min-height: 62px;
+    }
+    #atencionApp .atencion__titulo {
+        display: none;
+    }
+    #atencionApp .atencion-franja {
+        flex: 1;
+        min-width: 0;
+        padding: 9px 10px;
+        gap: 10px;
+        border-radius: 18px;
+        flex-wrap: nowrap;
+    }
+    #atencionApp .atencion__volver {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        border-radius: 50%;
+    }
+    #atencionApp .atencion-franja__anillo {
+        width: 42px;
+        height: 42px;
+        padding: 2px;
+        border-width: 2px;
+    }
+    #atencionApp .atencion-franja__identidad {
+        flex: 1 1 150px;
+        min-width: 80px;
+    }
+    #atencionApp .atencion-franja__identidad strong {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 16px;
+        white-space: nowrap;
+    }
+    #atencionApp .atencion-nombre-paciente {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion-franja__identidad small {
+        display: block;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion__estado {
+        padding: 3px 6px;
+        font-size: 11px;
+        font-weight: 600;
+        flex: none;
+    }
+    #atencionApp .atencion-franja__datos {
+        flex: 2 1 470px;
+        min-width: 0;
+    }
+    #atencionApp .atencion-franja__datos dl {
+        grid-template-columns: 1fr .7fr 1fr 1.6fr;
+    }
+    #atencionApp .atencion-franja__datos dl > div {
+        min-width: 0;
+        padding: 0 8px;
+    }
+    #atencionApp .atencion-franja__datos dt {
+        font-size: 11px;
+        margin: 0 0 3px;
+        white-space: nowrap;
+    }
+    #atencionApp .atencion-franja__datos dd {
+        display: block;
+        font-size: 12px;
+        line-height: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion-franja__datos .paciente__telefono {
+        flex: none;
+        padding: 1px 5px;
+        font-size: 11px;
+        line-height: 16px;
+    }
+    #atencionApp .atencion-franja__datos dd:has(.atencion-propietario-nombre) {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 4px;
+        overflow: visible;
+    }
+    #atencionApp .atencion-propietario-nombre {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion-franja__alertas {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        flex: 0 1 190px;
+        min-width: 100px;
+        padding-left: 8px;
+        gap: 3px;
+    }
+    #atencionApp .atencion-franja__alertas > .atencion-franja__etiqueta {
+        grid-column: 1 / -1;
+    }
+    #atencionApp .atencion-franja__alertas .consulta-chip {
+        grid-column: 1;
+    }
+    #atencionApp .atencion-franja__alertas .consulta-agregar-alerta {
+        grid-column: 2;
+        grid-row: 2 / 4;
+        align-self: center;
+    }
+    #atencionApp .consulta-chip--alerta {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        min-height: 0;
+        padding: 3px 6px;
+        font-size: 12px;
+        line-height: 14px;
+    }
+    #atencionApp .consulta-agregar-alerta {
+        padding: 3px 6px;
+        font-size: 12px;
+    }
+    #atencionApp .cabecera-cuenta .cabecera-clinica {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        min-width: 0;
+    }
+    #atencionApp .cabecera-clinica__texto,
+    #atencionApp .cabecera-clinica__cambiar {
+        display: none;
+    }
+    #atencionApp .atencion__cuerpo,
+    #atencionApp .atencion__panel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        gap: 0;
+    }
+    #atencionApp .atencion__herramientas {
+        flex: none;
+        flex-wrap: nowrap;
+        gap: 8px;
+        margin: 0 0 10px;
+    }
+    #atencionApp .atencion__tab {
+        padding: 6px 9px;
+        line-height: 20px;
+        font-size: 12px;
+    }
+    #atencionApp .consulta-progreso {
+        padding: 3px;
+        gap: 7px;
+    }
+    #atencionApp .consulta-progreso .atencion__paso-btn {
+        padding: 3px 6px;
+        font-size: 12px;
+    }
+    #atencionApp .consulta-progreso b {
+        line-height: 20px;
+    }
+    #atencionApp .atencion-contexto {
+        display: block;
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        font-size: 12px;
+        color: var(--z-text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion__contenido,
+    #atencionApp .atencion__vista.is-active,
+    #atencionApp #formConsultaAtencion,
+    #atencionApp #formConsultaAtencion > fieldset {
+        display: flex;
+        flex: 1;
+        height: auto;
+        min-height: 0;
+        padding: 0;
+        gap: 0;
+    }
+    #atencionApp .consulta-tres {
+        height: 100%;
+        min-height: 0;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        align-items: stretch;
+        gap: 0 12px;
+    }
+    #atencionApp .consulta-tres__contenido {
+        display: flex;
+        min-height: 0;
+        height: auto;
+    }
+    #atencionApp .consulta-hoja.is-active {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        padding: 14px 18px;
+        box-sizing: border-box;
+    }
+    #atencionApp .atencion-columna {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        gap: 8px;
+    }
+    #atencionApp .consulta-campo {
+        gap: 4px;
+        min-height: 0;
+        flex-shrink: 0;
+    }
+    #atencionApp .consulta-campo__etiqueta {
+        font-size: 12px;
+        line-height: 15px;
+    }
+    #atencionApp .consulta-hoja input:where(:not([type=checkbox]):not([type=radio]):not([type=hidden])),
+    #atencionApp .consulta-hoja textarea {
+        font-size: 14px;
+        padding: 8px 10px;
+        min-height: 36px;
+        line-height: 18px;
+        border-radius: 10px;
+    }
+    #atencionApp textarea {
+        field-sizing: fixed;
+        resize: none;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    #atencionApp .atencion-campo-crece {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+    }
+    #atencionApp .atencion-campo-crece textarea {
+        height: auto;
+        min-height: 50px;
+        flex: 1;
+    }
+    #atencionApp [data-panel-movil],
+    #atencionApp .consulta-marca-sugerido,
+    #atencionApp .consulta-sintomas__ayuda {
+        display: none;
+    }
+    #atencionApp .consulta-sintomas {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+    #atencionApp .consulta-sintomas__chips {
+        order: 2;
+        gap: 5px;
+    }
+    #atencionApp .consulta-sintoma {
+        font-size: 12px;
+        padding: 4px 6px;
+    }
+    #atencionApp .consulta-vitales {
+        flex: none;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    #atencionApp .consulta-vital {
+        padding: 8px;
+        background: var(--z-surface);
+    }
+    #atencionApp .consulta-vital > label:first-child {
+        font-size: 11px;
+    }
+    #atencionApp .consulta-vital label i {
+        width: 22px;
+        height: 24px;
+    }
+    #atencionApp .consulta-vital__valor {
+        margin: 2px 0;
+    }
+    #atencionApp .consulta-hoja .consulta-vital .consulta-vital__valor input[data-consulta-campo] {
+        min-height: 24px;
+        padding: 0;
+        font-size: 22px;
+        line-height: 24px;
+    }
+    #atencionApp .consulta-vital small,
+    #atencionApp .consulta-vital .consulta-sin-peso {
+        font-size: 11px;
+        line-height: 12px;
+        margin: 0;
+    }
+    #atencionApp .consulta-vital [data-vital-rango] {
+        display: none;
+    }
+    #atencionApp .consulta-plan-elegible {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-height: 0;
+    }
+    #atencionApp .consulta-examenes {
+        display: flex;
+        gap: 5px;
+    }
+    #atencionApp .consulta-examen {
+        padding: 4px 6px;
+        font-size: 12px;
+        line-height: 16px;
+        gap: 4px;
+    }
+    #atencionApp .consulta-recomendaciones {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border: 1px solid var(--z-border);
+        border-radius: 10px;
+    }
+    #atencionApp .consulta-recomendaciones li {
+        margin: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--z-border);
+    }
+    #atencionApp .consulta-recomendaciones li:last-child {
+        border-bottom: 0;
+    }
+    #atencionApp .consulta-hoja .consulta-recomendaciones input {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        min-height: 28px;
+        height: 28px;
+        padding: 4px 8px;
+        border-radius: 0;
+        font-size: 12px;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .consulta-tratamientos {
+        flex: none;
+        gap: 5px;
+    }
+    #atencionApp .consulta-seccion__cabecera {
+        gap: 6px;
+        margin-bottom: 5px;
+    }
+    #atencionApp .consulta-seccion__cabecera h3 {
+        font-size: 12px;
+        font-family: Inter, sans-serif;
+        margin: 0;
+    }
+    #atencionApp .consulta-seccion__cabecera button {
+        font-size: 12px;
+        padding: 5px 7px;
+    }
+    #atencionApp [data-tratamientos-lista] {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-height: 0;
+    }
+    #atencionApp .consulta-tratamiento {
+        margin: 0;
+        padding: 5px 8px;
+        border: 1px solid var(--z-border);
+        background: var(--z-surface);
+        border-radius: 12px;
+    }
+    #atencionApp .tratamiento-tarjeta {
+        min-width: 0;
+    }
+    #atencionApp .tratamiento-tarjeta__cabecera {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+        gap: 5px;
+    }
+    #atencionApp .tratamiento-tarjeta__cabecera > strong:first-child {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .tratamiento-tarjeta__dosis {
+        display: block;
+        max-width: 100px;
+        margin: 0;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .tratamiento-tarjeta__cabecera button {
+        padding: 3px 5px;
+        font-size: 11px;
+        min-height: 23px;
+    }
+    #atencionApp .tratamiento-tarjeta__cabecera .consulta-tratamiento__quitar {
+        position: static;
+        grid-column: auto;
+        grid-row: auto;
+        margin: 0;
+        width: 23px;
+        height: 23px;
+        padding: 3px;
+    }
+    #atencionApp .tratamiento-tarjeta__cabecera .consulta-tratamiento__quitar:hover,
+    #atencionApp .tratamiento-tarjeta__cabecera .consulta-tratamiento__quitar:focus-visible {
+        border-color: var(--z-primary-borde);
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+    }
+    #atencionApp .tratamiento-tarjeta__metadatos {
+        display: block;
+        margin: 1px 0 0;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .tratamiento-tarjeta__metadatos .consulta-chip {
+        display: inline;
+        padding: 0 4px 0 0;
+        font-size: inherit;
+        background: transparent;
+    }
+    #atencionApp .atencion-tratamiento-aviso {
+        display: block;
+        margin: 3px 0 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--z-primary);
+        font-size: 11px;
+        line-height: 13px;
+    }
+    #atencionApp .consulta-tratamiento--bloqueo .atencion-tratamiento-aviso {
+        color: var(--z-danger-dark);
+    }
+    #atencionApp .tratamiento-tarjeta__indicacion,
+    #atencionApp .consulta-tratamiento > [data-marca-sugerida] {
+        display: none;
+    }
+    #atencionApp .consulta-panel {
+        position: static;
+        height: 100%;
+        min-height: 0;
+        background: var(--z-surface);
+    }
+    #atencionApp .consulta-panel .consulta-sugerencias {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        padding: 12px;
+        box-sizing: border-box;
+        gap: 8px;
+    }
+    #atencionApp .consulta-panel .consulta-sugerencias__cabecera {
+        margin: 0;
+    }
+    #atencionApp .consulta-collage {
+        height: 64px;
+        flex: none;
+        margin: 0;
+        padding: 10px 98px 10px 12px;
+        border-bottom: 0;
+    }
+    #atencionApp .consulta-collage::after {
+        top: 0;
+    }
+    #atencionApp .consulta-collage img {
+        width: 94px;
+        height: 64px;
+        bottom: 0;
+        object-fit: cover;
+        object-position: center 30%;
+    }
+    #atencionApp .consulta-collage strong {
+        font-size: 16px;
+    }
+    #atencionApp .consulta-collage small {
+        font-size: 11px;
+        margin: 2px 0 0;
+    }
+    #atencionApp .consulta-panel__sintomas,
+    #atencionApp .consulta-sugerencias__datos {
+        display: none;
+    }
+    #atencionApp .consulta-sugerencias__lista {
+        gap: 6px;
+    }
+    #atencionApp .consulta-sugerencia {
+        padding: 7px;
+        margin: 0;
+    }
+    #atencionApp .consulta-sugerencia:nth-child(n+4) {
+        display: none;
+    }
+    #atencionApp .consulta-sugerencia__nombre {
+        font-size: 12px;
+    }
+    #atencionApp .consulta-sugerencia__usar {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+    #atencionApp .consulta-sugerencia__cobertura {
+        font-size: 11px;
+    }
+    #atencionApp .consulta-sugerencia__contenido progress {
+        margin: 4px 0;
+    }
+    #atencionApp .consulta-sugerencias__apoyo {
+        margin-top: auto;
+        font-size: 11px;
+    }
+    #atencionApp .atencion-ficha-resumen {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px;
+        border: 1px solid var(--z-primary-borde);
+        border-radius: 12px;
+        background: var(--z-bg-suave);
+    }
+    #atencionApp .atencion-ficha-resumen__texto {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        line-height: 14px;
+    }
+    #atencionApp .atencion-ficha-resumen button {
+        font-size: 12px;
+        padding: 6px;
+    }
+    #atencionApp .consulta-ficha-mini[popover] {
+        position: fixed;
+        inset: 165px 360px auto auto;
+        width: 300px;
+        margin: 0;
+        padding: 14px;
+        box-sizing: border-box;
+        background: var(--z-surface);
+        border: 1px solid var(--z-border);
+        border-radius: 18px;
+        box-shadow: var(--z-shadow-lista);
+        overflow: visible;
+    }
+    #atencionApp .consulta-ficha-mini[popover] > strong,
+    #atencionApp .consulta-ficha-mini[popover] > p {
+        display: none;
+    }
+    #atencionApp .atencion-flotante__cabecera {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    #atencionApp .atencion-flotante__cabecera button {
+        margin: 0;
+        width: auto;
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+    #atencionApp .consulta-hoja-pie {
+        position: static;
+        min-height: 0;
+        box-shadow: none;
+    }
+    #atencionApp .consulta-hoja-pie .atencion__acciones {
+        min-height: 47px;
+        padding: 8px 16px;
+        gap: 8px;
+    }
+    #atencionApp .atencion__btn {
+        padding: 8px 12px;
+        line-height: 18px;
+        font-size: 12px;
+    }
+    #atencionApp .atencion-pie-estado {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #atencionApp [data-sugerencia-aviso] {
+        min-width: 0;
+        flex: 1;
+    }
+    #atencionApp [data-sugerencia-aviso] > div {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        gap: 4px;
+        min-width: 0;
+        font-size: 12px;
+    }
+    #atencionApp [data-sugerencia-aviso] span {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion__borrador {
+        flex: 0 1 100px;
+        font-size: 11px;
+        line-height: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .consulta-panel .consulta-contexto-aviso {
+        flex: none;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 8px;
+        gap: 5px;
+        font-size: 12px;
+        line-height: 15px;
+    }
+    #atencionApp .consulta-panel .consulta-contexto-aviso span {
+        flex: 1;
+        min-width: 0;
+    }
+    #atencionApp .consulta-panel .consulta-contexto-aviso button {
+        margin: 0;
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 16px;
+    }
+    #atencionApp .consulta-borrador-aviso {
+        min-width: 0;
+        font-size: 11px;
+    }
+    #atencionApp .consulta-adjuntos {
+        flex: none;
+        min-height: 80px;
+        padding: 12px;
+        gap: 3px;
+    }
+    #atencionApp .consulta-adjuntos strong {
+        font-size: 12px;
+    }
+    #atencionApp .consulta-adjuntos > i {
+        font-size: 22px;
+    }
+    #atencionApp .consulta-control {
+        padding: 12px;
+        min-width: 0;
+    }
+    #atencionApp .consulta-control__cabecera {
+        font-size: 14px;
+    }
+    #atencionApp .consulta-control__fecha label,
+    #atencionApp .consulta-control__fecha small {
+        font-size: 12px;
+    }
+    #atencionApp .consulta-resumen-cierre {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        padding: 12px !important;
+        box-sizing: border-box;
+    }
+    #atencionApp .consulta-resumen-cierre dl {
+        display: grid;
+        grid-template-columns: 70px minmax(0, 1fr);
+        gap: 0 8px;
+        padding: 8px 0;
+        font-size: 12px;
+    }
+    #atencionApp .consulta-resumen-cierre :is(dt, dd) {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--z-border);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    #atencionApp .procedimiento {
+        flex: 1;
+        min-height: 0;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 12px;
+        align-items: stretch;
+    }
+    #atencionApp .procedimiento__form {
+        display: flex;
+        min-height: 0;
+        padding: 16px;
+    }
+    #atencionApp .procedimiento__form fieldset {
+        flex: 1;
+        display: grid;
+        align-content: start;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+    }
+    #atencionApp .procedimiento__form .campo-fila {
+        display: contents;
+    }
+    #atencionApp .procedimiento__form .atencion__btn {
+        align-self: end;
+        justify-self: end;
+        grid-column: 1 / -1;
+    }
+    #atencionApp .procedimiento__registros {
+        min-height: 0;
+        padding: 14px;
+    }
+    #atencionApp .registros,
+    #atencionApp #atencionHistorial {
+        flex: 1;
+        min-height: 0;
+    }
+    #atencionApp .historia-fila__resumen {
+        min-height: 44px;
+        padding: 6px 8px;
+    }
+    #atencionApp .historia-fila__lineas {
+        min-width: 0;
+    }
+    #atencionApp .historia-fila__linea {
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .historia-fila__titulo,
+    #atencionApp .historia-fila__clinica {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #atencionApp .atencion-editor,
+    #atencionApp .atencion-lista-dialogo {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: min(720px, calc(100vw - 48px));
+        height: fit-content;
+        padding: 18px;
+        border: 1px solid var(--z-border);
+        border-radius: 20px;
+        box-shadow: var(--z-shadow-lista);
+        color: var(--z-text);
+        background: var(--z-surface);
+        overflow: visible;
+    }
+    #atencionApp .atencion-editor::backdrop,
+    #atencionApp .atencion-lista-dialogo::backdrop {
+        background: var(--z-velo-modal);
+    }
+    #atencionApp .atencion-editor .consulta-tratamiento__campos {
+        display: grid;
+    }
+    #atencionApp .atencion-editor [data-cerrar-tratamiento] {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+    #atencionApp [data-ver-tratamientos] {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+    #atencionApp .atencion-tratamientos-mas:popover-open {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: fixed;
+        inset: 160px auto auto 35%;
+        width: 370px;
+        margin: 0;
+        padding: 14px;
+        border: 1px solid var(--z-border);
+        border-radius: 16px;
+        background: var(--z-surface);
+        box-shadow: var(--z-shadow-lista);
+    }
+    #atencionApp .atencion-tratamientos-mas__lista {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    #atencionApp .atencion-lista-dialogo__contenido {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+    #atencionApp .atencion-lista-dialogo__navegacion {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+    #atencionApp {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #atencionApp .atencion__cuerpo,
+    #atencionApp .atencion__panel,
+    #atencionApp .atencion__contenido {
+        min-width: 0;
+    }
+    #atencionApp .consulta-tres,
+    #atencionApp .procedimiento {
+        grid-template-columns: minmax(0, 1fr) 270px;
+    }
+    #atencionApp .consulta-hoja.is-active {
+        padding: 10px 12px;
+        gap: 12px;
+    }
+    #atencionApp .consulta-examenes {
+        gap: 3px;
+    }
+    #atencionApp .consulta-examen {
+        padding: 2px 6px;
+    }
+}
+@media (min-width: 1024px) and (max-width: 1439px) {
+    #atencionApp .consulta-progreso .atencion__paso-btn:has(.consulta-progreso__corto) .consulta-progreso__nombre {
+        display: none;
+    }
+    #atencionApp .consulta-progreso .atencion__paso-btn .consulta-progreso__corto {
+        display: inline;
+    }
+}
+@media (min-width: 1024px) and (max-height: 649px) {
+    body:has(#atencionApp) .dashboard-layout {
+        height: auto;
+        min-height: 650px;
+    }
+    body:has(#atencionApp) .main-content,
+    body:has(#atencionApp) .content-body {
+        height: 650px;
+    }
+}

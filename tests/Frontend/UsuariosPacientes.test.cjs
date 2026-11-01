@@ -37,8 +37,17 @@ for (const tipo of Object.keys(directorios)) {
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width:1366, height:768, deviceScaleFactor:1, mobile:false });
             await nav.enviar('Page.navigate', { url:servidor.url });
             await nav.esperar('document.querySelectorAll(' + JSON.stringify(directorios[tipo][0].filas) + ').length===30');
+            // La campana carga al iniciar: debe terminar antes de medir peticiones de paginación.
+            await nav.esperar("document.readyState==='complete' && performance.getEntriesByType('resource').some(r=>r.name.includes('get_notificaciones_ajax'))");
+            if (tipo === 'pacientes') {
+                await nav.esperar("performance.getEntriesByType('resource').some(r=>r.name.includes('listar_propietarios_ajax'))");
+                await pintar(nav);
+            }
             for (const d of directorios[tipo]) {
-                const elegir = selector => nav.evaluar('document.querySelector(' + JSON.stringify(selector) + ').click()');
+                const elegir = async selector => {
+                    await nav.evaluar('document.querySelector(' + JSON.stringify(selector) + ').click()');
+                    await pintar(nav);
+                };
                 const consultar = () => nav.evaluar(`(() => {
                     const d=${JSON.stringify(d)};
                     const visibles=s=>[...document.querySelectorAll(s)].filter(n=>n.getBoundingClientRect().height>0);

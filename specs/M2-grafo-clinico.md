@@ -39,6 +39,20 @@ Estado: **entregada, pendiente de revisión**. Solo interfaz sobre la lógica ex
 - Fuera: motores, endpoints, migraciones, conocimiento, contenido de los pasos y rediseño del modal de Pacientes. Sin `.env`, base de trabajo ni Git de escritura.
 - Verificación: Chrome CDP1366×768/390×844 en los tres pasos y Vacuna (geometría, scroll y colores), regresiones de Atención/modal, suites PHP completas sin/con motor aislado usando únicamente `zooki_test_base_v2`, JS completo y capturas lado a lado con las referencias en `scratch/r/atencion-v2/`.
 
+## Atención — cero scroll en escritorio (2.3.0)
+
+**Encargo aprobado del dueño (2026-10-31). Escribe Codex; revisa Claude (arquitecto).** Base `c3ec2fd`, rama `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión** (Codex, 2026-10-31; revisa Claude).
+Interfaz de Atención; versión2.3.0 conservada.
+
+- **Decisión del dueño:** sección11/V3 manda sobre la10 en escritorio. Desde1024px de ancho y650px de alto no desplaza la página ni las tarjetas; ventanas más bajas admiten respaldo de página. Celular/tableta conservan V2.
+- Dos filas superiores; paciente como cabecera, cuenta a la derecha, pestañas/contexto/pasos debajo; pasos con dos columnas y campos de texto que absorben el espacio. Pie delgado con sugerencia/Deshacer y borrador; apoyo con tres diagnósticos y ficha flotante; resumen en Cierre.
+- RE-2.1.6/7, RE-2.8.1/6 y RNF-16: recomendaciones de una línea editables, filas compactas de tratamiento y recuadro para editar/agregar; procedimientos e historial compactos con acceso al resto. Conserva lógica, datos, validación y modal de Pacientes.
+- **Decisión confirmada del dueño (2026-10-31):** caben cinco tratamientos; desde seis se muestran cuatro y el botón cuenta los ocultos: con seis, «Ver 2 más». Corrige «Ver 1 más» del ejemplo de prueba del encargo.
+- **Ajuste del dueño durante la implementación (2026-10-31):** conservar tamaños de fuente legibles; no encoger de forma general letras que tienen espacio. Se vuelve a verificar1366×650 después de recuperar el tamaño de campos, recomendaciones, tratamientos y botones.
+- Verificación: Chrome CDP1366×650/1440×900/1920×1080 con ocho exámenes, seis recomendaciones de160caracteres, cinco tratamientos/síntomas, dos alertas y nombres largos; seis tratamientos, ficha abierta, tres pasos y Vacuna;390×844 conserva scroll/sticky. Suites PHP sin/con host usando solo `zooki_test_base_v2` y JS completas; comparativo en `scratch/r/atencion-v3/`.
+- Fuera: motores, endpoints, migraciones, conocimiento y diseño móvil. Sin `.env`, base de trabajo ni Git de escritura.
+
 ## 1. Resultado y límites
 
 **Resultado:** al atender, el veterinario marca los síntomas del paciente y Zooki le sugiere los diagnósticos probables ordenados por peso; al prescribir, bloquea un fármaco tóxico para la especie o raza o al que la mascota es alérgica, y advierte una interacción con su medicación vigente; las alergias y alertas médicas se registran y se ven en toda clínica vinculada y en el portal; existe el motor de triage de 4 niveles, probado con la batería de casos, listo para que la agenda lo use en el módulo 4; y el superadministrador ve el grafo completo como un mapa interactivo de nodos para revisar el conocimiento. Todo es de apoyo: la decisión es siempre del veterinario (RN-209).
@@ -2174,3 +2188,32 @@ Estado: **entregada, pendiente de revisión**.
 - **Verificación:** PHP completo sin host **1274/11161**,98 omitidas de motor; con host127.0.0.1/puerto33317, MariaDB10.4.32 temporal y base predeterminada `zooki_test_base_v2`: **1274/12484, sin omitidas**,13m30s. JS completo **470/470**; afectadas20/20, Atención/modal finales3/3 y comprobaciones finales de estructura y errores1/1 cada una. Primer motor detenido por bloqueo interno de InnoDB; repetición completa con E/S no nativa y log ampliado correcta. Motores de esta tarea detenidos.
 - **Evidencia:** `scratch/r/atencion-v2/indice.html`,32 imágenes comparativas, `medidas.json`, `php-sin-host-final.log`, `php-mysql-completo.log`, `js-completo-final.log`, `atencion-modal-final.log`, `estructura-entrega.log` y `errores-borrador-final.log`. Historial2.3.0 actualizado; PDF/Word regenerados y `--revisar` al día. Sin cambios de motores, endpoints, esquema o conocimiento; versión conservada.
 - **Pendientes:** revisión de Claude y prueba del dueño. No quedan decisiones de alcance pendientes; no se inició otra subetapa. El dueño hace commit/push.
+
+### Anexo — Resultado: Atención — cero scroll en escritorio (2026-10-31)
+
+**Escribió Codex; revisa Claude (arquitecto).**
+Base `c3ec2fd`, rama `release/v2.3.0`; **entregada, pendiente de revisión**.
+
+- **Riesgo principal: redistribución de los campos existentes.** El adaptador de Atención mueve los mismos nodos, sin clonar campos ni cambiar la lógica compartida.
+  Se comprueban orden de tratamientos, datos de `FormData`, validación, editor visible y enfocado, y restauración al pasar a móvil.
+  El modal de Pacientes conserva sus partials, estilos y comportamiento; las reglas nuevas tienen ámbito de Atención.
+- Estructura V3 con dos filas superiores, pasos de dos columnas y pie delgado; sin scroll de página ni de tarjetas desde1024×650.
+  Ficha flotante, tres sugerencias, resumen de Cierre, procedimientos/listas compactos y acceso al resto sin scroll interno.
+  Cinco tratamientos caben; con seis quedan cuatro y «Ver 2 más», según la decisión confirmada del dueño.
+  Campos principales14px y recomendaciones/botones12px; no se reduce la fuente para hacer caber el peor caso.
+- **Verificación visual (RE-2.1.6/7, RE-2.8.1/6, RNF-16):** `AtencionEscritorio` usa Chrome CDP y vistas PHP reales con API sintética.
+  Tres pasos, Vacuna y ficha abierta a1366×650/1440×900/1920×1080, con8 exámenes,6 recomendaciones de160 caracteres,5 tratamientos/síntomas,2 alertas y nombres largos.
+  Página igual al alto de ventana, cero elementos con contenido vertical recortado salvo campos de texto, botones de una línea; seis/doce tratamientos, listas largas, edición y Reintentar verificados.
+  El límite adicional1024×650 tiene regresión permanente de alto y ancho; se corrige el exceso inicial con columnas y separaciones, conservando las fuentes.
+  Las49 mediciones de escritorio, en los cuatro tamaños, quedan sin desbordes ni botones partidos.
+  A390×844 conserva scroll de página, pie sticky y ausencia del perro; a1366×600 funciona el respaldo de página.
+- **PHPUnit completo:** sin host1274 pruebas/11162 aserciones,98 omitidas de motor; con host127.0.0.1/puerto33318, MariaDB10.4.32 temporal y base predeterminada `zooki_test_base_v2`,1274/12485, sin fallos ni omitidas.
+  Motor de esta tarea detenido y temporal retirado; no se tocó la base de trabajo.
+- **JavaScript completo:** **471/471**, sin fallos ni omitidas, con `node --test --test-concurrency=4 tests/Frontend/*.test.cjs`.
+  Regresiones dirigidas de Atención/modal y cabecera correctas.
+  Las esperas de pruebas de agenda/directorios/Pacientes se sincronizan con la carga y el repintado reales, conservando las aserciones y sin cambios de esas pantallas.
+  El editor de la sexta fila falló la comprobación de visibilidad antes de corregir la apertura de su popover; después queda visible, centrado y enfocado.
+- **Evidencia:** `scratch/r/atencion-v3/indice.html`, cinco pares lado a lado con V3, capturas y `medidas.json`; registros `php-sin-host.log`, `php-mysql-completo.log`, `js-completo-definitivo.log` y `js-completo-cierre.log`.
+  Historial2.3.0 y descargas PDF/Word actualizados; versión conservada.
+- **Pendientes:** revisión independiente de Claude y prueba del dueño, en especial legibilidad y edición de tratamientos.
+  Sin cambios de motores, endpoints, migraciones o conocimiento; no se inició otra subetapa y el dueño hace commit/push.

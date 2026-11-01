@@ -6,6 +6,25 @@
 
 ## Ahora
 
+### Atención — cero scroll en escritorio (2.3.0) — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude (arquitecto).**
+  Base `c3ec2fd`, rama `release/v2.3.0`; contrato y «Anexo — Resultado» en M2.
+  V3 de escritorio: dos filas superiores, hoja en dos columnas, pie delgado, ficha flotante y tratamientos en recuadro.
+  Con seis tratamientos, cuatro visibles y «Ver 2 más», por decisión del dueño.
+  Fuentes recuperadas: campos14px y recomendaciones/botones12px; móvil V2 conservado.
+- **Riesgo principal:** mover los mismos campos sin alterar datos, orden, validación, borrador ni modal compartido.
+  Chrome comprueba `FormData`, orden, editor visible/centrado/enfocado y restauración móvil.
+  Peor caso a1366×650/1440×900/1920×1080 sin scroll ni contenido vertical recortado;390×844 mantiene scroll/sticky y1366×600 usa respaldo.
+  Regresión adicional del límite1024×650 con ajuste solo de anchos y separaciones, sin reducir fuentes.
+- **Verificación:** PHP completo sin host1274/11162,98 omitidas de motor; con host127.0.0.1/puerto33318, MariaDB10.4.32 temporal y `zooki_test_base_v2`:1274/12485, sin omitidas.
+  Motor detenido y temporal retirado; JS completo471/471, sin fallos ni omitidas, con concurrencia4 y regresiones de Atención/modal correctas.
+  Capturas, cinco comparativos V3, mediciones y registros en `scratch/r/atencion-v3/`.
+  Historial y PDF/Word al día; versión2.3.0 conservada.
+- **Sigue:** revisión de Claude y prueba del dueño, especialmente legibilidad y edición de tratamientos.
+  Sin decisiones de alcance pendientes, motores/endpoints/migraciones/conocimiento nuevos, `.env`, base de trabajo ni Git de escritura.
+  No se empezó otra subetapa.
+
 ### Atención — estructura corregida (2.3.0) — entregada, pendiente de revisión (2026-10-31)
 
 - **Escribió Codex; revisa Claude (arquitecto).** Base `fcc803e`, rama `release/v2.3.0`; contrato y anexo al final de M2.

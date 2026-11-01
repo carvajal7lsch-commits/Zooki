@@ -94,7 +94,7 @@ for (const width of [390, 1366]) {
                 triageModalC4 = { resultado: () => ({ nivel: 'rojo', id_solicitud: 123 }), resumen: () => 'Dificultad respiratoria' };
                 irAUrgenciasDesdeCita();
             `);
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await nav.esperar("document.querySelector('#dialogoRojo').open");
             assert.equal(await nav.evaluar("document.querySelector('#dialogoRojo').open"), true);
             assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [name=id_mascota]').value"), '1');
             assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [name=id_solicitud]')?.value"), '123');
