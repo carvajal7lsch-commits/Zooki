@@ -2325,3 +2325,4 @@ Estado: **entregada, pendiente de revisión**; decisión posterior del dueño qu
 - **Evidencia:** `scratch/r/atencion-ficha-lateral/seleccion-servidor.log`, `seleccion-interfaz.log`, `seleccion-y-detalles.png` y `nombre-sin-catalogo.png`.
   HU, RE, Modelos e Historial reflejan el flujo vigente; se actualizan sus descargas y el diagrama.
 - **Pendientes:** revisión de Claude y prueba del dueño; sin suites, cambios de conocimiento/motores, base de trabajo ni commit/push.
+  Cierre retomado el2026-11-01: vista final legible con todos los campos y botones; exportación del Historial completada tras liberar el archivo ocupado y retoque de los Word de HU/RE.

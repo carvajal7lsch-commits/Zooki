@@ -2,11 +2,11 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-31
+**Actualizado:** 2026-11-01
 
 ## Ahora
 
-### Alertas — nombre seleccionado y detalles libres — entregada, pendiente de revisión (2026-10-31)
+### Alertas — nombre seleccionado y detalles libres — entregada, pendiente de revisión (2026-11-01)
 
 - **Escribió Codex; revisa Claude (arquitecto).**
   Decisión vigente aprobada por el dueño en M2/RE-2.1.5: buscador principal Alérgico/a a, Medicamento que toma o Condición, con selección de sugerencia y detalles libres aparte.
@@ -15,6 +15,7 @@
 - **Verificación acotada:** sintaxis, ejemplos de registro con SQLite sintético y vista Chrome1366×650 con búsqueda real por alias, detalles independientes, nombre no encontrado y tipos; cero excepciones.
   Sin suites por instrucción del dueño; `AlertaSeleccionTest` y regresiones C1 escritas/actualizadas, no ejecutadas; las cifras anteriores no corresponden a este cambio.
   Anexo de Codex y evidencias en M2 y `scratch/r/atencion-ficha-lateral/`; HU/RE/Modelos/Historial actualizados, con descargas y diagrama del flujo vigente.
+  Cierre retomado el2026-11-01: vista final del formulario confirmada; se completa la exportación interrumpida, sin suites.
 - **Sigue:** revisión de Claude y prueba del dueño con su catálogo cargado; regresiones sin ejecutar por su instrucción.
   Versión2.3.0 conservada, sin migración, conocimiento, motores, base de trabajo ni Git de escritura.
 
