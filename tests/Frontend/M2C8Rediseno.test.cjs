@@ -422,6 +422,13 @@ test('H6: el buscador de nodos de «Registrar alergia» se maneja con el teclado
     const zona = colgar(form, 'div', { alertaZonaNodo: '' }, { hidden: true });
     const envoltura = colgar(zona, 'div', { alertaBuscar: '' });
     const buscador = colgar(envoltura, 'input', { alertaCampo: 'busqueda' }, { type: 'search' });
+    // RE-2.1.5 vigente: el enlace opcional fue sustituido por nombre seleccionado y detalles libres.
+    colgar(form, 'label', { alertaDescripcionTitulo: '' });
+    colgar(form, 'button', { alertaEnviar: '' }, { type: 'submit' });
+    colgar(zona, 'label', { alertaNombreTitulo: '' });
+    colgar(zona, 'input', { alertaNoEncuentro: '' }, { name: 'no_encuentro_nombre', type: 'checkbox', value: '1' });
+    colgar(zona, 'small', { alertaAviso: 'busqueda' });
+    colgar(zona, 'small', { alertaNombreAviso: '' });
     colgar(zona, 'div', { alertaNodoElegido: '' }, { hidden: true });
     const lista = colgar(zona, 'div', { alertaSugerencias: '' }, { hidden: true });
     colgar(form, 'p', { alertaResultado: '' });

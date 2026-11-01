@@ -43,8 +43,8 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 consultas++;
                 const peso = Number(cuerpo.get('peso'));
                 const dosis = peso > 0 ? `${peso / 2} mg (0,5 mg/kg) cada 24 h` : '0,5 mg/kg · calcula con el peso cada 24 h';
-                const pauta = { codigo: 'trata.prueba', farmaco: 'farmaco.prueba', medicamento: 'Fármaco sintético', dosis, via_administracion: 'Oral', duracion: '5 días', observaciones: 'Indicación sintética', seguridad: { ...seguridad, huella: undefined } };
-                respuesta = { success: true, plan: { examenes: ['Examen sintético'], recomendaciones: ['Recomendación sintética'] }, tratamientos: [pauta, { ...pauta, codigo: 'trata.otra', farmaco: 'farmaco.otro', medicamento: 'Otro sintético' }, { ...pauta, codigo: 'trata.bloqueada', seguridad: { ...seguridad, bloqueada: true } }] };
+                const pauta = { codigo: 'trata.prueba', farmaco: 'farmaco.prueba', medicamento: 'Fármaco sintético', dosis, via_administracion: 'Oral', duracion: '5 días', observaciones: 'Indicación sintética', precargar: true, seguridad: { ...seguridad, huella: undefined } };
+                respuesta = { success: true, plan: { examenes: ['Examen sintético'], recomendaciones: ['Recomendación sintética'] }, tratamientos: [pauta, { ...pauta, codigo: 'trata.otra', farmaco: 'farmaco.otro', medicamento: 'Otro sintético' }, { ...pauta, codigo: 'trata.alternativa', farmaco: 'farmaco.alternativa', medicamento: 'Alternativa sintética', precargar: false }, { ...pauta, codigo: 'trata.bloqueada', precargar: false, seguridad: { ...seguridad, bloqueada: true } }] };
                 if (retrasar) await new Promise(r => setTimeout(r, retrasar));
             }
             res.end(JSON.stringify(respuesta));
@@ -64,7 +64,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
     const evaluar = expresion => navegador.evaluar(expresion);
     try {
         for (const ancho of [390, 1366]) {
-            await navegador.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: ancho < 768 ? 844 : 950, deviceScaleFactor: 1, mobile: ancho < 768 });
+            await navegador.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: ancho < 768 ? 844 : 650, deviceScaleFactor: 1, mobile: ancho < 768 });
             for (const accion of ['vet_atencion', 'vet_pacientes']) {
                 await navegador.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/index.php?action=${accion}` });
                 await navegador.esperar("document.readyState === 'complete' && typeof ZookiConsultaForm !== 'undefined'");
@@ -106,6 +106,8 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 assert.ok(datos.filas[0].fin >= datos.filas[0].inicio);
                 assert.match(datos.aviso, /diagnóstico, plan y 2 tratamientos/);
                 assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-pauta-sugerida=\"trata.bloqueada\"]'))"), false);
+                assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-pauta-sugerida=\"trata.alternativa\"]'))"), false, 'precargar:false conserva la alternativa fuera del formulario');
+                assert.equal(await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').hidden"), false);
                 await evaluar("formPrueba.querySelector('[data-usar-diagnostico]').click()");
                 assert.equal(consultas - antes, 1, 'Usar otra vez después de completar tampoco duplica');
                 await evaluar("ponerPrueba('[data-tratamiento-campo=\"dosis\"]', 'a'.repeat(101))");
@@ -137,6 +139,21 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 await navegador.esperar("formPrueba.querySelector('[data-tratamiento-campo=\"huella\"]').value.length === 64");
                 assert.ok(validaciones > 0, 'Las filas pasan por validar_prescripcion_ajax');
                 assert.equal(await evaluar("document.documentElement.scrollWidth <= innerWidth"), true, 'Sin desborde ' + accion + '/' + ancho);
+                await evaluar("formPrueba.querySelector('[data-usar-diagnostico]').click()");
+                await navegador.esperar("!formPrueba.querySelector('[data-tratamientos-alternativas]').hidden");
+                await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').click()");
+                await navegador.esperar("formPrueba.querySelector('[data-alternativas-lista]').matches(':popover-open')");
+                assert.equal(await evaluar("formPrueba.querySelectorAll('[data-usar-alternativa]').length"), 1, 'Solo alternativas no bloqueadas');
+                assert.equal(await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').getAttribute('aria-expanded')"), 'true');
+                assert.equal(await evaluar("(() => { const r = formPrueba.querySelector('[data-alternativas-lista]').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })()"), true, 'Alternativas cabe en escritorio y celular');
+                fs.mkdirSync(path.join(raiz, 'scratch/r/refuerzo-conocimiento'), { recursive: true });
+                const alternativasCaptura = await navegador.enviar('Page.captureScreenshot', { format: 'png' });
+                fs.writeFileSync(path.join(raiz, `scratch/r/refuerzo-conocimiento/alternativas-${accion}-${ancho}.png`), Buffer.from(alternativasCaptura.data, 'base64'));
+                await evaluar("formPrueba.querySelector('[data-usar-alternativa]').click(); formPrueba.querySelector('[data-usar-alternativa]').click()");
+                await navegador.esperar("formPrueba.querySelectorAll('[data-pauta-sugerida=\"trata.alternativa\"]').length === 1");
+                assert.equal(await evaluar("formPrueba.querySelector('[data-alternativas-lista]').matches(':popover-open')"), false);
+                await evaluar("formPrueba.querySelector('[data-deshacer-sugerencia]').click()");
+                assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-pauta-sugerida=\"trata.alternativa\"]'))"), false, 'Deshacer retira también la alternativa añadida');
                 // Una respuesta que llega tras cambiar de paciente/formulario no agrega nada.
                 retrasar = 150;
                 await evaluar("formPrueba.querySelector('[data-usar-diagnostico]').click()");

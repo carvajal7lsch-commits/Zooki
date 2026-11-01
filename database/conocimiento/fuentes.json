@@ -534,5 +534,69 @@
     "url": "https://merckvetmanual.com/multimedia/table/antiepileptic-drugs",
     "fecha_consulta": "2026-10-30",
     "seccion": "Tabla: dosis de fenobarbital y levetiracetam"
+  },
+  {
+    "codigo": "msd.raticidas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Anticoagulant Rodenticide Poisoning in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/rodenticide-poisoning/anticoagulant-rodenticide-poisoning-in-animals",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Clinical Signs, Decontamination y Key Points: hemorragia diferida y exposición que requiere evaluación; el tipo de raticida debe confirmarse."
+  },
+  {
+    "codigo": "ucd.mdr1",
+    "entidad": "University of California, Davis, Veterinary Genetics Laboratory",
+    "titulo": "Multidrug Sensitivity (MDR1)",
+    "url": "https://vgl.vetmed.ucdavis.edu/test/multidrug-sensitivity-mdr1",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Phenotype y Breeds appropriate for testing; ivermectina/loperamida, Collie, Australian Shepherd, Shetland Sheepdog, Border Collie y German Shepherd."
+  },
+  {
+    "codigo": "wsu.mdr1_farmacos",
+    "entidad": "Washington State University, WADDL",
+    "titulo": "Is your pet at risk of an adverse reaction to common drugs?",
+    "url": "https://waddl.vetmed.wsu.edu/2021/10/19/is-your-pet-at-risk-of-an-adverse-reaction-to-common-drugs/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Ivermectin y Loperamide: neurotoxicidad con dosis para sarna en perros con mutación MDR1; la raza no sustituye la prueba genética."
+  },
+  {
+    "codigo": "iscaid.respiratorio",
+    "entidad": "International Society for Companion Animal Infectious Diseases",
+    "titulo": "Antimicrobial use Guidelines for Treatment of Respiratory Tract Disease in Dogs and Cats",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5354050/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Table 2: amoxicilina-clavulanato 12,5 mg/kg PO cada12h en gatos; solo infección bacteriana secundaria, no infección viral por sí sola."
+  },
+  {
+    "codigo": "vmd.clav_periodontal",
+    "entidad": "Veterinary Medicines Directorate (UK)",
+    "titulo": "Clavaseptin250mg: prospecto para perros",
+    "url": "https://www.vmd.defra.gov.uk/productinformationdatabase/files/QRD_Documents/QRD-Auth_725417.PDF",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Prospecto§4 indicaciones periodontales;§8 dosis combinada12,5mg/kg cada12h y duración7 días (páginas4,6–7)."
+  },
+  {
+    "codigo": "msd.quinolonas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Quinolones, Including Fluoroquinolones, for Use in Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/antibacterial-agents/quinolones-including-fluoroquinolones-for-use-in-animals",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Adverse effects: degeneración retiniana en gatos con enrofloxacina, riesgo dependiente de dosis."
+  },
+  {
+    "codigo": "uzh.metamizol",
+    "entidad": "Universität Zürich, CliniPharm",
+    "titulo": "Metamizol: dosificaciones",
+    "url": "https://www-vetpharm.uzh.ch/Wirkstoffe/000000000590/7380_05.html",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Katze: evitar preparados con alcohol bencílico; formulación y dosis deben ser revisadas por el veterinario. No se deriva una pauta para diagnósticos sin indicación localizada."
+  },
+  {
+    "codigo": "haleon.dolex",
+    "entidad": "Haleon Consumer Healthcare Colombia",
+    "titulo": "Dolex Colombia: productos",
+    "url": "https://www.dolex.com.co/productos/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Dolex tabletas: composición acetaminofén500mg. El alias solo ofrece el nodo; se confirma producto exacto y no descarta otros componentes de presentaciones combinadas."
   }
 ]

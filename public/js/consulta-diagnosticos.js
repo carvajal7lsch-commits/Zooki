@@ -332,7 +332,18 @@
         const deshacer = elemento('button', 'consulta-sugerencia__usar', 'Deshacer');
         deshacer.type = 'button';
         deshacer.dataset.deshacerSugerencia = '';
-        aviso.append(mensaje, deshacer);
+        const alternativas = elemento('button', 'consulta-sugerencia__usar', 'Alternativas');
+        alternativas.type = 'button';
+        alternativas.dataset.tratamientosAlternativas = '';
+        alternativas.hidden = true;
+        alternativas.setAttribute('aria-expanded', 'false');
+        const panelAlternativas = elemento('div', 'consulta-alternativas');
+        panelAlternativas.popover = 'auto';
+        panelAlternativas.dataset.alternativasLista = '';
+        panelAlternativas.setAttribute('aria-label', 'Tratamientos alternativos');
+        panelAlternativas.addEventListener('toggle', evento => alternativas.setAttribute('aria-expanded', String(evento.newState === 'open')));
+        aviso.append(mensaje, alternativas, deshacer);
+        form.append(panelAlternativas);
         (form.querySelector('[data-sugerencia-aviso]') || raiz).append(aviso);
         const pesoActual = () => peso && !peso.disabled ? peso.value.trim().replace(',', '.') : '';
         const notificar = campo => campo.dispatchEvent(new Event('input', { bubbles: true }));
@@ -388,6 +399,57 @@
             return null;
         }
 
+        function cerrarAlternativas() {
+            if (panelAlternativas.matches(':popover-open')) panelAlternativas.hidePopover();
+            panelAlternativas.replaceChildren();
+        }
+
+        alternativas.addEventListener('click', async () => {
+            const operacion = ultima;
+            if (!operacion || alternativas.disabled) return;
+            alternativas.disabled = true;
+            try {
+                const respuesta = await consultar(operacion.codigo, generacion);
+                if (!respuesta || ultima !== operacion) return;
+                cerrarAlternativas();
+                panelAlternativas.append(elemento('strong', '', 'Tratamientos alternativos'));
+                for (const pauta of respuesta.tratamientos.filter(p => p.precargar === false && !p.seguridad.bloqueada)) {
+                    if (tratamientos.filas().some(f => f.dataset.pautaSugerida === pauta.codigo)) continue;
+                    const fila = elemento('div', 'consulta-alternativas__fila');
+                    const datos = elemento('div');
+                    datos.append(elemento('strong', '', pauta.medicamento), elemento('small', '', `${pauta.dosis} · ${pauta.via_administracion}`));
+                    const usar = elemento('button', 'consulta-sugerencia__usar', 'Usar');
+                    usar.type = 'button';
+                    usar.dataset.usarAlternativa = pauta.codigo;
+                    usar.setAttribute('aria-label', `Usar ${pauta.medicamento}`);
+                    usar.addEventListener('click', async () => {
+                        usar.disabled = true;
+                        try {
+                            // Peso, contexto y seguridad se vuelven a consultar; el borrador no acredita vigencia.
+                            const vigente = await consultar(operacion.codigo, generacion);
+                            const actual = vigente?.tratamientos.find(p => p.codigo === pauta.codigo && !p.seguridad.bloqueada);
+                            if (!actual || ultima !== operacion || tratamientos.filas().some(f => f.dataset.pautaSugerida === actual.codigo)) return;
+                            operacion.filas.push(tratamientos.agregarSugerida(actual));
+                            notificar(form);
+                            cerrarAlternativas();
+                        } catch (error) {
+                            mensaje.textContent = error.message;
+                        } finally {
+                            usar.disabled = false;
+                        }
+                    });
+                    fila.append(datos, usar);
+                    panelAlternativas.append(fila);
+                }
+                if (panelAlternativas.children.length === 1) panelAlternativas.append(elemento('p', '', 'No quedan alternativas nuevas para agregar.'));
+                panelAlternativas.showPopover();
+            } catch (error) {
+                mensaje.textContent = error.message;
+            } finally {
+                alternativas.disabled = false;
+            }
+        });
+
         async function usar(candidato) {
             if (operaciones.has(candidato.codigo) || pendiente === candidato.codigo) return;
             const vigente = ++generacion;
@@ -407,7 +469,7 @@
                 if (editorPlan) editorPlan.agregar(respuesta.plan, candidato.codigo);
                 else for (const parte of partes) agregarTexto(plan, parte, operacion);
                 for (const pauta of respuesta.tratamientos) {
-                    if (pauta.seguridad.bloqueada) continue;
+                    if (pauta.seguridad.bloqueada || pauta.precargar === false) continue;
                     if (tratamientos.filas().some(f => f.dataset.pautaSugerida === pauta.codigo)) continue;
                     const fila = tratamientos.agregarSugerida(pauta);
                     operacion.filas.push(fila);
@@ -416,6 +478,9 @@
                 notificar(form);
                 operacion.cargando = false;
                 ultima = operacion;
+                cerrarAlternativas();
+                operacion.tieneAlternativas = respuesta.tratamientos.some(p => p.precargar === false && !p.seguridad.bloqueada);
+                alternativas.hidden = !operacion.tieneAlternativas;
                 pendiente = null;
                 planActual = respuesta.plan;
                 pintarPlan();
@@ -480,6 +545,8 @@
         }
 
         function retirar(operacion) {
+            cerrarAlternativas();
+            alternativas.hidden = true;
             const cambioAnterior = cambiando;
             cambiando = true;
             for (const registro of operacion.textos.slice().reverse()) {
@@ -557,6 +624,7 @@
                     operaciones: [...operaciones.values()].filter(o => !o.cargando).map(o => ({
                         codigo: o.codigo,
                         etiqueta: o.etiqueta,
+                        tieneAlternativas: o.tieneAlternativas,
                         textos: o.textos.map(r => ({ campo: r.campo === plan ? 'plan_tratamiento' : 'diagnostico', inicio: r.inicio, texto: r.texto, editado: r.editado })),
                         filas: o.filas.map(f => tratamientos.filas().indexOf(f)).filter(i => i >= 0),
                     })),
@@ -577,6 +645,8 @@
                 editorPlan?.restaurar(datos?.editorPlan, datos);
                 pintarPlan();
                 aviso.hidden = !ultima;
+                cerrarAlternativas();
+                alternativas.hidden = !ultima?.tieneAlternativas;
                 deshacer.hidden = !ultima;
                 mensaje.textContent = ultima ? 'Sugerencias recuperadas. Revisa antes de guardar. ' : '';
                 comunicarUso(ultima?.codigo || null);
@@ -592,6 +662,8 @@
                 editorPlan?.limpiar();
                 pintarPlan();
                 aviso.hidden = true;
+                cerrarAlternativas();
+                alternativas.hidden = true;
             },
         };
     }

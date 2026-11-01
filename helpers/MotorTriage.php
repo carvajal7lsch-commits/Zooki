@@ -19,6 +19,14 @@ final class MotorTriage
         $revision = false;
         $inmediata = false;
         $contagio = false;
+        // RN-416: peor caso solo en exposiciones; se conserva el dato desconocido para revisión.
+        foreach ($exposiciones as $codigo => $episodio) {
+            if (($episodio['tiempo'] ?? null) === 'no_se') {
+                $contexto['exposiciones'][$codigo] = ['tiempo' => 'conocido', 'minutos' => 0];
+                $revision = true;
+                $faltantes[] = ['regla' => 'exposicion_reciente_por_politica', 'campo' => 'exposiciones.' . $codigo . '.minutos'];
+            }
+        }
         $especie = $grafo->nodos[$paciente['especie'] ?? ''] ?? [];
         $cobertura = $especie['metadatos']['cobertura']['triage'] ?? 'sin_cobertura';
         $cubierta = in_array($cobertura, ['parcial', 'completa'], true);

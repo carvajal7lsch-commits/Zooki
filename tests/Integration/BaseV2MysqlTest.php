@@ -22,6 +22,25 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testMigracion18RazasYCargaRealSonRepetibles(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('DELETE FROM razas WHERE id_raza BETWEEN 56 AND 59');
+        $this->cargar('18_razas_mdr1.sql');
+        $this->cargar('18_razas_mdr1.sql');
+        $this->cargar('02_semilla.sql');
+        $razas = $this->db->query('SELECT nombre_raza FROM razas WHERE id_raza BETWEEN 56 AND 59 ORDER BY id_raza')->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertSame(['Collie', 'Border Collie', 'Pastor Australiano', 'Pastor de Shetland'], $razas);
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        $cargador = new CargadorConocimiento($this->db);
+        $cargador->cargar(__DIR__ . '/../../database/conocimiento');
+        $antes = $this->db->query('SELECT codigo,id_nodo FROM grafo_nodos ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC);
+        $segunda = $cargador->cargar(__DIR__ . '/../../database/conocimiento');
+        $this->assertSame(0, $segunda['altas'] + $segunda['cambios'] + $segunda['retiros']);
+        $this->assertSame($antes, $this->db->query('SELECT codigo,id_nodo FROM grafo_nodos ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     public function testControlMigracion17DosVecesConservaParametros(): void
     {
         $this->cargar('01_schema.sql');
@@ -109,7 +128,7 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='citas' AND descripcion LIKE 'Reclasificación veterinaria%'")->fetchColumn());
         $grafo = (new GrafoConocimiento($this->db))->instantanea();
         $paciente = new PacienteDiagnostico($this->db);
-        $this->assertNull($paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->assertSame('desconocida', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
         $this->db->exec("INSERT INTO vacunas (id_mascota,id_clinica,nombre_vacuna,fecha_aplicacion,fecha_proxima_dosis) VALUES (1,2,'Rabia','2029-01-01','2031-01-01')");
         $this->assertSame('completa', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
         $this->db->exec("UPDATE vacunas SET fecha_proxima_dosis='2029-01-02'");
@@ -1640,7 +1659,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql', '18_razas_mdr1.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

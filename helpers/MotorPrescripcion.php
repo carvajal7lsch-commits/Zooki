@@ -28,12 +28,28 @@ final class MotorPrescripcion
         }
         usort($aplicables, static fn (array $a, array $b): int => ($b['peso'] <=> $a['peso']) ?: strcmp($a['codigo'], $b['codigo']));
         $filas = [];
+        $grupos = [];
+        $elecciones = [];
+        $preferidas = [];
+        foreach ($aplicables as $arista) {
+            $seguridad = self::evaluar($arista['destino'], $contexto, $alergias, $vigentes, [], $grafo, $fecha);
+            $duplicada = in_array('duplicado', array_column($seguridad['advertencias'], 'tipo'), true);
+            $grupo = $arista['pauta']['grupo'] ?? null;
+            $eleccion = $arista['pauta']['grupo_eleccion'] ?? null;
+            $preferidas[$arista['codigo']] = !$duplicada && ($grupo === null || !isset($grupos[$grupo])) && ($eleccion === null || !isset($elecciones[$eleccion]));
+            if ($grupo !== null) {
+                $grupos[$grupo] = true;
+            }
+            if ($eleccion !== null) {
+                $elecciones[$eleccion] = true;
+            }
+        }
         $vias = ['oral' => 'Oral', 'subcutanea' => 'Subcutánea', 'intramuscular' => 'Intramuscular', 'intravenosa' => 'Intravenosa', 'topica' => 'Tópica', 'otica' => 'Ótica', 'oftalmica' => 'Oftálmica'];
         foreach ($aplicables as $arista) {
             $pauta = $arista['pauta'];
             $otras = [];
             foreach ($aplicables as $otra) {
-                if ($otra['codigo'] !== $arista['codigo']) {
+                if ($otra['codigo'] !== $arista['codigo'] && $preferidas[$otra['codigo']]) {
                     $otras[] = ['farmaco' => $otra['destino'], 'visible' => true];
                 }
             }
@@ -46,6 +62,7 @@ final class MotorPrescripcion
                 'via_administracion' => $vias[$pauta['via']],
                 'duracion' => $pauta['duracion_dias'] === null ? 'según evolución' : $pauta['duracion_dias'] . ' días',
                 'observaciones' => $pauta['indicacion'],
+                'precargar' => $preferidas[$arista['codigo']],
                 'seguridad' => PrescripcionPublica::desde($seguridad, $grafo),
             ];
         }
@@ -114,6 +131,9 @@ final class MotorPrescripcion
             }
             if (($medicacion['vigencia'] ?? 'vigente') === 'desconocida') {
                 self::incompleta($resultado, 'vigencia_desconocida');
+            }
+            if ($otro === $farmaco) {
+                $resultado['advertencias'][] = ['tipo' => 'duplicado', 'mensaje' => 'Este fármaco ya figura en la medicación del paciente. Revisa antes de duplicarlo.', 'farmaco' => $otro, 'protegida' => !($medicacion['visible'] ?? false)];
             }
             foreach ($grafo->aristas as $arista) {
                 $pareja = ($arista['origen'] === $farmaco && $arista['destino'] === $otro) || ($arista['destino'] === $farmaco && $arista['origen'] === $otro);

@@ -15,7 +15,7 @@ final class PacienteDiagnostico extends ModeloHistoria
                 $this->denegarAcceso('mascotas', $idMascota, 'Apoyo clínico sin vínculo activo (RN-113, RN-115)');
             }
         }
-        $consulta = $this->conn->prepare("SELECT m.fecha_nacimiento, m.sexo, m.esterilizado,
+        $consulta = $this->conn->prepare("SELECT m.fecha_nacimiento, m.sexo, m.esterilizado, m.peso,
                 ne.codigo AS especie_codigo, nr.codigo AS raza_codigo
             FROM mascotas m
             " . ($propietario ? '' : "JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = ? AND mc.estado = 'activo'") . "
@@ -28,6 +28,14 @@ final class PacienteDiagnostico extends ModeloHistoria
             $this->denegarAcceso('mascotas', $idMascota, 'Ficha no autorizada para apoyo clínico (RN-G02, RN-113)');
         }
         $raza = $grafo->nodos[$ficha['raza_codigo']] ?? null;
+        $atributos = $raza['metadatos'] ?? [];
+        if ($ficha['especie_codigo'] === 'especie.canino' && !isset($atributos['tamanio'])) {
+            $peso = $this->ultimoPeso($idMascota, $ficha['peso'], $propietario, $fecha);
+            if ($peso !== null && $peso > 0) {
+                // RN-416: clasificación de política, no una raza inferida ni diagnóstico.
+                $atributos['tamanio'] = $peso < 10 ? 'pequeno' : ($peso <= 25 ? 'mediano' : ($peso <= 45 ? 'grande' : 'gigante'));
+            }
+        }
         // Solo los códigos globales activos que usan los motores, sin leer historia protegida.
         $consultaAlertas = $this->conn->prepare('SELECT n.codigo FROM alertas_medicas a JOIN grafo_nodos n ON n.id_nodo = a.id_nodo AND n.activo = 1 WHERE a.id_mascota = ? AND a.activa = 1 ORDER BY a.id_alerta');
         $consultaAlertas->execute([$idMascota]);
@@ -40,7 +48,7 @@ final class PacienteDiagnostico extends ModeloHistoria
         }
         return [
             'especie' => $ficha['especie_codigo'],
-            'raza' => $raza === null ? null : ['codigo' => $raza['codigo'], 'atributos' => $raza['metadatos']],
+            'raza' => $raza === null && $atributos === [] ? null : ['codigo' => $raza['codigo'] ?? null, 'atributos' => $atributos],
             'edad_meses' => self::edadMeses($ficha['fecha_nacimiento'], $fecha),
             'sexo' => $ficha['sexo'] === 'Desconocido' ? null : $ficha['sexo'],
             'esterilizado' => $ficha['esterilizado'] === null ? null : (bool) $ficha['esterilizado'],
@@ -52,15 +60,25 @@ final class PacienteDiagnostico extends ModeloHistoria
     }
 
     /** RN-416/RN-113: después de autorizar la mascota, sus vacunas son globales entre clínicas. */
-    private function vacunacionRegistrada(int $idMascota, DateTimeImmutable $fecha): ?string
+    private function vacunacionRegistrada(int $idMascota, DateTimeImmutable $fecha): string
     {
         $consulta = $this->conn->prepare('SELECT COUNT(*) AS total, MAX(CASE WHEN fecha_proxima_dosis < ? THEN 1 ELSE 0 END) AS vencida FROM vacunas WHERE id_mascota = ?');
         $consulta->execute([$fecha->format('Y-m-d'), $idMascota]);
         $vacunas = $consulta->fetch(PDO::FETCH_ASSOC);
         if ((int) $vacunas['total'] === 0) {
-            return null;
+            return 'desconocida';
         }
         return (int) $vacunas['vencida'] === 1 ? 'incompleta' : 'completa';
+    }
+
+    /** RN-113: el peso de una consulta ajena protegida no se usa para inferir atributos visibles. */
+    private function ultimoPeso(int $idMascota, mixed $pesoFicha, bool $propietario, DateTimeImmutable $fecha): ?float
+    {
+        [$visible, $parametros] = $propietario ? ['1 = 1', []] : $this->consultaVisible('c');
+        $consulta = $this->conn->prepare('SELECT c.peso FROM consultas c WHERE c.id_mascota = ? AND c.peso > 0 AND c.fecha_hora <= ? AND (' . $visible . ') ORDER BY c.fecha_hora DESC, c.id_consulta DESC LIMIT 1');
+        $consulta->execute([$idMascota, $fecha->format('Y-m-d H:i:s'), ...$parametros]);
+        $peso = $consulta->fetchColumn();
+        return $peso === false ? ($pesoFicha === null ? null : (float) $pesoFicha) : (float) $peso;
     }
 
     private static function edadMeses(?string $nacimiento, DateTimeImmutable $fecha): ?int

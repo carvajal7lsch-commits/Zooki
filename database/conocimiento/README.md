@@ -62,6 +62,15 @@ Solo `trata` admite el campo obligatorio `pauta`, de lista cerrada:
 }
 ```
 
+`grupo` es opcional y cerrado por clase: `aine`, `corticoide`, `antipruriginoso`, `antiparasitario`, `antiemetico`, `analgesico_opioide`, `antifungico`, `antibiotico`, `antiulceroso`, `antitiroideo`, `hormona_tiroidea`, `anticonvulsivo`, `insulina`, `suplemento`.
+Sugerir ordena por peso descendente y código estable; solo la primera pauta de cada grupo es precargable, y sin grupo se conserva la precarga.
+Una duplicada de medicación existente advierte `duplicado` y no se precarga; el grupo ya ocupado no busca otra pauta para añadir a esa medicación.
+Las demás se ofrecen como Alternativas explícitas, con nueva consulta de peso/seguridad al usarlas y validación normal al guardar.
+Las alternativas sin elegir no se tratan como medicación que el paciente ya toma.
+Decisión aprobada del dueño,2026-11-01: `grupo_eleccion` opcional requiere `grupo`; su lista cerrada es `control_prurito`, `antiprotozoario`.
+Se aplica dentro del diagnóstico solicitado además del límite por clase: las pautas del mismo grupo de elección compiten aun si sus clases difieren.
+Control_prurito une oclacitinib/prednisolona en dermatitis; antiprotozoario une fenbendazol/metronidazol en giardiasis. Los complementarios de clases y elecciones distintas siguen precargándose juntos.
+
 Exactamente uno de `dosis_mg_kg` y `dosis_texto` es distinto de null. El rango exige ambos extremos numéricos positivos finitos y mínimo ≤ máximo; un valor fijo repite ambos extremos. `dosis_texto` es texto no vacío que cabe en el campo de dosis (100 caracteres).
 Vías: `oral`, `subcutanea`, `intramuscular`, `intravenosa`, `topica`, `otica`, `oftalmica`. `frecuencia_horas` es entero positivo o null (dosis única); `duracion_dias` es entero positivo o null (según evolución); `indicacion` es texto no vacío de hasta 160 caracteres. Se rechazan espacios sobrantes y campos desconocidos.
 La migración 16 agrega `grafo_aristas.pauta` JSON; el plan usa los metadatos existentes. Cambiar pauta o plan modifica la versión y conserva IDs en recarga idempotente. Fixtures exclusivamente sintéticos en `tests/Fixtures/conocimiento/pautas`.
@@ -122,14 +131,14 @@ $contexto = [
 Cada campo puede faltar o ser `null`: es desconocido, nunca cero ni falso.
 Una edad cero es un recién nacido conocido y `esterilizado: false` es un estado conocido.
 `sexo` admite Macho/Hembra; la ficha «Desconocido» se normaliza a `null`.
-`vacunacion` admite completa/incompleta/desconocida si se declara: `desconocida` es una respuesta explícita del catálogo; omitirla produce `null`, y el motor no la deduce de vacunas registradas.
-`raza.atributos` solo lleva los atributos acreditados del nodo enlazado; un atributo ausente no equivale a falso ni se inventa desde `raza_indicada`.
+`vacunacion` admite completa/incompleta/desconocida si se declara: `desconocida` es una respuesta del catálogo y el resultado sin registros cuando no se declara otra. PacienteDiagnostico deriva registros globales: alguna próxima dosis vencida→incompleta; alguna vacuna y ninguna vencida→completa; ninguna→desconocida (RN-416, decisión2026-10-31). Un contexto puro con null sigue siendo dato faltante.
+`raza.atributos` conserva los atributos del nodo enlazado; no interpreta raza_indicada. RN-416 permite suplir solo tamaño canino desde el último peso de consulta visible no futura, o ficha si no hay: <10kg pequeño,10–25 incluido mediano,>25–45 incluido grande,>45 gigante. No cambia el código de raza; braquicefalia no se infiere del peso. Los nodos Criollo usan false por política aprobada de catálogo, sin afirmar genotipo ni morfología individual.
 `alertas_activas` es la lista de códigos enlazados a alertas activas conocidas; vacía significa que no hay esos registros, no que el paciente carezca de alergias o enfermedades.
 
 `sintomas` y `exposiciones` son mapas por código, sin duplicados.
 Un mapa vacío es una selección conocida vacía; que un código no esté significa «no marcado», no un hallazgo clínico negativo.
 Si el mapa completo es `null`, la selección es desconocida.
-La marca con `minutos: null` acredita el evento pero desconoce el tiempo; las exposiciones sin hora pueden activar reglas sin intervalo.
+La marca con `minutos: null` acredita el evento pero desconoce el tiempo. MotorTriage copia las exposiciones con tiempo no_se y calcula con0min por precaución (RN-416), conservando datos_faltantes y revisión; jamás modifica las entradas ni los síntomas. Los demás motores no aplican esta suposición.
 Para un evento no marcado, su condición temporal no aplica (falso); para uno marcado sin hora es desconocida.
 Los minutos son números no negativos referidos a la fecha de evaluación.
 Alternativamente, un episodio interno puede traer `desde: DateTimeImmutable`; el evaluador obtiene los minutos respecto a la fecha inyectada, y un inicio futuro queda desconocido.
@@ -189,7 +198,9 @@ Rojo no informa revisión del personal, y `revision_inmediata` y `contagio` se c
 La respuesta incluye `reglas_aplicadas`, `datos_faltantes`, `version` y `aviso` de apoyo pendiente de validación veterinaria.
 
 `GET ?action=buscar_sintomas_ajax&q=bomita&especie=especie.canino` entrega sugerencias de código/etiqueta, coincidencia y similitud, sin seleccionar ni calcular.
-`BuscadorSintomas` normaliza con `ArchivosConocimiento`, ordena exacto/prefijo/palabras y finalmente Damerau-Levenshtein sobre Unicode.
+`BuscadorSintomas` normaliza con `ArchivosConocimiento` y elimina una lista cerrada de relleno; solo para sustancias/fármacos elimina también comio/tomo/di/dio/trago.
+Cada palabra de contenido debe coincidir por prefijo o alcanzar0,65 con alguna palabra de la etiqueta o de un sinónimo completo, usando Damerau-Levenshtein Unicode; no mezcla fragmentos de sinónimos distintos.
+Ordena por similitud media descendente; empates por exacta/prefijo/palabras/aproximada y código estable. Nunca interpreta la nota ni selecciona.
 El umbral técnico es 0.65 y el máximo ocho opciones, reservando una para «Otro / no sé»; la búsqueda admite hasta 100 caracteres para acotar su costo.
 El filtro conserva alarmas universales y conceptos sin restricción de especie; el catálogo actual declara sus síntomas globales, sin inventar exclusividades a partir de su nombre.
 La lectura de C6 aporta únicamente nodos y sinónimos activos.

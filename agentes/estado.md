@@ -6,6 +6,20 @@
 
 ## Ahora
 
+### Refuerzo del conocimiento tras pruebas (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+
+- Escribió Codex; revisa Claude (arquitecto).
+  Búsqueda por palabras y alias, triage conservador, vacunación desconocida sin registros, tamaño por peso visible, ranking y seguridad MDR1/prednisolona.
+  Clase farmacológica más grupo de elección por diagnóstico aprobados por el dueño; precarga preferida, duplicados y Alternativas sin rediseñar Atención.
+  Migración18 y semilla con razas; versión2.3.0 conservada, conocimiento pendiente de validación veterinaria.
+- Verificación: PHP completo sin host1410 pruebas/11912 comprobaciones,99 omitidas de motor; MySQL dirigido repetible y cargador --revisar en base predeterminada, sin .env.
+  Banco comparable195/1008→97/1008 revisiones; ranking26/26 primero,29 frases entre tres; casos reforzados127 pruebas finales.
+  JS completo466/472 inicialmente; cinco fallos corregidos mediante variable de sombra y actualización de fixtures de cambios visuales ya aprobados;29 regresiones afectadas verdes en comprobaciones dirigidas.
+  Decisión del dueño,2026-11-01: documentar aparte el desborde previo de Evaluación a1024×650, idéntico en HEAD, y entregar el refuerzo sin ampliar el diseño.
+- Sigue: revisión de Claude; el desborde queda como pendiente separado de Atención y JS completo conserva esa excepción conocida, aceptada por el dueño para esta entrega.
+  MySQL dirigido final3 pruebas/13 comprobaciones; --revisar sin cambios, motor detenido. PDF/Word completados y diagramas renderizados.
+  Evidencias en `scratch/r/refuerzo-conocimiento/`; no se inició semilla demo ni se hizo commit/push.
+
 ### Alertas — nombre seleccionado y detalles libres — entregada, pendiente de revisión (2026-11-01)
 
 - **Escribió Codex; revisa Claude (arquitecto).**

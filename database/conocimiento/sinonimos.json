@@ -4719,5 +4719,205 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.diarrea.0",
+    "nodo": "sintoma.diarrea",
+    "texto": "churrias",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.decaimiento.0",
+    "nodo": "sintoma.decaimiento",
+    "texto": "triste",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.abdomen_distendido.1",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "se le hinchó la barriga",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.abdomen_distendido.2",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "panza inflada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.farmaco.paracetamol.1",
+    "nodo": "farmaco.paracetamol",
+    "texto": "Dolex",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "haleon.dolex",
+        "localizador": "Productos: Dolex tabletas500mg de acetaminofén; el buscador solo sugiere, no acredita composición ni dosis ingerida.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.perdida_peso.0",
+    "nodo": "sintoma.perdida_peso",
+    "texto": "flaco",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.perdida_peso.1",
+    "nodo": "sintoma.perdida_peso",
+    "texto": "adelgazó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.secrecion_nasal.1",
+    "nodo": "sintoma.secrecion_nasal",
+    "texto": "moquitos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.cojera_leve_estable.0",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "patica",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.cojera_leve_estable.1",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "le duele la patica",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.traumatismo.0",
+    "nodo": "sintoma.traumatismo",
+    "texto": "lo mordió otro perro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.traumatismo.1",
+    "nodo": "sintoma.traumatismo",
+    "texto": "herida",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sintoma.traumatismo.2",
+    "nodo": "sintoma.traumatismo",
+    "texto": "mordida",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sustancia.raticida.0",
+    "nodo": "sustancia.raticida",
+    "texto": "raticida",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.refuerzo.sustancia.raticida.1",
+    "nodo": "sustancia.raticida",
+    "texto": "veneno para ratas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

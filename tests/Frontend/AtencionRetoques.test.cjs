@@ -98,7 +98,11 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
                 if (!process.env.ZOOKI_CAPTURAS_ANTES) {
                     await e("poner('[name=peso]','');ZookiConsultaForm.validarTodo(f.querySelector('[data-consulta-paso=\"0\"]'))");
                     assert.equal(await e("getComputedStyle(f.querySelector('[data-campo-aviso=peso]')).color"),'rgb(185, 28, 28)','Error rojo');
-                    if (a === 'vet_atencion') assert.notEqual(await e("getComputedStyle(f.querySelector('[data-campo-aviso=peso]'),'::before').content"), 'none', 'Error con icono debajo del campo');
+                    if (a === 'vet_atencion') {
+                        const icono = await e("getComputedStyle(f.querySelector('[data-campo-aviso=peso]'),'::before').content");
+                        if (ancho >= 1024) assert.equal(icono, 'none', 'El dueño retiró el icono del error de peso en el retoque de escritorio');
+                        else assert.notEqual(icono, 'none', 'Móvil conserva el indicador de validación');
+                    }
                     await e("poner('[name=peso]','9');poner('[name=temperatura]','40')");
                     await n.esperar("f.querySelector('[data-vital=temperatura]').classList.contains('consulta-vital--fuera')");
                     assert.equal(await e("getComputedStyle(f.querySelector('[data-vital=temperatura] input')).color"),'rgb(0, 82, 255)','Referencia azul');
@@ -172,13 +176,14 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
                         if (!process.env.ZOOKI_CAPTURAS_ANTES) assert.equal(await e(`document.querySelector('[data-vista=${tab}]').getBoundingClientRect().height>0`),true);
                     }
                     if (!process.env.ZOOKI_CAPTURAS_ANTES) {
-                        assert.equal(await e("document.querySelector('.atencion-franja__datos dl')!==null"),true);
+                        assert.equal(await e(`document.querySelector('${ancho >= 1024 ? '[data-ficha-paciente]' : '.atencion-franja__datos'} dl')!==null`),true);
                         if (ancho < 768) await e("document.querySelector('[data-abrir-alertas]').click()");
+                        else await e("document.querySelector('[data-abrir-ficha-paciente]').click()");
                         const cta = await e("(()=>{const b=document.querySelector('[data-registrar-alerta]');b.focus();const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,foco:document.activeElement===b,borde:getComputedStyle(b).borderStyle};})()");
                         assert.equal(cta.foco,true);
-                        assert.equal(cta.borde,'solid');
+                        assert.equal(cta.borde,ancho >= 1024 ? 'none' : 'solid','Agregar es botón de texto en la ficha lateral de escritorio');
                         await n.enviar('Input.dispatchMouseEvent',{type:'mouseMoved',x:cta.x,y:cta.y});
-                        if (ancho === 1366) assert.equal(await e("getComputedStyle(document.querySelector('[data-registrar-alerta]')).borderTopColor"),'rgb(0, 82, 255)');
+                        if (ancho === 1366) assert.equal(await e("getComputedStyle(document.querySelector('[data-registrar-alerta]')).color"),'rgb(0, 82, 255)');
                         assert.equal(await e("document.querySelectorAll('[data-alertas-chips] .consulta-chip--alerta:not([hidden])').length"),2);
                         await e("document.querySelector('[data-alertas-mas]').click()");
                         assert.equal(await e("document.querySelectorAll('[data-alertas-chips] .consulta-chip--alerta:not([hidden])').length"),4);

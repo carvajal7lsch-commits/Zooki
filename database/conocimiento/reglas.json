@@ -105,6 +105,11 @@
           "codigo": "especie.canino"
         },
         {
+          "predicado": "edad_meses",
+          "minimo": 6,
+          "incluye_minimo": true
+        },
+        {
           "predicado": "sexo",
           "valor": "Hembra"
         },
@@ -167,6 +172,11 @@
       {
         "codigo": "zooki.casos_triage",
         "localizador": "§2.B: hembra entera con signos tras el celo, naranja",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
         "fundamento": "politica"
       }
     ],
@@ -1046,6 +1056,10 @@
             {
               "predicado": "exposicion",
               "codigo": "farmaco.ibuprofeno"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.raticida"
             }
           ]
         }
@@ -1105,6 +1119,11 @@
         "codigo": "zooki.decisiones_b21",
         "localizador": "B2 — Revisión, decisión 1 del usuario (2026-10-14): toxicidad documentada para la especie implica mínimo naranja; chocolate solo con menos de 720 minutos",
         "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs, Decontamination; exposición potencialmente grave con inicio diferido, revisión para identificar raticida.",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1155,6 +1174,18 @@
             {
               "predicado": "exposicion",
               "codigo": "farmaco.meloxicam"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.raticida"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.enrofloxacina"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.metamizol"
             }
           ]
         }
@@ -1224,6 +1255,21 @@
         "codigo": "zooki.decisiones_b21",
         "localizador": "B2 — Revisión, decisión 1 del usuario (2026-10-14): toxicidad documentada para la especie implica mínimo naranja; chocolate solo con menos de 720 minutos",
         "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs, Decontamination; exposición potencialmente grave con inicio diferido, revisión para identificar raticida.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.quinolonas",
+        "localizador": "Adverse effects: degeneración retiniana felina; especial precaución con dosis de5mg/kg/día o más.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "uzh.metamizol",
+        "localizador": "Katze: no usar preparados con alcohol bencílico; verificar formulación y dosis.",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1329,6 +1375,38 @@
       {
         "codigo": "zooki.decisiones_b21",
         "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): menos de 30 minutos implica naranja con revisión; no declara un parto seguro",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.permetrina_felino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "exposicion",
+          "codigo": "farmaco.permetrina"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ectoparasiticidas",
+        "localizador": "Pyrethrins and Pyrethroids: permetrina altamente tóxica para gatos; productos caninos no deben usarse en gatos.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
         "fundamento": "politica"
       }
     ],

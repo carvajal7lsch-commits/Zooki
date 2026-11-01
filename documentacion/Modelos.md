@@ -203,7 +203,10 @@ flowchart TD
   MA -- No --> ME["Aviso junto al apoyo; conservar formulario y permitir reintento"]
   ME --> M
   MA -- Si --> MS["Filtrar trata por especie y condiciones; excluir bloqueos de toxicidad o alergia;<br/>advertencias publicas sin evidencia protegida; ordenar por preferencia"]
-  MS --> ML["Agregar sin duplicar: diagnostico, examenes, recomendaciones y filas editables;<br/>mg calculados o mg/kg con calcula con el peso; marca verifica la dosis"]
+  MS --> GP["Preferida por clase y grupo de eleccion del diagnostico; duplicado vigente advierte y no precarga; sin grupo conserva precarga"]
+  GP --> ML["Agregar sin duplicar: diagnostico, examenes, recomendaciones y filas preferidas editables;<br/>mg calculados o mg/kg con calcula con el peso; marca verifica la dosis"]
+  GP --> ALT["Alternativas junto a Zooki lleno; Usar consulta peso/contexto/seguridad vigentes;<br/>decision explicita y Deshacer conserva ediciones"]
+  ALT --> ML
   ML --> CAM["Usar abre paso 2 Diagnostico y tratamiento;<br/>Cambiar o borrar diagnostico retira solo sus sugerencias sin editar;<br/>lo revisado se conserva como propio"]
   CAM --> MD["Aviso de lo agregado y Deshacer que conserva texto previo y ediciones;<br/>peso recalcula solo dosis sugeridas aun no editadas; validacion en tiempo real"]
   MD --> L
@@ -214,7 +217,7 @@ flowchart TD
   P --> Q{"Alergia registrada del paciente o toxicidad de especie/raza<br/>con efecto bloqueo? (RN-211)"}
   Q -- Si --> Q1[/"Mensaje de bloqueo: elige otro farmaco"/]
   Q1 --> P
-  Q -- No --> R{"Advertencia por toxicidad, regla o interaccion<br/>con medicacion vigente u otra fila nueva?"}
+  Q -- No --> R{"Advertencia por duplicado, toxicidad, regla o interaccion<br/>con medicacion vigente u otra fila nueva?"}
   R -- Si --> RP{Aviso de medicacion protegida segun RN-113?}
   RP -- No --> R1[Advertencia visible y decision auditada]
   RP -- Si --> RG["Aviso generico sin farmaco, dosis ni contenido protegido"]
@@ -284,11 +287,12 @@ Las solicitudes no urgentes en espera se ordenan amarillo antes de verde y, dent
 flowchart TD
   A([Agendar o registrar llegada]) --> R{"Veterinario o propietario en contexto legitimo?"}
   R -- No --> DEN[/"403; admin no crea citas"/]
-  R -- Si --> CAP["Mascota propia/vinculada, marcas y tiempos; vacunacion declarada o registros de esa mascota en cualquier clinica; nota fuera del calculo"]
+  R -- Si --> CAP["Mascota propia/vinculada, marcas y tiempos; vacunacion declarada o registros globales; sin registros desconocida; ultimo peso visible para tamano canino; nota fuera del calculo"]
   NUE["Abrir Nueva cita"] --> JOR{"Jornada aprobada del veterinario?"}
   JOR -- No --> SIN["Aún no tienes horario aprobado: propón tu horario en Mi perfil; portal excluye ese vet"]
   JOR -- Si --> CAP
-  CAP --> G["Grafo I: maximo, version y banderas; conservar 26 T"]
+  CAP --> CTX["Poscelo solo canina desde6 meses; toxico sin hora:0min solo al calcular y pedir revision; nunca suponer tiempo de sintomas"]
+  CTX --> G["Grafo I: maximo, version y banderas; conservar 26 T"]
   G --> RO{Rojo?}
   RO -- Si --> HOR{Clinica abierta segun horario y cierres?}
   HOR -- No --> CERR[/"Cerrada; telefono de urgencias si existe y servicio 24h"/]

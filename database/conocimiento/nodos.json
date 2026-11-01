@@ -3290,5 +3290,241 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.garrapatas",
+    "tipo": "sintoma",
+    "etiqueta": "Tiene garrapatas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Etiology and Pathogenesis: transmisión por garrapatas; la presencia no confirma infección.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.raticida",
+    "tipo": "sustancia",
+    "etiqueta": "Veneno para ratas (raticida)",
+    "fuentes": [
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs y Decontamination: intoxicación por anticoagulantes; confirmar producto, no presumir el principio activo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.criollo_canino",
+    "tipo": "raza",
+    "etiqueta": "Criollo (Mestizo)",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Criollo (Mestizo)"
+    },
+    "metadatos": {
+      "braquicefalo": false
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.criollo_felino",
+    "tipo": "raza",
+    "etiqueta": "Criollo",
+    "taxonomia": {
+      "especie": "Felino",
+      "raza": "Criollo"
+    },
+    "metadatos": {
+      "braquicefalo": false
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.collie",
+    "tipo": "raza",
+    "etiqueta": "Collie",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Collie"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.border_collie",
+    "tipo": "raza",
+    "etiqueta": "Border Collie",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Border Collie"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Border Collie; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pastor_australiano",
+    "tipo": "raza",
+    "etiqueta": "Pastor Australiano",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pastor Australiano"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Pastor Australiano; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pastor_shetland",
+    "tipo": "raza",
+    "etiqueta": "Pastor de Shetland",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pastor de Shetland"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Pastor de Shetland; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.ivermectina",
+    "tipo": "farmaco",
+    "etiqueta": "Ivermectina",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: ivermectina200mcg/kg oral o SC,2–4 tratamientos separados2 semanas; uso extrarrótulo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.amoxicilina_clavulanato",
+    "tipo": "farmaco",
+    "etiqueta": "Amoxicilina con ácido clavulánico",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: amoxicilina-clavulanato en cistitis bacteriana canina.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.cefalexina",
+    "tipo": "farmaco",
+    "etiqueta": "Cefalexina",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: ensayo en perros con cistitis esporádica,20mg/kg oral cada12h10 días.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.enrofloxacina",
+    "tipo": "farmaco",
+    "etiqueta": "Enrofloxacina",
+    "fuentes": [
+      {
+        "codigo": "msd.quinolonas",
+        "localizador": "Adverse effects y dosificaciones: fluoroquinolona y riesgo retiniano felino.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.omeprazol",
+    "tipo": "farmaco",
+    "etiqueta": "Omeprazol",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: supresión ácida no rutinaria, solo ante ulceración confirmada o fuertemente sospechada.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metoclopramida",
+    "tipo": "farmaco",
+    "etiqueta": "Metoclopramida",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis:0,2–0,5mg/kg cada6–8h; descartar obstrucción gastrointestinal.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metamizol",
+    "tipo": "farmaco",
+    "etiqueta": "Dipirona (metamizol)",
+    "fuentes": [
+      {
+        "codigo": "uzh.metamizol",
+        "localizador": "Dosierungen; gato: evitar preparados con alcohol bencílico.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

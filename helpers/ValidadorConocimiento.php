@@ -7,6 +7,8 @@ final class ValidadorConocimiento
     public const PREDICADOS = ['sintoma_marcado', 'especie', 'raza', 'edad_meses', 'sexo', 'esterilizado', 'alerta_activa', 'inicio_episodio', 'minutos_desde_exposicion', 'exposicion', 'vacunacion', 'dias_desde_celo'];
     public const MOTORES = ['diagnosticos', 'prescripcion', 'triage'];
     public const NIVELES = ['rojo', 'naranja', 'amarillo', 'verde'];
+    public const GRUPOS_PAUTA = ['aine', 'corticoide', 'antipruriginoso', 'antiparasitario', 'antiemetico', 'analgesico_opioide', 'antifungico', 'antibiotico', 'antiulceroso', 'antitiroideo', 'hormona_tiroidea', 'anticonvulsivo', 'insulina', 'suplemento'];
+    public const ELECCIONES_PAUTA = ['control_prurito', 'antiprotozoario'];
     private const TIPOS = ['sintoma', 'diagnostico', 'farmaco', 'especie', 'raza', 'condicion', 'sustancia'];
     private const COMUNES = ['codigo', 'fuentes', 'estado_validacion', 'validacion'];
 
@@ -296,7 +298,14 @@ final class ValidadorConocimiento
     private static function pauta(mixed $pauta): void
     {
         $campos = ['dosis_mg_kg', 'dosis_texto', 'via', 'frecuencia_horas', 'duracion_dias', 'indicacion'];
-        self::campos($pauta, $campos, $campos);
+        self::campos($pauta, [...$campos, 'grupo', 'grupo_eleccion'], $campos);
+        if (array_key_exists('grupo', $pauta)) {
+            self::opcion($pauta['grupo'], self::GRUPOS_PAUTA);
+        }
+        if (array_key_exists('grupo_eleccion', $pauta)) {
+            self::exigir(isset($pauta['grupo']), 'Un grupo de elección necesita clase farmacológica.');
+            self::opcion($pauta['grupo_eleccion'], self::ELECCIONES_PAUTA);
+        }
         self::exigir(($pauta['dosis_mg_kg'] === null) !== ($pauta['dosis_texto'] === null), 'Pauta: exactamente una forma de dosis.');
         if ($pauta['dosis_mg_kg'] !== null) {
             self::campos($pauta['dosis_mg_kg'], ['minimo', 'maximo'], ['minimo', 'maximo']);

@@ -12,6 +12,49 @@
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4, F) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
 
+## Refuerzo del conocimiento tras pruebas (2.3.0)
+
+Encargo aprobado del dueño, 2026-11-01; escribe Codex y revisa Claude (arquitecto), en `release/v2.3.0`.
+Estado: **entregada, pendiente de revisión**, con el fallo previo de interfaz documentado abajo; no se declara JS completo verde.
+Decisión confirmada del dueño,2026-11-01: documentar aparte el desborde previo de Evaluación y entregar el refuerzo; no ampliar ahora el diseño de Atención.
+Contrato: RN-424 buscador por palabras de contenido y sinónimos colombianos; RN-416/418 vacunación sin registros desconocida, poscelo desde6 meses, exposición sin hora reciente solo al calcular, tamaño canino por peso visible, permetrina felina roja y raticida con revisión.
+RN-210/212: garrapatas y ranking de gastritis; RE-2.8.4/5 y RE-2.9.4: precarga preferente, alternativas explícitas, duplicados e interacciones de prednisolona.
+RN-211: razas MDR1, ivermectina, fármacos con indicación pública localizada; todo conocimiento pendiente de validación veterinaria.
+Migración18 y semilla agregan razas globales con INSERT IGNORE; sin cambio de versión ni base de trabajo.
+Tamaño supletorio por política: <10 pequeño,10–25 incluido mediano,>25–45 incluido grande y>45 gigante; primero último peso de consulta visible no futura y, en su defecto, ficha.
+Decisión confirmada del dueño,2026-11-01: conservar clase farmacológica y agregar grupo de elección por diagnóstico para alternativas entre clases; control_prurito une oclacitinib/prednisolona y antiprotozoario une fenbendazol/metronidazol en giardiasis. Complementarios como maropitant/buprenorfina conservan sus grupos independientes.
+Evidencia previa en `scratch/r/refuerzo-conocimiento/`:195/1008 revisiones (19%), ranking25/26 primero y26/26 entre tres.
+Verificación: casos de Claude convertidos a PHPUnit, T-01..26 intactos, buscador25 frases, seguridad/precarga/carga repetible, JS Alternativas; una pasada PHP completa sin host y JS completa al cierre; motor aislado solo esquema/cargador, base predeterminada `zooki_test_base_v2`.
+Fuera: agenda operativa, semilla demo, otros diseños de Atención y validación veterinaria.
+
+### Anexo — Resultado: Refuerzo del conocimiento tras pruebas (2.3.0)
+
+Escribió **Codex**,2026-11-01; revisa **Claude (arquitecto)**. Estado: entregada, pendiente de revisión.
+Buscador por palabras/alias, vacunación/tiempos/tamaño conservadores, garrapatas/raticida/permetrina, ranking y MDR1/prednisolona.
+Clases y grupos de elección aprobados; precarga preferida, duplicados y Alternativas revalidadas, reversibles y compartidas con el modal.
+Migración18 repetible y semilla; fuente pública/localizador/fundamento en el conocimiento, todo pendiente de validación veterinaria.
+
+| RE/RN | Evidencia |
+|---|---|
+| RE-2.11.1/3/6/7, RN-416/424 | CasosReforzados127 pruebas,29 frases entre tres, MotorTriage T-01..26 intactos, DiagnosticoTest y peso visible |
+| RE-2.8.4/5, RE-2.9.4, RN-211/212 | CasosReforzados/MotorPrescripcion/Pautas; Chrome Alternativas390/1366, modal/Atención, Usar/Deshacer/seguridad |
+| RN-212 | MySQL temporal33319, base por defecto zooki_test_base_v2;3 pruebas/13 comprobaciones de instalación/migrador/carga repetida con IDs estables; --revisar sin cambios |
+
+Barrido comparable:195/1008 (19,35%)→97/1008 (9,62%); perfil normalizado a vacunación/criollo reales, mismos72 síntomas. Originales guardados; garrapatas amplía el barrido bruto a1022.
+Ranking:25/26→26/26 primero;26/26 entre tres. No constituye validación clínica.
+PHP completo sin host:1410/11912,99 omitidas; JSON final y casos positivos adicionales:127/422. JS completo inicial466/472; cinco fallos corregidos,29 regresiones afectadas verdes por archivo; desborde previo V3 documentado aparte por decisión del dueño. No se repite la suite completa por §11.
+Modelos§3/4 renderizados. PDF/Word completados tras materializar de nuevo los archivos afectados de OneDrive.
+Sin pauta genérica de omeprazol/dipirona: fuentes condicionan ulceración/formulación o no localizan indicación en los diagnósticos presentes; nodos disponibles y advertencia felina de dipirona.
+Pendientes: validación veterinaria y revisión de Claude; Evaluación queda en entrega separada por decisión del dueño. Fuera de cobertura, el ranking aún puede ofrecer sugerencias genéricas al conejo; P2 para entrega posterior, sin ampliar cobertura en silencio.
+Se conservan revisión por edad/celo/tiempo desconocidos, chocolate conocido con revisión y T-20 amarillo provisional; las expectativas exploratorias del banco no sustituyen RN-418.
+Producción: desplegar código y conjunto juntos; arranque Docker ejecuta migración18/semilla y luego carga automática; comprobar versión cargada y bloqueos, sin comandos manuales en el servidor. Sin commit/push ni semilla demo.
+
+### Lista para D — refuerzo
+
+- P2 previo, separado por decisión del dueño (2026-11-01): Evaluación con cinco síntomas largos desborda a1024×650 (783px), idéntico con CSS/JS de120f695. `AtencionEscritorio.test.cjs` permanece exigente y falla; se entrega el refuerzo con esta excepción conocida, sin ampliar ahora el diseño ni introducir scroll.
+- P2 previo: el ranking sin cobertura puede mostrar sugerencias genéricas al conejo; el banco lo excluye de sus26 diagnósticos con esperado cubierto. No se amplía cobertura clínica en esta entrega.
+- Formulario de celo ya condicionado: se conserva sin tocar por instrucción expresa del punto2.c; el filtro nuevo de6 meses se aplica en el motor.
+
 ## Consulta que se llena sola: tratamientos y plan sugeridos (2.3.0)
 
 **Encargo aprobado del dueño (2026-10-30); decisión clínica del 2026-10-29. Escribe Codex; revisa Claude (arquitecto).** Rama `release/v2.3.0`.
