@@ -6,6 +6,21 @@
 
 ## Ahora
 
+### Semilla de demostración (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+
+- Escribió Codex; revisa Claude (arquitecto).
+  Plan y decisiones en `specs/semilla-demo.md`: Max conserva prednisolona en Alternativas y la escena se rechaza si no cabe en los horarios aprobados.
+  Consola con simulación por defecto, entorno obligatorio y confirmación escrita fuera de local; alta, vínculos, política, suscripciones, reservas, llegada y cascada mediante modelos existentes.
+  Borrado físico limitado a los NIT/correos de demo con FK activas, protección de Zooki y superadministradores y rechazo completo de vínculos ajenos, incluso inactivos.
+- Verificación dirigida con motor temporal y `zooki_test_base_v2`: 196 pruebas y 1327 comprobaciones; incluye repetibilidad, aislamiento, guion, escena, conocimiento ausente, colisiones y política de claves.
+  Tras el último refuerzo del borrado, repetibilidad y escena nuevamente verdes: 2 pruebas/105 comprobaciones, incluida invitación pendiente de clínica ajena; evidencia en `scratch/r/semilla-demo/phpunit.log`.
+  Corrida CLI real en base temporal: 5 clínicas, 41 cuentas, 42 mascotas, 128 consultas, 41 vacunas, 42 desparasitaciones, 5 alertas, 168 citas y 45 solicitudes; borrado final en cero.
+  Cuentas con claves generadas y conteos en `scratch/r/semilla-demo/corrida-local.log`, ignorado por Git; sin leer ni escribir `.env`.
+  Historial de la 2.3.0 y sus descargas actualizados; sin cambios de pantallas, motores, conocimiento ni versión.
+- Sigue: revisión de Claude y ensayo del dueño en zooki-pruebas antes de producción; Docker no está instalado en este equipo.
+  Entrada CLI comprobada con 87 dependencias y ninguna de `scripts/dev`, pruebas o PHPUnit, excluidos por la imagen; conserva pendiente la validación veterinaria del conocimiento existente.
+  Sin commit ni push.
+
 ### Refuerzo del conocimiento tras pruebas (2.3.0) — entregada, pendiente de revisión (2026-11-01)
 
 - Escribió Codex; revisa Claude (arquitecto).
