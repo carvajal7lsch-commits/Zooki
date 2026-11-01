@@ -118,6 +118,7 @@
      */
     function crear(raiz, opciones = {}) {
         const estado = raiz.querySelector('[data-diagnosticos-estado]');
+        const guia = raiz.querySelector('[data-diagnosticos-guia]');
         const lista = raiz.querySelector('[data-diagnosticos-lista]');
         const zonaDatos = raiz.querySelector('[data-diagnosticos-datos]');
         const ficha = raiz.querySelector('[data-diagnosticos-ficha]');
@@ -138,7 +139,8 @@
 
         function mostrarEstado(texto) {
             estado.textContent = texto;
-            estado.hidden = texto === '';
+            if (guia) guia.hidden = texto !== TEXTOS.sinSintomas;
+            estado.hidden = texto === '' || Boolean(guia && !guia.hidden);
         }
 
         function pintarDatos(legibles) {

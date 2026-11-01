@@ -41,7 +41,14 @@
     </section>
     <div class="consulta-panel__sintomas" data-sintomas-panel></div>
     <p class="consulta-sugerencias__estado" data-diagnosticos-estado></p>
+    <?php if (!empty($consultaEnAtencion)): ?>
+    <ol class="consulta-vacio-guia" data-diagnosticos-guia hidden>
+        <li>Marca los síntomas que observas.</li>
+        <li>Aquí aparecen los diagnósticos posibles, del más al menos probable.</li>
+    </ol>
+    <?php else: ?>
     <i class="fas fa-stethoscope consulta-vacio-icono" aria-hidden="true" data-diagnosticos-vacio></i>
+    <?php endif; ?>
     <ol class="consulta-sugerencias__lista" data-diagnosticos-lista hidden></ol>
 
     <div class="consulta-sugerencias__datos" data-diagnosticos-datos hidden>

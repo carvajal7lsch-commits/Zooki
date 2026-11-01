@@ -14,10 +14,58 @@
         const paciente = app.querySelector('.atencion-franja');
         const volver = app.querySelector('.atencion__volver');
         const estado = app.querySelector('#atencionEstado');
+        const fichaPaciente = app.querySelector('[data-ficha-paciente]');
+        const alertasPaciente = app.querySelector('.atencion-franja__alertas');
+        const abrirFichaPaciente = () => {
+            if (!fichaPaciente.open) fichaPaciente.showModal();
+        };
+        for (const boton of app.querySelectorAll('[data-abrir-ficha-paciente]')) boton.addEventListener('click', abrirFichaPaciente);
+        fichaPaciente.querySelector('[data-cerrar-ficha-paciente]').addEventListener('click', () => fichaPaciente.close());
+        fichaPaciente.addEventListener('click', evento => {
+            if (evento.target !== fichaPaciente) return;
+            const caja = fichaPaciente.getBoundingClientRect();
+            if (evento.clientX < caja.left || evento.clientX > caja.right || evento.clientY < caja.top || evento.clientY > caja.bottom) fichaPaciente.close();
+        });
+        // El formulario de alertas existente está fuera del diálogo nativo y debe poder recibir el foco.
+        fichaPaciente.addEventListener('click', evento => {
+            if (evento.target.closest('[data-registrar-alerta]')) fichaPaciente.close();
+        }, true);
+        fichaPaciente.querySelector('[data-ficha-ver-historial]').addEventListener('click', () => {
+            fichaPaciente.close();
+            app.querySelector('[data-tab=historial]').click();
+        });
+        app.addEventListener('zooki:ficha-actualizada', evento => {
+            if (String(evento.detail.idMascota) !== app.dataset.idMascota) return;
+            const datos = evento.detail.datos;
+            const dato = nombre => fichaPaciente.querySelector(`[data-ficha-paciente-dato="${nombre}"]`);
+            if (datos.sexo) texto(dato('sexo'), datos.sexo);
+            if (datos.fecha_nacimiento && typeof window.calculateAge === 'function') texto(dato('edad'), window.calculateAge(datos.fecha_nacimiento));
+            const identidad = ['sexo', 'edad'].map(nombre => dato(nombre).textContent).filter(valor => valor !== 'Sin registrar').join(' y ') || 'Sexo y edad sin registrar';
+            texto(paciente.querySelector('.atencion-franja__resumen'), [dato('especie').textContent, identidad, dato('peso').textContent].join(' · '));
+        });
         const herramientas = app.querySelector('.atencion__herramientas');
         const pie = app.querySelector('#accionesAtencion');
         const ficha = app.querySelector('[data-ficha-mini]');
         const listaTratamientos = app.querySelector('[data-tratamientos-lista]');
+        const sintomas = app.querySelector('[data-sintomas]');
+        const frecuentes = nodo('div', 'atencion-sintomas-frecuentes');
+        frecuentes.append(nodo('span', 'consulta-campo__etiqueta', 'Frecuentes'));
+        const opcionesFrecuentes = nodo('div', 'atencion-sintomas-frecuentes__opciones');
+        for (const [codigo, etiqueta] of [['vomito', 'Vómito'], ['diarrea', 'Diarrea'], ['tos', 'Tos'], ['no_come', 'No come'], ['decaimiento', 'Decaimiento'], ['fiebre', 'Fiebre']]) {
+            const opcion = nodo('button', 'atencion-sintoma-frecuente');
+            opcion.append(nodo('span', 'atencion-sintoma-frecuente__signo', '+'), nodo('span', '', etiqueta));
+            opcion.type = 'button';
+            opcion.dataset.sintomaFrecuente = 'sintoma.' + codigo;
+            opcion.dataset.etiqueta = etiqueta;
+            opcionesFrecuentes.append(opcion);
+        }
+        frecuentes.append(opcionesFrecuentes);
+        sintomas?.append(frecuentes);
+        app.addEventListener('click', evento => {
+            const tarjeta = evento.target.closest('.consulta-vital');
+            if (!tarjeta || evento.target.closest('input, label, button, a, select, textarea')) return;
+            tarjeta.querySelector('input:not([type=checkbox]):not(:disabled)')?.focus();
+        });
         const apoyo = app.querySelector('[data-diagnosticos]');
         const avisoContexto = app.querySelector('[data-contexto-aviso]');
         const titulo = app.querySelector('.atencion__titulo');
@@ -257,6 +305,13 @@
         function actualizar() {
             programado = false;
             if (!activo) return;
+            const alertas = [...alertasPaciente.querySelectorAll('.consulta-chip--alerta')];
+            const resumenAlertas = app.querySelector('[data-ficha-alertas-resumen]');
+            const errorAlertas = alertasPaciente.querySelector('.alertas-medicas__vacio--error');
+            texto(resumenAlertas, errorAlertas ? 'Alertas sin cargar' : alertas.length === 1 ? '1 alerta: ' + alertas[0].textContent.split(':')[0] : alertas.length ? alertas.length + ' alertas' : alertasPaciente.querySelector('.consulta-chip') ? 'Sin alertas' : 'Cargando alertas…');
+            resumenAlertas.parentElement.classList.toggle('sin-alertas', !errorAlertas && alertas.length === 0);
+            const etiquetaAlertas = alertasPaciente.querySelector('.atencion-franja__etiqueta');
+            if (etiquetaAlertas) texto(etiquetaAlertas, 'Alergias y alertas');
             const nombres = [...(ficha?.querySelectorAll('[data-ficha-fila]') || [])].filter(e => !e.hidden).map(e => ({ sexo: 'sexo', esterilizado: 'esterilización', fecha_nacimiento: 'nacimiento' })[e.dataset.fichaFila]);
             ocultar(resumenFicha, !nombres.length || ficha.hidden);
             texto(faltantes, 'Faltan ' + nombres.join(', ') + ' en la ficha');
@@ -291,11 +346,14 @@
                 mover(paciente, barra, true);
                 mover(volver, paciente, true);
                 mover(estado, paciente.querySelector('.atencion-franja__identidad strong'));
+                mover(alertasPaciente, fichaPaciente.querySelector('[data-ficha-paciente-alertas]'));
                 const pasos = app.querySelectorAll('[data-consulta-paso]');
                 if (pasos.length) {
                     const campo = (paso, nombre) => paso.querySelector(`[data-consulta-campo="${nombre}"]`).closest('.consulta-campo');
-                    columna(pasos[0], [campo(pasos[0], 'motivo'), pasos[0].querySelector('[data-sintomas]')]);
-                    columna(pasos[0], [pasos[0].querySelector('.consulta-vitales'), campo(pasos[0], 'anamnesis')], campo(pasos[0], 'anamnesis'));
+                    pasos[0].classList.add('atencion-evaluacion');
+                    for (const elemento of [pasos[0].querySelector('.consulta-vitales'), campo(pasos[0], 'motivo'), sintomas, campo(pasos[0], 'anamnesis')]) mover(elemento, pasos[0]);
+                    mover(sintomas.querySelector('[data-sintomas-chips]'), frecuentes);
+                    campo(pasos[0], 'anamnesis').classList.add('atencion-campo-crece');
                     columna(pasos[1], [campo(pasos[1], 'diagnostico'), pasos[1].querySelector('[data-plan-elegible]')]);
                     columna(pasos[1], [pasos[1].querySelector('[data-tratamientos]'), campo(pasos[1], 'otras_indicaciones')], campo(pasos[1], 'otras_indicaciones'));
                     columna(pasos[2], [pasos[2].querySelector('[data-soltar-adjuntos]'), campo(pasos[2], 'observaciones')], campo(pasos[2], 'observaciones'));
@@ -306,6 +364,9 @@
                 if (ficha) ficha.popover = 'manual';
                 if (avisoContexto) mover(avisoContexto, apoyo);
             } else {
+                if (fichaPaciente.open) fichaPaciente.close();
+                const etiquetaAlertas = alertasPaciente.querySelector('.atencion-franja__etiqueta');
+                if (etiquetaAlertas) texto(etiquetaAlertas, 'Alertas');
                 for (const dialogo of app.querySelectorAll('.atencion-lista-dialogo[open]')) dialogo.close();
                 ficha?.hidePopover();
                 ficha?.removeAttribute('popover');

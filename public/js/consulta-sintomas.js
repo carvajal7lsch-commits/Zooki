@@ -86,6 +86,10 @@
             chips.replaceChildren(...nodos);
             chips.hidden = marcados.length === 0;
             buscador.disabled = marcados.length >= maximo;
+            for (const boton of raiz.querySelectorAll('[data-sintoma-frecuente]')) {
+                boton.hidden = marcados.some(sintoma => sintoma.codigo === boton.dataset.sintomaFrecuente);
+                boton.disabled = marcados.length >= maximo;
+            }
         }
 
         function cambiar(nuevos) {
@@ -149,6 +153,12 @@
                 mostrarAviso('No se pudo buscar el síntoma. Revisa tu conexión.');
             }
         }
+
+        raiz.addEventListener('click', evento => {
+            const frecuente = evento.target.closest('[data-sintoma-frecuente]');
+            if (!frecuente || !raiz.contains(frecuente)) return;
+            marcarSintoma({ codigo: frecuente.dataset.sintomaFrecuente, etiqueta: frecuente.dataset.etiqueta });
+        });
 
         buscador.addEventListener('input', () => {
             clearTimeout(temporizador);

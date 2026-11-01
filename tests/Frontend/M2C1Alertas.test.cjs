@@ -31,7 +31,7 @@ class FormDataFalso {
     constructor(form) {
         this.datos = new Map();
         for (const n of form ? form.todos() : []) {
-            if (n.name && (n.type !== 'radio' || n.checked)) this.datos.set(n.name, n.value);
+            if (n.name && !n.disabled && (!['radio', 'checkbox'].includes(n.type) || n.checked)) this.datos.set(n.name, n.value);
         }
     }
     append(clave, valor) { this.datos.set(clave, valor); }
@@ -47,21 +47,27 @@ function pagina(respuestas = {}) {
     colgar(modal, 'p', { alertaMascota: '' });
     colgar(modal, 'button', { alertaCerrar: '' });
     const form = colgar(modal, 'form', { alertaForm: '', nodosPorTipo: JSON.stringify(NODOS_POR_TIPO) });
-    form.reset = () => form.todos().forEach(n => { if (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA') { n.value = n.type === 'radio' ? n.value : ''; n.checked = false; } });
+    form.reset = () => form.todos().forEach(n => { if (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA') { n.value = n.type === 'radio' ? n.value : n.defaultValue ?? ''; n.checked = false; } });
     colgar(form, 'input', { alertaCampo: 'id_mascota' }, { name: 'id_mascota', type: 'hidden' });
     colgar(form, 'input', { alertaCampo: 'nodo' }, { name: 'nodo', type: 'hidden' });
+    colgar(form, 'input', {}, { name: 'seleccion_estructurada', type: 'hidden', value: '1', defaultValue: '1' });
     const radios = {};
     for (const tipo of Object.keys(NODOS_POR_TIPO)) {
         radios[tipo] = colgar(form, 'input', { alertaTipo: '' }, { name: 'tipo', type: 'radio', value: tipo });
     }
     colgar(form, 'small', { alertaAviso: 'tipo' });
-    const area = colgar(form, 'textarea', { alertaCampo: 'descripcion' }, { name: 'descripcion' });
+    colgar(form, 'label', { alertaDescripcionTitulo: '' });
+    const area = colgar(form, 'textarea', { alertaCampo: 'descripcion', descripcionMax: '255' }, { name: 'descripcion' });
     area.setAttribute('maxlength', '255');
     colgar(form, 'small', { alertaAviso: 'descripcion' });
     colgar(form, 'span', { alertaContador: '' });
     const zona = colgar(form, 'div', { alertaZonaNodo: '' }, { hidden: true });
+    colgar(zona, 'label', { alertaNombreTitulo: '' });
     const envoltura = colgar(zona, 'div', { alertaBuscar: '' });
-    colgar(envoltura, 'input', { alertaCampo: 'busqueda' }, { type: 'search' });
+    colgar(envoltura, 'input', { alertaCampo: 'busqueda' }, { name: 'nombre_alerta', type: 'search' });
+    colgar(zona, 'input', { alertaNoEncuentro: '' }, { name: 'no_encuentro_nombre', type: 'checkbox', value: '1', defaultValue: '1' });
+    colgar(zona, 'small', { alertaAviso: 'busqueda' });
+    colgar(zona, 'small', { alertaNombreAviso: '' });
     colgar(zona, 'div', { alertaNodoElegido: '' }, { hidden: true });
     colgar(zona, 'div', { alertaSugerencias: '' }, { hidden: true });
     colgar(form, 'p', { alertaResultado: '' });
@@ -201,6 +207,8 @@ test('C1: registrar valida en tiempo real, busca el nodo y actualiza la lista si
     assert.equal(opciones.method, 'POST');
     assert.equal(opciones.body.get('tipo'), 'alergia');
     assert.equal(opciones.body.get('nodo'), 'farmaco.paracetamol');
+    assert.equal(opciones.body.get('nombre_alerta'), 'Paracetamol (acetaminofén)');
+    assert.equal(opciones.body.get('seleccion_estructurada'), '1');
     assert.equal(opciones.body.get('descripcion'), 'Penicilina');
     assert.ok(!p.modal.classList.contains('is-open'), 'Se cierra al guardar');
     assert.match(p.ficha.textContent, /Penicilina/, 'La lista se actualizó con la respuesta');
@@ -212,12 +220,34 @@ test('C1: un error del servidor queda junto al campo y no cierra el formulario',
     p.api.pintar(p.ficha, { activas: [], historial: [] }, { idMascota: 1 });
     p.api.abrirFormulario(1, 'Luna');
     p.radios.alergia.checked = true;
+    p.radios.alergia.disparar('change');
+    p.q('[data-alerta-campo="busqueda"]').value = 'Nombre no disponible';
+    p.q('[data-alerta-no-encuentro]').checked = true;
     p.area.value = 'Válida en el navegador';
     p.form.disparar('submit');
     await esperar();
     assert.equal(p.q('[data-alerta-aviso="descripcion"]').textContent, 'La descripción admite hasta 255 caracteres.');
     assert.ok(p.modal.classList.contains('is-open'));
     assert.equal(p.avisos.length, 0);
+});
+
+test('C1: escribir los detalles conserva la selección y editar el nombre la retira', async () => {
+    const p = pagina({ buscar_nodo_alerta_ajax: { success: true, nodos: [{ codigo: 'farmaco.paracetamol', etiqueta: 'Paracetamol (acetaminofén)', coincidencia: 'acetaminofén' }] } });
+    p.api.abrirFormulario(1, 'Luna');
+    p.radios.alergia.checked = true;
+    p.radios.alergia.disparar('change');
+    const buscador = p.q('[data-alerta-campo="busqueda"]');
+    buscador.value = 'acetaminofen';
+    buscador.disparar('input');
+    await esperar();
+    p.q('[data-nodo-sugerido="farmaco.paracetamol"]').click();
+    p.area.value = 'Sin reacción grave';
+    p.area.disparar('input');
+    assert.equal(p.q('[data-alerta-campo="nodo"]').value, 'farmaco.paracetamol');
+    assert.equal(p.peticiones.length, 1, 'Los detalles no se envían para interpretar frases');
+    buscador.value = 'Otro medicamento';
+    buscador.disparar('input');
+    assert.equal(p.q('[data-alerta-campo="nodo"]').value, '');
 });
 
 test('C1: desactivar pide confirmación y actualiza la lista; cancelar no envía nada', async () => {

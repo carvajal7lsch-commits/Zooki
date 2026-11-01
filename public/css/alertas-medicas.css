@@ -273,6 +273,36 @@
     text-decoration: underline;
 }
 
+.alertas-medicas__form .input-group > .alertas-medicas__no-encuentro {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0 4px;
+    color: var(--z-text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.alertas-medicas__form .input-group .alertas-medicas__no-encuentro input {
+    flex: 0 0 14px;
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    height: 14px;
+    padding: 0;
+    margin: 3px 0 0;
+    accent-color: var(--z-primary);
+}
+.alertas-medicas__no-encuentro span {
+    flex: 1;
+    min-width: 0;
+}
+.alertas-medicas__nodo-elegido[hidden] {
+    display: none;
+}
+
 /* ── Modal de registro (users-modal) ── */
 .alertas-medicas__panel {
     max-width: 560px;

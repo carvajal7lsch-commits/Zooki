@@ -68,7 +68,11 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
         <?php // M2 C8 (H4): más compacta; los datos en una cuadrícula densa y el resto en filas cortas. ?>
         <section class="atencion-franja" aria-label="Paciente">
             <div class="atencion-franja__anillo"><?php if ($tieneFoto): ?><img src="<?= $e($fotoMascota) ?>" alt="" id="atencionFoto"><?php else: ?><span><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?></span><?php endif; ?></div>
-            <div class="atencion-franja__identidad"><strong><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $mascota['nombre_raza'] ?? '']))) ?></small></div>
+            <div class="atencion-franja__identidad"><strong><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $mascota['nombre_raza'] ?? '']))) ?></small><small class="atencion-franja__resumen"><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', implode(' y ', array_filter([$mascota['sexo'] ?? '', $edadMascota])) ?: 'Sexo y edad sin registrar', $pesoReferencia ? $pesoReferencia . ' kg' : 'Sin peso']))) ?></small></div>
+            <div class="atencion-franja__acciones">
+                <button type="button" class="atencion-franja__aviso" data-abrir-ficha-paciente><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span data-ficha-alertas-resumen>Cargando alertas…</span></button>
+                <button type="button" class="atencion-franja__abrir" data-abrir-ficha-paciente><i class="far fa-file-alt" aria-hidden="true"></i> Ficha del paciente</button>
+            </div>
             <section class="atencion-franja__datos" aria-label="Datos"><dl>
                 <div><dt>Sexo y edad</dt><dd><?= $e(implode(' · ', array_filter([$mascota['sexo'] ?? '', $edadMascota])) ?: 'Sin registrar') ?></dd></div>
                 <div><dt>Peso</dt><dd class="<?= $pesoReferencia ? '' : 'sin-registrar' ?>"><?= $pesoReferencia ? $textoPeso($pesoReferencia) : 'Sin registrar' ?></dd></div>
@@ -353,6 +357,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
         </main>
     </div>
 
+    <?php require __DIR__ . '/../partials/atencion_ficha_paciente.php'; ?>
     <datalist id="listaVacunas"></datalist>
     <datalist id="listaLaboratorios"></datalist>
     <datalist id="listaProductos"></datalist>

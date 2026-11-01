@@ -1,5 +1,10 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
+> **Decisión vigente del dueño (2026-10-31):** sustituir la interpretación de frases de alertas por un campo principal con buscador: Alérgico/a a, Medicamento que toma o Condición; el veterinario selecciona un resultado y escribe los detalles aparte.
+> «No encuentro el nombre» conserva el nombre escrito y los detalles como aviso sin nodo; Otra alerta solo pide descripción.
+> La descripción no identifica ni invalida el concepto elegido; se retira el identificador de frases añadido durante los retoques.
+> Revalidación del código, tipo y actividad en servidor, nombre seleccionado ligado al campo actual, límite total existente de255 caracteres y auditoría; sin migración ni cambio de versión.
+
 > **Ajuste vigente, 2026-10-29:** RN-418 permite reservar con nivel provisional aunque la revisión sea inmediata; sustituye la revisión previa a horario de los anexos históricos. RN-416 deriva vacunación de los registros globales de esa mascota si no se declara. Encargo aprobado del dueño en `release/v2.3.0`; escribe Codex, revisa Claude. Contrato y resultado en la subetapa «Triage que no frena» del plan M4; sin modificar `database/conocimiento`.
 
 > Estado: F entregada, pendiente de revisión (Codex, 2026-10-16); pruebas del usuario de C5a/C5b/C7 y despliegue pendientes
@@ -44,6 +49,10 @@ Estado: **entregada, pendiente de revisión**. Solo interfaz sobre la lógica ex
 **Encargo aprobado del dueño (2026-10-31). Escribe Codex; revisa Claude (arquitecto).** Base `c3ec2fd`, rama `release/v2.3.0`.
 Estado: **entregada, pendiente de revisión** (Codex, 2026-10-31; revisa Claude).
 Interfaz de Atención; versión2.3.0 conservada.
+
+**Retoque aprobado del dueño (2026-10-31):** en Evaluación, vitales en una fila superior de cuatro tarjetas, motivo a todo el ancho y debajo síntomas junto a anamnesis.
+Las capturas adjuntas sustituyen la distribución V3 de este paso; frecuentes seleccionables y chips elegidos azul sólido, con hover.
+El dueño solicita revisión incremental rápida, sin repetir suites completas; se conserva la fuente y no se cambia la lógica clínica.
 
 - **Decisión del dueño:** sección11/V3 manda sobre la10 en escritorio. Desde1024px de ancho y650px de alto no desplaza la página ni las tarjetas; ventanas más bajas admiten respaldo de página. Celular/tableta conservan V2.
 - Dos filas superiores; paciente como cabecera, cuenta a la derecha, pestañas/contexto/pasos debajo; pasos con dos columnas y campos de texto que absorben el espacio. Pie delgado con sugerencia/Deshacer y borrador; apoyo con tres diagnósticos y ficha flotante; resumen en Cierre.
@@ -2217,3 +2226,102 @@ Base `c3ec2fd`, rama `release/v2.3.0`; **entregada, pendiente de revisión**.
   Historial2.3.0 y descargas PDF/Word actualizados; versión conservada.
 - **Pendientes:** revisión independiente de Claude y prueba del dueño, en especial legibilidad y edición de tratamientos.
   Sin cambios de motores, endpoints, migraciones o conocimiento; no se inició otra subetapa y el dueño hace commit/push.
+
+### Anexo — Resultado: retoque de Evaluación (2026-10-31)
+
+**Escribió Codex; revisa Claude; entregada, pendiente de revisión y aprobación visual del dueño.**
+Desde `ec98706`: vitales en una fila de cuatro, motivo completo y síntomas junto a anamnesis, conforme a las dos capturas del dueño.
+Frecuentes usan los códigos del catálogo existente; al marcar aparecen chips azul sólido con hover y × para retirar.
+Se mantienen tamaños de fuente, campos, validación y presentación del modal; el nuevo orden solo se activa en Atención de escritorio.
+Verificación puntual: sintaxis JS y una vista Chrome1366×650 con Vómito, Diarrea y Decaimiento seleccionados, página650px.
+Captura en `scratch/r/atencion-evaluacion-retoque/evaluacion.png`; no se repitieron suites completas por petición expresa del dueño.
+Pendiente: prueba visual del dueño y sus siguientes correcciones; cierre documental conjunto al aprobar el lote, sin cambiar versión ni hacer commit/push.
+
+**Segunda corrección del dueño, escribió Codex (2026-10-31):** título de vitales más grueso, tarjetas más altas con línea de entrada y clic en la tarjeta enfoca su campo.
+Se retira el icono del error de peso; frecuentes oscuros, elegidos inmediatamente debajo del título Frecuentes y antes de las opciones restantes, con dimensiones iguales antes y después de seleccionar.
+Sin suites por instrucción expresa del dueño; solo sintaxis y comprobación visual puntual, pendiente de su revisión.
+
+**Tercera corrección del dueño, escribió Codex (2026-10-31):** mensajes de error de campos a11px, por debajo del tamaño de sus etiquetas, y frecuentes con `--z-text-tenue`, el mismo gris de los placeholders.
+Solo CSS de Atención; sin suites, pendiente de aprobación visual del dueño.
+El dueño ajusta después el gris de frecuentes a un tono ligeramente más oscuro que el placeholder: `#8493a8`.
+
+### Anexo — Resultado: cabecera y ficha lateral del paciente (2026-10-31)
+
+**Escribió Codex; revisa Claude; entregada, pendiente de revisión y aprobación visual del dueño.**
+Decisión del dueño: nueva cabecera según sus dos capturas, conservando el aro azul de la mascota y «Sin cerrar» rojo con icono.
+Nombre/estado y resumen a la izquierda; aviso de alertas y botón Ficha del paciente a la derecha.
+Ficha lateral con alertas completas, datos del paciente, propietario/teléfono y cita; márgenes de16px arriba, abajo y a la derecha como propuesta que revisa el dueño.
+Reutiliza el contenedor de alertas, el formulario de Agregar y la pestaña Historial existentes; la ficha se actualiza al completar los datos mediante el evento existente.
+Solo presentación de Atención de escritorio, sin cambios de rutas, permisos o datos; móvil y modal de Pacientes conservados.
+Comprobación puntual Chrome1366×650: márgenes16/16/16, página650px, alerta contada, Agregar abre su formulario e Historial activa su pestaña, sin excepciones JS.
+Capturas en `scratch/r/atencion-ficha-lateral/`; sin suites por instrucción expresa del dueño.
+Pendiente: aprobación visual del componente y de sus márgenes; cierre documental conjunto al finalizar los retoques, versión2.3.0 y sin commit/push.
+
+**Retoque del dueño, escribió Codex (2026-10-31):** aviso de alertas en peso600 como Sin cerrar; Ficha del paciente con azul y peso600 de los pasos, y jerarquía tipográfica reforzada en el lateral.
+Fecha de la cita con el día real de la semana, número, mes en texto y año, seguida de la hora; reutiliza `ResumenPanel::fechaLarga`, sin suites.
+
+### Anexo — Resultado: modal de alergia y guía inicial de Zooki (2026-10-31)
+
+**Escribió Codex; revisa Claude; entregada, pendiente de revisión y aprobación visual del dueño.**
+Nueva alergia o alerta en Atención según su captura: icono rojo, cuatro tipos en dos columnas, alergia inicial, descripción con contador y acciones compactas, con tipografía y colores del sistema.
+**Decisión confirmada del dueño:** conservar Enlazar al conocimiento en un desplegable cerrado; mantiene los campos, búsqueda y lógica existentes.
+Estado inicial de Zooki con los dos pasos de la segunda captura; sustituye el texto plano y el icono aislado, conservando los estados de carga, error y falta de coincidencias.
+Cambios visuales limitados a Atención; otras entradas del modal compartido conservan su presentación y comportamiento.
+Sintaxis PHP/JS y vista puntual Chrome1366×650 correctas: modal abierto, alergia elegida, enlace cerrado, guía visible y cero excepciones.
+Capturas en `scratch/r/atencion-ficha-lateral/nueva-alerta.png` y `cabecera.png`; sin suites por instrucción del dueño.
+Pendiente: revisión visual del dueño; versión2.3.0 y sin commit/push.
+
+**Retoque del dueño, escribió Codex (2026-10-31):** modal ampliado de390 a520px, título18px, descripción/botones14px y tipos13px con controles más altos; sin suites.
+**Automatización del enlace — aprobada por el dueño (2026-10-31), entregada, pendiente de revisión:** escribió Codex; revisa Claude.
+Reglas aprobadas: alergia identifica fármaco/sustancia, medicación continua identifica fármaco y condición crónica identifica condición del catálogo; Otra alerta sigue informativa.
+Solo asociar automáticamente una referencia explícita y única; negaciones, múltiples conceptos o texto ambiguo requieren precisar, y ningún concepto disponible conserva el aviso sin atribuirle un cruce automático.
+Esto amplía el alcance de interfaz; el dueño aprobó expresamente estas reglas, queda revisión independiente de Claude.
+
+Contrato de implementación de RE-2.1.5: nombres y sinónimos activos con límites de palabra, sin coincidencias aproximadas; una referencia afirmativa y única se asocia al guardar en el servidor.
+Varias coincidencias requieren elegir explícitamente el concepto, corregir la descripción o decidir «Guardar solo como aviso».
+El texto negado, incierto o referido a terceros exige corregirlo o guardar solo el aviso; elegir un nombre no basta para convertirlo en una afirmación.
+Sin coincidencias u Otra alerta se conserva el texto sin enlace; no se inventa conocimiento ni se modifican motores, migraciones o identificadores existentes.
+La vista previa reutiliza la ruta de búsqueda autorizada; el servidor recalcula al registrar, conserva controles de clínica/rol/CSRF, valida cualquier elección explícita y deja la procedencia en auditoría.
+La interfaz invalida identificaciones al cambiar texto/tipo/paciente y descarta respuestas atrasadas; desaparece la necesidad de entender «enlazar al conocimiento».
+Verificación acotada al cambio, sin suites por instrucción del dueño; ejemplos afirmativos, negados, ambiguos, sin coincidencia, alias y selección explícita con aislamiento existente.
+
+### Anexo — Resultado: identificación automática de alertas (2026-10-31)
+
+**Histórico, sustituido por la decisión posterior del dueño: búsqueda principal y selección de nombre, sin interpretar los detalles libres.**
+
+**Escribió Codex; revisa Claude (arquitecto).**
+Estado: **entregada, pendiente de revisión**, dentro de2.3.0 sin publicar.
+
+- **Riesgo principal: asociar una frase negada o ambigua.** El identificador es conservador y usa nombres/sinónimos activos exactos, límites de palabra y referencias afirmativas; no adivina conceptos ni interpreta lenguaje libre con IA.
+  Una negación, duda o referencia a terceros exige corregir el texto o decidir solo aviso; ni elegir un nombre ni omitir la marca del formulario permite asociar esa redacción.
+- El servidor identifica al registrar; una elección explícita valida nodo/tipo/actividad y las decisiones del formulario se ligan a la descripción actual.
+  Identificación automática, elección manual y aviso sin asociación quedan diferenciados en auditoría; Otra alerta sigue informativa.
+  Conserva transacción, vínculo, clínica, permisos y CSRF; reutiliza la ruta de búsqueda para la vista previa, sin rutas ni migraciones nuevas.
+- Formulario ampliado a520px, identificación en vivo, confirmación explícita de referencias múltiples y opción Guardar solo como aviso; búsqueda manual como ayuda, sin lenguaje técnico de enlaces.
+  Cambiar texto/tipo/paciente invalida las decisiones; las respuestas atrasadas no cierran otra ficha ni reutilizan una identificación anterior.
+- **Verificación puntual, sin suites por instrucción expresa del dueño:** sintaxis PHP/JS, ejemplos con SQLite sintético y controlador/modelo reales, guardado automático de alias, rechazo de negación, referencias múltiples, medicación, condición y aviso sin nodo.
+  Chrome1366×650: identificación afirmativa, negación sin botones de asociación, elección explícita, limpieza al editar, Solo aviso y Otra alerta; cero excepciones.
+  Casos de regresión escritos en `IdentificadorAlertaTest` y `AlertaIdentificacionTest`, **no ejecutados**; no se atribuyen al cambio las cifras de suites de entregas anteriores.
+- **Evidencia:** `scratch/r/atencion-ficha-lateral/identificacion-servidor.log`, `identificacion-interfaz.log`, capturas de identificación automática/precisión y diagrama de consulta renderizado con83 nodos.
+  HU, RE, Modelos e Historial actualizados; PDF/Word de HU/RE/Historial regenerados.
+- **Pendientes:** revisión de Claude y prueba del dueño con su catálogo cargado; las suites quedan sin ejecutar por su instrucción.
+  No cambia el conocimiento, los motores ni la base de trabajo; sin commit/push y versión2.3.0 conservada.
+
+### Anexo — Resultado: alertas con nombre seleccionado (2026-10-31)
+
+**Escribió Codex; revisa Claude (arquitecto).**
+Estado: **entregada, pendiente de revisión**; decisión posterior del dueño que sustituye la interpretación de frases.
+
+- **Riesgo principal:** conservar un código anterior al cambiar el nombre; el servidor revalida código, tipo, actividad y que el nombre actual coincida con la selección.
+  Cambiar nombre/tipo/paciente retira la selección y descarta respuestas atrasadas; los detalles libres no se usan para inferir ni invalidar el concepto.
+- Buscador principal Alérgico/a a, Medicamento que toma o Condición; reacción/indicaciones/cuidados aparte.
+  «No encuentro el nombre» conserva el nombre escrito y los detalles como aviso sin nodo; Otra alerta solo pide descripción.
+  Sin migración: se conserva el código cuando se selecciona y se guarda nombre + detalles en el texto existente, compartiendo el límite de255 caracteres, sin truncar; procedencia en auditoría.
+- Se retiran el identificador de frases, su ruta de vista previa y sus pruebas provisionales; se reutiliza la búsqueda por nombre/sinónimo que ya existía.
+  Se mantienen permisos, clínica, vínculo, transacción y CSRF; versión2.3.0 conservada.
+- **Comprobaciones puntuales, sin suites:** sintaxis PHP/JS; servidor SQLite sintético verifica selección con detalles que contienen «Sin», nombre no encontrado conservado sin nodo, rechazo de nombre sin elegir y selección anterior, y Otra alerta.
+  Chrome1366×650 comprueba sugerencias por alias, detalles que conservan la selección, No encuentro el nombre y los tres rótulos/ocultación en Otra alerta; cero excepciones.
+  Regresiones escritas en `AlertaSeleccionTest` y actualizado `M2C1Alertas.test.cjs`, **no ejecutadas** por instrucción del dueño.
+- **Evidencia:** `scratch/r/atencion-ficha-lateral/seleccion-servidor.log`, `seleccion-interfaz.log`, `seleccion-y-detalles.png` y `nombre-sin-catalogo.png`.
+  HU, RE, Modelos e Historial reflejan el flujo vigente; se actualizan sus descargas y el diagrama.
+- **Pendientes:** revisión de Claude y prueba del dueño; sin suites, cambios de conocimiento/motores, base de trabajo ni commit/push.

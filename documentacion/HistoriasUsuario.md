@@ -655,6 +655,9 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - La consulta queda vinculada a la mascota y visible en su historial.
 - No se puede registrar una consulta sin diagnóstico.
 - _(v2.0)_ El veterinario registra las alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua); no se borran, se desactivan, y las ven todas las clínicas vinculadas. _La presentación en el carnet se entrega al final de la v2.0 (RE-2.1.5 y RE-2.10.1)._
+- _(2.3.0, decisión vigente del dueño del 2026-10-31)_ El formulario pide Alérgico/a a, Medicamento que toma o Condición mediante un buscador por nombre o sinónimo; el veterinario selecciona una sugerencia y escribe los detalles aparte.
+  «No encuentro el nombre» conserva el nombre escrito y los detalles como aviso sin asociación; Otra alerta solo pide descripción.
+  La descripción libre no identifica ni invalida el concepto elegido; el servidor revalida código, tipo, actividad y nombre actual, conserva el límite total de255 caracteres y audita la procedencia.
 
 **Reglas de negocio:** RN-201, RN-202, RN-203, RN-112, RN-113 · **Dependencias:** HU-1.1
 

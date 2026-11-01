@@ -226,7 +226,11 @@ flowchart TD
   RD -- Confirmar con huella vigente y requisitos cumplidos --> U
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
-  AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
+  AL -- Si --> ALT{"Tipo de alerta"}
+  ALT -- "Alergia, medicacion o condicion" --> ALB["Buscar y seleccionar un nombre<br/>o marcar No encuentro el nombre"]
+  ALT -- "Otra alerta" --> ALD["Escribir descripcion o detalles libres"]
+  ALB --> ALD
+  ALD --> AL1["Registrar y auditar: revalidar la seleccion<br/>o conservar el nombre escrito sin asociacion;<br/>no interpretar los detalles libres<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
   AL1 --> V0
   AL -- No --> V0["Paso 3 Cierre: adjuntos arrastrables, observaciones,<br/>panel de resumen con un solo perro en escritorio; control con explicacion,<br/>interruptor y flatpickr con dia habilitado"]
   V0 --> V{Adjuntar archivos?}

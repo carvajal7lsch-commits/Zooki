@@ -6,6 +6,46 @@
 
 ## Ahora
 
+### Alertas — nombre seleccionado y detalles libres — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude (arquitecto).**
+  Decisión vigente aprobada por el dueño en M2/RE-2.1.5: buscador principal Alérgico/a a, Medicamento que toma o Condición, con selección de sugerencia y detalles libres aparte.
+  Se retira el identificador de frases; cambiar los detalles conserva la elección y cambiar nombre/tipo/paciente la invalida.
+  «No encuentro el nombre» conserva nombre + detalles sin nodo; Otra alerta solo pide descripción; servidor valida selección, tipo, actividad, nombre actual y límite total existente de255 caracteres, con auditoría.
+- **Verificación acotada:** sintaxis, ejemplos de registro con SQLite sintético y vista Chrome1366×650 con búsqueda real por alias, detalles independientes, nombre no encontrado y tipos; cero excepciones.
+  Sin suites por instrucción del dueño; `AlertaSeleccionTest` y regresiones C1 escritas/actualizadas, no ejecutadas; las cifras anteriores no corresponden a este cambio.
+  Anexo de Codex y evidencias en M2 y `scratch/r/atencion-ficha-lateral/`; HU/RE/Modelos/Historial actualizados, con descargas y diagrama del flujo vigente.
+- **Sigue:** revisión de Claude y prueba del dueño con su catálogo cargado; regresiones sin ejecutar por su instrucción.
+  Versión2.3.0 conservada, sin migración, conocimiento, motores, base de trabajo ni Git de escritura.
+
+### Atención — cabecera y ficha lateral del paciente — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude; pendiente de aprobación visual del dueño.**
+  Cabecera según las nuevas capturas: aro azul y estado rojo con icono conservados, resumen a la izquierda, alertas y Ficha del paciente a la derecha.
+  Ficha lateral con márgenes de16px arriba, abajo y a la derecha, sujetos a la decisión del dueño; alertas completas, paciente, propietario y cita.
+  Reutiliza Agregar e Historial; presentación solo de Atención de escritorio, sin cambios del modal de Pacientes.
+  Vista puntual Chrome1366×650 correcta: márgenes16/16/16, página650px, apertura, Agregar e Historial sin excepciones; sin suites por petición del dueño.
+  Capturas en `scratch/r/atencion-ficha-lateral/` y anexo de Codex en M2.
+  Sigue la aprobación visual del dueño y sus siguientes retoques; versión2.3.0, sin commit ni push.
+  Retoque posterior del dueño: alerta en seminegrita como Sin cerrar; Ficha del paciente y acciones laterales en azul/600, títulos reforzados y fecha con día de la semana y mes en texto junto a la hora; sin suites.
+  Nuevo retoque: modal Nueva alergia o alerta según mockup, con enlace al conocimiento plegado por confirmación expresa del dueño, y guía inicial de Zooki en dos pasos.
+  Vista puntual con alergia seleccionada, contador, enlace cerrado y guía visible, sin excepciones; sin suites, pendiente de aprobación visual.
+  Modal ampliado a520px; la decisión posterior del dueño sustituye el análisis de frases por el buscador principal y detalles independientes, en la entrada actual de M2.
+
+### Atención — distribución de Evaluación y frecuentes — entregada, pendiente de revisión (2026-10-31)
+
+- **Escribió Codex; revisa Claude; pendiente de aprobación visual del dueño.**
+  Retoque incremental desde `ec98706`, en `release/v2.3.0`: vitales en cuatro tarjetas arriba, motivo a todo el ancho, síntomas y anamnesis debajo.
+  Frecuentes con selección mediante los códigos existentes, chips azul sólido, hover y quitar; fuentes conservadas y ámbito visual de Atención de escritorio.
+  Sintaxis JS y una vista puntual Chrome1366×650 con tres frecuentes seleccionados correctas, página650px.
+  No se repitieron suites completas, por instrucción expresa del dueño; las cifras de la entrega anterior corresponden a esa base.
+  Evidencia en `scratch/r/atencion-evaluacion-retoque/evaluacion.png`; decisión y resultado en M2.
+  Sigue la prueba del dueño y sus siguientes correcciones antes del cierre documental conjunto; sin commit ni push.
+  Segunda corrección del dueño: título de vitales más grueso, tarjetas más altas con línea de entrada y enfoque al tocar; error de peso sin icono.
+  Frecuentes oscuros, elegidos arriba de las opciones restantes y del mismo tamaño; sin suites, pendiente de revisión visual.
+  Tercera corrección del dueño: errores de campos a11px y frecuentes en el gris de los placeholders; solo CSS, sin suites.
+  Ajuste posterior del dueño: frecuentes en gris `#8493a8`, un poco más oscuro que el placeholder; sin suites.
+
 ### Atención — cero scroll en escritorio (2.3.0) — entregada, pendiente de revisión (2026-10-31)
 
 - **Escribió Codex; revisa Claude (arquitecto).**

@@ -1,5 +1,278 @@
-/* RE-2.1.6/7, RNF-16: V3 solo en Atención de escritorio. */
+/* RE-2.1.6/7, RNF-16: presentación de Atención; estructura V3 solo en escritorio. */
+#atencionApp .consulta-vacio-guia {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--z-bg-suave);
+    color: var(--z-text-secondary);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+    list-style: none;
+    counter-reset: pasos-zooki;
+}
+#atencionApp .consulta-vacio-guia[hidden] {
+    display: none;
+}
+#atencionApp .consulta-vacio-guia li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    counter-increment: pasos-zooki;
+}
+#atencionApp .consulta-vacio-guia li::before {
+    content: counter(pasos-zooki);
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] {
+    font-family: Inter, sans-serif;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__panel {
+    width: calc(100% - 24px);
+    max-width: 520px;
+    border: 1px solid var(--z-border);
+    border-radius: 18px;
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-lista);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .modal-header {
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+    padding: 20px 20px 16px;
+    border: 0;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .modal-header > div {
+    position: relative;
+    min-width: 0;
+    padding-left: 52px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .modal-header h3 {
+    display: block;
+    margin: 0 0 2px;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 24px;
+    color: var(--z-text);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .modal-header h3 i {
+    position: absolute;
+    inset: 0 auto auto 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 14px;
+    background: var(--z-danger-soft);
+    color: var(--z-danger-dark);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__subtitulo {
+    margin: 0;
+    font-size: 12px;
+    line-height: 17px;
+    color: var(--z-text-muted);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .close-modal {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+    font-size: 12px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .users-modal__body {
+    padding: 0 20px 20px;
+    min-height: 0;
+    overflow-y: auto;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__tipos {
+    margin: 0 0 18px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] :is(.alertas-medicas__tipos legend, .input-group > label) {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--z-text);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opciones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion {
+    gap: 8px;
+    min-height: 44px;
+    padding: 11px 12px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--z-text-secondary);
+    background: var(--z-surface);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion i {
+    display: none;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion input {
+    appearance: none;
+    width: 7px;
+    height: 7px;
+    min-width: 7px;
+    flex: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--z-border-fuerte);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion input:checked {
+    background: var(--z-primary);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion:has(input:checked) {
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-weight: 600;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__opcion:hover {
+    border-color: var(--z-primary-borde);
+    background: var(--z-bg-suave);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .input-group {
+    margin: 0;
+    gap: 0;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__entrada-descripcion {
+    position: relative;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] textarea {
+    display: block;
+    width: 100%;
+    height: 116px;
+    min-height: 116px;
+    box-sizing: border-box;
+    padding: 12px 12px 26px;
+    resize: none;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    font-family: inherit;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] textarea::placeholder {
+    color: var(--z-text-tenue);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__contador-texto {
+    position: absolute;
+    right: 10px;
+    bottom: 7px;
+    color: var(--z-text-tenue);
+    font-size: 11px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] [data-alerta-aviso] {
+    font-size: 11px;
+    font-weight: 400;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] [data-alerta-aviso]:empty {
+    display: none;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__zona-nodo {
+    margin-bottom: 18px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__zona-nodo input[type=search] {
+    height: 44px;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-bg-suave);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--z-text);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__zona-nodo input[type=search]::placeholder {
+    color: var(--z-text-tenue);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__zona-nodo .alertas-medicas__no-encuentro {
+    margin: 10px 0 4px;
+    color: var(--z-text-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__no-encuentro input {
+    flex: 0 0 14px;
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    height: 14px;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .alertas-medicas__nodo-elegido {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .users-modal__footer {
+    padding: 16px 20px;
+    gap: 8px;
+    border-top: 1px solid var(--z-border);
+    background: var(--z-bg-suave);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .users-modal__footer button {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 18px;
+    white-space: nowrap;
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-secondary {
+    color: var(--z-text-secondary);
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+}
+body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-primary {
+    background: var(--z-primary);
+    color: white;
+    box-shadow: none;
+}
+#atencionApp :is(.cuenta-validacion--error, .consulta-tratamiento__error, [data-ficha-error]) {
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 400;
+}
 #atencionApp .atencion-contexto,
+#atencionApp .atencion-franja__resumen,
+#atencionApp .atencion-franja__acciones,
+#atencionApp .atencion-sintomas-frecuentes,
 #atencionApp .atencion-ficha-resumen,
 #atencionApp .atencion-flotante__cabecera,
 #atencionApp .atencion-tratamientos-mas,
@@ -309,8 +582,101 @@
         gap: 5px;
     }
     #atencionApp .consulta-sintoma {
+        font-size: 14px;
+        font-weight: 400;
+        height: 32px;
+        box-sizing: border-box;
+        line-height: 18px;
+        padding: 6px 10px;
+        gap: 6px;
+        background: var(--z-primary);
+        border-color: var(--z-primary);
+        color: white;
+        transition: background-color 120ms ease, border-color 120ms ease;
+    }
+    #atencionApp .consulta-sintoma:hover,
+    #atencionApp .consulta-sintoma:focus-within {
+        background: var(--z-primary-dark);
+        border-color: var(--z-primary-dark);
+    }
+    #atencionApp .consulta-sintoma__quitar:hover,
+    #atencionApp .consulta-sintoma__quitar:focus-visible {
+        background: rgba(255, 255, 255, .2);
+    }
+    #atencionApp .consulta-sintoma__quitar {
+        width: 14px;
+        height: 18px;
+        font-size: 18px;
+        flex: none;
+    }
+    #atencionApp .consulta-hoja.atencion-evaluacion.is-active {
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 12px 16px;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-vitales {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-vitales::before {
+        content: 'Signos vitales';
+        grid-column: 1 / -1;
+        color: var(--z-text-muted);
         font-size: 12px;
-        padding: 4px 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-campo:has([name=motivo]) {
+        grid-column: 1 / -1;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-sintomas {
+        min-height: 0;
+        min-width: 0;
+    }
+    #atencionApp .atencion-sintomas-frecuentes {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 6px;
+        order: 1;
+    }
+    #atencionApp .atencion-sintomas-frecuentes__opciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        order: 1;
+    }
+    #atencionApp .atencion-sintomas-frecuentes > .consulta-sintomas__chips {
+        order: 0;
+    }
+    #atencionApp .atencion-sintoma-frecuente {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        box-sizing: border-box;
+        padding: 6px 10px;
+        border: 1px solid var(--z-border);
+        border-radius: 999px;
+        background: var(--z-surface);
+        color: #8493a8;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 18px;
+        cursor: pointer;
+    }
+    #atencionApp .atencion-sintoma-frecuente[hidden] {
+        display: none;
+    }
+    #atencionApp .atencion-sintoma-frecuente__signo {
+        width: 14px;
+        flex: none;
+    }
+    #atencionApp .atencion-sintoma-frecuente:hover,
+    #atencionApp .atencion-sintoma-frecuente:focus-visible {
+        background: var(--z-primary-soft);
+        border-color: var(--z-primary);
+        outline: none;
     }
     #atencionApp .consulta-vitales {
         flex: none;
@@ -320,6 +686,30 @@
     #atencionApp .consulta-vital {
         padding: 8px;
         background: var(--z-surface);
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital {
+        min-height: 128px;
+        padding: 12px;
+        box-sizing: border-box;
+        cursor: text;
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital > label:first-child {
+        font-size: 12px;
+        font-weight: 700;
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital__valor {
+        margin: 8px 0;
+        padding-bottom: 4px;
+        border-bottom: 2px solid var(--z-border);
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital:focus-within .consulta-vital__valor {
+        border-bottom-color: var(--z-primary);
+    }
+    #atencionApp .atencion-evaluacion [data-vital=peso] .cuenta-validacion--error::before {
+        content: none;
+    }
+    #atencionApp .atencion-evaluacion [data-vital-rango]:not(:empty) {
+        display: block;
     }
     #atencionApp .consulta-vital > label:first-child {
         font-size: 11px;
@@ -891,5 +1281,258 @@
     body:has(#atencionApp) .main-content,
     body:has(#atencionApp) .content-body {
         height: 650px;
+    }
+}
+@media (min-width: 1024px) {
+    #atencionApp .atencion-franja {
+        padding: 8px 12px;
+    }
+    #atencionApp .atencion-franja__identidad {
+        flex: 1;
+    }
+    #atencionApp .atencion-nombre-paciente {
+        flex: 0 1 auto;
+    }
+    #atencionApp .atencion-franja__identidad > small:not(.atencion-franja__resumen),
+    #atencionApp .atencion-franja > .atencion-franja__datos {
+        display: none;
+    }
+    #atencionApp .atencion-franja__identidad > .atencion-franja__resumen {
+        display: block;
+        color: var(--z-text-muted);
+        margin-top: 3px;
+    }
+    #atencionApp .atencion-franja__acciones {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    #atencionApp .atencion-franja__acciones button {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        line-height: 18px;
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+    #atencionApp .atencion-franja__aviso {
+        border: 0;
+        border-radius: 999px;
+        background: var(--z-danger-soft);
+        color: var(--z-danger-dark);
+        font-weight: 600;
+    }
+    #atencionApp .atencion-franja__aviso.sin-alertas {
+        color: var(--z-text-muted);
+        background: var(--z-bg-light);
+    }
+    #atencionApp .atencion-franja__abrir {
+        color: var(--z-primary);
+        font-weight: 600;
+        background: var(--z-surface);
+        border: 1px solid var(--z-border);
+        border-radius: 10px;
+    }
+    #atencionApp .atencion-franja__acciones button:hover {
+        filter: brightness(.97);
+    }
+    #atencionApp .atencion-ficha-lateral {
+        position: fixed;
+        inset: 16px 16px 16px auto;
+        margin: 0;
+        width: 360px;
+        max-width: calc(100vw - 32px);
+        height: calc(100dvh - 32px);
+        max-height: none;
+        padding: 0;
+        box-sizing: border-box;
+        border: 1px solid var(--z-border);
+        border-radius: 22px;
+        background: var(--z-surface);
+        color: var(--z-text);
+        box-shadow: var(--z-shadow-lista);
+        font-family: Inter, sans-serif;
+    }
+    #atencionApp .atencion-ficha-lateral[open] {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+    #atencionApp .atencion-ficha-lateral::backdrop {
+        background: var(--z-velo-modal);
+    }
+    #atencionApp .atencion-ficha-lateral__cabecera {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px;
+        border-bottom: 1px solid var(--z-border);
+    }
+    #atencionApp .atencion-ficha-lateral__avatar {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        flex: none;
+        border-radius: 50%;
+        color: var(--z-primary);
+        background: var(--z-primary-soft);
+        font-weight: 700;
+    }
+    #atencionApp .atencion-ficha-lateral__avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+    }
+    #atencionApp .atencion-ficha-lateral__cabecera h2 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0 0 2px;
+    }
+    #atencionApp .atencion-ficha-lateral__cabecera p {
+        margin: 0;
+        font-size: 11px;
+        color: var(--z-text-muted);
+    }
+    #atencionApp .atencion-ficha-lateral__cerrar {
+        margin-left: auto;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--z-border);
+        border-radius: 10px;
+        background: var(--z-surface);
+        color: var(--z-text-secondary);
+        cursor: pointer;
+    }
+    #atencionApp .atencion-ficha-lateral__cuerpo {
+        padding: 16px 18px;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    #atencionApp .atencion-ficha-lateral__seccion {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--z-border);
+    }
+    #atencionApp .atencion-ficha-lateral__seccion:last-child {
+        border-bottom: 0;
+    }
+    #atencionApp .atencion-ficha-lateral h3,
+    #atencionApp .atencion-ficha-lateral .atencion-franja__etiqueta {
+        margin: 0 0 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        color: var(--z-text-muted);
+    }
+    #atencionApp .atencion-ficha-lateral__datos {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+        margin: 0;
+    }
+    #atencionApp .atencion-ficha-lateral__datos dt {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--z-text-muted);
+        margin-bottom: 2px;
+    }
+    #atencionApp .atencion-ficha-lateral__datos dd {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+    #atencionApp .atencion-ficha-lateral__propietario {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+    }
+    #atencionApp .atencion-ficha-lateral__propietario strong {
+        min-width: 0;
+        flex: 1;
+        overflow-wrap: anywhere;
+    }
+    #atencionApp .atencion-ficha-lateral__iniciales {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--z-primary);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    #atencionApp .atencion-ficha-lateral__telefono {
+        padding: 7px 8px;
+        border: 1px solid var(--z-primary-borde);
+        border-radius: 9px;
+        color: var(--z-primary);
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    #atencionApp .atencion-ficha-lateral .atencion-franja__alertas {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+    }
+    #atencionApp .atencion-ficha-lateral .atencion-franja__etiqueta {
+        grid-column: 1;
+        align-self: center;
+        margin: 0;
+    }
+    #atencionApp .atencion-ficha-lateral .consulta-agregar-alerta {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--z-primary);
+        font-size: 11px;
+        font-weight: 600;
+    }
+    #atencionApp .atencion-ficha-lateral .consulta-chip {
+        grid-column: 1 / -1;
+        white-space: normal;
+        overflow: visible;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 17px;
+        padding: 8px 10px;
+        border-radius: 10px;
+    }
+    #atencionApp .atencion-ficha-lateral__pie {
+        padding: 14px 18px;
+        border-top: 1px solid var(--z-border);
+    }
+    #atencionApp .atencion-ficha-lateral__pie button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--z-border);
+        border-radius: 10px;
+        background: var(--z-surface);
+        color: var(--z-primary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #atencionApp .atencion-ficha-lateral__hora {
+        white-space: nowrap;
+    }
+    #atencionApp .atencion-ficha-lateral__cerrar:hover,
+    #atencionApp .atencion-ficha-lateral__pie button:hover,
+    #atencionApp .atencion-ficha-lateral__telefono:hover {
+        background: var(--z-primary-soft);
     }
 }

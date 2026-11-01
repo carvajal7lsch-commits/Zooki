@@ -3,6 +3,8 @@ require_once __DIR__ . '/ModeloHistoria.php';
 require_once __DIR__ . '/../helpers/ValidadorAlertaMedica.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
+require_once __DIR__ . '/../helpers/ArchivosConocimiento.php';
 
 /**
  * HU-2.1, RE-2.1.5 y RE-2.10.1 — Alergias y alertas médicas de la mascota.
@@ -38,15 +40,34 @@ class AlertaMedica extends ModeloHistoria
         $this->exigirMascotaActiva($idMascota);
         $tipo = ValidadorAlertaMedica::tipo($entrada['tipo'] ?? null);
         $descripcion = ValidadorAlertaMedica::descripcion($entrada['descripcion'] ?? null);
-        $idNodo = $this->nodoPermitido($tipo, $entrada['nodo'] ?? null);
+        $codigoNodo = $entrada['nodo'] ?? null;
+        $estructurada = ($entrada['seleccion_estructurada'] ?? '') === '1';
+        $sinCatalogo = in_array($entrada['no_encuentro_nombre'] ?? null, [1, '1', true], true);
+        $modoIdentificacion = 'manual';
+        $nombre = null;
+        if ($estructurada && $tipo !== 'otra') {
+            $nombre = is_string($entrada['nombre_alerta'] ?? null) ? trim(preg_replace('/\s+/u', ' ', $entrada['nombre_alerta']) ?? '') : '';
+            if ($nombre === '') throw new CampoInvalido('busqueda', 'Escribe el nombre y elige una sugerencia.', 'Falta el medicamento, sustancia o condición.');
+            if ($sinCatalogo && $codigoNodo !== null && $codigoNodo !== '') throw new CampoInvalido('busqueda', 'Elige una sugerencia o marca No encuentro el nombre.', 'La alerta tiene dos decisiones distintas.');
+            if (!$sinCatalogo && ($codigoNodo === null || $codigoNodo === '')) throw new CampoInvalido('busqueda', 'Elige una sugerencia o marca No encuentro el nombre.', 'Falta seleccionar el medicamento, sustancia o condición.');
+            if ($sinCatalogo && mb_strlen($nombre) > ValidadorAlertaMedica::BUSQUEDA_MAX) throw new CampoInvalido('busqueda', 'El nombre es demasiado largo.', 'El nombre supera el límite del buscador.');
+            $modoIdentificacion = $sinCatalogo ? 'sin_catalogo' : 'seleccion_catalogo';
+        }
+        $idNodo = $this->nodoPermitido($tipo, $codigoNodo, $sinCatalogo ? null : $nombre);
+        if ($nombre !== null) {
+            $compuesta = $nombre . ': ' . $descripcion;
+            if (mb_strlen($compuesta) > ValidadorAlertaMedica::DESCRIPCION_MAX) throw new CampoInvalido('descripcion', 'Reduce los detalles: el nombre también ocupa espacio.', 'Nombre y detalles juntos admiten hasta ' . ValidadorAlertaMedica::DESCRIPCION_MAX . ' caracteres.');
+            $descripcion = ValidadorAlertaMedica::descripcion($compuesta);
+        }
+        if ($tipo === 'otra') $modoIdentificacion = 'informativa';
         $clinica = $this->clinica();
         $veterinario = $this->veterinarioActual();
 
-        return Transaccion::ejecutar($this->conn, function () use ($idMascota, $tipo, $descripcion, $idNodo, $clinica, $veterinario): int {
+        return Transaccion::ejecutar($this->conn, function () use ($idMascota, $tipo, $descripcion, $idNodo, $clinica, $veterinario, $modoIdentificacion): int {
             $this->conn->prepare('INSERT INTO alertas_medicas (id_mascota, id_clinica, id_veterinario, tipo, id_nodo, descripcion, activa) VALUES (?, ?, ?, ?, ?, ?, 1)')
                 ->execute([$idMascota, $clinica, $veterinario, $tipo, $idNodo, $descripcion]);
             $id = (int) $this->conn->lastInsertId();
-            $this->auditar('INSERT', $id, null, ['id_mascota' => $idMascota, 'tipo' => $tipo, 'id_nodo' => $idNodo, 'descripcion' => $descripcion], 'Alerta médica registrada (RE-2.1.5)');
+            $this->auditar('INSERT', $id, null, ['id_mascota' => $idMascota, 'tipo' => $tipo, 'id_nodo' => $idNodo, 'descripcion' => $descripcion, 'identificacion' => $modoIdentificacion], 'Alerta médica registrada (RE-2.1.5)');
             return $id;
         });
     }
@@ -154,7 +175,7 @@ class AlertaMedica extends ModeloHistoria
      * A.2: el enlace al conocimiento es opcional, pero si viene tiene que ser un nodo
      * activo del tipo que admite la alerta. Se recibe el código estable, nunca un id.
      */
-    private function nodoPermitido(string $tipo, mixed $codigo): ?int
+    private function nodoPermitido(string $tipo, mixed $codigo, ?string $nombre = null): ?int
     {
         if ($codigo === null || $codigo === '') {
             return null;
@@ -163,7 +184,7 @@ class AlertaMedica extends ModeloHistoria
         if (!is_string($codigo) || $permitidos === []) {
             throw new InvalidArgumentException('Este tipo de alerta no se enlaza con el conocimiento.');
         }
-        $consulta = $this->conn->prepare('SELECT id_nodo, tipo FROM grafo_nodos WHERE codigo = ? AND activo = 1');
+        $consulta = $this->conn->prepare('SELECT id_nodo, tipo, etiqueta FROM grafo_nodos WHERE codigo = ? AND activo = 1');
         $consulta->execute([$codigo]);
         $nodo = $consulta->fetch(PDO::FETCH_ASSOC);
         if ($nodo === false) {
@@ -171,6 +192,9 @@ class AlertaMedica extends ModeloHistoria
         }
         if (!in_array($nodo['tipo'], $permitidos, true)) {
             throw new InvalidArgumentException('El elemento del conocimiento elegido no corresponde a este tipo de alerta.');
+        }
+        if ($nombre !== null && ArchivosConocimiento::normalizarTexto($nombre) !== ArchivosConocimiento::normalizarTexto($nodo['etiqueta'])) {
+            throw new CampoInvalido('busqueda', 'El nombre cambió. Elige de nuevo una sugerencia.', 'La selección ya no corresponde al nombre actual.');
         }
         return (int) $nodo['id_nodo'];
     }
