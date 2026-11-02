@@ -6,7 +6,7 @@
 
 ## Ahora
 
-### Guion Tampermonkey y escena de sustentación (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 
 - Escribió Codex; revisa Claude (arquitecto); decisiones y anexo en `specs/semilla-demo.md`, instalación y cinco comprobaciones manuales en `demo/LEEME.md`.
   `demo/zooki-demo.user.js` queda fuera de `public/`: un paso por Shift+S, reinicio por Shift+Q, panel aislado y minimizable, autocompletados reales y ninguna consulta guardada ni reserva creada.
