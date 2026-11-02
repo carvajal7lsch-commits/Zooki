@@ -78,6 +78,7 @@ final class SemillaDemoTest extends TestCase
         $this->assertSame(41, $segunda['conteos']['usuarios']);
         $this->assertSame(42, $segunda['conteos']['mascotas']);
         $this->assertSame(128, $segunda['conteos']['consultas']);
+        $this->assertSame([], $this->filas('SELECT id_cita FROM citas WHERE id_clinica IN (?,?) AND DAYOFWEEK(fecha)=1', [$this->idClinica('sanroque'), $this->idClinica('huellitas')]), 'La demo conserva el domingo cerrado también en su historia.');
         $this->assertSame(3, $segunda['correos']['recordatorios_dosis']);
         $this->assertSame(0, $segunda['correos']['eventos_pendientes']);
         $this->assertSame(15, $segunda['correos']['recordatorios_citas_por_dia']['2026-11-02']);

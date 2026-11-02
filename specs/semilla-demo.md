@@ -245,3 +245,11 @@ Semilla (`fe730c9`) **aprobada con corrección antes de producción**. Corrida r
 - Corrida CLI real `--si`/`--escena` con reloj inyectado en lunes: 5 clínicas, 41 cuentas, 42 mascotas, 128 consultas, 221 citas y 97 solicitudes tras crear; cuentas/claves en evidencia local ignorada por Git.
 - Evidencias: `scratch/r/userscript/phpunit.log`, `navegador.log`, `resultado.json`, `corrida-cli.log` y seis capturas; sin `.env`, SMTP, commit ni push.
 - Pendiente: revisión de Claude e instalación/ensayo del dueño en Tampermonkey; se conservó el recorte de la línea de descartadas del pie existente a 1366, sin rediseñar Atención; versión 2.3.0 sin cambio.
+
+## Corrección de historia en domingo (2026-11-02)
+
+- **Decisión del dueño:** mantener el domingo cerrado; corregir las fechas de la historia de demostración, sin abrir una jornada dominical.
+- Escribió Codex; entregada, pendiente de revisión del dueño: `consultaHistorica` traslada al sábado anterior las fechas ficticias que caían en domingo, conservando hora, cantidades y el episodio vigente de Max.
+- La corrección se aplica al ejecutar de nuevo `--si`; `--escena` no rehace los seis meses de historia y no corrige los registros ya sembrados.
+- Se conserva la jornada lunes–sábado7:00–20:00; sintaxis PHP comprobada, sin ejecutar suites, integraciones ni la semilla por instrucción del dueño; no se tocó la base cargada.
+- Regresión agregada a `SemillaDemoTest` para impedir citas demo en domingo; escrita y sin ejecutar por esa misma instrucción.

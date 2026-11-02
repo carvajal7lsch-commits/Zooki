@@ -293,6 +293,10 @@ final class SemillaDemo
 
     public function consultaHistorica(array $mascota, int $clinica, int $vet, DateTimeImmutable $fecha, string $diagnostico, bool $vigente = false, int $minutosReales = 30): int
     {
+        // Decisión del dueño (2026-11-02): conservar el domingo cerrado también en la historia ficticia.
+        if ($fecha->format('N') === '7') {
+            $fecha = $fecha->modify('-1 day');
+        }
         self::como($vet, $clinica, Roles::VETERINARIO);
         $contexto = (new PacienteDiagnostico($this->db))->contexto($mascota['id'], $this->grafo, $fecha, []);
         $sintomas = [];

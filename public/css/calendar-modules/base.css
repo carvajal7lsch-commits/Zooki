@@ -168,6 +168,28 @@
     font-weight: 600;
 }
 
+/* Las citas del mes caben dentro de la fila; el popover conserva sus tarjetas completas. */
+.agenda .fc .fc-daygrid-day-frame > .fc-daygrid-day-top {
+    padding-top: 2px;
+}
+.agenda .fc .fc-daygrid-day-frame > .fc-daygrid-day-events {
+    margin-bottom: 2px;
+}
+.agenda .fc .fc-daygrid-day-frame > .fc-daygrid-day-events > .fc-daygrid-event-harness {
+    margin-top: 1px;
+}
+.agenda .fc .fc-daygrid-day-frame > .fc-daygrid-day-events > .fc-daygrid-event-harness > .fc-daygrid-event {
+    min-height: 18px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 18px;
+}
+.agenda .fc .fc-daygrid-day-frame > .fc-daygrid-day-events .fc-daygrid-more-link {
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 14px;
+}
+
 .agenda .fc .fc-event-title {
     overflow: hidden;
     text-overflow: ellipsis;

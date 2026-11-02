@@ -377,7 +377,8 @@ function iniciarCalendario() {
         height: '100%',
         expandRows: true,
         fixedWeekCount: false,
-        dayMaxEvents: 2,
+        // Mantener las semanas equilibradas: el contenido que no cabe va a «+N más».
+        dayMaxEventRows: true,
         eventDisplay: 'block',
         nowIndicator: true,
         allDaySlot: false,

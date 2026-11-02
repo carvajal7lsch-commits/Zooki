@@ -1182,7 +1182,7 @@ Anotados por Claude (arquitecto) a partir de las capturas del dueño. Pendientes
 
 Escribió Codex; revisión visual y decisión final del dueño.
 
-- H-1 — **entregados, pendiente de revisión del dueño**: Mes muestra hasta dos citas por día y «+N más» para el resto; conserva el alto original de las celdas, por indicación posterior del dueño.
+- H-1 — **entregados, pendiente de revisión del dueño**: Mes muestra las citas que caben y «+N más» para el resto, con semanas equilibradas que conservan el alto disponible por indicación posterior del dueño.
 - H-2 — **entregados, pendiente de revisión del dueño**: popover nativo sin repintado al abrir; se evita el acceso a una celda inexistente que rompía el cierre, con X y clic afuera operativos.
 - H-3 — **entregados, pendiente de revisión del dueño**: Calendario y Portal excluyen la fecha/hora actual antes de presentar y recomendar horarios; mensaje explícito si no queda otra opción.
 - H-4 — **entregados, pendiente de revisión del dueño**: Macho/Hembra segmentados en Nuevo/Editar; selección y bloqueo de identidad conservados, sexo y nacimiento obligatorios.
@@ -1206,3 +1206,7 @@ Las franjas activas por día determinan el sombreado no laboral dentro de esa ve
 Corrección adicional H-2 (2026-11-02), escrita por Codex, entregada y pendiente de revisión del dueño: «+N más» selecciona la fecha de la celda, evitando restar un día al convertir el marcador UTC de FullCalendar.
 Escape usa el cierre nativo para conservar el estado del popover; la URL de calendario.js incluye su hash de contenido para no reutilizar una copia anterior dentro de2.3.0.
 Comprobación puntual con clics reales en Chrome a1366×768 y1024×650: día/título coincidentes, X, clic afuera, Escape y reapertura correctos, sin excepciones; sin suites ni capturas; evidencia local `scratch/r/hallazgos-demo/cierre-real.json`.
+
+Retoque del dueño (2026-11-02), escrito por Codex, entregado y pendiente de revisión: Mes equilibra la altura de sus semanas y manda a «+N más» las citas que no caben, con tarjetas compactas dentro de las celdas; el cursor no altera sus dimensiones.
+Se renueva la revisión de los CSS del calendario para cargar el rótulo centrado y los estilos actuales; apertura puntual con muchas citas sin errores JS ni scroll interno adicional a1366×768/900, sin suites ni capturas.
+El dueño confirmó mantener el domingo cerrado y corregir la historia demo; las fechas ficticias que caían en domingo pasan al sábado anterior al recrear la semilla, sin editar registros existentes desde la interfaz.
