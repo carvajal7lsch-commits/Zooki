@@ -396,8 +396,12 @@ function iniciarCalendario() {
         editable: false,
         eventDurationEditable: false,
         moreLinkText: n => `+${n} más`,
-        // H-2: el popover nativo conserva su cierre sin repintar el calendario al abrirlo.
-        moreLinkClick: 'popover',
+        moreLinkClick: info => {
+            // FullCalendar entrega aquí un marcador UTC; convertirlo a hora local restaba un día.
+            const fecha = info.jsEvent.target.closest('.fc-daygrid-day')?.dataset.date || info.date.toISOString().slice(0, 10);
+            seleccionarDia(new Date(fecha + 'T12:00:00'));
+            return 'popover';
+        },
         events: cargarEventos,
         eventsSet: () => window.ZookiAgendaMovil?.actualizar(),
         loading: cargando => {
@@ -1562,7 +1566,8 @@ document.addEventListener('keydown', e => {
     if (document.querySelector('dialog[open]')) return;
     if (document.getElementById('reprogramarModalOverlay')?.classList.contains('is-open')) cerrarModalReprogramar();
     else if (document.getElementById('citaModalOverlay')?.classList.contains('is-open')) closeCitaModal();
-    document.querySelectorAll('.fc-popover').forEach(p => p.remove());
+    // Cerrar mediante FullCalendar conserva su estado y permite volver a abrir «+N más».
+    document.querySelector('.fc-popover-close')?.click();
 });
 
 document.addEventListener('click', e => {

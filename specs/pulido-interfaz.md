@@ -1202,3 +1202,7 @@ Solo presentación de Semana; sin cambios de citas ni horarios; apertura puntual
 
 Retoque posterior del dueño (2026-11-02), escrito por Codex, entregado y pendiente de revisión: columna de horas más amplia, formato24 h «07:00» y ventana semanal desde la primera apertura hasta el último cierre configurados; ninguna entrada fija a las7.
 Las franjas activas por día determinan el sombreado no laboral dentro de esa ventana compartida; los cambios de horario se reflejan al recargar la agenda; apertura puntual sin errores de consola, sin suites ni capturas.
+
+Corrección adicional H-2 (2026-11-02), escrita por Codex, entregada y pendiente de revisión del dueño: «+N más» selecciona la fecha de la celda, evitando restar un día al convertir el marcador UTC de FullCalendar.
+Escape usa el cierre nativo para conservar el estado del popover; la URL de calendario.js incluye su hash de contenido para no reutilizar una copia anterior dentro de2.3.0.
+Comprobación puntual con clics reales en Chrome a1366×768 y1024×650: día/título coincidentes, X, clic afuera, Escape y reapertura correctos, sin excepciones; sin suites ni capturas; evidencia local `scratch/r/hallazgos-demo/cierre-real.json`.

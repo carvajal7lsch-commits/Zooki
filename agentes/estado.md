@@ -14,6 +14,7 @@
   Sigue su revisión visual; H-8 conserva su alcance pendiente y no se tocó; versión 2.3.0 conservada, sin commit ni push.
   Retoque posterior del dueño, escrito por Codex: rótulo gris «No laboral» centrado en la celda y pista de arrastre solo al pasar el cursor sobre citas movibles, sin la nota fija ni aumentar el alto de las celdas; Calendario sin errores de consola a1366/390, pendiente de revisión del dueño.
   Semana: tarjetas compactas con nombre/hora/tipo y borde azul completo de selección; encabezado intacto, columna de horas ampliada con formato24 h y escala entre apertura/cierre configurados, actualizada al recargar; apertura sin errores de consola, sin suites ni capturas; escrito por Codex y pendiente de revisión del dueño.
+  H-2 corregido de nuevo por Codex: fecha exacta de la celda en «+N más» sin desfase UTC, Escape mediante el cierre nativo y JS con hash de contenido para evitar copias anteriores; clics reales a1366/1024 confirman X/afuera/Escape/reapertura y selección, sin excepciones, suites ni capturas; pendiente de revisión del dueño.
 
 ### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 
