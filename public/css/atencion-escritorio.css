@@ -1264,6 +1264,34 @@ body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-primary {
     #atencionApp .consulta-examen {
         padding: 2px 6px;
     }
+    /* RE-2.1.6/7: los síntomas largos necesitan el alto de la hoja en escritorio estrecho. */
+    #atencionApp .consulta-hoja.atencion-evaluacion.is-active {
+        gap: 8px 12px;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-vitales {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    #atencionApp .atencion-evaluacion > .consulta-campo:has([name=motivo]) {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-sintomas {
+        grid-column: 2;
+        grid-row: 1 / -1;
+    }
+    #atencionApp .atencion-evaluacion > .consulta-campo:has([name=anamnesis]) {
+        grid-column: 1;
+        grid-row: 3;
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital {
+        min-height: 104px;
+        padding: 8px;
+    }
+    #atencionApp .atencion-evaluacion .consulta-vital__valor {
+        margin: 4px 0;
+    }
 }
 @media (min-width: 1024px) and (max-width: 1439px) {
     #atencionApp .consulta-progreso .atencion__paso-btn:has(.consulta-progreso__corto) .consulta-progreso__nombre {
@@ -1271,6 +1299,36 @@ body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-primary {
     }
     #atencionApp .consulta-progreso .atencion__paso-btn .consulta-progreso__corto {
         display: inline;
+    }
+}
+@media (min-width: 1280px) and (max-width: 1439px) and (min-height: 650px) and (max-height: 849px) {
+    /* RE-2.1.6/7: adaptar solo el peor caso; la evaluación habitual conserva su distribución. */
+    #atencionApp .consulta-hoja.atencion-evaluacion.is-active:has(.consulta-sintoma:nth-child(5)) {
+        gap: 8px 12px;
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) > .consulta-vitales {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) > .consulta-campo:has([name=motivo]) {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) > .consulta-sintomas {
+        grid-column: 2;
+        grid-row: 1 / -1;
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) > .consulta-campo:has([name=anamnesis]) {
+        grid-column: 1;
+        grid-row: 3;
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) .consulta-vital {
+        min-height: 104px;
+        padding: 8px;
+    }
+    #atencionApp .atencion-evaluacion:has(.consulta-sintoma:nth-child(5)) .consulta-vital__valor {
+        margin: 4px 0;
     }
 }
 @media (min-width: 1024px) and (max-height: 649px) {
