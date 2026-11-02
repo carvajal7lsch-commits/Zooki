@@ -59,6 +59,10 @@
             const salida = herramientas.querySelector('[data-agenda-pendientes-total]');
             salida.textContent = total;
             salida.setAttribute('aria-label', `${total} pendientes en total`);
+            const contadorInferior = document.querySelector('[data-agenda-pendientes-conteo]');
+            contadorInferior.textContent = total;
+            contadorInferior.hidden = total === 0;
+            contadorInferior.closest('button').setAttribute('aria-label', `Pendientes: ${total}`);
             if (!esMovil && vista === 'pendientes' && !eleccionManual) elegirPrioridad();
         }
         botones.forEach((boton, indice) => {

@@ -20,6 +20,10 @@
     background: var(--z-surface);
 }
 .agenda-panel__vistas button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     flex: 1;
     min-height: 38px;
     padding: 8px 12px;
@@ -32,6 +36,21 @@
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
+}
+.agenda-panel__conteo {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-size: .65rem;
+    font-weight: 700;
+}
+.agenda-panel__conteo[hidden] {
+    display: none;
 }
 .agenda-panel__vistas button:hover {
     background: var(--z-bg-suave);

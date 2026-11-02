@@ -1287,3 +1287,4 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Consulta general se resuelve por nombre en el catálogo activo, sin id fijo ni sustitución arbitraria; motivo genérico aprobado y decisión clínica únicamente cuando el servidor la pide.
 - Se mantienen el registro único, los reintentos, la respuesta de espera/orden/pausa y el diálogo fuera del contenedor ocultable.
 - Verificación: lectura del código y diff; sin pruebas, suites ni capturas en esta iteración por la instrucción vigente; aceptación visual y funcional pendiente.
+- Retoque posterior: el botón inferior Pendientes lleva el mismo total de su encabezado y lo oculta en cero; Solo registrar llegada muestra un aviso breve con la ubicación Pendientes → Rojos; Atender ahora conserva el inicio de Atención; escribió Codex, pendiente de revisión visual, sin pruebas ni suites.

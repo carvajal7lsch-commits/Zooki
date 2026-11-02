@@ -76,7 +76,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <div class="agenda-panel__pendientes" id="agendaPanelPendientes" data-agenda-pendientes role="tabpanel" aria-labelledby="agendaVistaPendientes" hidden></div>
             <footer class="agenda-panel__vistas" role="tablist" aria-label="Contenido del panel">
                 <button type="button" id="agendaVistaCitas" role="tab" aria-controls="agendaPanelCitas" aria-selected="true" data-agenda-vista="citas">Citas</button>
-                <button type="button" id="agendaVistaPendientes" role="tab" aria-controls="agendaPanelPendientes" aria-selected="false" tabindex="-1" data-agenda-vista="pendientes">Pendientes</button>
+                <button type="button" id="agendaVistaPendientes" role="tab" aria-controls="agendaPanelPendientes" aria-selected="false" tabindex="-1" data-agenda-vista="pendientes">Pendientes <span class="agenda-panel__conteo" data-agenda-pendientes-conteo hidden>0</span></button>
             </footer>
             <?php endif; ?>
         </aside>

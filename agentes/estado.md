@@ -17,6 +17,7 @@
 - Comprobación puntual de apertura/cierre con clics reales en Chrome a1366×768 y390×844: ventana visible, página liberada y sin excepciones; sin suites, capturas ni envíos; pendiente de revisión del dueño.
 - Simplificación posterior aprobada: botón + Urgencia, ventana Nueva urgencia con Identificar después por defecto y búsqueda opcional; sin motivo, contacto ni tipo visibles; Consulta general del catálogo y motivo genérico acordado; decisión solo ante exigencia del servidor.
 - Escribió Codex; simplificación entregada, pendiente de revisión visual/funcional del dueño, sin ejecutar pruebas ni suites en esta iteración; endpoints y modelos conservados.
+- Retoque pedido por el dueño: total visible en el botón inferior Pendientes cuando es mayor que cero y aviso breve tras Solo registrar llegada; esta acción mantiene el caso en espera, mientras Atender ahora abre Atención; escribió Codex, pendiente de revisión, sin suites ni pruebas.
 
 ### Panel lateral de Agenda: Citas y Pendientes — entregada, pendiente de revisión del dueño (2026-11-02)
 

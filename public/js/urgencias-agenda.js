@@ -412,6 +412,7 @@
                     if (!iniciarAtencion) {
                         global.zookiCerrarDialogo(form);
                         reiniciar();
+                        global.zookiToast?.('Llegada registrada en Pendientes → Rojos.', 'success');
                     } else {
                         principal.textContent = 'Iniciando atención…';
                         cuerpoAtencion.set('id_solicitud', solicitud);
