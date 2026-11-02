@@ -193,6 +193,53 @@
 #dialogoRojo .zk-dialogo__pie {
     flex-wrap: wrap;
 }
+#dialogoRojo .zk-dialogo__cuerpo {
+    display: grid;
+    gap: 14px;
+}
+.urgencia-rapida__opciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.urgencia-rapida__opciones button {
+    min-height: 42px;
+    padding: 8px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.urgencia-rapida__opciones button[aria-pressed="true"] {
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.urgencia-rapida__opciones button:hover {
+    border-color: var(--z-primary);
+}
+.urgencia-rapida__opciones button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+.urgencia-rapida__opciones button:disabled {
+    cursor: default;
+}
+.urgencia-rapida__ayuda {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .8rem;
+    line-height: 1.5;
+}
+.urgencia-rapida__paciente {
+    display: grid;
+    gap: 12px;
+}
 @media (max-width: 767px) {
     #dialogoRojo .zk-dialogo__pie > [type="submit"] {
         flex-basis: 100%;

@@ -6,7 +6,7 @@
 
 ## Ahora
 
-### Rojo presencial: registrar y atender — entregada, pendiente de revisión del dueño (2026-11-02)
+### Urgencia rápida: registrar y atender — entregada, pendiente de revisión del dueño (2026-11-02)
 
 - Escribió Codex; encargo y anexo en `specs/pulido-interfaz.md`.
 - Atender ahora encadena ingreso/llegada y atención con endpoints existentes; tipo del catálogo y decisión clínica opcional; Atención abre solo con la cita confirmada por el servidor.
@@ -15,6 +15,8 @@
 - Sin pruebas, suites ni capturas por la instrucción vigente del dueño; lectura del código y revisión funcional/visual pendiente;2.3.0 conservada, sin commit ni push.
 - Corrección posterior del bloqueo, escrita por Codex: diálogo Rojo presencial fuera del contenedor ocultable de Pendientes y recarga del formulario mediante su referencia global; antes abría a0×0 y dejaba inerte la página.
 - Comprobación puntual de apertura/cierre con clics reales en Chrome a1366×768 y390×844: ventana visible, página liberada y sin excepciones; sin suites, capturas ni envíos; pendiente de revisión del dueño.
+- Simplificación posterior aprobada: botón + Urgencia, ventana Nueva urgencia con Identificar después por defecto y búsqueda opcional; sin motivo, contacto ni tipo visibles; Consulta general del catálogo y motivo genérico acordado; decisión solo ante exigencia del servidor.
+- Escribió Codex; simplificación entregada, pendiente de revisión visual/funcional del dueño, sin ejecutar pruebas ni suites en esta iteración; endpoints y modelos conservados.
 
 ### Panel lateral de Agenda: Citas y Pendientes — entregada, pendiente de revisión del dueño (2026-11-02)
 

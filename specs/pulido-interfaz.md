@@ -1271,3 +1271,19 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Verificación: lectura de controlador/modelo, código y diff; sin pruebas ni suites por la instrucción vigente; pendientes revisión funcional/visual del dueño y CI tras su push.
 - Corrección posterior: Rojo presencial estaba dentro de Pendientes oculto; showModal dejaba el diálogo abierto a0×0 y bloqueaba el resto; ahora la ventana vive en body y su formulario se sigue recargando por id.
 - Comprobación puntual con clics reales en Chrome local a1366×768 y390×844: ventana visible, X cierra y la página vuelve a recibir clics; sin excepciones, suites, capturas ni registros guardados; escribió Codex, pendiente de revisión del dueño.
+
+#### Simplificación aprobada por el dueño (2026-11-02)
+
+- Botón «+ Urgencia» y título «Nueva urgencia»; «Identificar después» por defecto, con búsqueda opcional de un paciente existente.
+- Ningún texto obligatorio para ingresar: motivo inicial «Ingreso de urgencia presencial», ficha provisional sin datos del acompañante y tipo Consulta general tomado del catálogo activo; no elegir otro tipo si falta ese nombre.
+- Solo Atender ahora y Solo registrar llegada al pie; los detalles reales y la identificación se completan después con los flujos existentes.
+- La decisión clínica aparece únicamente cuando el servidor la exige por una atención ya pausada; se conservan sus reglas, el ingreso confirmado y los reintentos seguros.
+- Sustituye la elección manual inicial del tipo y los campos visibles de motivo/contacto/decisión del encargo anterior; dentro de2.3.0, sin cambios de endpoints ni motores.
+
+#### Anexo — Resultado de la simplificación
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Nueva urgencia abre con Identificar después; búsqueda de mascota opcional, dos acciones al pie y ningún texto obligatorio inicial.
+- Consulta general se resuelve por nombre en el catálogo activo, sin id fijo ni sustitución arbitraria; motivo genérico aprobado y decisión clínica únicamente cuando el servidor la pide.
+- Se mantienen el registro único, los reintentos, la respuesta de espera/orden/pausa y el diálogo fuera del contenedor ocultable.
+- Verificación: lectura del código y diff; sin pruebas, suites ni capturas en esta iteración por la instrucción vigente; aceptación visual y funcional pendiente.

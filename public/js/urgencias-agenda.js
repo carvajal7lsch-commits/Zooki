@@ -270,6 +270,27 @@
             });
         }
 
+        function normalizarNombre(valor) {
+            return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function prepararTipoIngreso(form) {
+            // Decisión del dueño: Consulta general, tomada del catálogo activo y nunca de un id fijo.
+            const tipos = (catalogos?.tipos || []).filter(tipo => normalizarNombre(tipo.nombre_tipo) === 'consulta general');
+            form.elements.namedItem('id_tipo_cita').value = tipos.length === 1 ? tipos[0].id_tipo_cita : '';
+            form.querySelector('[data-ingreso-configuracion]').textContent = catalogos && tipos.length !== 1
+                ? 'No se pudo identificar Consulta general en los tipos activos de la clínica. Puedes registrar la llegada e ir a Urgencias.' : '';
+        }
+
+        function llenarPacientesIngreso(form) {
+            const select = form.elements.namedItem('id_mascota');
+            const previo = select.value;
+            const busqueda = normalizarNombre(form.querySelector('[data-urgencia-buscar]').value);
+            const pacientes = (catalogos?.mascotas || []).filter(mascota => normalizarNombre(mascota.nombre).includes(busqueda));
+            opciones(select, pacientes, 'id_mascota', 'nombre');
+            select.value = previo;
+        }
+
         async function recargar() {
             const turno = ++lectura;
             const respuesta = await global.fetch('index.php?action=listar_urgencias_ajax');
@@ -279,14 +300,8 @@
             catalogos = datos.catalogos;
             const form = document.querySelector('#dialogoRojo [data-ingreso-rojo]');
             if (form) {
-                const select = form.elements.namedItem('id_mascota');
-                const previo = select.value;
-                opciones(select, catalogos.mascotas, 'id_mascota', 'nombre');
-                select.value = previo;
-                const tipo = form.elements.namedItem('id_tipo_cita');
-                const tipoPrevio = tipo.value;
-                opciones(tipo, catalogos.tipos, 'id_tipo_cita', 'nombre_tipo');
-                tipo.value = tipoPrevio;
+                llenarPacientesIngreso(form);
+                prepararTipoIngreso(form);
                 validar(form);
             }
             rojos(datos.rojos);
@@ -302,22 +317,38 @@
             let solicitud = null;
             let registroIntentado = false;
             let cuerpoRegistro = null;
-            const camposIdentidad = ['identidad', 'id_mascota', 'nombre_mascota', 'nombre_acompanante', 'telefono_acompanante', 'motivo'];
+            let decisionRequerida = false;
+            const camposIdentidad = ['identidad', 'id_mascota', 'motivo'];
+
+            function ajustarDecision() {
+                form.querySelector('[data-ingreso-decision]').hidden = !decisionRequerida;
+                const entrada = form.elements.namedItem('decision');
+                entrada.disabled = !decisionRequerida;
+                entrada.required = decisionRequerida;
+            }
 
             function reiniciar() {
                 solicitud = null;
                 registroIntentado = false;
                 cuerpoRegistro = null;
+                decisionRequerida = false;
                 registrar.reiniciar();
                 atender.reiniciar();
                 form.reset();
+                form.elements.namedItem('id_solicitud').value = '';
+                form.elements.namedItem('identidad').value = 'provisional';
+                form.elements.namedItem('motivo').value = 'Ingreso de urgencia presencial';
+                llenarPacientesIngreso(form);
                 camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = false; });
+                form.querySelectorAll('[data-urgencia-identidad], [data-urgencia-buscar]').forEach(control => { control.disabled = false; });
                 delete form.dataset.intento;
                 form.querySelectorAll('[data-tocado]').forEach(campo => { delete campo.dataset.tocado; });
                 form.querySelector('[data-evaluacion-conservada]').hidden = true;
                 salida.textContent = '';
                 ir.hidden = true;
                 principal.textContent = 'Atender ahora';
+                prepararTipoIngreso(form);
+                ajustarDecision();
                 form.elements.namedItem('identidad').dispatchEvent(new Event('change'));
             }
 
@@ -351,8 +382,7 @@
                 if (!validar(form)) return;
                 const tipo = form.elements.namedItem('id_tipo_cita');
                 if (iniciarAtencion && !tipo.value) {
-                    form.querySelector('[data-error-campo="id_tipo_cita"]').textContent = 'Elige el tipo de atención.';
-                    tipo.focus();
+                    prepararTipoIngreso(form);
                     return;
                 }
                 const cuerpoIngreso = new FormData(form);
@@ -397,6 +427,7 @@
                         return;
                     }
                 } catch (error) {
+                    if (error.rechazo && /atención pausada[\s\S]*decisión clínica/i.test(error.message)) decisionRequerida = true;
                     if (error.rechazo) {
                         if (solicitud) atender.reiniciar();
                         else {
@@ -410,6 +441,8 @@
                     escribiendo = false;
                     controles.forEach((control, indice) => { control.disabled = deshabilitados[indice]; });
                     if (solicitud || registroIntentado) camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = true; });
+                    form.querySelectorAll('[data-urgencia-identidad], [data-urgencia-buscar]').forEach(control => { control.disabled = Boolean(solicitud || registroIntentado); });
+                    ajustarDecision();
                     principal.textContent = solicitud ? 'Reintentar atender' : 'Atender ahora';
                     validar(form);
                 }
@@ -447,6 +480,8 @@
                     await recargar();
                     flujoIngreso.reiniciar();
                     ingreso.elements.namedItem('id_solicitud').value = evento.detail.id_solicitud;
+                    ingreso.elements.namedItem('identidad').value = 'conocida';
+                    ingreso.elements.namedItem('identidad').dispatchEvent(new Event('change'));
                     ingreso.elements.namedItem('id_mascota').value = evento.detail.id_mascota;
                     ingreso.elements.namedItem('motivo').value = evento.detail.resumen.slice(0, 255);
                     const resumen = ingreso.querySelector('[data-evaluacion-conservada]');
@@ -468,12 +503,24 @@
             });
             ingreso.elements.namedItem('identidad').addEventListener('change', () => {
                 const provisional = ingreso.elements.namedItem('identidad').value === 'provisional';
-                const ficha = ingreso.querySelector('[data-identidad-provisional]');
-                ficha.disabled = !provisional;
-                ficha.hidden = !provisional;
+                ingreso.querySelector('[data-identidad-provisional]').hidden = !provisional;
                 const conocida = ingreso.querySelector('[data-identidad-conocida]');
                 conocida.hidden = provisional;
                 conocida.querySelector('select').disabled = provisional;
+                ingreso.querySelectorAll('[data-urgencia-identidad]').forEach(boton => {
+                    boton.setAttribute('aria-pressed', String(boton.dataset.urgenciaIdentidad === ingreso.elements.namedItem('identidad').value));
+                });
+                validar(ingreso);
+            });
+            ingreso.querySelectorAll('[data-urgencia-identidad]').forEach(boton => {
+                boton.addEventListener('click', () => {
+                    ingreso.elements.namedItem('identidad').value = boton.dataset.urgenciaIdentidad;
+                    ingreso.elements.namedItem('identidad').dispatchEvent(new Event('change'));
+                    if (boton.dataset.urgenciaIdentidad === 'conocida') ingreso.querySelector('[data-urgencia-buscar]').focus();
+                });
+            });
+            ingreso.querySelector('[data-urgencia-buscar]').addEventListener('input', () => {
+                llenarPacientesIngreso(ingreso);
                 validar(ingreso);
             });
             // RNF-16: desde la barra puede abrirse con Pendientes oculto; el diálogo nativo debe tener caja visible.
