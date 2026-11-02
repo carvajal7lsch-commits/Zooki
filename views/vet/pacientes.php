@@ -1,6 +1,7 @@
 <?php require_once __DIR__ . '/../../config/App.php'; ?>
 <?php
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
+require_once __DIR__ . '/../../helpers/FotoMascota.php';
 // views/mascotas/listado.php
 // D1: los teléfonos usan la regla del servidor (ValidadorTelefono).
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
@@ -444,7 +445,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                             </div>
                         </div>
                         <div class="card-body-mini cursor-pointer" data-c3-click="evento37" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
-                            <h3 class="card-title-mini"><?php echo htmlspecialchars($m["nombre"]); ?></h3>
+                            <h3 class="card-title-mini" title="<?= htmlspecialchars($m["nombre"], ENT_QUOTES, 'UTF-8') ?>"><?php echo htmlspecialchars($m["nombre"]); ?></h3>
                             <div class="card-tags-mini">
                                 <span class="paciente-solo-escritorio paciente-hc <?= empty($m['numero_historia_clinica']) ? 'paciente-hc--vacia' : '' ?>"><?= htmlspecialchars($m['numero_historia_clinica'] ?: 'Sin historia', ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php if($m['estado'] == 0): ?>
@@ -569,8 +570,8 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             <div id="tabNuevaMascota" class="modal-tab-content">
                 <?php // M5 C3: validación en tiempo real y restricción de entrada con las reglas de ValidadorMascota (validacion-mascota.js). ?>
                 <form id="formMascota" data-c3-submit="evento42" enctype="multipart/form-data" novalidate data-validacion-mascota data-aviso-obligatorio="<?= htmlspecialchars(ValidadorMascota::AVISO_OBLIGATORIO, ENT_QUOTES, 'UTF-8') ?>">
-                    <p class="mascota-obligatorios">* Obligatorio. Lo demás es opcional.</p>
                     <div class="users-modal__body">
+                        <p class="mascota-obligatorios">* Obligatorio. Lo demás es opcional.</p>
                         <div class="form-grid-split">
                             <div class="photo-side">
                                 <div class="preview-box">
@@ -579,7 +580,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <img id="newPreview" src="" class="d-none">
                                     <button type="button" class="btn-clear-img clear-preview-btn d-none" id="btnClearNewImg" data-input="newFoto" data-preview="newPreview" title="Quitar imagen"><i class="fas fa-times"></i></button>
                                 </div>
-                                <input type="file" name="foto" id="newFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
+                                <input type="file" name="foto" id="newFoto" <?= FotoMascota::atributosHtml() ?> aria-describedby="newFoto_ayuda newFoto_aviso" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
+                                <small class="mascota-foto-ayuda" id="newFoto_ayuda"><?= htmlspecialchars(FotoMascota::ayuda(), ENT_QUOTES, 'UTF-8') ?></small>
+                                <small class="cuenta-validacion mascota-aviso" id="newFoto_aviso" aria-live="polite"></small>
 
                                 <div class="mascota-extra">
                                     <?php // M5 C4b (usuario): estado y esterilización en una línea, dos cajas gemelas con su etiqueta arriba; sin colores. ?>
@@ -614,12 +617,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
                                         <div class="input-group">
                                             <label>Sexo *</label>
-                                            <div class="input-wrapper">
-                                                <i class="fas fa-venus-mars field-icon"></i>
-                                                <select name="sexo" id="new_sexo" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
-                                                    <option value="Macho">Macho</option>
-                                                    <option value="Hembra">Hembra</option>
-                                                </select>
+                                            <div class="mascota-sexo">
+
+                                                <div class="segmento" role="group" aria-label="Sexo obligatorio">
+                                                    <label class="segmento__opcion">
+                                                        <input type="radio" name="sexo" id="new_sexo" value="Macho" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                                        <span><i class="fas fa-mars" aria-hidden="true"></i> Macho</span>
+                                                    </label>
+                                                    <label class="segmento__opcion">
+                                                        <input type="radio" name="sexo" id="new_sexo_hembra" value="Hembra" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                                        <span><i class="fas fa-venus" aria-hidden="true"></i> Hembra</span>
+                                                    </label>
+                                                </div>
                                             </div>
                                             <small class="cuenta-validacion mascota-aviso" id="new_sexo_aviso" aria-live="polite"></small>
                                         </div>
@@ -719,9 +728,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             </button>
         </div>
         <form id="formEditMascota" novalidate data-validacion-mascota data-aviso-obligatorio="<?= htmlspecialchars(ValidadorMascota::AVISO_OBLIGATORIO, ENT_QUOTES, 'UTF-8') ?>">
-            <p class="mascota-obligatorios">* Obligatorio. Lo demás es opcional.</p>
             <input type="hidden" name="id_mascota" id="edit_id_mascota">
             <div class="users-modal__body">
+                <p class="mascota-obligatorios">* Obligatorio. Lo demás es opcional.</p>
                 <div class="form-grid-split">
                     <div class="photo-side">
                         <div class="preview-box">
@@ -730,7 +739,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                             <img id="editPreview" src="" class="d-none">
                             <button type="button" class="btn-clear-img clear-preview-btn d-none" id="btnClearEditImg" data-input="editFoto" data-preview="editPreview" title="Quitar imagen"><i class="fas fa-times"></i></button>
                         </div>
-                        <input type="file" name="foto" id="editFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
+                        <input type="file" name="foto" id="editFoto" <?= FotoMascota::atributosHtml() ?> aria-describedby="editFoto_ayuda editFoto_aviso" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
+                        <small class="mascota-foto-ayuda" id="editFoto_ayuda"><?= htmlspecialchars(FotoMascota::ayuda(), ENT_QUOTES, 'UTF-8') ?></small>
+                        <small class="cuenta-validacion mascota-aviso" id="editFoto_aviso" aria-live="polite"></small>
 
                         <div class="mascota-extra">
                             <?php // M5 C4b (usuario): estado y esterilización en una línea, dos cajas gemelas con su etiqueta arriba; sin colores. ?>
@@ -765,12 +776,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
                                 <div class="input-group">
                                     <label>Sexo *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fas fa-venus-mars field-icon"></i>
-                                        <select name="sexo" id="edit_sexo" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
-                                            <option value="Macho">Macho</option>
-                                            <option value="Hembra">Hembra</option>
-                                        </select>
+                                    <div class="mascota-sexo">
+
+                                        <div class="segmento" role="group" aria-label="Sexo obligatorio">
+                                                    <label class="segmento__opcion">
+                                                        <input type="radio" name="sexo" id="edit_sexo" value="Macho" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                                        <span><i class="fas fa-mars" aria-hidden="true"></i> Macho</span>
+                                                    </label>
+                                                    <label class="segmento__opcion">
+                                                        <input type="radio" name="sexo" id="edit_sexo_hembra" value="Hembra" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                                        <span><i class="fas fa-venus" aria-hidden="true"></i> Hembra</span>
+                                                    </label>
+                                                </div>
                                     </div>
                                     <small class="cuenta-validacion mascota-aviso" id="edit_sexo_aviso" aria-live="polite"></small>
                                 </div>

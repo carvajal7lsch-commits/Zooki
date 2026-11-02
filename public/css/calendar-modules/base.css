@@ -68,6 +68,18 @@
     align-items: center;
     padding: 6px 6px 2px 8px;
 }
+.agenda-dia-no-laboral {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    color: var(--cal-text-3);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 11px;
+    text-align: center;
+}
 
 .agenda .fc .fc-daygrid-day-number {
     width: 26px;
@@ -201,6 +213,61 @@
     font-weight: 600;
 }
 
+/* Retoque del dueño: tarjetas compactas solo en Semana; el encabezado conserva su diseño. */
+.agenda .fc-timeGridWeek-view .fc-timegrid-slot-label-cushion,
+.agenda .fc-timeGridWeek-view .fc-timegrid-axis-cushion {
+    min-width: 50px;
+    padding-right: 6px;
+    box-sizing: border-box;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.agenda .fc-timeGridWeek-view .fc-timegrid-event {
+    bottom: auto;
+    height: 24px;
+    max-height: 24px;
+    min-height: 0;
+    margin: 0 3px;
+    padding: 3px 6px;
+    border-left-width: 2px;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+.agenda .fc-timeGridWeek-view .fc-event-main {
+    padding: 0;
+}
+.agenda-cita-semanal {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 16px;
+}
+.agenda-cita-semanal strong {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+.agenda-cita-semanal span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 400;
+}
+.agenda .fc-timeGridWeek-view .agenda-evento-seleccionado {
+    border: 1px solid var(--cal-primary);
+    border-left-width: 2px;
+    box-shadow: 0 0 0 1px var(--cal-primary);
+}
+
 .agenda .fc .fc-timegrid-now-indicator-line { border-width: 2px 0 0; }
 
 /* ── Popover nativo de "+N más" ── */
@@ -220,3 +287,11 @@
 }
 
 .fc .fc-popover-body { padding: 8px 6px; }
+.agenda .fc .fc-popover-close {
+    position: relative;
+    z-index: 1;
+    min-width: 26px;
+    min-height: 26px;
+    cursor: pointer;
+    pointer-events: auto;
+}

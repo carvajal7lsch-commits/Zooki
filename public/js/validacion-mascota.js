@@ -9,6 +9,14 @@
  * Los campos clínicos no usan las reglas de cuenta (validacion-cuenta.js).
  */
 (function () {
+    function problemaFoto(campo) {
+        const archivo = campo.files?.[0];
+        if (!archivo) return '';
+        const tipos = campo.accept.split(',').map(tipo => tipo.trim());
+        if (!tipos.includes(archivo.type)) return 'Solo se permiten fotos JPG o PNG.';
+        if (!archivo.size || archivo.size > Number(campo.dataset.maxBytes)) return campo.dataset.fotoAyuda + '. Elige una foto más liviana y que no esté vacía.';
+        return '';
+    }
     function cumplePatron(campo, valor) {
         if (!campo.pattern) return true;
         return new RegExp('^(?:' + campo.pattern + ')$', 'u').test(valor);
@@ -25,7 +33,8 @@
      */
     function regla(campo, final) {
         const form = campo.form;
-        if (campo.disabled || campo.type === 'hidden' || campo.type === 'file') return '';
+        if (campo.disabled || campo.type === 'hidden') return '';
+        if (campo.type === 'file') return problemaFoto(campo);
         if (campo.type === 'radio') {
             const marcado = Array.from(form.querySelectorAll(`[name="${campo.name}"]`)).some(r => r.checked);
             return !marcado && campo.required && final ? (campo.dataset.avisoFormato || obligatorio(form)) : '';
@@ -49,6 +58,7 @@
     /** La línea de aviso reservada bajo el campo (o el grupo de radios). */
     function avisoDe(campo) {
         const form = campo.form;
+        if (campo.type === 'file') return document.getElementById(campo.id + '_aviso') || form.querySelector('.foto-campo__ayuda');
         const primero = campo.type === 'radio' ? form.querySelector(`[name="${campo.name}"]`) : campo;
         return document.getElementById(primero.id + '_aviso');
     }
@@ -56,9 +66,10 @@
     function marcar(campo, mensaje) {
         const aviso = avisoDe(campo);
         if (aviso) {
-            aviso.textContent = mensaje;
+            aviso.textContent = mensaje || (campo.type === 'file' && aviso.matches('.foto-campo__ayuda') ? campo.dataset.fotoAyuda : '');
             aviso.title = mensaje;
             aviso.classList.toggle('cuenta-validacion--error', mensaje !== '');
+            if (campo.type === 'file') aviso.classList.toggle('is-error', mensaje !== '');
         }
         if (typeof campo.setAttribute === 'function') campo.setAttribute('aria-invalid', mensaje ? 'true' : 'false');
     }
@@ -72,7 +83,7 @@
     function campos(form) {
         const vistos = new Set();
         return Array.from(form.elements).filter(campo => {
-            if (!campo.name || campo.type === 'hidden' || campo.type === 'file' || campo.tagName === 'BUTTON') return false;
+            if (!campo.name || campo.type === 'hidden' || campo.tagName === 'BUTTON') return false;
             if (campo.type === 'radio') {
                 if (vistos.has(campo.name)) return false;
                 vistos.add(campo.name);
@@ -127,5 +138,5 @@
         if (e.target.form && e.target.form.matches('[data-validacion-mascota]')) revisar(e.target, true);
     });
 
-    window.ZookiValidacionMascota = { regla, marcar, validar, mostrarServidor, limpiar };
+    window.ZookiValidacionMascota = { regla, marcar, validar, mostrarServidor, limpiar, problemaFoto };
 })();

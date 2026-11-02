@@ -68,7 +68,11 @@ function contextoDeAgenda() {
 }
 
 function diaNoReservable(date) {
-    if (esDiaPasado(date)) return true;
+    return esDiaPasado(date) || diaNoLaboral(date);
+}
+
+/** Un cierre se distingue de una fecha pasada, aunque ambas impidan reservar. */
+function diaNoLaboral(date) {
     const datos = contextoDeAgenda();
     if (!datos) return false;
     const dia = date.getDay() || 7;
@@ -288,10 +292,19 @@ async function cargarEventos(info, exito, fallo) {
 }
 
 function mountDayAddButton(arg) {
-    if (!isUsuarioVeterinario()) return;
-    if (arg.view.type !== 'dayGridMonth' || diaNoReservable(arg.date)) return;
+    if (arg.view.type !== 'dayGridMonth') return;
+    // H-2: el día del popover no entrega una celda; una excepción aquí rompe su cierre nativo.
+    if (!arg.el) return;
     const top = arg.el.querySelector('.fc-daygrid-day-top');
-    if (!top || top.querySelector('.fc-day-add-btn')) return;
+    if (!top) return;
+    if (diaNoLaboral(arg.date)) {
+        const etiqueta = document.createElement('small');
+        etiqueta.className = 'agenda-dia-no-laboral';
+        etiqueta.textContent = 'No laboral';
+        arg.el.querySelector('.fc-daygrid-day-frame').append(etiqueta);
+        return;
+    }
+    if (!isUsuarioVeterinario() || esDiaPasado(arg.date) || top.querySelector('.fc-day-add-btn')) return;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -308,6 +321,41 @@ function mountDayAddButton(arg) {
 
 function tieneEventos(date) {
     return !!calendarInstance && eventosDelDia(date).length > 0;
+}
+
+function contenidoCitaSemanal(info) {
+    const fila = document.createElement('div');
+    fila.className = 'agenda-cita-semanal';
+    const nombre = document.createElement('strong');
+    nombre.textContent = info.event.extendedProps.mascota_nombre || info.event.title;
+    const detalle = document.createElement('span');
+    const hora = info.event.start.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const tipo = info.event.extendedProps.tipo_cita_nombre || TIPOS_EVENTO[info.event.extendedProps.tipo];
+    detalle.textContent = [hora, tipo].filter(Boolean).join(' · ');
+    fila.append(nombre, detalle);
+    return { domNodes: [fila] };
+}
+
+/** La escala semanal sigue la apertura de la clínica, sin una hora de entrada fija. */
+function horarioVisibleSemana() {
+    const franjas = (contextoDeAgenda()?.apertura || []).filter(dia => Number(dia.activo)).flatMap(dia =>
+        ['morning', 'afternoon'].filter(bloque => Number(dia['bloque_' + bloque + '_activo'])).map(bloque => ({
+            daysOfWeek: [Number(dia.dia_semana) % 7],
+            startTime: dia['bloque_' + bloque + '_inicio'],
+            endTime: dia['bloque_' + bloque + '_fin']
+        }))
+    );
+    if (!franjas.length) return {};
+    const inicio = franjas.map(franja => franja.startTime).sort()[0];
+    const fin = franjas.map(franja => franja.endTime).sort().at(-1);
+    return { slotMinTime: inicio, slotMaxTime: fin, scrollTime: inicio, businessHours: franjas };
+}
+
+function marcarCitaCalendario() {
+    document.querySelectorAll('#calendar [data-agenda-evento]').forEach(elemento => {
+        const seleccionada = _panel.modo === 'detalle' && elemento.dataset.agendaEvento === String(_panel.eventoId);
+        elemento.classList.toggle('agenda-evento-seleccionado', seleccionada);
+    });
 }
 
 /** Marca la celda del día y, salvo que se pida lo contrario, pinta su lista en el panel. */
@@ -329,21 +377,27 @@ function iniciarCalendario() {
         height: '100%',
         expandRows: true,
         fixedWeekCount: false,
-        dayMaxEvents: true,
+        dayMaxEvents: 2,
         eventDisplay: 'block',
         nowIndicator: true,
         allDaySlot: false,
         scrollTime: '07:00:00',
-        views: { dayGridMonth: { displayEventTime: false } },
+        views: {
+            dayGridMonth: { displayEventTime: false },
+            timeGridWeek: {
+                ...horarioVisibleSemana(),
+                eventContent: contenidoCitaSemanal,
+                slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                slotLabelInterval: '01:00:00'
+            }
+        },
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', hour12: true },
         // Decisión del usuario (revisión de C5): se arrastra cita por cita; ver puedeArrastrar().
         editable: false,
         eventDurationEditable: false,
         moreLinkText: n => `+${n} más`,
-        moreLinkClick: info => {
-            seleccionarDia(info.date);
-            return 'popover';
-        },
+        // H-2: el popover nativo conserva su cierre sin repintar el calendario al abrirlo.
+        moreLinkClick: 'popover',
         events: cargarEventos,
         eventsSet: () => window.ZookiAgendaMovil?.actualizar(),
         loading: cargando => {
@@ -354,7 +408,7 @@ function iniciarCalendario() {
         // Conserva la selección cuando FullCalendar vuelve a pintar las celdas.
         dayCellClassNames: arg => [
             ...(_selectedDate && toLocalDateStr(arg.date) === toLocalDateStr(_selectedDate) ? ['is-selected'] : []),
-            ...(diaNoReservable(arg.date) && !esDiaPasado(arg.date) ? ['fc-day-past', 'agenda-dia-cerrado'] : [])
+            ...(diaNoLaboral(arg.date) ? ['fc-day-past', 'agenda-dia-cerrado'] : [])
         ],
         dateClick: info => {
             // Días pasados: solo consulta. Sin actividad no hay nada que mostrar
@@ -370,13 +424,17 @@ function iniciarCalendario() {
         },
         eventDidMount: info => {
             const p = info.event.extendedProps;
+            info.el.dataset.agendaEvento = info.event.id;
+            info.el.classList.toggle('agenda-evento-seleccionado', _panel.modo === 'detalle' && String(_panel.eventoId) === info.event.id);
             if (p.tipo === 'cita') info.el.dataset.estado = p.estado;
             else info.el.dataset.tipo = p.tipo;
             info.el.title = [
                 formatHora(info.event.start),
                 p.mascota_nombre,
+                ...(info.view.type === 'timeGridWeek' ? [p.tipo_cita_nombre] : []),
                 p.tipo === 'cita' ? ESTADOS_CITA[p.estado] : TIPOS_EVENTO[p.tipo]
             ].filter(Boolean).join(' · ');
+            if (puedeArrastrar(p.tipo, p)) info.el.title += '\nPuedes arrastrar esta cita para reprogramarla.';
         },
         // Arrastrar una cita a un día pasado se bloquea antes de soltarla.
         eventAllow: (drop, evento) => !diaNoReservable(drop.start) && (!evento || cambioPermitidoCalendario(evento.start, evento.extendedProps)),
@@ -467,6 +525,7 @@ function resumenDia(nCitas, nOtros) {
 function renderPanelDia() {
     if (!_selectedDate || !calendarInstance) return;
     _panel = { modo: 'dia', eventoId: null };
+    marcarCitaCalendario();
 
     const date = _selectedDate;
     const pasado = diaNoReservable(date);
@@ -535,6 +594,7 @@ function mostrarDetalleCita(eventId) {
     const ev = calendarInstance && calendarInstance.getEventById(eventId);
     if (!ev) { renderPanelDia(); return; }
     _panel = { modo: 'detalle', eventoId: eventId };
+    marcarCitaCalendario();
 
     const p = ev.extendedProps;
     const esCita = p.tipo === 'cita';
@@ -1308,6 +1368,7 @@ async function crearCitaModal(e) {
 // Modal: reprogramar cita
 // ═══════════════════════════════════════
 let _reprogramarCitaId = null;
+let _reprogramarCitaActual = null;
 let _turnoSlotsReprog = 0;
 
 function actualizarBotonReprog() {
@@ -1326,11 +1387,13 @@ function ocultarErrorReprog() {
 function cerrarModalReprogramar() {
     cerrarOverlay('reprogramarModalOverlay');
     _reprogramarCitaId = null;
+    _reprogramarCitaActual = null;
 }
 
 async function abrirModalReprogramar(idCita) {
     comandosC3.reprogramar_cita_ajax.reiniciar();
     _reprogramarCitaId = idCita;
+    _reprogramarCitaActual = null;
     ocultarErrorReprog();
     val('reprogramar_hora', '');
     actualizarBotonReprog();
@@ -1357,6 +1420,7 @@ async function abrirModalReprogramar(idCita) {
             return;
         }
         const cita = datos.cita;
+        _reprogramarCitaActual = cita;
         document.getElementById('reprogramar_tipo_cita').dataset.mascota = cita.id_mascota;
         const vetSel = document.getElementById('reprogramar_veterinario');
         const tipoSel = document.getElementById('reprogramar_tipo_cita');
@@ -1408,9 +1472,9 @@ async function cargarSlotsReprogramar() {
         const data = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsReprog) return;
         if (mostrarFalloSlots(id, data)) return;
-        const horas = data.sugerencias;
+        const horas = zookiHorariosReprogramacion(data.sugerencias, fecha, _reprogramarCitaActual);
         if (!horas.length) {
-            setSlotsEstado(id, 'vacio', data.motivo || 'No hay horarios libres ese día. Prueba con otra fecha o veterinario.');
+            setSlotsEstado(id, 'vacio', data.motivo || 'No quedan otros horarios libres ese día. El horario actual de la cita no es una opción de reprogramación. Prueba otra fecha o veterinario.');
             return;
         }
         renderSlots(id, horas, hora => {

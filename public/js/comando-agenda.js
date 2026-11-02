@@ -29,10 +29,15 @@
             }
         };
     }
+    /** H-3: excluir el instante actual solo en su fecha, sin alterar la disponibilidad del servidor. */
+    function horariosReprogramacion(horas, fecha, cita) {
+        return (Array.isArray(horas) ? horas : []).filter(hora => !cita || fecha !== cita.fecha || String(hora).slice(0, 5) !== String(cita.hora).slice(0, 5));
+    }
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = { crearComando, formatearHora };
     } else {
         raiz.zookiCrearComandoAgenda = crearComando;
         raiz.zookiHoraAgenda = formatearHora;
+        raiz.zookiHorariosReprogramacion = horariosReprogramacion;
     }
 })(globalThis);

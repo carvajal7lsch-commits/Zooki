@@ -1160,3 +1160,45 @@ El dueño reporta en producción una vuelta unas dos horas después de cerrar Wo
   3. Celular: Ajustes abre la lista; entrar a una sección y volver; Cerrar sesión al final.
   4. Desde el Inicio, «Revisar» ausencias u horarios abre esa sección directo.
   5. El avatar del encabezado y un enlace viejo a `mi_perfil` llevan a Ajustes › Mi cuenta; el veterinario sigue con su Mi perfil.
+
+## Hallazgos del dueño en zooki-pruebas con la semilla demo (2026-11-01)
+
+Anotados por Claude (arquitecto) a partir de las capturas del dueño. Pendientes de corrección.
+
+| # | Pantalla | Qué pasa | Causa probable | Corrección esperada |
+|---|---|---|---|---|
+| H-1 | Calendario del veterinario, vista Mes | Con muchas citas en un día, la celda no muestra ninguna cita: solo «+6 más», «+5 más». Se ve todo apiñado. | `dayMaxEvents: true` en `public/js/calendario.js` (l. ~332) con `height: '100%'`: la fila del mes es tan baja que FullCalendar manda todas las citas al enlace «+N más». | Mostrar hasta 2–3 citas por día (`dayMaxEvents: 2` o `dayMaxEventRows: 3`) con una altura mínima de fila que las deje ver; desde la cuarta, «+N más». Conservar el diseño actual. |
+| H-2 | Calendario, popover de «+N más» | Al abrir «+N más», la X del popover pequeño no lo cierra. | Por revisar: `moreLinkClick` llama a `seleccionarDia()` antes de devolver `'popover'`; el repintado del panel lateral o una capa encima puede estar interceptando el clic de `.fc-popover-close`. | La X y el clic afuera cierran el popover; Escape ya lo quita (l. ~1501). Prueba JS. |
+| H-3 | Reprogramar cita | Rocky está el 2 de noviembre a las 9:15 y el modal de reprogramar ofrece **9:15 como «Recomendado»**, es decir, la misma hora. Eso no es reprogramar. | La consulta de horarios excluye la propia cita de la ocupación (para no chocar consigo misma), y `renderSlots` marca la primera hora como recomendada. | En reprogramación, quitar de las opciones la fecha y hora actuales de la cita (o mostrarlas deshabilitadas como «Actual») y recomendar la siguiente libre. Si no queda otra hora ese día, decirlo. Aplica también al portal (`public/js/portal.js`, mismo patrón). Prueba PHP/JS. |
+| H-4 | Nuevo Registro › Mascota (veterinario, `views/vet/pacientes.php`) | El campo Sexo es un select con icono; en el portal es un selector de dos botones (Macho/Hembra). | Dos implementaciones distintas del mismo campo. | Usar el mismo control del portal (radios segmentados, `ValidadorMascota::atributosHtml('sexo')`) en Nuevo y Editar mascota del veterinario, conservando el resto del formulario. |
+| H-5 | Nuevo Registro › Mascota | La nota «* Obligatorio. Lo demás es opcional.» queda pegada al borde izquierdo, fuera del margen del contenido del modal. | `.mascota-obligatorios` sin el padding del cuerpo del modal. | Alinearla con el contenido (mismo margen que la foto y los campos), en escritorio y celular. |
+| H-6 | Nuevo Registro › Mascota (y Editar, y portal) | «Subir Foto (opcional)» no dice el tamaño ni los formatos permitidos. | El texto no usa los límites de `FotoMascota` (5 MB, solo JPG o PNG). | Mostrar «Máx. 5 MB · JPG o PNG» tomado de `FotoMascota::MAX_BYTES` y de sus tipos, y avisar al elegir un archivo más grande antes de enviar. |
+| H-7 | Pacientes (veterinario) y Usuarios (administrador), vista de tarjetas | En una pantalla ancha (captura del dueño, ~1920 px) salen solo 4 tarjetas por fila, muy anchas; antes cabían 6. | `public/css/directorio.css` (l. ~375–384): `repeat(3)` desde 1024 px y `repeat(4)` desde 1280 px, sin cortes más anchos. | Agregar cortes: 5 columnas desde ~1536 px y 6 desde ~1800 px (o `repeat(auto-fill, minmax(260px, 1fr))` acotado a 6), probando 1366, 1536, 1920. Los correos largos (`zooki.vet+demo-prop-19@gmail.com`) se cortan con puntos suspensivos y `title`, sin partir la tarjeta. Aplica a Propietarios, Mascotas y Usuarios. |
+| H-8 | Calendario del veterinario › herramientas de agenda (Triage, Llegadas, Reasignaciones, Urgencias; `views/partials/agenda_herramientas.php`) | El dueño las ve mal resueltas: cuatro pestañas debajo del calendario, cada una con su propio encabezado, filtro y botón de actualizar; la revisión de triage es un select + un campo largo + Confirmar; pestañas vacías ocupan el mismo lugar que las que tienen pendientes. | Se agruparon en pestañas (D) sin replantear qué necesita el veterinario en el día. | Rediseño con mockup (propuesta de Claude 2026-11-01 en el chat): bandeja única de lo que requiere acción, en el panel derecho del calendario cuando no hay cita seleccionada; «Rojo presencial» fijo en el encabezado; grupos vacíos ocultos. Pendiente de decisión del dueño. |
+
+**Nota sobre H-4:** sexo y fecha de nacimiento son obligatorios por RE-1.1.1 (el triage los usa: gato macho, cachorro, celo). El dueño creía que eran opcionales; queda así salvo que decida otra cosa.
+
+### Entrega H-1 a H-7 (2026-11-02)
+
+Escribió Codex; revisión visual y decisión final del dueño.
+
+- H-1 — **entregados, pendiente de revisión del dueño**: Mes muestra hasta dos citas por día y «+N más» para el resto; conserva el alto original de las celdas, por indicación posterior del dueño.
+- H-2 — **entregados, pendiente de revisión del dueño**: popover nativo sin repintado al abrir; se evita el acceso a una celda inexistente que rompía el cierre, con X y clic afuera operativos.
+- H-3 — **entregados, pendiente de revisión del dueño**: Calendario y Portal excluyen la fecha/hora actual antes de presentar y recomendar horarios; mensaje explícito si no queda otra opción.
+- H-4 — **entregados, pendiente de revisión del dueño**: Macho/Hembra segmentados en Nuevo/Editar; selección y bloqueo de identidad conservados, sexo y nacimiento obligatorios.
+- H-5 — **entregados, pendiente de revisión del dueño**: nota de obligatoriedad dentro del cuerpo de Nuevo/Editar, con los mismos márgenes que sus campos.
+- H-6 — **entregados, pendiente de revisión del dueño**: «Máx. 5 MB · JPG o PNG» y validación junto al campo en veterinario/portal; metadatos desde FotoMascota, sin cambiar los formatos ni límites del servidor.
+- H-7 — **entregados, pendiente de revisión del dueño**: directorios con cuatro/cinco/seis columnas desde 1280/1536/1800 px y nombres/contactos con puntos suspensivos y título completo.
+
+Comprobación puntual: Calendario, Pacientes/Propietarios, Usuarios y Portal abiertos en Chrome a 1366×768 y 390×844, incluidos los modales tocados, sin excepciones JS ni mensajes de error de consola.
+Solo vistas locales con datos efímeros; sin suites, integraciones, capturas comparativas ni envíos de formularios.
+Evidencia local ignorada por Git: `scratch/r/hallazgos-demo/consola.json`.
+
+Retoque del dueño (2026-11-02), escrito por Codex, entregado y pendiente de su revisión: «No laboral» pequeño y gris, centrado dentro de la celda de los días sin atención, distinguiéndolos de las fechas pasadas y conservando el alto de las celdas.
+Se retira la nota fija de arrastre; la pista aparece al pasar el cursor por una cita que realmente permite arrastrar; Calendario abierto a1366/390 sin errores de consola, sin suites ni capturas.
+
+Retoque semanal del dueño (2026-11-02), escrito por Codex, entregado y pendiente de revisión: tarjetas compactas de24 px con nombre, hora y tipo, recorte con «…» y borde azul completo al seleccionar; encabezados y cuadrícula horaria conservados.
+Solo presentación de Semana; sin cambios de citas ni horarios; apertura puntual en Chrome y selección sin errores de consola, sin suites ni capturas; evidencia local en `scratch/r/hallazgos-demo/calendario-semana.json`.
+
+Retoque posterior del dueño (2026-11-02), escrito por Codex, entregado y pendiente de revisión: columna de horas más amplia, formato24 h «07:00» y ventana semanal desde la primera apertura hasta el último cierre configurados; ninguna entrada fija a las7.
+Las franjas activas por día determinan el sombreado no laboral dentro de esa ventana compartida; los cambios de horario se reflejan al recargar la agenda; apertura puntual sin errores de consola, sin suites ni capturas.

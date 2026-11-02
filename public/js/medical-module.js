@@ -192,6 +192,9 @@ function abrirModalRegistro(tipo) {
 }
 
 function previewImg(input, previewId, btnId = null) {
+    const problema = window.ZookiValidacionMascota.problemaFoto(input);
+    window.ZookiValidacionMascota.marcar(input, problema);
+    if (problema) return;
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => { 
@@ -213,6 +216,7 @@ function clearPreview(e, inputId, previewId, btnId) {
         e.stopPropagation();
     }
     document.getElementById(inputId).value = '';
+    window.ZookiValidacionMascota.marcar(document.getElementById(inputId), '');
     const img = document.getElementById(previewId);
     img.src = '';
     img.style.display = 'none';
@@ -315,6 +319,7 @@ function inicialesDueno(nombre) {
 /** Una etiqueta mini con su icono de Bootstrap Icons. */
 function etiquetaDueno(texto, icono, clase = 'tag-mini') {
     const etiqueta = nodoDueno('span', clase);
+    etiqueta.title = texto;
     if (icono) {
         const i = nodoDueno('i', 'bi ' + icono);
         i.setAttribute('aria-hidden', 'true');
@@ -381,7 +386,9 @@ function tarjetaDueno(o) {
     // RN-115: desvinculado, solo el nombre y la marca (el servidor no manda el contacto).
     if (!activo) cabecera.append(etiquetaDueno('Desvinculado', 'bi-link-45deg'));
     const cuerpo = nodoDueno('div', 'card-body-mini');
-    cuerpo.append(nodoDueno('h3', 'card-title-mini', o.nombre_completo));
+    const nombre = nodoDueno('h3', 'card-title-mini', o.nombre_completo);
+    nombre.title = o.nombre_completo;
+    cuerpo.append(nombre);
     cuerpo.append(nodoDueno('span', 'paciente-solo-escritorio propietario-cantidad', Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
     const etiquetas = nodoDueno('div', 'card-tags-mini');
     etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} ${Number(o.total_mascotas) === 1 ? 'mascota' : 'mascotas'}`, 'bi-heart'));
@@ -1052,9 +1059,12 @@ async function editPet(id) {
             const nacimiento = document.getElementById('edit_fecha_nac');
             if (nacimiento._flatpickr) nacimiento._flatpickr.setDate(m.fecha_nacimiento, false);
             else nacimiento.value = m.fecha_nacimiento;
-            document.getElementById('edit_sexo').value = m.sexo;
+            document.querySelectorAll('#formEditMascota [name="sexo"]').forEach(radio => {
+                radio.checked = radio.value === m.sexo;
+                radio.disabled = !m.identidad_editable;
+            });
             document.getElementById('edit_estado').value = m.estado;
-            ['edit_especie','edit_raza','edit_sexo','edit_fecha_nac','edit_nueva_raza'].forEach(id => {
+            ['edit_especie','edit_raza','edit_fecha_nac','edit_nueva_raza'].forEach(id => {
                 const campo = document.getElementById(id);
                 if (campo) {
                     campo.disabled = !m.identidad_editable;

@@ -1735,8 +1735,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editForm = document.getElementById('portalEditPetForm');
     if (!addForm || !editForm) return;
 
-    const MAX_FOTO = 5 * 1024 * 1024; // FotoMascota::MAX_BYTES
-    const TIPOS_FOTO = ['image/jpeg', 'image/png'];
 
     const campo = (form, nombre) => form.querySelector(`[name="${nombre}"]`);
 
@@ -1814,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', () => {
         campo(form, 'foto').value = '';
         form.querySelector('.foto-campo__quitar').hidden = true;
         const ayuda = form.querySelector('.foto-campo__ayuda');
-        ayuda.textContent = urlActual ? 'Esta es la foto actual. JPG o PNG, hasta 5 MB.' : 'JPG o PNG, hasta 5 MB.';
+        ayuda.textContent = campo(form, 'foto').dataset.fotoAyuda;
         ayuda.classList.remove('is-error');
         pintarFoto(form, urlActual);
     };
@@ -1867,11 +1865,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ayuda = form.querySelector('.foto-campo__ayuda');
                 if (!archivo) return;
                 // Se revisa aquí para avisar de una vez; el servidor lo vuelve a comprobar.
-                const problema = !TIPOS_FOTO.includes(archivo.type) ? 'Esa foto no es JPG ni PNG. Elige otra.'
-                    : !archivo.size || archivo.size > MAX_FOTO ? 'Esa foto pesa más de 5 MB o está vacía. Elige una más liviana.'
-                    : null;
+                const problema = window.ZookiValidacionMascota.problemaFoto(input);
                 if (problema) {
-                    prepararFoto(form, form.dataset.fotoActual);
+                    pintarFoto(form, form.dataset.fotoActual);
+                    form.querySelector('.foto-campo__quitar').hidden = false;
                     ayuda.textContent = problema;
                     ayuda.classList.add('is-error');
                     return;

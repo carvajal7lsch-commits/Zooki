@@ -11,6 +11,19 @@
 final class FotoMascota
 {
     public const MAX_BYTES = 5 * 1024 * 1024;
+    public const FORMATOS = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png'];
+
+    /** H-6: la presentación comparte los límites reales de la carga, sin otra configuración JS. */
+    public static function ayuda(): string
+    {
+        return 'Máx. ' . (self::MAX_BYTES / (1024 * 1024)) . ' MB · ' . implode(' o ', array_map('strtoupper', self::FORMATOS));
+    }
+
+    public static function atributosHtml(): string
+    {
+        $tipos = implode(',', array_map('image_type_to_mime_type', array_keys(self::FORMATOS)));
+        return 'accept="' . htmlspecialchars($tipos, ENT_QUOTES, 'UTF-8') . '" data-max-bytes="' . self::MAX_BYTES . '" data-foto-ayuda="' . htmlspecialchars(self::ayuda(), ENT_QUOTES, 'UTF-8') . '"';
+    }
 
     private static function carpeta(): string
     {
@@ -57,10 +70,7 @@ final class FotoMascota
         // El tipo sale del contenido, no del nombre ni del Content-Type que
         // manda el navegador, que el cliente controla por completo.
         $info = @getimagesize($archivo['tmp_name']);
-        $extensionPorTipo = [
-            IMAGETYPE_JPEG => 'jpg',
-            IMAGETYPE_PNG  => 'png',
-        ];
+        $extensionPorTipo = self::FORMATOS;
         if ($info === false || !isset($extensionPorTipo[$info[2]])) {
             $error = 'Solo se permiten imágenes en formato JPG o PNG.';
             return false;

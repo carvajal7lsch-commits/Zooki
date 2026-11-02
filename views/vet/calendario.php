@@ -42,8 +42,6 @@ $usuarioAgenda = (int) Contexto::idUsuario();
         </div>
     </div>
 
-    <p class="agenda-arrastre"><i class="fas fa-hand-pointer" aria-hidden="true"></i> Puedes arrastrar tus citas pendientes o confirmadas para reprogramarlas. En móvil también puedes usar el detalle de la cita.</p>
-
     <?php if ($rolAgenda === Roles::VETERINARIO) require __DIR__ . '/partials/agenda_movil.php'; ?>
     <div class="agenda-layout">
         <section class="agenda-calendar" aria-label="Calendario">

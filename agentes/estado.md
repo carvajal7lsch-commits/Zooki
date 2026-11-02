@@ -2,9 +2,18 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-11-01
+**Actualizado:** 2026-11-02
 
 ## Ahora
+
+### Pulido de semilla demo H-1 a H-7 — entregados, pendiente de revisión del dueño (2026-11-02)
+
+- Escribió Codex; detalle y una línea por hallazgo en `specs/pulido-interfaz.md`.
+  Mes y popover, horarios distintos al reprogramar, sexo segmentado, nota alineada, límites/avisos de foto compartidos y directorios de cuatro/cinco/seis columnas.
+- Calendario, Pacientes/Propietarios, Usuarios y Portal abiertos en Chrome a 1366×768 y 390×844 sin errores de consola; sin suites, integraciones ni capturas comparativas, por instrucción del dueño.
+  Sigue su revisión visual; H-8 conserva su alcance pendiente y no se tocó; versión 2.3.0 conservada, sin commit ni push.
+  Retoque posterior del dueño, escrito por Codex: rótulo gris «No laboral» centrado en la celda y pista de arrastre solo al pasar el cursor sobre citas movibles, sin la nota fija ni aumentar el alto de las celdas; Calendario sin errores de consola a1366/390, pendiente de revisión del dueño.
+  Semana: tarjetas compactas con nombre/hora/tipo y borde azul completo de selección; encabezado intacto, columna de horas ampliada con formato24 h y escala entre apertura/cierre configurados, actualizada al recargar; apertura sin errores de consola, sin suites ni capturas; escrito por Codex y pendiente de revisión del dueño.
 
 ### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/../../helpers/FotoMascota.php';
 require_once __DIR__ . '/../../models/MarcaClinica.php';
 
 /**
@@ -888,10 +889,10 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                     <div class="foto-campo" data-foto="<?= $p ?>">
                         <div class="foto-campo__vista" aria-hidden="true"><i class="ri-image-line"></i></div>
                         <div class="foto-campo__acciones">
-                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" accept="image/jpeg,image/png" class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda" <?= ValidadorMascota::atributosHtml('foto') ?>>
+                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" <?= FotoMascota::atributosHtml() ?> class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda" <?= ValidadorMascota::atributosHtml('foto') ?>>
                             <label class="foto-campo__boton" for="<?= $p ?>_pet_foto"><i class="ri-upload-2-line" aria-hidden="true"></i> <span><?= $editar ? 'Cambiar foto' : 'Elegir foto' ?></span></label>
                             <button type="button" class="btn-enlace foto-campo__quitar" hidden>Quitar la foto elegida</button>
-                            <p class="portal-ayuda foto-campo__ayuda" id="<?= $p ?>_foto_ayuda">JPG o PNG, hasta 5 MB.</p>
+                            <p class="portal-ayuda foto-campo__ayuda" id="<?= $p ?>_foto_ayuda"><?= htmlspecialchars(FotoMascota::ayuda(), ENT_QUOTES, 'UTF-8') ?></p>
                         </div>
                     </div>
                 </div>
