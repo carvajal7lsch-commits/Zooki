@@ -2,7 +2,7 @@
 
 > Plan de una sola entrega. Arquitecto: Claude. Ejecutor: Codex. Va **después** de «Refuerzo del conocimiento tras pruebas (2.3.0)», porque usa Collie, ivermectina y los fármacos nuevos.
 
-**Estado:** corrección S.1 entregada, pendiente de revisión de Claude.
+**Estado:** S.1 revisada; guion de navegador y ajuste de escena entregados, pendientes de revisión de Claude.
 
 ## Objetivo
 
@@ -65,8 +65,8 @@ Reglas:
 |---|---|
 | **Rocco**, Collie macho de 4 años, 28 kg | Síntomas de sarna: Zooki sugiere sarna sarcóptica, precarga selamectina y deja la ivermectina bloqueada por MDR1 con su fuente. |
 | **Max**, criollo de 9 años, 30 kg, con meloxicam vigente | Dermatitis atópica: oclacitinib precargado; al elegir prednisolona en Alternativas aparece la interacción con meloxicam (decisión del dueño,2026-11-01). |
-| **Mishi**, gata criolla de 5 años, alérgica a un fármaco del grafo | Al escribir ese fármaco o recibirlo como sugerencia, queda bloqueado por la alergia. |
-| **Simón**, gato criollo macho de 3 años | Solicitud del portal «va a la arena y no hace»: queda en **rojo** y derivada, sin horario. |
+| **Mishi**, gata criolla de 5 años, 4,2 kg, alérgica a un fármaco del grafo | Conserva la alergia del guion; en la demo en vivo se marcan fiebre, decaimiento y vómito y se elige paracetamol para mostrar el bloqueo por toxicidad felina con su fuente. |
+| **Simón**, gato criollo macho de 3 años | El propietario evalúa realmente «va a la arena y no hace» y dolor al orinar en el Portal: **rojo**, aviso de emergencia y derivación, sin reserva; la semilla no crea previamente esa solicitud. |
 | **Luna**, Golden hembra entera de 6 años | Solicitud con días desde el celo: **naranja**. |
 | **Kira**, cachorra criolla de 3 meses sin vacunas registradas | Vómito y diarrea: **naranja**, sin revisión. |
 
@@ -77,10 +77,11 @@ La **propietaria principal del portal** (cuenta para entrar en el celular) tiene
 Se calcula desde la hora actual H, redondeada a 5 minutos:
 
 - De0 a3 citas completadas en las2 horas antes de H, según las que caben desde la apertura, con `hora_inicio_real`, `hora_fin_real` y duración objetivo.
-- 1 cita **en curso** que empezó en H−35 min con duración de 30 min, para que la cascada muestre retraso en las siguientes.
+- **Rocco** es la única cita **en curso**, iniciada en H−35 min con duración de30 min y llegada registrada5 min antes del inicio; Atención abre habilitada y la cascada muestra el retraso real.
 - De2 a4 reservas posteriores y una **naranja de sobrecupo**, usando Consulta general y Vacunación/Revisión rápida; todas las estimaciones de la escena terminan, con margen, antes del cierre.
-- Rocco con **llegada registrada** y en espera, listo para abrir Atención.
-- Solicitudes del portal del día: roja derivada (Simón), naranja (Luna, Kira), amarilla en revisión y verde.
+- **Mila queda completada**, con horas reales coherentes; nunca queda como segunda cita en curso.
+- Solicitudes del portal del día sembradas: naranja (Luna, Kira), amarilla en revisión y verde; **Simón solo se evalúa en vivo**.
+- `--escena` elimina la solicitud de Simón de ese día en San Roque, aunque se haya elegido otro veterinario; `--si` la elimina al recrear toda la demo.
 - Nunca deja citas «sin cerrar» ni pausas abiertas: con eso todo el día se iría a revisión.
 - Recalcula la cascada al terminar (`CascadaAgenda::procesar`) para que la agenda abra ya estimada.
 
@@ -102,8 +103,8 @@ Se calcula desde la hora actual H, redondeada a 5 minutos:
   - Correr `--si` dos veces da los mismos conteos (repetible).
   - `--borrar` deja intactas la clínica «Zooki», el super-administrador y una clínica ajena creada por la prueba.
   - Aislamiento: el personal de Huellitas no ve nada de San Roque.
-  - Las solicitudes tienen el nivel esperado de la tabla de pacientes guion.
-  - `--escena` deja exactamente una cita en curso, ninguna «sin cerrar» y la cascada calculada.
+  - Las solicitudes sembradas tienen el nivel esperado; Simón no se precarga, su evaluación real da rojo/derivada y rehacer la escena la elimina.
+  - `--escena` deja Rocco como única cita en curso, llegada anterior al inicio, Mila completada, ninguna «sin cerrar» y la cascada calculada.
   - Se niega si falta un código del conocimiento.
 - Sin suites completas: solo la prueba nueva y las de los modelos que use. El CI corre la suite en MySQL 8 después del push.
 
@@ -222,3 +223,25 @@ Semilla (`fe730c9`) **aprobada con corrección antes de producción**. Corrida r
 - Evidencias locales y cuentas generadas: `scratch/r/semilla-s1/corrida-local.log`, `phpunit.log`, `jornada-completa.log`; claves ignoradas por Git; Historial2.3.0, descargas y flujo de Modelos actualizados.
 - Pendiente: revisión de Claude y ensayo en zooki-pruebas/Docker; la cascada conserva su alcance por clínica, sin cambiar su motor ni corregir «sin cerrar» o pausas.
 - Versión2.3.0 conservada; sin commit ni push ni otras pantallas, migraciones o cambios del refuerzo.
+
+## Guion de navegador — decisión del dueño (2026-11-01)
+
+- `demo/zooki-demo.user.js` se instala en Tampermonkey; vive fuera de `public/` y no modifica pantallas, motores ni conocimiento.
+- Agenda solo resalta las citas reales; Rocco es la única atención en curso desde H−35, duración 30, llegada previa y Mila completada.
+- El propietario evalúa realmente a Simón en el Portal con los dos síntomas urinarios; se permite crear esa solicitud de demo, nunca reservar una cita ni mostrar una respuesta de API dentro del panel.
+- La semilla no precarga el rojo de Simón; `--escena` limpia su evaluación del día en San Roque y `--si` recrea todos los datos de demo.
+- Rocco y Mishi se muestran sin guardar consultas; síntomas y medicamentos se seleccionan en los autocompletados existentes y los resultados los calculan los motores reales.
+- Shift+S avanza un paso y Shift+Q reinicia el contador; el clic manual reciente en un campo conserva la escritura durante 3,5 segundos; reiniciar no borra ni revierte datos.
+- La guía de instalación, el orden de los cuatro escenarios y las cinco comprobaciones manuales están en `demo/LEEME.md`.
+
+## Anexo del guion — Resultado
+
+- **Escribió Codex, 2026-11-01; revisa Claude (arquitecto). Entregada, pendiente de revisión.**
+- Userscript aislado con panel azul minimizable, tecleo nativo 40–60 ms, autocompletados reales y esperas limitadas a 8 s; errores visibles y prevención de duplicado de Simón en la misma pestaña.
+- Único ajuste de semilla autorizado: Rocco en curso con llegada anterior, Mila completada y evaluación de Simón exclusivamente desde el Portal; no se agregaron pacientes ni catálogos.
+- `SemillaDemoTest`: **4 pruebas/1230 comprobaciones**, MariaDB temporal con `zooki_test_base_v2`; nueve relojes, tipos reales, cierre de 20:00, ausencia de reajustes/propuestas y limpieza de Simón aunque elija otro veterinario.
+- Chrome headless por CDP: mismo userscript a 1366×768 y Portal a 390×844; sarna3/3, selamectina y descarte de ivermectina; diagnósticos para Mishi y bloqueo real de paracetamol con fuente; Simón rojo/derivada sin cita.
+- Verificación de base y peticiones: cero consultas guardadas, cero tratamientos guardados, cero reservas nuevas y una evaluación de Simón; rehacer la escena la elimina; sin excepciones JS.
+- Corrida CLI real `--si`/`--escena` con reloj inyectado en lunes: 5 clínicas, 41 cuentas, 42 mascotas, 128 consultas, 221 citas y 97 solicitudes tras crear; cuentas/claves en evidencia local ignorada por Git.
+- Evidencias: `scratch/r/userscript/phpunit.log`, `navegador.log`, `resultado.json`, `corrida-cli.log` y seis capturas; sin `.env`, SMTP, commit ni push.
+- Pendiente: revisión de Claude e instalación/ensayo del dueño en Tampermonkey; se conservó el recorte de la línea de descartadas del pie existente a 1366, sin rediseñar Atención; versión 2.3.0 sin cambio.

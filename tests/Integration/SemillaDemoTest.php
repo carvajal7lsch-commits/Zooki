@@ -86,12 +86,12 @@ final class SemillaDemoTest extends TestCase
         foreach ($segunda['cuentas'] as $cuenta) {
             $this->assertTrue(password_verify($cuenta['clave'], $this->filas('SELECT password FROM usuarios WHERE email=?', [$cuenta['correo']])[0]['password']));
         }
-        foreach (['Simón' => 'rojo', 'Luna' => 'naranja', 'Kira' => 'naranja', 'Nala' => 'amarillo', 'Toby' => 'verde'] as $nombre => $nivel) {
+        foreach (['Luna' => 'naranja', 'Kira' => 'naranja', 'Nala' => 'amarillo', 'Toby' => 'verde'] as $nombre => $nivel) {
             $this->assertSame($nivel, $segunda['niveles'][$nombre]['nivel']);
         }
         $this->assertFalse($segunda['niveles']['Kira']['revision']);
-        $roja = $this->filas('SELECT estado,id_cita,origen FROM solicitudes_agenda WHERE id_solicitud=?', [$segunda['niveles']['Simón']['id_solicitud']])[0];
-        $this->assertSame(['estado' => 'derivada', 'id_cita' => null, 'origen' => 'portal'], $roja);
+        $this->assertArrayNotHasKey('Simón', $segunda['niveles']);
+        $this->assertSame([], $this->filas("SELECT s.id_solicitud FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE m.nombre='Simón' AND s.nivel_calculado='rojo'"));
         $clinica = $this->idClinica('huellitas');
         $vet = $this->idUsuario('huellitas-vet-1');
         SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
@@ -190,10 +190,15 @@ final class SemillaDemoTest extends TestCase
             $this->assertSame(in_array($hora, ['08:00', '08:05'], true) ? 1 : 3, count($completadas));
             $this->assertSame([], array_values(array_filter($citas, static fn (array $c): bool => in_array($c['estado'], ['sin_cerrar', 'pausada'], true))));
             $rocco = $this->filas('SELECT * FROM citas WHERE id_cita=?', [$escena['rocco']])[0];
+            $this->assertSame($escena['en_curso'], $escena['rocco']);
+            $this->assertSame('en_curso', $rocco['estado']);
+            $this->assertSame(30, (int) $rocco['duracion_minutos']);
+            $this->assertSame('Rocco', $this->filas('SELECT nombre FROM mascotas WHERE id_mascota=?', [$rocco['id_mascota']])[0]['nombre']);
             $this->assertNotNull($rocco['hora_llegada']);
-            if (!in_array($hora, ['08:05', '17:55'], true)) {
-                $this->assertGreaterThan($rocco['fecha'] . ' ' . $rocco['hora'], $rocco['inicio_estimado']);
-            }
+            $this->assertLessThan($rocco['hora_inicio_real'], $rocco['hora_llegada']);
+            $this->assertSame([], $this->filas("SELECT c.id_cita FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_clinica=? AND c.fecha='2026-11-02' AND m.nombre='Mila' AND c.estado<>'completada'", [$clinica]));
+            $this->assertCount(1, $this->filas("SELECT c.id_cita FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_clinica=? AND c.fecha='2026-11-02' AND m.nombre='Mila' AND c.estado='completada'", [$clinica]));
+            $this->assertSame([], $this->filas("SELECT s.id_solicitud FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_clinica=? AND m.nombre='Simón' AND JSON_UNQUOTE(JSON_EXTRACT(s.contexto_triage,'$.entrada.fecha'))='2026-11-02'", [$clinica]));
             $this->assertSame($this->ahora->modify('-35 minutes')->format('Y-m-d H:i:s'), $this->filas('SELECT hora_inicio_real FROM citas WHERE id_cita=?', [$escena['en_curso']])[0]['hora_inicio_real']);
             $pendientes = array_filter($citas, static fn (array $c): bool => $c['estado'] === 'confirmada');
             $this->assertGreaterThanOrEqual(3, count($pendientes));
@@ -228,6 +233,15 @@ final class SemillaDemoTest extends TestCase
         }
         $primera = $this->semilla->escena();
         $this->assertSame($escena['cascada']['calculadas'], $primera['cascada']['calculadas']);
+        // El Portal crea la única derivación del día; rehacer la escena limpia esa evaluación real.
+        SemillaDemo::como($this->idUsuario('portal'), null, Roles::PROPIETARIO);
+        $simon = (int) $this->filas("SELECT m.id_mascota FROM mascotas m JOIN usuarios u ON u.id_usuario=m.id_propietario WHERE m.nombre='Simón' AND u.email=?", [GuionDemo::correo('portal')])[0]['id_mascota'];
+        $tipo = (int) $this->filas("SELECT id_tipo_cita FROM tipos_cita WHERE id_clinica=? AND nombre_tipo='Consulta general/Enfermedad'", [$clinica])[0]['id_tipo_cita'];
+        $evaluacion = (new SolicitudAgenda(self::$db, fn () => $this->ahora))->enClinicaDelPropietario($clinica)->evaluar(['id_mascota' => $simon, 'id_veterinario' => $this->idUsuario('sanroque-vet-2'), 'id_tipo_cita' => $tipo, 'fecha' => '2026-11-02', 'sintomas' => GuionDemo::episodios(['intentos_orinar_minimo', 'dolor_orinar'])]);
+        $this->assertSame('rojo', $evaluacion['nivel']);
+        $this->assertSame('derivada', $this->filas('SELECT estado FROM solicitudes_agenda WHERE id_solicitud=?', [$evaluacion['id_solicitud']])[0]['estado']);
+        $this->semilla->escena();
+        $this->assertSame([], $this->filas("SELECT id_solicitud FROM solicitudes_agenda WHERE id_mascota=? AND nivel_calculado='rojo'", [$simon]));
         $this->comprobarCronsSinSmtp($primera['correos']);
         $this->assertSame($historiaAntes, $this->filas("SELECT id_consulta FROM consultas WHERE fecha_hora<'2026-11-02' ORDER BY id_consulta"));
         $this->assertSame([], $this->filas('SELECT id_pausa FROM pausas_cita WHERE id_clinica=? AND fin IS NULL', [$clinica]));

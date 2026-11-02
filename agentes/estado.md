@@ -6,6 +6,18 @@
 
 ## Ahora
 
+### Guion Tampermonkey y escena de sustentación (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+
+- Escribió Codex; revisa Claude (arquitecto); decisiones y anexo en `specs/semilla-demo.md`, instalación y cinco comprobaciones manuales en `demo/LEEME.md`.
+  `demo/zooki-demo.user.js` queda fuera de `public/`: un paso por Shift+S, reinicio por Shift+Q, panel aislado y minimizable, autocompletados reales y ninguna consulta guardada ni reserva creada.
+- Decisión del dueño: Rocco es la única cita en curso, desde H−35 con duración 30 y llegada anterior; Mila queda completada y Agenda solo resalta.
+  Simón se evalúa realmente desde el Portal y crea la única solicitud roja del día; la semilla no la precarga y `--escena`/`--si` la limpian.
+- Verificación dirigida: SemillaDemoTest **4/1230** en MariaDB temporal con `zooki_test_base_v2`; Chrome headless/CDP **1/1**, escritorio 1366×768 y Portal 390×844, con controladores/vistas/motores reales y reloj de lunes inyectado.
+  Rocco: sarna, selamectina e ivermectina descartada; Mishi: diagnósticos y paracetamol bloqueado con fuente; Simón: rojo/derivada sin cita; cero consultas/tratamientos guardados y cero excepciones JS.
+  CLI real `--si`/`--escena`, claves solo en `scratch/r/userscript/corrida-cli.log`; evidencia y seis capturas en esa carpeta; no se leyó ni escribió `.env`.
+- Sigue: revisión de Claude y ensayo del dueño con Tampermonkey instalado; la línea de descartadas conserva el recorte del pie existente a 1366, fuera del ajuste autorizado de pantallas.
+  Versión 2.3.0 conservada; sin cambios de motores, conocimiento o pantallas, salvo el ajuste explícito de semilla; sin commit ni push.
+
 ### S.1 — Corrección de la semilla demo (2.3.0) — revisada: aprobada (revisión liviana por decisión del dueño, 2026-11-01)
 
 - Escribió Codex; revisa Claude (arquitecto); hallazgos1–5 de la revisión de `specs/semilla-demo.md`.

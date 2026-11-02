@@ -98,6 +98,10 @@ final class AgendaDemo
     {
         $salida = [];
         foreach (GuionDemo::casos() as $nombre => [$sintomas, $esperado, $declarados]) {
+            // Guion en vivo: la única derivación de Simón la crea el propietario desde el Portal.
+            if ($nombre === 'Simón') {
+                continue;
+            }
             [, , $respuesta] = $this->solicitud($nombre, $sintomas, $declarados, $dia, $reloj, $this->usuarios['sanroque-vet-1'], $this->tipo(), $fase, $nombre, true);
             $salida[$nombre] = ['nivel' => $respuesta['nivel'], 'revision' => $respuesta['revision'], 'id_solicitud' => $respuesta['id_solicitud']];
             if ($respuesta['nivel'] !== $esperado || ($nombre === 'Kira' && $respuesta['revision'])) {
@@ -137,7 +141,7 @@ final class AgendaDemo
             $vet = $this->usuarios['sanroque-vet-1'];
             $this->completarJornadaAnterior($ahora);
             SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
-            foreach (['Nina', 'Apolo', 'Lola'] as $i => $nombre) {
+            foreach (['Nina', 'Apolo', 'Mila'] as $i => $nombre) {
                 $fecha = $h->modify('-' . (120 - 30 * $i) . ' minutes');
                 if ($fecha->format('H:i') >= '07:00') {
                     ($this->historia)($this->mascotas[$nombre], $clinica, $vet, $fecha, 'diagnostico.gastritis_aguda', false, 25);
@@ -145,22 +149,18 @@ final class AgendaDemo
             }
             $inicio = $h->modify('-35 minutes');
             $relojPasado = static fn (): DateTimeImmutable => $inicio->modify('-5 minutes');
-            $id = $this->reservar('Mila', ['control_preventivo'], $h, $relojPasado, $vet, $this->tipo(), 'escena', 'en-curso');
+            $id = $this->reservar('Rocco', ['picazon', 'costras_piel', 'perdida_pelo'], $h, $relojPasado, $vet, $this->tipo(), 'escena', 'en-curso');
             // La reserva normal respeta la grilla; el inicio real expresa el hecho simulado aprobado por el dueño.
             $citas = new Cita($this->db, $this->reloj);
+            (new LlegadaAgenda($this->db, $relojPasado))->llegada($id, $this->clave('escena', $h->format('Y-m-d'), 'llegada-Rocco'));
             $citas->iniciarAtencion($citas->getById($id), $inicio->format('Y-m-d H:i:s'));
-            $rocco = 0;
-            $posteriores = ['Rocco' => ['picazon', 'costras_piel', 'perdida_pelo'], 'Max' => ['lame_patas', 'picazon'], 'Mishi' => ['vomito'], 'Toby' => ['control_preventivo']];
+            $rocco = $id;
+            $posteriores = ['Max' => ['lame_patas', 'picazon'], 'Mishi' => ['vomito'], 'Toby' => ['control_preventivo'], 'Lola' => ['control_preventivo']];
             if ($h->format('H:i') >= '17:00') {
                 $posteriores = array_slice($posteriores, 0, 2, true);
             }
             foreach ($posteriores as $nombre => $sintomas) {
-                $relojReserva = $nombre === 'Rocco' ? static fn (): DateTimeImmutable => $h->modify('-5 minutes') : $this->reloj;
-                $tipo = $this->tipo($nombre === 'Rocco' ? 'Consulta general/Enfermedad' : 'Vacunación/Revisión rápida');
-                $cita = $this->reservar($nombre, $sintomas, $h, $relojReserva, $vet, $tipo, 'escena', $nombre);
-                if ($nombre === 'Rocco') {
-                    $rocco = $cita;
-                }
+                $this->reservar($nombre, $sintomas, $h, $this->reloj, $vet, $this->tipo('Vacunación/Revisión rápida'), 'escena', $nombre);
             }
             SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
             $paciente = (new PacienteDiagnostico($this->db))->contexto($this->mascotas['Bruno']['id'], $this->grafo, $ahora, []);
@@ -175,7 +175,6 @@ final class AgendaDemo
                 throw new RuntimeException('No cabe el sobrecupo demo en la jornada.');
             }
             $citas->registrarClasificada(['id_mascota' => $this->mascotas['Bruno']['id'], 'id_veterinario' => $vet, 'id_tipo_cita' => $this->tipo(), 'fecha' => $h->format('Y-m-d'), 'hora' => $horas[0], 'motivo' => 'Demo: sobrecupo naranja calculado', 'clave_operacion' => $this->clave('escena', $h->format('Y-m-d'), 'sobrecupo')], $nivel, true);
-            (new LlegadaAgenda($this->db, $this->reloj))->llegada($rocco, $this->clave('escena', $h->format('Y-m-d'), 'llegada-Rocco'));
             $niveles = $this->solicitudesGuion($h, $this->reloj, 'escena');
             SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
             $cascada = (new CascadaAgenda($this->db, $this->reloj))->procesar($h->format('Y-m-d'));
@@ -224,9 +223,9 @@ final class AgendaDemo
         $clinica = $this->clinicas['sanroque'];
         $vet = $this->usuarios['sanroque-vet-1'];
         $citas = $this->filas('SELECT id_cita FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=?', [$clinica, $vet, $dia]);
-        $solicitudes = $this->filas("SELECT id_solicitud FROM solicitudes_agenda WHERE id_clinica=? AND JSON_UNQUOTE(JSON_EXTRACT(contexto_triage,'$.entrada.fecha'))=? AND JSON_UNQUOTE(JSON_EXTRACT(contexto_triage,'$.entrada.id_veterinario'))=?", [$clinica, $dia, (string) $vet]);
+        $solicitudes = $this->filas("SELECT id_solicitud FROM solicitudes_agenda WHERE id_clinica=? AND JSON_UNQUOTE(JSON_EXTRACT(contexto_triage,'$.entrada.fecha'))=? AND (JSON_UNQUOTE(JSON_EXTRACT(contexto_triage,'$.entrada.id_veterinario'))=? OR (id_mascota=? AND origen='portal'))", [$clinica, $dia, (string) $vet, $this->mascotas['Simón']['id']]);
         $operaciones = [];
-        foreach (['en-curso', 'Rocco', 'Max', 'Mishi', 'Toby', 'Simón', 'Luna', 'Kira', 'Nala'] as $etiqueta) {
+        foreach (['en-curso', 'Rocco', 'Max', 'Mishi', 'Toby', 'Lola', 'Simón', 'Luna', 'Kira', 'Nala'] as $etiqueta) {
             foreach (['evaluar-', 'reservar-'] as $accion) {
                 $operaciones[] = $this->clave('escena', $dia, $accion . $etiqueta);
                 $operaciones[] = $this->clave('base', $dia, $accion . $etiqueta);
