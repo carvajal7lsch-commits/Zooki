@@ -35,7 +35,7 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
             <input type="hidden" name="id_solicitud" value="">
             <input type="hidden" name="identidad" value="provisional">
             <input type="hidden" name="motivo" value="Ingreso de urgencia presencial">
-            <input type="hidden" name="id_tipo_cita" value="" data-ingreso-tipo>
+            <input type="hidden" name="decision" value="">
             <header class="zk-dialogo__head">
                 <h3 id="dialogoRojoTitulo">Nueva urgencia</h3>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
@@ -51,14 +51,20 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
                     <label>Buscar por nombre <input type="search" data-urgencia-buscar autocomplete="off" placeholder="Nombre del paciente"></label>
                     <label>Paciente <select name="id_mascota" required disabled><option value="">Elige el paciente</option></select><span data-error-campo="id_mascota" aria-live="polite"></span></label>
                 </div>
-                <label data-ingreso-decision hidden>Decisión clínica <input name="decision" maxlength="255" data-caracteres="\P{C}" data-espacios="normalizar" disabled><span data-error-campo="decision" aria-live="polite"></span></label>
-                <p class="ah-error" data-ingreso-configuracion role="status"></p>
+                <div class="urgencia-rapida__excepcion" data-ingreso-excepcion hidden>
+                    <p class="urgencia-rapida__ayuda" data-ingreso-excepcion-titulo></p>
+                    <label>Detalle adicional <span class="ah-opcional">(opcional)</span> <input name="detalle_urgencia" maxlength="200" data-caracteres="\P{C}" data-espacios="normalizar" disabled></label>
+                    <div class="urgencia-rapida__motivos" role="group" aria-label="Motivo clínico">
+                        <button type="button" data-urgencia-motivo>Este paciente es más grave</button>
+                        <button type="button" data-urgencia-motivo>El otro paciente está estable</button>
+                        <button type="button" data-urgencia-motivo>Orden del veterinario</button>
+                    </div>
+                </div>
                 <p class="ah-error" data-aviso role="status"></p>
-                <button type="button" class="zk-btn zk-btn--sec zk-btn--mini" data-ingreso-ir-urgencias hidden>Ir a Urgencias</button>
             </div>
             <footer class="zk-dialogo__pie">
                 <button type="button" class="zk-btn zk-btn--sec" data-ingreso-solo-llegada>Solo registrar llegada</button>
-                <button type="submit" class="zk-btn zk-btn--peligro" disabled>Atender ahora</button>
+                <button type="submit" class="zk-btn zk-btn--peligro">Atender ahora</button>
             </footer>
         </form>
     </dialog>

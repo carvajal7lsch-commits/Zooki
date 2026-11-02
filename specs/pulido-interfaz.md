@@ -1306,3 +1306,11 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Formularios de revisión, reordenamiento y otras acciones conservados en desplegables; el celular reutiliza estos controles sin duplicar el formulario de revisión.
 - Atender desde la tarjeta toma Consulta general, conserva los controles excepcionales y redirige solo con id_cita confirmado; servidor, endpoints y reglas de seguridad intactos.
 - Verificación: lectura de código y diff; sin pruebas, suites ni capturas por instrucción del dueño; pendiente su revisión visual y funcional.
+
+### HU-4.15 — Urgencia presencial directa (2026-11-02)
+
+- Escribió Codex; entregada, pendiente de revisión; contrato y Anexo — Resultado en `specs/M4-agenda-grafo-ii.md`.
+- Sustituye la resolución del tipo desde JavaScript y los formularios largos de Rojos: el servidor elige el tipo, inicia pese a agenda llena y conserva la protección contra atenciones reales simultáneas.
+- Atender ahora abre Atención directamente; pausa y prioridad solo solicitan motivo cuando el servidor lo exige, en el mismo modal; el reintento conserva llegada y datos.
+- Verificación dirigida autorizada:6 pruebas/31 aserciones y cuatro recorridos reales a1366×768 y390×844 con Identificar después y Rocco, sin excepciones de consola; sin suites completas ni capturas comparativas.
+- RN-427, RE-4.15.2/4/5 y diagrama actualizados; PDF/Word de Reglas, Requisitos e Historial al día; Modelos conserva sus descargas actuales por decisión del dueño; pendiente revisión de Claude y del dueño.

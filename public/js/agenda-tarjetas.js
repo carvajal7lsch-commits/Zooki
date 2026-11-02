@@ -84,7 +84,7 @@
             if (!acciones.children.length) boton.classList.add('ah-tarjeta__boton--principal');
             acciones.append(accion);
         });
-        if (tarjeta.dataset.ingreso) {
+        if (tarjeta.dataset.ingreso && !tarjeta.closest('[data-rojos-lista]')) {
             const ficha = tarjeta.closest('[data-agenda-herramientas]').querySelector(`[data-conciliar-identidad="${tarjeta.dataset.ingreso}"]`);
             if (ficha) {
                 const completar = nodo('button', 'ah-tarjeta__boton', 'Completar ficha');

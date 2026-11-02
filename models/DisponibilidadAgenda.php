@@ -198,7 +198,7 @@ final class DisponibilidadAgenda extends ModeloClinica
     }
 
     /** RN-401: excepción global mínima; nunca nombres, clínica, motivo o contactos. */
-    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = [], bool $rojoPresente = false): array
+    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = [], bool $rojoPresente = false, bool $soloAtencionesReales = false): array
     {
         $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=c.id_mascota) AS mascota,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
             c.hora_inicio_real,c.hora_fin_real,c.inicio_estimado,c.fin_estimado,c.duracion_activa_objetivo_segundos,
@@ -213,6 +213,10 @@ final class DisponibilidadAgenda extends ModeloClinica
         if ($excluir !== null) {
             $sql .= ' AND c.id_cita<>?';
             $parametros[] = $excluir;
+        }
+        if ($soloAtencionesReales) {
+            // RN-401/427: las reservas se desplazan; una atención real simultánea sigue protegida globalmente.
+            $sql .= " AND c.estado IN ('en_curso','sin_cerrar') AND c.hora_fin_real IS NULL";
         }
         if ($secuencia) {
             // Solo el procesador sustituye esta secuencia local por su proyección en memoria.
@@ -318,19 +322,19 @@ final class DisponibilidadAgenda extends ModeloClinica
     }
 
     /** RE-4.15.2: capacidad global mínima; cierre no impide atender a un rojo ya presente. */
-    public function exigirCapacidadUrgente(int $vet, int $mascota, int $segundos): void
+    public function exigirCapacidadUrgente(int $vet, int $mascota, int $segundos, bool $soloAtencionesReales = false): void
     {
         $this->autorizar($vet, $mascota);
         $ahora = ($this->reloj)();
         $inicio = $ahora->format('Y-m-d H:i:s');
         $fin = PoliticaTemporalAgenda::sello($ahora->getTimestamp() + $segundos);
-        if ($this->filas("SELECT 1 FROM ausencias_veterinario WHERE id_veterinario=? AND id_clinica=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>?", [$vet,$this->clinica(),$fin,$inicio])) {
+        if (!$soloAtencionesReales && $this->filas("SELECT 1 FROM ausencias_veterinario WHERE id_veterinario=? AND id_clinica=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>?", [$vet,$this->clinica(),$fin,$inicio])) {
             throw new HorarioOcupado('No hay un veterinario disponible para esta atención.');
         }
-        $ocupadas = $this->ocupacionGlobal($vet,$mascota,$ahora->format('Y-m-d'),null,$ahora->getTimestamp(),false,[],true);
+        $ocupadas = $this->ocupacionGlobal($vet,$mascota,$ahora->format('Y-m-d'),null,$ahora->getTimestamp(),false,[],true,$soloAtencionesReales);
         foreach ($ocupadas as [$desde,$hasta]) {
             if ($desde < $ahora->getTimestamp() + $segundos && $hasta > $ahora->getTimestamp()) {
-                throw new HorarioOcupado('No hay disponibilidad para esta atención.');
+                throw new HorarioOcupado($soloAtencionesReales ? 'El paciente o el veterinario tiene otra atención real en curso. No se pueden iniciar dos atenciones simultáneas.' : 'No hay disponibilidad para esta atención.');
             }
         }
     }

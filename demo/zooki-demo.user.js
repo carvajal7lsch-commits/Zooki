@@ -185,8 +185,13 @@
         for (const letra of texto) {
             if (turno !== generacion) throw new Error('Escenario reiniciado.');
             cambiar(campo, campo.value + letra);
-            await new Promise(resolver => setTimeout(resolver, 40 + Math.floor(Math.random() * 21)));
+            await new Promise(resolver => setTimeout(resolver, 110 + Math.floor(Math.random() * 41)));
         }
+    }
+
+    // Pausas para que el público alcance a ver cada paso (pedido del dueño, 2026-11-02).
+    function pausa(ms) {
+        return new Promise(resolver => setTimeout(resolver, ms));
     }
 
     function clic(boton) {
@@ -201,10 +206,12 @@
             const opcion = await esperar(() => [...raiz.querySelectorAll('[data-sintomas-sugerencias] [data-codigo]')].find(n => n.dataset.codigo === codigo && visible(n)), `la sugerencia ${texto}`);
             const diagnosticos = raiz.closest('form')?.querySelector('[data-diagnosticos-lista]');
             const anterior = diagnosticos?.firstElementChild;
+            await pausa(600);
             clic(opcion);
             await esperar(() => raiz.querySelector(`[data-sintoma="${codigo}"]`), `el síntoma seleccionado ${texto}`);
             // La lista anterior puede seguir visible durante el debounce; esperar la respuesta de esta selección.
             if (diagnosticos) await esperar(() => !diagnosticos.hidden && diagnosticos.firstElementChild && diagnosticos.firstElementChild !== anterior, `el recálculo tras ${texto}`);
+            await pausa(1000);
         }
     }
 
@@ -251,7 +258,10 @@
             resaltar([candidato.closest('article') || candidato]);
             informar('Zooki calculó los diagnósticos. No se guardó la consulta.');
         } else {
-            clic(await esperar(() => document.querySelector('[data-usar-diagnostico="diagnostico.sarna_sarcoptica"]'), 'el diagnóstico de sarna'));
+            const sarna = await esperar(() => document.querySelector('[data-usar-diagnostico="diagnostico.sarna_sarcoptica"]'), 'el diagnóstico de sarna');
+            resaltar([sarna.closest('article') || sarna]);
+            await pausa(1200);
+            clic(sarna);
             await esperar(() => form.querySelector('[data-tratamiento-campo="farmaco"][value="farmaco.selamectina"]') || [...form.querySelectorAll('[data-tratamiento-campo="farmaco"]')].find(n => n.value === 'farmaco.selamectina'), 'la selamectina precargada');
             const descarte = await esperar(() => form.querySelector('[data-prescripcion-descartada="farmaco.ivermectina"]'), 'la ivermectina descartada por MDR1');
             resaltar([descarte]);
@@ -279,12 +289,14 @@
         } else {
             if (normalizar(document.querySelector('#consultationPetName')?.textContent) !== 'mishi') throw new Error('La consulta abierta no es Mishi.');
             clic(form.querySelector('[data-consulta-ir="1"]'));
+            await pausa(900);
             const antes = form.querySelectorAll('[data-tratamiento]').length;
             let fila = [...form.querySelectorAll('[data-tratamiento]')].find(n => n.querySelector('[data-tratamiento-campo="farmaco"]')?.value === 'farmaco.paracetamol');
             if (!fila) {
                 clic(form.querySelector('[data-agregar-tratamiento]'));
                 fila = await esperar(() => form.querySelectorAll('[data-tratamiento]').length > antes && [...form.querySelectorAll('[data-tratamiento]')].at(-1), 'la fila de medicamento');
                 await escribir(fila.querySelector('[data-tratamiento-campo="medicamento"]'), 'paracetamol');
+                await pausa(700);
                 clic(await esperar(() => fila.querySelector('[data-farmaco="farmaco.paracetamol"]'), 'paracetamol en el catálogo'));
             }
             await esperar(() => fila.classList.contains('consulta-tratamiento--bloqueo') && fila.querySelector('.consulta-tratamiento__fuente'), 'el bloqueo por toxicidad felina con fuente');

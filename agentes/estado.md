@@ -6,6 +6,15 @@
 
 ## Ahora
 
+### HU-4.15 — Urgencia presencial directa — entregada, pendiente de revisión (2026-11-02)
+
+- Escribió Codex; revisa Claude (arquitecto); contrato y anexo en `specs/M4-agenda-grafo-ii.md`; sustituye los criterios anteriores de elección del tipo desde JavaScript.
+- Nueva urgencia → Atender ahora → Atención; tipo activo automático en el servidor, motivo inicial automático, llegada conservada y Reintentar atender ante fallo; Rojos con una sola acción.
+- Agenda llena se reacomoda por cascada; se conserva RN-401 contra atenciones reales simultáneas; pausa no decidida y otro rojo anterior se resuelven dentro del mismo modal con motivo clínico.
+- Verificación dirigida:6 pruebas/31 aserciones; cuatro recorridos reales con semilla San Roque en motor temporal `zooki_test_base_v2`, a1366×768 y390×844, con identificación posterior y Rocco; Atención abierta y consola sin excepciones.
+- RN-427, RE-4.15.2/4/5, diagrama de Modelos y entrada2.3.0 actualizados; Mermaid renderizado (47 nodos); PDF/Word de Reglas, Requisitos e Historial regenerados y al día; Modelos conserva sus descargas actuales por decisión del dueño.
+- Pendientes: revisión de Claude y aceptación del dueño; sin suites completas, migraciones, cambio de versión, commit ni push.
+
 ### Tarjetas de Pendientes — entregada, pendiente de revisión del dueño (2026-11-02)
 
 - Escribió Codex; referencia y anexo en `specs/pulido-interfaz.md`; solo Rojos, Triage, Sala y Reasignar, con Citas del día conservadas.

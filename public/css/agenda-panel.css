@@ -259,6 +259,34 @@
     display: grid;
     gap: 12px;
 }
+.urgencia-rapida__excepcion {
+    display: grid;
+    gap: 12px;
+}
+.urgencia-rapida__motivos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.urgencia-rapida__motivos button {
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.urgencia-rapida__motivos button:hover,
+.urgencia-rapida__motivos button:focus-visible {
+    border-color: var(--z-primary);
+    outline: 2px solid var(--z-primary-borde);
+    outline-offset: 1px;
+}
 /* Referencia del dueño: tarjetas compactas solo en los cuatro módulos de Pendientes. */
 .agenda-herramientas--tarjetas .ah-tarjeta {
     --ah-acento: var(--z-primary);

@@ -3314,3 +3314,26 @@ README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mj
 - **Cubierto:** (1) propuesta de horario con apertura L–V 8–12/14–18 y aviso al administrador, días cerrados bloqueados en el formulario; (2) aviso al abrir Nueva cita sin horario aprobado y portal sin veterinarios sin horario; (3) días cerrados del calendario como los pasados; (4) propietario-veterinario agenda su mascota con auditoría (RN-G18) y vínculo automático de la mascota a las clínicas activas del propietario; (5) obligatorios/opcionales en Pacientes; (6) «Cirugía programada» 120/15, no pausable y solo_personal, con liberación desde el fin real; (7) verde/amarillo con todos los horarios y «Recomendado», naranja con tres y primer libre; (8) rojo pasa a Urgencias con mascota y evaluación; (9) RN-430 con anticipacion_cambios_min = 30 y administrador con motivo. Migración 15 repetible.
 - **Verificación de Claude (Linux):** JS completa con Chrome **465/465**; PHP completa con MySQL 8 y zooki_test_base_v2 1236 pruebas con 2 fallas de expectativas no actualizadas: BaseV2Mysql (lista de migraciones sin la 15) y AgendaB2Mysql (instantánea de clinicas/tipos_cita sin las columnas y la cirugía de la 15). Corregidas por el revisor respetando el orden físico de ALTER … AFTER; ambas pasan. Sin cambios de código de producción del revisor.
 - **Dueño (máximo 6):** proponer el horario L–V y verlo como administrador; Nueva cita sin horario; tocar un domingo en Citas; agendar su propia mascota como veterinario y como propietario; naranja con tres horarios y rojo a Urgencias sin reescribir; intentar cancelar a menos de 30 minutos.
+
+## HU-4.15 — Corrección profunda de urgencia presencial (2026-11-02)
+
+- Decisión del dueño: Nueva urgencia → Atender ahora → Atención directamente, con Identificar después o paciente buscado; tipo elegido por servidor: Urgencia → Consulta general → primer tipo activo no exclusivo del personal.
+- Motivo inicial automático «Ingreso de urgencia presencial»; sin campos de tipo o motivo inicial ni formularios largos en Rojos; una sola acción Atender ahora por tarjeta.
+- RN-427/RE-4.15.2/5: la capacidad de agenda no frena al rojo presente; se inicia y la cascada reacomoda las reservas, sin cambiar las horas pactadas.
+- Aclaración aprobada por el dueño: desplazar reservas y conservar RN-401 contra dos atenciones reales simultáneas del paciente o del veterinario; no se elimina esa protección global.
+- Atención no pausable conserva espera con paciente actual y primera posición; otra pausa sin decisión u otro rojo anterior exige motivo dentro del mismo modal, con chips y detalle opcional; seleccionar reintenta sin perder ingreso ni datos.
+- Fallo posterior al ingreso conserva la llegada confirmada, explica qué pasó y ofrece Reintentar atender; claves separadas para ingreso, prioridad y atención, sin duplicación ante respuesta perdida.
+- Documentación obligatoria: RN-427, RE-4.15.2/4/5, flujo HU-4.15 de Modelos e Historial2.3.0; sin migración ni subida de versión.
+- Aclaración aprobada por el dueño: Modelos mantiene sus descargas actuales; actualizar y comprobar su diagrama en el portal, regenerando solo PDF/Word de Reglas, Requisitos e Historial.
+- Verificación autorizada: solo pruebas dirigidas del tipo automático y capacidad/RN-401; recorridos reales del modal en escritorio y celular, sin suites completas ni capturas comparativas.
+
+### Anexo — Resultado
+
+- Escribió Codex; revisa Claude (arquitecto); entregada, pendiente de revisión.
+- RE-4.15.4: selección automática del tipo por clínica con cuatro variantes, aislamiento y repetición idempotente; el navegador ya no busca el tipo por nombre ni bloquea por esa búsqueda.
+- RN-427/RE-4.15.2/5: prueba de agenda llena con inicio real y cascada, más rechazo de atención real simultánea;6 pruebas dirigidas y31 aserciones correctas en `AgendaC7Test`.
+- Interfaz: cuatro recorridos con endpoints reales y semilla San Roque sobre MariaDB temporal `zooki_test_base_v2`; Identificar después y Rocco a1366×768 y390×844 abren Atención, sin excepciones de consola.
+- Excepciones clínicas dentro del mismo modal; reintentos conservan el registro; tarjetas de Rojos con una sola acción, sin cambiar las demás bandejas.
+- Evidencia local: `scratch/r/urgencia-directa/resultado.json` y logs; motor temporal detenido y eliminado; sin consultar la base manual ni leer o escribir `.env`.
+- RN/RE/Modelos/Historial alineados; Mermaid renderizado (47 nodos); tres pares PDF/Word regenerados, con descargas al día; no se agregaron descargas de Modelos.
+- Pendientes: revisión de Claude y aceptación visual/funcional del dueño; sin suites completas, migración, cambio de versión, commit ni push.

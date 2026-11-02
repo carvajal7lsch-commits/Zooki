@@ -79,12 +79,11 @@
                 entrada.setAttribute('aria-invalid', error ? 'true' : 'false');
                 valido = valido && !error;
             });
-            const tipoIngreso = form.querySelector('[data-ingreso-tipo]');
-            form.querySelector('[type="submit"]').disabled = escribiendo || !valido || Boolean(tipoIngreso && !tipoIngreso.value);
+            form.querySelector('[type="submit"]').disabled = escribiendo || !valido;
             const soloLlegada = form.querySelector('[data-ingreso-solo-llegada]');
             if (soloLlegada) soloLlegada.disabled = escribiendo || !valido;
-            if (tipoIngreso) {
-                const hayAviso = form.querySelector('[data-ingreso-configuracion]').textContent || form.querySelector('[data-aviso]').textContent;
+            if (form.hasAttribute('data-ingreso-rojo')) {
+                const hayAviso = form.querySelector('[data-aviso]').textContent;
                 form.querySelector('[data-identidad-provisional]').hidden = form.elements.namedItem('identidad').value !== 'provisional' || Boolean(hayAviso);
             }
             return valido;
@@ -127,13 +126,6 @@
                     const datos = await respuesta.json();
                     if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudo guardar.');
                     comando.reiniciar();
-                    if (destino === 'atender_rojo_ajax') {
-                        if (datos.resultado?.espera) throw new Error(datos.message || 'El paciente sigue en espera.');
-                        const cita = Number(datos.resultado?.id_cita);
-                        if (!Number.isInteger(cita) || cita < 1) throw new Error('No se pudo confirmar la apertura de Atención. Reintenta.');
-                        global.location.assign(`index.php?action=vet_atencion&id_cita=${encodeURIComponent(cita)}`);
-                        return;
-                    }
                     aviso.textContent = datos.message;
                     if (form.closest('dialog')) {
                         if (global.zookiCerrarDialogo) global.zookiCerrarDialogo(form);
@@ -148,12 +140,6 @@
                     await recargar();
                     global.dispatchEvent(new Event('agenda:urgencia'));
                 } catch (error) {
-                    if (form.dataset.urgenciaAtender && /atención pausada[\s\S]*decisión clínica/i.test(error.message)) {
-                        const decision = form.elements.namedItem('decision');
-                        decision.disabled = false;
-                        decision.required = true;
-                        decision.closest('label').hidden = false;
-                    }
                     form.querySelector('[data-aviso]').textContent = error.message;
                 } finally {
                     escribiendo = false;
@@ -191,32 +177,11 @@
                 texto(tarjeta, 'p', s.fecha_llegada ? `Llegó ${String(s.fecha_llegada).slice(11, 16)} · ${ESTADOS[s.estado] || s.estado}` : 'Aviso remoto: aún no se acredita la llegada').className = 'ah-item__meta';
                 const resumen = texto(tarjeta, 'p', [ESTADOS[s.estado] || s.estado, identidadPendiente ? 'Identidad pendiente' : ''].filter(Boolean).join(' · '));
                 resumen.className = 'ah-item__texto';
-                const datos = { id_solicitud: s.id_solicitud, version: s.version_solicitud };
-                if (!s.fecha_llegada) {
-                    const f = formulario(tarjeta, 'Acreditar llegada física', 'llegada_rojo_ajax', datos);
-                    preparar(f, 'llegada_rojo_ajax', f.extras);
-                }
                 if (!vet) return;
-                if (s.estado_revision === 'pendiente' || s.revision_vigente === false) {
-                    const f = formulario(tarjeta, 'Revisar contexto actual', 'revisar_rojo_ajax', datos);
-                    campo(f, 'motivo', 'Revisión clínica y contexto vigente', true);
-                    preparar(f, 'revisar_rojo_ajax', f.extras);
-                }
-                if (s.estado !== 'espera_presencial' || !s.fecha_llegada) return;
-                const atender = formulario(tarjeta, 'Atender ahora', 'atender_rojo_ajax', datos);
-                atender.dataset.urgenciaAtender = '1';
-                const tipo = campo(atender, 'id_tipo_cita', 'Tipo de atención', true, 'select');
-                opciones(tipo, catalogos.tipos, 'id_tipo_cita', 'nombre_tipo');
-                tipo.value = tipoConsultaGeneral();
-                tipo.closest('label').hidden = Boolean(tipo.value);
-                const decision = campo(atender, 'decision', 'Decisión clínica si ya hay una atención pausada');
-                decision.disabled = true;
-                decision.closest('label').hidden = true;
-                preparar(atender, 'atender_rojo_ajax', atender.extras);
-                if (s === lista.find(pendiente => pendiente.estado === 'espera_presencial' && pendiente.fecha_llegada)) return;
-                const ordenar = formulario(tarjeta, 'Priorizar este rojo', 'ordenar_rojo_ajax', datos);
-                campo(ordenar, 'motivo', 'Motivo clínico del cambio de orden', true);
-                preparar(ordenar, 'ordenar_rojo_ajax', ordenar.extras);
+                const atender = texto(tarjeta, 'button', 'Atender ahora');
+                atender.type = 'button';
+                atender.className = 'zk-btn zk-btn--peligro zk-btn--mini';
+                atender.addEventListener('click', () => document.dispatchEvent(new CustomEvent('agenda:atender-rojo', { detail: s })));
             });
         }
 
@@ -303,18 +268,6 @@
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
         }
 
-        function tipoConsultaGeneral() {
-            // ValoresInicialesClinica nombra la consulta general «Consulta general/Enfermedad».
-            const tipos = (catalogos?.tipos || []).filter(tipo => ['consulta general/enfermedad', 'consulta general'].includes(normalizarNombre(tipo.nombre_tipo).replace(/\s*\/\s*/g, '/')));
-            return tipos.length === 1 ? String(tipos[0].id_tipo_cita) : '';
-        }
-
-        function prepararTipoIngreso(form) {
-            form.elements.namedItem('id_tipo_cita').value = tipoConsultaGeneral();
-            form.querySelector('[data-ingreso-configuracion]').textContent = catalogos && !tipoConsultaGeneral()
-                ? 'No se puede iniciar la atención: revisa el tipo Consulta general/Enfermedad en la configuración de la clínica. Mientras tanto, puedes registrar la llegada.' : '';
-        }
-
         function llenarPacientesIngreso(form) {
             const select = form.elements.namedItem('id_mascota');
             const previo = select.value;
@@ -334,7 +287,6 @@
             const form = document.querySelector('#dialogoRojo [data-ingreso-rojo]');
             if (form) {
                 llenarPacientesIngreso(form);
-                prepararTipoIngreso(form);
                 validar(form);
             }
             rojos(datos.rojos, datos.ingresos);
@@ -344,33 +296,35 @@
         function prepararIngreso(form) {
             const registrar = global.zookiCrearComandoAgenda();
             const atender = global.zookiCrearComandoAgenda();
+            const priorizar = global.zookiCrearComandoAgenda();
             const salida = form.querySelector('[data-aviso]');
             const principal = form.querySelector('[type="submit"]');
-            const ir = form.querySelector('[data-ingreso-ir-urgencias]');
             let solicitud = null;
             let registroIntentado = false;
             let cuerpoRegistro = null;
-            let decisionRequerida = false;
+            let excepcion = null;
             const camposIdentidad = ['identidad', 'id_mascota', 'motivo'];
 
-            function ajustarDecision() {
-                form.querySelector('[data-ingreso-decision]').hidden = !decisionRequerida;
-                const entrada = form.elements.namedItem('decision');
-                entrada.disabled = !decisionRequerida;
-                entrada.required = decisionRequerida;
+            function ajustarExcepcion() {
+                form.querySelector('[data-ingreso-excepcion]').hidden = !excepcion;
+                form.elements.namedItem('detalle_urgencia').disabled = !excepcion;
+                form.querySelector('[data-ingreso-excepcion-titulo]').textContent = excepcion === 'prioridad'
+                    ? 'Selecciona el motivo para priorizar y atender a este paciente.' : 'Selecciona el motivo de la decisión clínica para atender a este paciente.';
             }
 
             function reiniciar() {
                 solicitud = null;
                 registroIntentado = false;
                 cuerpoRegistro = null;
-                decisionRequerida = false;
+                excepcion = null;
                 registrar.reiniciar();
                 atender.reiniciar();
+                priorizar.reiniciar();
                 form.reset();
                 form.elements.namedItem('id_solicitud').value = '';
                 form.elements.namedItem('identidad').value = 'provisional';
                 form.elements.namedItem('motivo').value = 'Ingreso de urgencia presencial';
+                form.elements.namedItem('decision').value = '';
                 llenarPacientesIngreso(form);
                 camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = false; });
                 form.querySelectorAll('[data-urgencia-identidad], [data-urgencia-buscar]').forEach(control => { control.disabled = false; });
@@ -378,10 +332,8 @@
                 form.querySelectorAll('[data-tocado]').forEach(campo => { delete campo.dataset.tocado; });
                 form.querySelector('[data-evaluacion-conservada]').hidden = true;
                 salida.textContent = '';
-                ir.hidden = true;
                 principal.textContent = 'Atender ahora';
-                prepararTipoIngreso(form);
-                ajustarDecision();
+                ajustarExcepcion();
                 form.elements.namedItem('identidad').dispatchEvent(new Event('change'));
             }
 
@@ -395,6 +347,7 @@
                 if (!respuesta.ok || datos.success === false) {
                     const error = new Error(datos.message || 'No se pudo completar la acción.');
                     error.rechazo = respuesta.status < 500;
+                    error.campo = datos.campo;
                     throw error;
                 }
                 return datos;
@@ -413,15 +366,14 @@
                 if (escribiendo) return;
                 form.dataset.intento = '1';
                 if (!validar(form)) return;
-                const tipo = form.elements.namedItem('id_tipo_cita');
-                if (iniciarAtencion && !tipo.value) {
-                    prepararTipoIngreso(form);
+                const motivoExcepcion = form.elements.namedItem('decision').value || form.elements.namedItem('detalle_urgencia').value.trim();
+                if (iniciarAtencion && excepcion && !motivoExcepcion) {
+                    salida.textContent = 'Selecciona un motivo clínico o escribe el detalle de la decisión.';
                     return;
                 }
                 const cuerpoIngreso = new FormData(form);
                 const cuerpoAtencion = new FormData();
-                cuerpoAtencion.set('id_tipo_cita', tipo.value);
-                cuerpoAtencion.set('decision', form.elements.namedItem('decision').value);
+                cuerpoAtencion.set('decision', excepcion === 'decision' ? motivoExcepcion : '');
                 const controles = Array.from(form.querySelectorAll('input, select, textarea, button'));
                 const deshabilitados = controles.map(control => control.disabled);
                 escribiendo = true;
@@ -432,7 +384,7 @@
                 try {
                     if (!solicitud) {
                         registroIntentado = true;
-                        // Una respuesta perdida conserva el cuerpo y la clave, aunque cambie el tipo para atender.
+                        // Una respuesta perdida conserva el cuerpo y la clave para no duplicar la llegada.
                         if (!cuerpoRegistro) cuerpoRegistro = cuerpoIngreso;
                         const accion = cuerpoRegistro.get('id_solicitud') ? 'llegada_rojo_ajax' : 'ingresar_rojo_ajax';
                         const datos = await enviar(accion, cuerpoRegistro, registrar);
@@ -448,6 +400,15 @@
                         global.zookiToast?.('Llegada registrada en Pendientes → Rojos.', 'success');
                     } else {
                         principal.textContent = 'Iniciando atención…';
+                        if (excepcion === 'prioridad') {
+                            const orden = new FormData();
+                            orden.set('id_solicitud', solicitud);
+                            orden.set('motivo', motivoExcepcion);
+                            await enviar('ordenar_rojo_ajax', orden, priorizar);
+                            priorizar.reiniciar();
+                            excepcion = null;
+                            form.elements.namedItem('decision').value = '';
+                        }
                         cuerpoAtencion.set('id_solicitud', solicitud);
                         const datos = await enviar('atender_rojo_ajax', cuerpoAtencion, atender);
                         if (datos.resultado?.espera) {
@@ -461,7 +422,10 @@
                         return;
                     }
                 } catch (error) {
-                    if (error.rechazo && /atención pausada[\s\S]*decisión clínica/i.test(error.message)) decisionRequerida = true;
+                    if (['decision', 'prioridad'].includes(error.campo)) {
+                        excepcion = error.campo;
+                        form.elements.namedItem('decision').value = '';
+                    }
                     if (error.rechazo) {
                         if (solicitud) atender.reiniciar();
                         else {
@@ -470,13 +434,12 @@
                         }
                     }
                     salida.textContent = solicitud ? `La llegada quedó registrada. ${error.message}` : error.message;
-                    ir.hidden = !solicitud;
                 } finally {
                     escribiendo = false;
                     controles.forEach((control, indice) => { control.disabled = deshabilitados[indice]; });
                     if (solicitud || registroIntentado) camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = true; });
                     form.querySelectorAll('[data-urgencia-identidad], [data-urgencia-buscar]').forEach(control => { control.disabled = Boolean(solicitud || registroIntentado); });
-                    ajustarDecision();
+                    ajustarExcepcion();
                     principal.textContent = solicitud ? 'Reintentar atender' : 'Atender ahora';
                     validar(form);
                 }
@@ -494,21 +457,44 @@
                     validar(form);
                 });
             }
-            ir.addEventListener('click', () => {
-                if (escribiendo) return;
-                global.zookiCerrarDialogo(form);
-                document.querySelector('[data-agenda-tab="urgencias"]')?.click();
-                reiniciar();
+            form.querySelectorAll('[data-urgencia-motivo]').forEach(boton => {
+                boton.addEventListener('click', () => {
+                    const detalle = form.elements.namedItem('detalle_urgencia').value.trim();
+                    form.elements.namedItem('decision').value = [boton.textContent, detalle].filter(Boolean).join(' · ');
+                    ejecutar(true);
+                });
             });
             form.closest('dialog').addEventListener('cancel', evento => {
                 if (escribiendo) evento.preventDefault();
             });
-            return { reiniciar, conservar: () => solicitud !== null || registroIntentado };
+            function retomar(caso) {
+                if (escribiendo) return;
+                if (caso.estado === 'en_atencion' && caso.id_cita) {
+                    global.location.assign(`index.php?action=vet_atencion&id_cita=${encodeURIComponent(caso.id_cita)}`);
+                    return;
+                }
+                reiniciar();
+                form.elements.namedItem('id_solicitud').value = caso.id_solicitud;
+                form.elements.namedItem('id_mascota').value = caso.id_mascota;
+                const resumen = form.querySelector('[data-evaluacion-conservada]');
+                resumen.textContent = caso.nombre || 'Urgencia registrada';
+                resumen.hidden = false;
+                global.zookiAbrirDialogo('dialogoRojo');
+                if (caso.fecha_llegada) {
+                    solicitud = Number(caso.id_solicitud);
+                    camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = true; });
+                    ejecutar(true);
+                } else {
+                    resumen.textContent += ' · La llegada física se registra al pulsar Atender ahora.';
+                }
+            }
+            return { reiniciar, retomar, conservar: () => solicitud !== null || registroIntentado };
         }
 
         const ingreso = raiz.querySelector('[data-ingreso-rojo]');
         if (ingreso) {
             const flujoIngreso = prepararIngreso(ingreso);
+            document.addEventListener('agenda:atender-rojo', evento => flujoIngreso.retomar(evento.detail));
             document.addEventListener('agenda:ingreso-rojo', async evento => {
                 try {
                     await recargar();

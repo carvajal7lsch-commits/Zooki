@@ -411,6 +411,8 @@ Este flujo también aplica si se regulariza mientras una solicitud sigue activa;
 ```mermaid
 flowchart TD
   REG([Regularizar identidad de un ingreso existente, incluso con solicitud activa]) --> VER
+  NUEVA([Nueva urgencia]) --> AH["Atender ahora; identificar despues o buscar paciente"]
+  AH --> B
   A([Rojo remoto o ingreso presencial]) --> REU["Desde Nueva cita: conservar mascota, sintomas/exposiciones y evaluacion en la solicitud existente; abrir llegada sin duplicar"]
   REU --> B["Caso y aviso idempotentes con prioridad maxima, sin cuota ni mora"]
   B --> F{Presencia fisica acreditada?}
@@ -421,20 +423,27 @@ flowchart TD
   PRO --> CT["Nombre/telefono opcionales; sin documento por defecto ni atribucion de propiedad"]
   EX --> ORD
   CT --> ORD["Cola de rojos presentes por llegada fisica/ID; cambio vet con motivo/auditoria"]
-  ORD --> NRO{"Otro rojo y atencion ya pausada?"}
+  ORD --> ANTES{"Otro rojo presente antes?"}
+  ANTES -- Si --> PRI["Mismo modal: motivo clinico en chips y detalle opcional; no perder ingreso"]
+  PRI --> OAU["Reordenar con motivo auditado y reintentar atender"]
+  OAU --> ORD
+  ANTES -- No --> NRO{"Otra atencion ya pausada?"}
   NRO -- Si --> DEC{Decision del veterinario?}
   NRO -- No --> CAP
-  DEC -- "Atender nuevo rojo" --> CAP{Vet libre?}
-  DEC -- "Seguir atencion anterior" --> ESP2["Nuevo rojo espera; continuar/reanudar segun decision"]
+  DEC -- "Motivo explicito en el mismo modal y reintentar" --> CAP{Vet libre?}
+  DEC -- "Sin decision" --> ESP2["Informar paciente actual; urgencia primera en la fila; conservar formulario"]
   ESP2 --> REE{{Liberacion o reevaluacion clinica}}
   REE --> CAP
-  CAP -- Si --> CITA
-  CAP -- No --> PA{Tipo pausable y sin otra pausa abierta del vet?}
+  CAP -- Si --> TIPO
+  CAP -- No --> PA{Tipo actual pausable?}
   PA -- Si --> SEG["Pausar con segmento real; conservar inicio y activo restante"]
-  PA -- No --> ESP["Espera durable sin vet asignado; primero compatible que se libere"]
+  PA -- No --> ESP["Informar a quien atiende y que la urgencia quedo primera en la fila; Reintentar atender"]
   ESP --> CAP
-  SEG --> CITA["Veterinario crea/enlaza cita de llegada e inicia cuando atiende realmente"]
-  CITA --> CON[["Consulta atomica (§3); releer revision/ficha vigente; cerrar rojo y reanudar pausa en la misma unidad"]]
+  SEG --> TIPO["Tipo activo automatico: Urgencia, Consulta general o primero no exclusivo"]
+  TIPO --> CITA["Crear/enlazar cita e iniciar; la capacidad de agenda no frena al rojo presente; RN-401 vigente"]
+  CITA --> AJ[["Cascada M inmediata: reacomodar las demas citas (§5)"]]
+  AJ --> ATENCION["Atencion abierta directamente"]
+  ATENCION --> CON[["Consulta atomica (§3); releer revision/ficha vigente; cerrar rojo y reanudar pausa en la misma unidad"]]
   CON --> CAS[["Cascada M (§5), no regenerar margen"]]
   CAS --> PEND{Ficha provisional?}
   PEND -- Si --> VER["Admin o vet verifica titularidad por mecanismos vigentes"]
