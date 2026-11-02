@@ -302,6 +302,7 @@
 }
 
 .fc .fc-popover-header {
+    align-items: center;
     padding: 8px 12px;
     background: var(--cal-muted-bg);
     font-size: 0.8rem;
@@ -312,6 +313,10 @@
 .agenda .fc .fc-popover-close {
     position: relative;
     z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
     min-width: 26px;
     min-height: 26px;
     cursor: pointer;

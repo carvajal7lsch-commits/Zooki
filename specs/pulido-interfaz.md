@@ -1210,3 +1210,7 @@ Comprobación puntual con clics reales en Chrome a1366×768 y1024×650: día/tí
 Retoque del dueño (2026-11-02), escrito por Codex, entregado y pendiente de revisión: Mes equilibra la altura de sus semanas y manda a «+N más» las citas que no caben, con tarjetas compactas dentro de las celdas; el cursor no altera sus dimensiones.
 Se renueva la revisión de los CSS del calendario para cargar el rótulo centrado y los estilos actuales; apertura puntual con muchas citas sin errores JS ni scroll interno adicional a1366×768/900, sin suites ni capturas.
 El dueño confirmó mantener el domingo cerrado y corregir la historia demo; las fechas ficticias que caían en domingo pasan al sábado anterior al recrear la semilla, sin editar registros existentes desde la interfaz.
+
+Retoque H-2 (2026-11-02), escrito por Codex, entregado y pendiente de revisión del dueño: X centrada dentro de su área de clic y alineada con el título del popover; revisión del CSS renovada para evitar la copia anterior.
+Chrome local a1366×768: centros alineados, cierre, clic afuera, Escape y reapertura correctos; carga a390×844 sin excepciones; sin suites ni capturas.
+El domingo conserva su sombreado de cierre; los registros demo ya cargados requieren recrear la semilla con `--si`, que no se ejecutó en este retoque.

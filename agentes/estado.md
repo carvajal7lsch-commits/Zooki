@@ -17,6 +17,7 @@
   H-2 corregido de nuevo por Codex: fecha exacta de la celda en «+N más» sin desfase UTC, Escape mediante el cierre nativo y JS con hash de contenido para evitar copias anteriores; clics reales a1366/1024 confirman X/afuera/Escape/reapertura y selección, sin excepciones, suites ni capturas; pendiente de revisión del dueño.
   Mes: semanas de altura equilibrada, citas compactas y CSS renovados; apertura con muchas citas a1366×768/900 sin scroll interno adicional ni errores JS; sin suites ni capturas.
   Decisión posterior del dueño: domingo cerrado; historia ficticia del domingo trasladada al sábado anterior al recrear con `--si`; semilla no ejecutada, base existente intacta; escrito por Codex y pendiente de revisión del dueño.
+  X del popover centrada con el título y CSS renovado; comprobación puntual en Chrome a1366 de alineación/cierre/reapertura y carga a390, sin excepciones ni suites; escribió Codex, entregada, pendiente de revisión del dueño.
 
 ### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 
