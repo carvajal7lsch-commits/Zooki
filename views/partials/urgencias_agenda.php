@@ -48,11 +48,15 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
                     <label>Teléfono del acompañante <span class="ah-opcional">(opcional)</span> <input name="telefono_acompanante" <?= ValidadorTelefono::atributosHtml() ?>><span data-error-campo="telefono_acompanante" aria-live="polite"></span></label>
                 </fieldset>
                 <label>Motivo clínico <input name="motivo" maxlength="255" data-caracteres="\P{C}" data-espacios="normalizar" required placeholder="Ej. dificultad respiratoria"><span data-error-campo="motivo" aria-live="polite"></span></label>
-                <p data-aviso role="status"></p>
+                <label>Tipo de atención <select name="id_tipo_cita" data-ingreso-tipo><option value="">Elige para atender ahora</option></select><span data-error-campo="id_tipo_cita" aria-live="polite"></span></label>
+                <label>Decisión clínica <span class="ah-opcional">(si ya hay una atención pausada)</span> <input name="decision" maxlength="255" data-caracteres="\P{C}" data-espacios="normalizar"><span data-error-campo="decision" aria-live="polite"></span></label>
+                <p class="ah-error" data-aviso role="status"></p>
+                <button type="button" class="zk-btn zk-btn--sec zk-btn--mini" data-ingreso-ir-urgencias hidden>Ir a Urgencias</button>
             </div>
             <footer class="zk-dialogo__pie">
                 <button type="button" class="zk-btn zk-btn--sec" data-cerrar-dialogo>Cancelar</button>
-                <button type="submit" class="zk-btn zk-btn--peligro">Registrar llegada roja</button>
+                <button type="button" class="zk-btn zk-btn--sec" data-ingreso-solo-llegada>Solo registrar llegada</button>
+                <button type="submit" class="zk-btn zk-btn--peligro">Atender ahora</button>
             </footer>
         </form>
     </dialog>
@@ -69,4 +73,4 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
         </fieldset>
     </template>
 </section>
-<script src="js/urgencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="js/urgencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/urgencias-agenda.js'), 0, 12) ?>" defer></script>

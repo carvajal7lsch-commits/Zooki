@@ -22,24 +22,29 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <button type="button" class="cal-btn cal-btn--ghost cal-btn--sm" data-nav="today">Hoy</button>
         </div>
 
-        <div class="agenda-toolbar__views" role="group" aria-label="Vista del calendario">
-            <button type="button" class="view-tab active" data-view="dayGridMonth">Mes</button>
-            <button type="button" class="view-tab" data-view="timeGridWeek">Semana</button>
-            <button type="button" class="view-tab" data-view="timeGridDay">Día</button>
-        </div>
+        <div class="agenda-toolbar__opciones">
+            <div class="agenda-toolbar__views" role="group" aria-label="Vista del calendario">
+                <button type="button" class="view-tab active" data-view="dayGridMonth">Mes</button>
+                <button type="button" class="view-tab" data-view="timeGridWeek">Semana</button>
+                <button type="button" class="view-tab" data-view="timeGridDay">Día</button>
+            </div>
 
-        <div class="agenda-toolbar__filters">
-            <button type="button" class="filter-btn active" data-tipo="cita" aria-pressed="true"><span class="tipo-dot"></span>Citas</button>
-            <button type="button" class="filter-btn active" data-tipo="vacunacion" aria-pressed="true"><span class="tipo-dot"></span>Vacunas</button>
-            <button type="button" class="filter-btn active" data-tipo="desparasitacion" aria-pressed="true"><span class="tipo-dot"></span>Desparasitación</button>
-            <!-- El veterinario solo ve su agenda: el JS oculta este filtro para él. -->
-            <div class="select-wrapper" id="filterVeterinarioWrap">
-                <select id="filterVeterinario" class="filter-vet-select" aria-label="Filtrar por veterinario">
-                    <option value="">Todos los veterinarios</option>
-                </select>
-                <i class="fas fa-chevron-down select-arrow"></i>
+            <div class="agenda-toolbar__filters">
+                <button type="button" class="filter-btn active" data-tipo="cita" aria-pressed="true"><span class="tipo-dot"></span>Citas</button>
+                <button type="button" class="filter-btn active" data-tipo="vacunacion" aria-pressed="true"><span class="tipo-dot"></span>Vacunas</button>
+                <button type="button" class="filter-btn active" data-tipo="desparasitacion" aria-pressed="true"><span class="tipo-dot"></span>Desparasitación</button>
+                <!-- El veterinario solo ve su agenda: el JS oculta este filtro para él. -->
+                <div class="select-wrapper" id="filterVeterinarioWrap">
+                    <select id="filterVeterinario" class="filter-vet-select" aria-label="Filtrar por veterinario">
+                        <option value="">Todos los veterinarios</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
             </div>
         </div>
+        <?php if ($rolAgenda === Roles::VETERINARIO): ?>
+        <div class="agenda-toolbar__rojo" data-agenda-rojo-destino></div>
+        <?php endif; ?>
     </div>
 
     <?php if ($rolAgenda === Roles::VETERINARIO) require __DIR__ . '/partials/agenda_movil.php'; ?>
@@ -61,10 +66,19 @@ $usuarioAgenda = (int) Contexto::idUsuario();
         </section>
 
         <aside class="agenda-panel" id="agendaPanel" aria-live="polite">
-            <header class="agenda-panel__head" id="agendaPanelHead"></header>
-            <div class="agenda-panel__body" id="agendaPanelBody">
-                <div class="agenda-skeleton"><span></span><span></span><span></span></div>
+            <div class="agenda-panel__citas" id="agendaPanelCitas" role="tabpanel" aria-labelledby="agendaVistaCitas">
+                <header class="agenda-panel__head" id="agendaPanelHead"></header>
+                <div class="agenda-panel__body" id="agendaPanelBody">
+                    <div class="agenda-skeleton"><span></span><span></span><span></span></div>
+                </div>
             </div>
+            <?php if ($rolAgenda === Roles::VETERINARIO): ?>
+            <div class="agenda-panel__pendientes" id="agendaPanelPendientes" data-agenda-pendientes role="tabpanel" aria-labelledby="agendaVistaPendientes" hidden></div>
+            <footer class="agenda-panel__vistas" role="tablist" aria-label="Contenido del panel">
+                <button type="button" id="agendaVistaCitas" role="tab" aria-controls="agendaPanelCitas" aria-selected="true" data-agenda-vista="citas">Citas</button>
+                <button type="button" id="agendaVistaPendientes" role="tab" aria-controls="agendaPanelPendientes" aria-selected="false" tabindex="-1" data-agenda-vista="pendientes">Pendientes</button>
+            </footer>
+            <?php endif; ?>
         </aside>
     </div>
 </div>
@@ -231,6 +245,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
 <script src="js/triage-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/agenda-panel.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-panel.js'), 0, 12) ?>"></script>
 <script src="js/agenda-movil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-movil.js'), 0, 12) ?>"></script>
 <script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/calendario.js'), 0, 12) ?>"></script>
 

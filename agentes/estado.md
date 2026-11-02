@@ -6,6 +6,25 @@
 
 ## Ahora
 
+### Rojo presencial: registrar y atender — entregada, pendiente de revisión del dueño (2026-11-02)
+
+- Escribió Codex; encargo y anexo en `specs/pulido-interfaz.md`.
+- Atender ahora encadena ingreso/llegada y atención con endpoints existentes; tipo del catálogo y decisión clínica opcional; Atención abre solo con la cita confirmada por el servidor.
+- Solo registrar llegada cierra y actualiza la lista; ante fallo al atender se conservan ingreso/campos y aparecen Reintentar atender e Ir a Urgencias, sin duplicar el registro; rechazo por orden y pausa conservado del servidor.
+- Aprobación adicional del dueño: contadores de pestañas siempre grises; total azul, Rojos rojo solo con pendientes.
+- Sin pruebas, suites ni capturas por la instrucción vigente del dueño; lectura del código y revisión funcional/visual pendiente;2.3.0 conservada, sin commit ni push.
+- Corrección posterior del bloqueo, escrita por Codex: diálogo Rojo presencial fuera del contenedor ocultable de Pendientes y recarga del formulario mediante su referencia global; antes abría a0×0 y dejaba inerte la página.
+- Comprobación puntual de apertura/cierre con clics reales en Chrome a1366×768 y390×844: ventana visible, página liberada y sin excepciones; sin suites, capturas ni envíos; pendiente de revisión del dueño.
+
+### Panel lateral de Agenda: Citas y Pendientes — entregada, pendiente de revisión del dueño (2026-11-02)
+
+- Escribió Codex; encargo y resultado en `specs/pulido-interfaz.md`.
+- Botones inferiores Citas/Pendientes; herramientas actuales dentro del panel de escritorio, encabezado con fecha/total y pestañas Rojos, Triage, Sala y Reasignar con contadores al lado; prioridad al entrar: Rojos, primer grupo con pendientes o Rojos si todo está vacío.
+- Tarjetas y acciones actuales conservadas para el próximo diseño del dueño; navegación y hojas del celular conservadas; sin cambios de endpoints, motores ni datos.
+- Por instrucción expresa del dueño, sin pruebas, suites ni capturas en esta iteración; revisión del código y aceptación visual pendiente; versión2.3.0 conservada, sin commit ni push.
+- Retoque de tamaños pedido por el dueño: encabezado y subtítulo menores, total azul de22 px y pestañas/contadores más compactos; escribió Codex, entregado, pendiente de revisión visual, sin ejecutar pruebas.
+- Retoque posterior: contadores en insignias pequeñas azules (Rojos en rojo), filtros junto a Mes/Semana/Día y botón existente Rojo presencial en el extremo de la barra, compacto; en celular vuelve a su panel; escribió Codex, entregado, pendiente de revisión visual, sin pruebas ni suites.
+
 ### Pulido de semilla demo H-1 a H-7 — entregados, pendiente de revisión del dueño (2026-11-02)
 
 - Escribió Codex; detalle y una línea por hallazgo en `specs/pulido-interfaz.md`.

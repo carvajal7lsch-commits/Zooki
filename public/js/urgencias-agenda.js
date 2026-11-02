@@ -79,7 +79,10 @@
                 entrada.setAttribute('aria-invalid', error ? 'true' : 'false');
                 valido = valido && !error;
             });
-            form.querySelector('[type="submit"]').disabled = escribiendo || !valido;
+            const tipoIngreso = form.querySelector('[data-ingreso-tipo]');
+            form.querySelector('[type="submit"]').disabled = escribiendo || !valido || Boolean(tipoIngreso && !tipoIngreso.value);
+            const soloLlegada = form.querySelector('[data-ingreso-solo-llegada]');
+            if (soloLlegada) soloLlegada.disabled = escribiendo || !valido;
             return valido;
         }
 
@@ -274,26 +277,175 @@
             if (turno !== lectura) return;
             if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudieron consultar las urgencias.');
             catalogos = datos.catalogos;
-            const form = raiz.querySelector('[data-ingreso-rojo]');
+            const form = document.querySelector('#dialogoRojo [data-ingreso-rojo]');
             if (form) {
                 const select = form.elements.namedItem('id_mascota');
                 const previo = select.value;
                 opciones(select, catalogos.mascotas, 'id_mascota', 'nombre');
                 select.value = previo;
+                const tipo = form.elements.namedItem('id_tipo_cita');
+                const tipoPrevio = tipo.value;
+                opciones(tipo, catalogos.tipos, 'id_tipo_cita', 'nombre_tipo');
+                tipo.value = tipoPrevio;
+                validar(form);
             }
             rojos(datos.rojos);
             ingresos(datos.ingresos);
         }
 
+        function prepararIngreso(form) {
+            const registrar = global.zookiCrearComandoAgenda();
+            const atender = global.zookiCrearComandoAgenda();
+            const salida = form.querySelector('[data-aviso]');
+            const principal = form.querySelector('[type="submit"]');
+            const ir = form.querySelector('[data-ingreso-ir-urgencias]');
+            let solicitud = null;
+            let registroIntentado = false;
+            let cuerpoRegistro = null;
+            const camposIdentidad = ['identidad', 'id_mascota', 'nombre_mascota', 'nombre_acompanante', 'telefono_acompanante', 'motivo'];
+
+            function reiniciar() {
+                solicitud = null;
+                registroIntentado = false;
+                cuerpoRegistro = null;
+                registrar.reiniciar();
+                atender.reiniciar();
+                form.reset();
+                camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = false; });
+                delete form.dataset.intento;
+                form.querySelectorAll('[data-tocado]').forEach(campo => { delete campo.dataset.tocado; });
+                form.querySelector('[data-evaluacion-conservada]').hidden = true;
+                salida.textContent = '';
+                ir.hidden = true;
+                principal.textContent = 'Atender ahora';
+                form.elements.namedItem('identidad').dispatchEvent(new Event('change'));
+            }
+
+            async function enviar(accion, cuerpo, comando) {
+                const token = raiz.querySelector('[data-urgencias-csrf] input');
+                cuerpo.set(token.name, token.value);
+                cuerpo.set('id_clinica', raiz.dataset.clinica);
+                cuerpo.set('clave_operacion', comando.clave(cuerpo));
+                const respuesta = await global.fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: true });
+                const datos = await respuesta.json();
+                if (!respuesta.ok || datos.success === false) {
+                    const error = new Error(datos.message || 'No se pudo completar la acción.');
+                    error.rechazo = respuesta.status < 500;
+                    throw error;
+                }
+                return datos;
+            }
+
+            async function refrescar() {
+                try {
+                    await recargar();
+                } catch (error) {
+                    aviso.textContent = error.message;
+                }
+                global.dispatchEvent(new Event('agenda:urgencia'));
+            }
+
+            async function ejecutar(iniciarAtencion) {
+                if (escribiendo) return;
+                form.dataset.intento = '1';
+                if (!validar(form)) return;
+                const tipo = form.elements.namedItem('id_tipo_cita');
+                if (iniciarAtencion && !tipo.value) {
+                    form.querySelector('[data-error-campo="id_tipo_cita"]').textContent = 'Elige el tipo de atención.';
+                    tipo.focus();
+                    return;
+                }
+                const cuerpoIngreso = new FormData(form);
+                const cuerpoAtencion = new FormData();
+                cuerpoAtencion.set('id_tipo_cita', tipo.value);
+                cuerpoAtencion.set('decision', form.elements.namedItem('decision').value);
+                const controles = Array.from(form.querySelectorAll('input, select, textarea, button'));
+                const deshabilitados = controles.map(control => control.disabled);
+                escribiendo = true;
+                ++lectura;
+                controles.forEach(control => { control.disabled = true; });
+                principal.textContent = solicitud ? 'Iniciando atención…' : 'Registrando llegada…';
+                salida.textContent = '';
+                try {
+                    if (!solicitud) {
+                        registroIntentado = true;
+                        // Una respuesta perdida conserva el cuerpo y la clave, aunque cambie el tipo para atender.
+                        if (!cuerpoRegistro) cuerpoRegistro = cuerpoIngreso;
+                        const accion = cuerpoRegistro.get('id_solicitud') ? 'llegada_rojo_ajax' : 'ingresar_rojo_ajax';
+                        const datos = await enviar(accion, cuerpoRegistro, registrar);
+                        const id = Number(datos.resultado?.id_solicitud);
+                        if (!Number.isInteger(id) || id < 1) throw new Error('No se pudo confirmar el ingreso. Reintenta sin cambiar los datos.');
+                        solicitud = id;
+                        form.elements.namedItem('id_solicitud').value = id;
+                        aviso.textContent = datos.message;
+                    }
+                    if (!iniciarAtencion) {
+                        global.zookiCerrarDialogo(form);
+                        reiniciar();
+                    } else {
+                        principal.textContent = 'Iniciando atención…';
+                        cuerpoAtencion.set('id_solicitud', solicitud);
+                        const datos = await enviar('atender_rojo_ajax', cuerpoAtencion, atender);
+                        if (datos.resultado?.espera) {
+                            // Una espera confirmada es un resultado definitivo: otro intento debe evaluar el estado nuevo.
+                            atender.reiniciar();
+                            throw new Error(datos.message || 'El rojo sigue en espera.');
+                        }
+                        const cita = Number(datos.resultado?.id_cita);
+                        if (!Number.isInteger(cita) || cita < 1) throw new Error('No se pudo confirmar la apertura de Atención. Reintenta atender.');
+                        global.location.assign(`index.php?action=vet_atencion&id_cita=${encodeURIComponent(cita)}`);
+                        return;
+                    }
+                } catch (error) {
+                    if (error.rechazo) {
+                        if (solicitud) atender.reiniciar();
+                        else {
+                            registroIntentado = false;
+                            cuerpoRegistro = null;
+                        }
+                    }
+                    salida.textContent = solicitud ? `La llegada quedó registrada. ${error.message}` : error.message;
+                    ir.hidden = !solicitud;
+                } finally {
+                    escribiendo = false;
+                    controles.forEach((control, indice) => { control.disabled = deshabilitados[indice]; });
+                    if (solicitud || registroIntentado) camposIdentidad.forEach(nombre => { form.elements.namedItem(nombre).disabled = true; });
+                    principal.textContent = solicitud ? 'Reintentar atender' : 'Atender ahora';
+                    validar(form);
+                }
+                if (solicitud || !registroIntentado) await refrescar();
+            }
+
+            form.addEventListener('submit', evento => {
+                evento.preventDefault();
+                ejecutar(true);
+            });
+            form.querySelector('[data-ingreso-solo-llegada]').addEventListener('click', () => ejecutar(false));
+            for (const nombre of ['input', 'change']) {
+                form.addEventListener(nombre, evento => {
+                    if (evento.target.name) evento.target.dataset.tocado = '1';
+                    validar(form);
+                });
+            }
+            ir.addEventListener('click', () => {
+                if (escribiendo) return;
+                global.zookiCerrarDialogo(form);
+                document.querySelector('[data-agenda-tab="urgencias"]')?.click();
+                reiniciar();
+            });
+            form.closest('dialog').addEventListener('cancel', evento => {
+                if (escribiendo) evento.preventDefault();
+            });
+            return { reiniciar, conservar: () => solicitud !== null || registroIntentado };
+        }
+
         const ingreso = raiz.querySelector('[data-ingreso-rojo]');
         if (ingreso) {
-            // El botón y el aviso ya pertenecen al HTML de la ventana; preparar los reutiliza.
-            ingreso.dataset.etiqueta = 'Registrar llegada roja';
-            preparar(ingreso, () => ingreso.elements.namedItem('id_solicitud').value ? 'llegada_rojo_ajax' : 'ingresar_rojo_ajax');
+            const flujoIngreso = prepararIngreso(ingreso);
             document.addEventListener('agenda:ingreso-rojo', async evento => {
                 try {
                     await recargar();
-                    ingreso.reset();
+                    flujoIngreso.reiniciar();
                     ingreso.elements.namedItem('id_solicitud').value = evento.detail.id_solicitud;
                     ingreso.elements.namedItem('id_mascota').value = evento.detail.id_mascota;
                     ingreso.elements.namedItem('motivo').value = evento.detail.resumen.slice(0, 255);
@@ -308,7 +460,8 @@
             });
             document.addEventListener('click', evento => {
                 if (!evento.target.closest('[data-abrir-dialogo="dialogoRojo"]')) return;
-                ingreso.reset();
+                if (escribiendo || flujoIngreso.conservar()) return;
+                flujoIngreso.reiniciar();
                 ingreso.elements.namedItem('id_solicitud').value = '';
                 ingreso.querySelector('[data-evaluacion-conservada]').hidden = true;
                 validar(ingreso);
@@ -323,6 +476,8 @@
                 conocida.querySelector('select').disabled = provisional;
                 validar(ingreso);
             });
+            // RNF-16: desde la barra puede abrirse con Pendientes oculto; el diálogo nativo debe tener caja visible.
+            document.body.append(ingreso.closest('dialog'));
         }
         raiz.querySelector('[data-urgencias-actualizar]').addEventListener('click', () => {
             if (!escribiendo) recargar().catch(error => { aviso.textContent = error.message; });

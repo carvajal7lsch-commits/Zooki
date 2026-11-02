@@ -1,0 +1,201 @@
+/* Panel lateral del veterinario; las tarjetas conservan sus estilos y acciones. */
+.agenda-panel__citas,
+.agenda-panel__pendientes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+.agenda-panel__citas[hidden],
+.agenda-panel__pendientes[hidden] {
+    display: none !important;
+}
+.agenda-panel__vistas {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--z-border);
+    background: var(--z-surface);
+}
+.agenda-panel__vistas button {
+    flex: 1;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.agenda-panel__vistas button:hover {
+    background: var(--z-bg-suave);
+    color: var(--z-primary);
+}
+.agenda-panel__vistas button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.agenda-panel__vistas button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 1px;
+}
+.agenda-pendientes__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px;
+}
+.agenda-pendientes__head > div {
+    flex: 1;
+    min-width: 0;
+}
+.agenda-pendientes__head h3 {
+    margin: 0 0 2px;
+    color: var(--z-text);
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+.agenda-pendientes__head p {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .7rem;
+    line-height: 1.35;
+}
+.agenda-pendientes__total {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-size: .7rem;
+    font-weight: 700;
+}
+.agenda-pendientes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+.agenda-pendientes .agenda-herramientas__tabs {
+    flex: none;
+    gap: 0;
+    padding: 0 8px;
+}
+.agenda-pendientes .agenda-herramientas__tab {
+    flex: 1;
+    justify-content: center;
+    gap: 4px;
+    min-height: 36px;
+    padding: 0 2px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--z-text-muted);
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.agenda-pendientes .agenda-herramientas__tab > i {
+    display: none;
+}
+.agenda-pendientes .agenda-herramientas__tab:hover {
+    background: var(--z-bg-suave);
+}
+.agenda-pendientes .agenda-herramientas__tab[aria-selected="true"] {
+    border-bottom-color: var(--z-primary);
+    background: transparent;
+    color: var(--z-primary);
+}
+.agenda-pendientes .agenda-herramientas__tab[data-agenda-tab="urgencias"][aria-selected="true"] {
+    border-bottom-color: var(--z-danger);
+    color: var(--z-danger-dark);
+}
+.agenda-pendientes .agenda-conteo,
+.agenda-vet-movil .agenda-herramientas__tab .agenda-conteo {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
+    font-size: .65rem;
+    font-weight: 700;
+}
+.agenda-pendientes [data-agenda-tab="urgencias"] .agenda-conteo[data-con-pendientes="true"],
+.agenda-vet-movil [data-agenda-tab="urgencias"] .agenda-conteo[data-con-pendientes="true"] {
+    background: var(--z-danger);
+    color: var(--z-surface);
+}
+.agenda-pendientes .agenda-herramientas__cuerpo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+.agenda-pendientes .agenda-herramientas__panel {
+    gap: 12px;
+    padding: 14px 12px;
+}
+.agenda-pendientes .ah-head {
+    flex-wrap: wrap;
+}
+.agenda-pendientes .ah-head > div:first-child {
+    flex-basis: 100%;
+}
+.agenda-pendientes .ah-acciones {
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+.agenda-vet-movil .agenda-panel__vistas,
+.agenda-vet-movil .agenda-herramientas:has([data-agenda-tab="agenda"][aria-selected="true"]) > .agenda-pendientes__head {
+    display: none;
+}
+.agenda-toolbar__opciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+.agenda-toolbar__opciones .agenda-toolbar__filters {
+    margin-left: 0;
+}
+.agenda-toolbar__views {
+    flex: none;
+}
+.agenda-toolbar__rojo {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+.zk-btn.agenda-rojo-compacto {
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: .78rem;
+}
+#dialogoRojo .zk-dialogo__pie {
+    flex-wrap: wrap;
+}
+@media (max-width: 767px) {
+    #dialogoRojo .zk-dialogo__pie > [type="submit"] {
+        flex-basis: 100%;
+        order: -1;
+    }
+}

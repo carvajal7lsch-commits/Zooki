@@ -16,13 +16,26 @@ if ($esVetHerramientas) {
     $pestanasAgenda['reasignaciones'] = ['Reasignaciones', 'fas fa-exchange-alt'];
 }
 $pestanasAgenda['urgencias'] = ['Urgencias', 'fas fa-exclamation-triangle'];
+if ($esVetHerramientas) {
+    $pestanasAgenda = ['urgencias' => ['Rojos', 'fas fa-exclamation-triangle'], 'triage' => ['Triage', 'fas fa-stethoscope'], 'llegadas' => ['Sala', 'fas fa-door-open'], 'reasignaciones' => ['Reasignar', 'fas fa-exchange-alt']];
+}
 ?>
 <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <section class="agenda-herramientas" data-agenda-herramientas aria-label="Herramientas de agenda">
+    <?php if ($esVetHerramientas): ?>
+    <header class="agenda-pendientes__head">
+        <div>
+            <h3>Pendientes de hoy</h3>
+            <p><span data-agenda-pendientes-fecha></span> · lo que requiere acción</p>
+        </div>
+        <span class="agenda-pendientes__total" data-agenda-pendientes-total aria-label="Total de pendientes">0</span>
+    </header>
+    <?php endif; ?>
     <div class="agenda-herramientas__tabs" role="tablist" aria-label="Herramientas de agenda">
         <?php $primeraAgenda = true; foreach ($pestanasAgenda as $claveAgenda => [$tituloAgenda, $iconoAgenda]): ?>
         <button type="button" role="tab" class="agenda-herramientas__tab" id="agenda-tab-<?= $claveAgenda ?>" aria-controls="agenda-panel-<?= $claveAgenda ?>" aria-selected="<?= $primeraAgenda ? 'true' : 'false' ?>" tabindex="<?= $primeraAgenda ? '0' : '-1' ?>" data-agenda-tab="<?= $claveAgenda ?>">
             <i class="<?= $iconoAgenda ?>" aria-hidden="true"></i><span><?= $tituloAgenda ?></span>
+            <?php if ($esVetHerramientas): ?><span class="agenda-conteo" data-agenda-conteo="<?= $claveAgenda ?>">0</span><?php endif; ?>
         </button>
         <?php $primeraAgenda = false; endforeach; ?>
     </div>

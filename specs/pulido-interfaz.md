@@ -1230,3 +1230,44 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Verificación dirigida: CorreccionesDueno230, DisponibilidadAgenda, M2C8Rediseno y PortalRetoques;67 pruebas en verde tras repetir solo DisponibilidadAgenda (21/21) por el último ajuste de su mensaje esperado.
 - Evidencia local ignorada: `scratch/ci-41495527310.log`, `scratch/ci-correcciones.log` y `scratch/ci-disponibilidad.log`; sin suites completas, cambios de base ni operaciones Git de escritura.
 - Pendiente: revisión del dueño y nuevo CI tras su push; versión2.3.0 conservada.
+
+### Panel lateral de Agenda — encargo del dueño (2026-11-02)
+
+- Escribe Codex; revisa el dueño visualmente; HU-4.13/14/15/18/19, RNF-16; dentro de2.3.0.
+- Dos botones al pie del panel: Citas conserva su lista/detalle y Pendientes aloja las herramientas actuales, retirándolas de debajo del calendario en escritorio.
+- Encabezado «Pendientes de hoy», fecha actual y «lo que requiere acción», con total azul; pestañas compactas Rojos, Triage, Sala y Reasignar con su contador al lado.
+- Al entrar en Pendientes, priorizar Rojos si tiene casos; de lo contrario el primer grupo con pendientes en ese orden; sin pendientes, Rojos por defecto.
+- Conservar los formularios y tarjetas actuales hasta recibir sus diseños; el celular conserva sus hojas y navegación; no cambiar endpoints ni reglas de negocio.
+- Por instrucción expresa del dueño no se ejecutan suites ni pruebas en esta iteración; aceptación visual pendiente.
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Dos vistas al pie del panel, con las herramientas reubicadas sin duplicarlas; encabezado y contadores compactos, prioridad Rojos → Triage → Sala → Reasignar y selección manual conservada al editar.
+- Conteos desde las bandejas existentes, sin contar la vista de triages revisados ni identidades ya resueltas; se consulta triage al entrar para disponer de su contador.
+- El celular conserva sus hojas y navegación; las herramientas se devuelven a su contenedor antes de cambiar entre vistas responsivas para evitar ciclos en el DOM.
+- Verificación: lectura del código y diff; no se ejecutaron pruebas, suites ni capturas por instrucción del dueño; queda su aceptación visual y el diseño de las tarjetas internas.
+- Retoque del dueño sobre su nueva captura: título de.95 rem, subtítulo de.7 rem, total azul de22 px y pestañas de36 px con números pequeños al lado; mismos colores y negrillas, menos espacio en el encabezado; escribió Codex, pendiente de revisión visual, sin pruebas.
+- Retoque posterior del dueño: insignias de18 px en cada contador (azul y rojo para Rojos); filtros Citas/Vacunas/Desparasitación junto al selector Mes/Semana/Día; Rojo presencial ocupa el extremo de la barra con su mismo estilo, reducido a32 px de alto y menor relleno.
+- Se reubica el botón original y conserva su diálogo y acción; en el celular vuelve al panel de urgencias; escribió Codex, entregado, pendiente de revisión visual, sin pruebas ni suites.
+- Decisión posterior aprobada: insignias de pestañas siempre grises, con número oscuro; total principal azul y Rojos rojo únicamente con pendientes.
+
+### Rojo presencial — registrar y atender (encargo del dueño, 2026-11-02)
+
+- Escribe Codex; HU-4.15, RN-427 y RE-4.15.7; sin cambios del servidor ni de sus reglas de presencia, revisión, orden y pausa.
+- Principal «Atender ahora»: registrar por el endpoint existente y atender en una segunda llamada; elegir tipo desde el catálogo existente y redirigir a Atención solo si el servidor devuelve una cita iniciada.
+- Secundario «Solo registrar llegada»: registrar, cerrar y actualizar rojos activos, sin iniciar ni pausar una cita.
+- Tras un fallo al atender, conservar el ingreso confirmado y los campos; ofrecer Reintentar atender e Ir a Urgencias, sin volver a registrar; conservar las claves de idempotencia ante pérdida de respuesta.
+- Mostrar literalmente el rechazo por otro rojo anterior o la decisión clínica requerida, sin reordenar ni interrumpir desde JS; permitir aportar la decisión que ya admite el endpoint.
+- Se mantiene la instrucción del dueño de no ejecutar pruebas ni suites durante estos ajustes; revisión funcional y visual pendiente.
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Ingreso y atención en secuencia con los endpoints actuales; llegada sola disponible sin elegir tipo; espera, pausa y orden decididos por UrgenciaAgenda sin modificarlo.
+- Confirmación de ingreso conservada para reintentar únicamente atender; claves separadas y cuerpo estable ante respuesta perdida; campos y mensajes del servidor conservados.
+- Catálogo existente para el tipo y decisión clínica opcional; redirección a Atención solo con id_cita confirmado; pie adaptable con las dos acciones.
+- Contadores grises aprobados por el dueño; total azul y Rojos rojo solo cuando tiene pendientes.
+- Verificación: lectura de controlador/modelo, código y diff; sin pruebas ni suites por la instrucción vigente; pendientes revisión funcional/visual del dueño y CI tras su push.
+- Corrección posterior: Rojo presencial estaba dentro de Pendientes oculto; showModal dejaba el diálogo abierto a0×0 y bloqueaba el resto; ahora la ventana vive en body y su formulario se sigue recargando por id.
+- Comprobación puntual con clics reales en Chrome local a1366×768 y390×844: ventana visible, X cierra y la página vuelve a recibir clics; sin excepciones, suites, capturas ni registros guardados; escribió Codex, pendiente de revisión del dueño.
