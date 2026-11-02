@@ -2,7 +2,7 @@
 
 > Plan de una sola entrega. Arquitecto: Claude. Ejecutor: Codex. Va **después** de «Refuerzo del conocimiento tras pruebas (2.3.0)», porque usa Collie, ivermectina y los fármacos nuevos.
 
-**Estado:** entregada, pendiente de revisión de Claude.
+**Estado:** corrección S.1 entregada, pendiente de revisión de Claude.
 
 ## Objetivo
 
@@ -17,7 +17,7 @@ Todo se carga con un script repetible que primero se prueba en zooki-pruebas y d
 - La fecha de la sustentación no está confirmada (semana del 2 de noviembre de 2026). Por eso el script recibe `--dia` y tiene un modo para preparar la escena justo antes de presentar.
 - Las fotos de las mascotas las sube el dueño a mano (5 o 6 fichas que va a mostrar). El script no carga imágenes.
 - **Confirmado por el dueño,2026-11-01:** Max muestra la interacción al elegir prednisolona en Alternativas; oclacitinib conserva la precarga vigente, sin cambiar motores.
-- **Confirmado por el dueño,2026-11-01:** `--escena` se niega si la secuencia relativa a la hora real no cabe en los horarios aprobados, incluyendo domingos, noche o bordes del descanso; no abre una jornada excepcional. Las pruebas usan reloj controlado dentro de jornada.
+- **Decisión inicial sustituida por S.1,2026-11-01:** se rechazaba la escena si no cabía en las franjas partidas; ahora rige la jornada continua y la ventana de S.1, indicadas al final de este plan.
 
 ## Propuestas del arquitecto (pendientes de que el dueño las objete)
 
@@ -52,11 +52,11 @@ Reglas:
 
 ### Centro Veterinario San Roque (plan Profesional, activa)
 
-- 1 administradora y 3 veterinarios con horarios de lunes a sábado (8:00–12:00 y 14:00–18:00).
+- 1 administradora y 3 veterinarios con jornada continua de lunes a sábado,7:00–20:00 (decisión vigente S.1 del dueño).
 - Unos 25 propietarios y unas 35 mascotas. Mayoría de criollos (perro «Criollo (Mestizo)» y gato «Criollo») y también Collie, Gran danés, Bulldog francés, Golden hembra entera, Labrador, Pastor alemán, Poodle, Shih tzu y gatos machos y hembras. Pesos coherentes con la raza y la edad.
-- **Historia de 6 meses:** unas 120 consultas con síntomas, diagnóstico del grafo, tratamiento (pautas de `MotorPrescripcion`) y peso, más vacunas y desparasitaciones. Algunas vacunas vencidas y otras próximas en 7 días, para que haya recordatorios.
+- **Historia de 6 meses:** unas 120 consultas con síntomas, diagnóstico del grafo, tratamiento (pautas de `MotorPrescripcion`) y peso, más vacunas y desparasitaciones. Solo3 vacunas próximas en7 días; las demás vencidas fuera de la ventana de recordatorio.
 - **Alertas médicas:** al menos 3 alergias enlazadas a fármacos del grafo, una epilepsia (`condicion.epilepsia`) y medicación vigente.
-- **Próximas 2 semanas:** unas 40 citas de los tres veterinarios, de los distintos tipos de cita.
+- **Clínica viva (S.1):**6 citas por veterinario el día de demo y5 por veterinario en cada uno de los5 días hábiles siguientes, de tipos existentes; si el día elegido es domingo la agenda comienza el lunes.
 - Carnet QR configurado en varias mascotas.
 
 ### Pacientes guion (los que se muestran en Atención)
@@ -76,9 +76,9 @@ La **propietaria principal del portal** (cuenta para entrar en el celular) tiene
 
 Se calcula desde la hora actual H, redondeada a 5 minutos:
 
-- 3 citas completadas en las 2 horas antes de H, con `hora_inicio_real`, `hora_fin_real` y duración objetivo.
+- De0 a3 citas completadas en las2 horas antes de H, según las que caben desde la apertura, con `hora_inicio_real`, `hora_fin_real` y duración objetivo.
 - 1 cita **en curso** que empezó en H−35 min con duración de 30 min, para que la cascada muestre retraso en las siguientes.
-- 4 o 5 citas pendientes después de H, con colores de triage distintos, incluida una **naranja de sobrecupo**.
+- De2 a4 reservas posteriores y una **naranja de sobrecupo**, usando Consulta general y Vacunación/Revisión rápida; todas las estimaciones de la escena terminan, con margen, antes del cierre.
 - Rocco con **llegada registrada** y en espera, listo para abrir Atención.
 - Solicitudes del portal del día: roja derivada (Simón), naranja (Luna, Kira), amarilla en revisión y verde.
 - Nunca deja citas «sin cerrar» ni pausas abiertas: con eso todo el día se iría a revisión.
@@ -87,6 +87,7 @@ Se calcula desde la hora actual H, redondeada a 5 minutos:
 ### Veterinaria Huellitas (plan Gratuito, activa)
 
 - Administradora y un veterinario: personal en **2/2**. Al invitar a un tercero aparece el límite del plan.
+- Jornada continua de lunes a sábado,7:00–20:00, igual que San Roque.
 - 8 mascotas con unas pocas consultas. Una de ellas es la mascota global de la propietaria principal, con historia propia en esta clínica.
 
 ### Clínicas livianas (solo clínica y administrador)
@@ -144,7 +145,7 @@ php scripts/semilla_demo.php --entorno=produccion --borrar
 `--si` reemplaza la demo anterior, incluidas claves y tokens QR; cargar las fotos manuales después de la última recreación.
 PetCare conserva su administrador pendiente de activación; no se altera esa regla para permitirle entrar.
 `--escena` usa siempre el día y la hora reales, sin admitir `--dia`, y solo reemplaza la agenda de la veterinaria principal de ese día.
-Debe caber tanto la historia de las dos horas previas como las reservas posteriores; las 10:30 de lunes a sábado son una referencia compatible con los horarios sembrados.
+Funciona de8:00 a18:00 de lunes a sábado, con jornada continua7:00–20:00; fuera de esa ventana se rechaza antes de modificar la agenda.
 Si alguien vinculó una persona o mascota de demo con una clínica ajena, el borrado se rechaza completo, incluso si el vínculo está inactivo.
 Se exige un super-administrador activo existente para conceder las suscripciones mediante el modelo; si falta, se indica `php scripts/crear_superadmin.php`, sin crear ni modificar esa identidad desde la demo.
 
@@ -173,3 +174,51 @@ Las llaves foráneas permanecen activas y las dependencias se eliminan antes que
 - Escena repetida con reloj controlado: 3 completadas, 1 en curso, 5 pendientes, sobrecupo naranja, Rocco llegado, cascada calculada y sin pausas abiertas ni «sin cerrar»; historia anterior intacta.
 - Pendiente: revisión de Claude y ensayo del dueño en zooki-pruebas/Docker; no hay Docker instalado localmente. Conocimiento conserva su validación veterinaria pendiente.
 - Versión 2.3.0 conservada; no se hicieron commits ni push y no se tocaron pantallas, motores, conocimiento, fotos ni pagos.
+
+
+## Revisión de Claude (2026-11-01)
+
+Refuerzo (`c521fc2`) **aprobado**. Banco de pruebas de Claude con el código nuevo: diagnósticos 26/26 en primer lugar, revisiones del triage del 19 % al 13 % (lo que queda es sobre todo el celo de perras enteras), permetrina en gato roja, chocolate sin hora naranja, Collie sin ivermectina precargada (escrita a mano la bloquea), prednisolona con interacción y osteoartritis con un solo AINE precargado.
+
+Semilla (`fe730c9`) **aprobada con corrección antes de producción**. Corrida real de Claude en MariaDB temporal: `--si` en 5 s con los conteos del anexo, niveles del guion correctos, `--borrar` deja solo al super-administrador.
+
+| # | Tipo | Hallazgo | Destino |
+|---|---|---|---|
+| 1 | P1 demo | `--escena` solo funciona entre 10:00 y 11:30 de lunes a sábado (probado con faketime de 07:30 a 17:00). La hora de la sustentación no se conoce. | Corrección S.1 |
+| 2 | P2 | `--si` deja 40 correos NUEVA_CITA pendientes y unas 28 vacunas en ventana de recordatorio: en producción llegan decenas de correos de golpe a la cuenta Gmail que envía. | Corrección S.1 |
+| 3 | P2 | El día de la demo solo la veterinaria principal tiene agenda; los días siguientes, 4 citas en total para 3 veterinarios. La clínica se ve vacía. | Corrección S.1 |
+| 4 | P3 | La ivermectina bloqueada no se ve en las sugerencias del Collie: el bloqueo solo aparece al escribirla a mano. | Corrección S.1 (mostrar «Descartada por seguridad») |
+| 5 | P3 | Buscador: «le huele feo la boca» ya no encuentra Mal aliento; milbemicina sin advertencia MDR1 en Collie. | Corrección S.1 |
+
+## S.1 — Corrección aprobada (2026-11-01)
+
+- Escribe Codex; revisa Claude (arquitecto); alcance limitado a los hallazgos1–5 de esta revisión.
+- **Decisión del dueño:** jornada continua7:00–20:00 de lunes a sábado para San Roque y Huellitas; escena entre8:00 y18:00, adaptando completadas y posteriores, con tipos reales existentes, sin tipo exclusivo ni estimaciones fuera del cierre.
+- **Decisión del dueño:** no agregar migraciones ni cambiar `Recordatorio`; las citas diarias conservan sus recordatorios reales al Gmail del dueño, unos15 por día.
+- El máximo de5 correos de `--si`/`--escena` excluye esos recordatorios diarios; contar por separado eventos de agenda, recordatorios de dosis y citas diarias.
+- Los correos de agenda de la semilla quedan `omitido` con motivo de demo, excepto los eventos generados por la escena para Rocco; máximo3 vacunas en ventana y las demás vencidas.
+- Los3 veterinarios tienen6 citas el día de demo y5 en cada uno de los5 siguientes días hábiles; la escena reemplaza solo las de la veterinaria principal y conserva las reservas y horas de los otros dos.
+- **Confirmación posterior del dueño:** la cascada puede actualizar las estimaciones de los otros veterinarios; sus citas anteriores a H quedan completadas con horas reales coherentes y las posteriores caben antes del cierre.
+- Después de la escena, ninguna cita del día de San Roque queda en `pendiente_revision`, `pendiente_reasignacion` o `pendiente_reprogramacion`, ni con propuestas abiertas; verificar a8:00,12:30,15:00 y18:00.
+- `MotorPrescripcion::sugerir` separa las pautas bloqueadas como `descartadas`, con seguridad pública, motivo y fuente; nunca entran en `tratamientos` ni se precargan.
+- Atención muestra una línea informativa junto a Alternativas; el modal compartido conserva su presentación; se verifican Collie descartada y criollo alternativa.
+- Sinónimos de mal aliento solicitados y4 advertencias clínicas de milbemicina/MDR1; la fuente distingue dosis rotuladas de otras formulaciones y la raza no confirma el genotipo.
+- Verificación acordada: SemillaDemoTest con reloj a8:00,9:00,12:30,14:00,16:00 y18:00; CasosReforzadosTest, MotorPrescripcionTest, ConocimientoRealTest y ConsultaSugerida230.test.cjs; corrida CLI temporal a dos horas distintas.
+
+## Anexo S.1 — Resultado
+
+- **Escribió Codex,2026-11-01; revisa Claude (arquitecto). Entregada, pendiente de revisión.**
+- Hallazgos1/3: jornada continua7:00–20:00 de lunes a sábado, escena8:00–18:00 con tipos reales; completadas adaptables, mínimo2 reservas y sobrecupo, atención retrasada, llegada de Rocco y cierre de toda la jornada antes de20:00.
+- Agenda base:6 citas por veterinario el día de demo y5 en los5 días hábiles siguientes; conserva reservas/horas de los otros dos y completa sus citas anteriores a H con los modelos existentes y sellos coherentes; cascada normal, sin reajustes pendientes ni propuestas abiertas.
+- Hallazgo2: eventos de agenda `omitido` con motivo de demo salvo Rocco; solo3 vacunas en ventana, resto vencidas; sin migraciones ni cambios de `Recordatorio`.
+- La consola informa por separado eventos pendientes, dosis y recordatorios diarios; el máximo5 excluye los diarios por decisión del dueño.
+- En la corrida CLI:3 correos de dosis y15 diarios de citas tras cada `--si`;0 adicionales tras cada `--escena` al correr los crons seguidos, respetando marcas de envío y vigencia del evento de Rocco; transporte falso, sin SMTP.
+- Sin ejecutar aún los crons, la previsión conservadora de escena suma los eventos pendientes de Rocco más las3 dosis aún sin recordar; el ensayo de los9 relojes conserva el máximo5.
+- Recordatorios de citas por fecha de la cita:18 el día de demo y15 en cada uno de los5 siguientes días hábiles; se envían el día anterior y las marcas previenen duplicados.
+- Hallazgo4: `descartadas` con motivo/fuente públicos y `precargar=false`; ivermectina fuera de tratamientos en Collie y como alternativa en criollo; línea informativa de Atención, modal sin rediseño.
+- Hallazgo5:2 sinónimos de mal aliento y4 advertencias de milbemicina/MDR1 con fuente clínica WSU/UC Davis; dosis rotuladas y genotipo individual distinguidos, validación veterinaria pendiente.
+- PHP dirigido:3 clases clínicas, **158 pruebas/3804 comprobaciones**; pasada inicial de SemillaDemoTest **4/353**; cierre global **1/1060** con9 relojes, incluido15:00, sin ajustes/propuestas en toda San Roque y con cronología real coherente; JS afectado **1/1**, Atención/modal390/1366.
+- CLI real con reloj inyectado a8:00 y18:00: creación, escena, crons falsos y borrado; base temporal `zooki_test_base_v2`, sin `.env`;5 clínicas,41 cuentas,42 mascotas,128 consultas,221 citas y98 solicitudes tras crear.
+- Evidencias locales y cuentas generadas: `scratch/r/semilla-s1/corrida-local.log`, `phpunit.log`, `jornada-completa.log`; claves ignoradas por Git; Historial2.3.0, descargas y flujo de Modelos actualizados.
+- Pendiente: revisión de Claude y ensayo en zooki-pruebas/Docker; la cascada conserva su alcance por clínica, sin cambiar su motor ni corregir «sin cerrar» o pausas.
+- Versión2.3.0 conservada; sin commit ni push ni otras pantallas, migraciones o cambios del refuerzo.

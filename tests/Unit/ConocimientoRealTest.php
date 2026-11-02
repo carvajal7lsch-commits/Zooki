@@ -280,6 +280,22 @@ final class ConocimientoRealTest extends TestCase
         }
     }
 
+    public function testS1AdvertenciaClinicaMilbemicinaEnCuatroRazasYSinonimosDeMalAliento(): void
+    {
+        $aristas = array_column(self::$datos['aristas'], null, 'codigo');
+        foreach (['collie', 'pastor_australiano', 'pastor_shetland', 'border_collie'] as $raza) {
+            $arista = $aristas['arista.toxico.' . $raza . '.milbemicina'];
+            $this->assertSame('advertencia', $arista['efecto']);
+            $this->assertSame('farmaco.milbemicina', $arista['destino']);
+            $this->assertContains('clinico', array_column($arista['fuentes'], 'fundamento'));
+            $this->assertStringContainsString('dosis rotuladas', $arista['fuentes'][0]['localizador']);
+        }
+        $sinonimos = array_filter(self::$datos['sinonimos'], static fn (array $s): bool => $s['nodo'] === 'sintoma.mal_aliento');
+        foreach (['le huele feo la boca', 'aliento feo'] as $texto) {
+            $this->assertContains($texto, array_column($sinonimos, 'texto'));
+        }
+    }
+
     public function testCadaToxicoDeEspecieTieneMinimoNaranjaConSuFuente(): void
     {
         $reglas = array_column(self::$datos['reglas'], null, 'codigo');

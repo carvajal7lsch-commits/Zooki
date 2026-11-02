@@ -204,6 +204,7 @@ flowchart TD
   ME --> M
   MA -- Si --> MS["Filtrar trata por especie y condiciones; excluir bloqueos de toxicidad o alergia;<br/>advertencias publicas sin evidencia protegida; ordenar por preferencia"]
   MS --> GP["Preferida por clase y grupo de eleccion del diagnostico; duplicado vigente advierte y no precarga; sin grupo conserva precarga"]
+  MS --> DS["Bloqueadas en descartadas, aparte de tratamientos; motivo y fuente publicos;<br/>Atencion muestra Descartada por seguridad sin boton; nunca precargar"]
   GP --> ML["Agregar sin duplicar: diagnostico, examenes, recomendaciones y filas preferidas editables;<br/>mg calculados o mg/kg con calcula con el peso; marca verifica la dosis"]
   GP --> ALT["Alternativas junto a Zooki lleno; Usar consulta peso/contexto/seguridad vigentes;<br/>decision explicita y Deshacer conserva ediciones"]
   ALT --> ML

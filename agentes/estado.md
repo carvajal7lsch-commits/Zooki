@@ -6,7 +6,26 @@
 
 ## Ahora
 
-### Semilla de demostración (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+### S.1 — Corrección de la semilla demo (2.3.0) — revisada: aprobada (revisión liviana por decisión del dueño, 2026-11-01)
+
+- Escribió Codex; revisa Claude (arquitecto); hallazgos1–5 de la revisión de `specs/semilla-demo.md`.
+  Decisiones vigentes del dueño: jornada continua7:00–20:00, escena8:00–18:00 con tipos reales, sin migración ni cambios de Recordatorio; el máximo5 excluye los recordatorios diarios de citas.
+  Agenda base:6 citas por veterinario el día de demo y5 en los5 días hábiles siguientes; la escena adapta completadas/reservas y conserva las reservas/horas de los otros dos veterinarios.
+  Confirmación posterior del dueño: completar sus citas anteriores a H con sellos reales coherentes, permitir el recálculo normal y exigir toda San Roque sin reajustes ni propuestas abiertas y dentro del cierre.
+  Correos de agenda omitidos con motivo de demo, excepto Rocco;3 vacunas en ventana y las demás vencidas, con desglose de envíos previstos en consola.
+- Prescripción devuelve `descartadas` sin precarga, con motivo/fuente públicos; Atención muestra la línea informativa y el modal conserva su presentación.
+  Sinónimos de mal aliento y4 advertencias clínicas de milbemicina/MDR1; sin otros cambios del conocimiento.
+- Verificación: CasosReforzadosTest, MotorPrescripcionTest y ConocimientoRealTest158/3804; pasada inicial de SemillaDemoTest4/353; cierre de la nueva condición global1/1060 con9 relojes (incluidos8:00,12:30,15:00,18:00,8:05 y17:55); JS afectado1/1, incluidas Atención/modal a390/1366.
+  Corrida CLI real con reloj inyectado a8:00 y18:00: `--si` y `--escena`, crons con transporte falso y borrado final correcto en motor temporal, solo `zooki_test_base_v2`, sin `.env` ni SMTP.
+  Tras `--si`:221 citas y98 solicitudes; recordatorios diarios por citas:18 para el día de demo y15 para cada uno de los5 días siguientes, separados del límite5.
+  Crons ensayados:3 recordatorios de dosis y15 de citas tras cada creación;0 adicionales tras cada escena, por marcas ya procesadas y validación vigente del evento de Rocco.
+  Evidencia y cuentas generadas, ignoradas por Git, en `scratch/r/semilla-s1/`; Historial2.3.0 y descargas actualizados.
+- Sigue: revisión de Claude y ensayo del dueño en zooki-pruebas antes de producción; conocimiento pendiente de validación veterinaria.
+  Versión2.3.0 conservada, sin migraciones, cambios de Recordatorio, correcciones de «sin cerrar»/pausas, commit ni push.
+
+### Semilla de demostración (2.3.0) — revisada: corrección S.1 antes de producción (2026-11-01)
+
+- **Revisión de Claude:** hallazgos 1–5 en `specs/semilla-demo.md` (escena solo 10:00–11:30, correos en masa, agenda vacía en 2 de 3 veterinarios, ivermectina invisible en sugerencias, buscador «feo»/milbemicina). Sigue S.1 con Codex.
 
 - Escribió Codex; revisa Claude (arquitecto).
   Plan y decisiones en `specs/semilla-demo.md`: Max conserva prednisolona en Alternativas y la escena se rechaza si no cabe en los horarios aprobados.
@@ -21,7 +40,7 @@
   Entrada CLI comprobada con 87 dependencias y ninguna de `scripts/dev`, pruebas o PHPUnit, excluidos por la imagen; conserva pendiente la validación veterinaria del conocimiento existente.
   Sin commit ni push.
 
-### Refuerzo del conocimiento tras pruebas (2.3.0) — entregada, pendiente de revisión (2026-11-01)
+### Refuerzo del conocimiento tras pruebas (2.3.0) — revisada: aprobada (2026-11-01)
 
 - Escribió Codex; revisa Claude (arquitecto).
   Búsqueda por palabras y alias, triage conservador, vacunación desconocida sin registros, tamaño por peso visible, ranking y seguridad MDR1/prednisolona.

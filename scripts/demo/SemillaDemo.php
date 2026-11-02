@@ -16,6 +16,7 @@ require_once __DIR__ . '/../../models/VinculosPropietario.php';
 require_once __DIR__ . '/../../models/PacienteDiagnostico.php';
 require_once __DIR__ . '/../../models/SolicitudAgenda.php';
 require_once __DIR__ . '/../../models/HorarioClinica.php';
+require_once __DIR__ . '/../../models/Recordatorio.php';
 
 /** Orquestación CLI de datos ficticios; ninguna regla ni catálogo de producción se modifica. */
 final class SemillaDemo
@@ -126,7 +127,7 @@ final class SemillaDemo
                 $this->horarios();
                 $agenda = new AgendaDemo($this->db, $this->grafo, $this->clinicas, $this->usuarios, $this->mascotas, $this->reloj, $this->consultaHistorica(...));
                 $niveles = $agenda->preparar($fecha);
-                return ['cuentas' => $this->cuentas, 'conteos' => $this->conteos(), 'niveles' => $niveles, 'version' => $this->grafo->version];
+                return ['cuentas' => $this->cuentas, 'conteos' => $this->conteos(), 'niveles' => $niveles, 'version' => $this->grafo->version, 'correos' => $this->correos($fecha)];
             } catch (Throwable $error) {
                 if ($creada) {
                     // La fase previa es completa, pero no se publica una demo sin agenda si falla su preparación.
@@ -151,7 +152,8 @@ final class SemillaDemo
         $this->revisar();
         return $this->exclusiva(function (): array {
             $this->leerIdentidades();
-            return (new AgendaDemo($this->db, $this->grafo, $this->clinicas, $this->usuarios, $this->mascotas, $this->reloj, $this->consultaHistorica(...)))->escena();
+            $escena = (new AgendaDemo($this->db, $this->grafo, $this->clinicas, $this->usuarios, $this->mascotas, $this->reloj, $this->consultaHistorica(...)))->escena();
+            return $escena + ['correos' => $this->correos(($this->reloj)())];
         });
     }
 
@@ -282,7 +284,7 @@ final class SemillaDemo
             $clinica = $this->clinicas[$mascota['clinica']];
             $vet = $this->usuarios[$mascota['clinica'] . '-vet-1'];
             if ($mascota['id'] !== $this->mascotas['Kira']['id']) {
-                $proxima = $dia->modify($i % 3 === 0 ? '+7 days' : ($i % 3 === 1 ? '-14 days' : '+180 days'));
+                $proxima = $dia->modify($i < 3 ? '+7 days' : '-14 days');
                 $this->insertar('vacunas', ['id_clinica' => $clinica, 'id_mascota' => $mascota['id'], 'id_veterinario' => $vet, 'nombre_vacuna' => $mascota['especie'] === 'Canino' ? 'Rabia' : 'Triple Felina', 'laboratorio' => 'Laboratorio de demostración', 'lote' => 'DEMO-' . ($i + 1), 'fecha_aplicacion' => $dia->modify('-5 months')->format('Y-m-d'), 'fecha_proxima_dosis' => $proxima->format('Y-m-d'), 'observaciones' => 'Registro ficticio de demostración.']);
             }
             $this->insertar('desparasitaciones', ['id_clinica' => $clinica, 'id_mascota' => $mascota['id'], 'id_veterinario' => $vet, 'tipo' => $i % 2 === 0 ? 'interna' : 'externa', 'producto' => $i % 2 === 0 ? 'Fenbendazol' : 'Selamectina', 'periodicidad' => 'trimestral', 'fecha_aplicacion' => $dia->modify('-45 days')->format('Y-m-d'), 'fecha_proxima' => $dia->modify('+45 days')->format('Y-m-d'), 'observaciones' => 'Registro ficticio para demostración, sin pauta nueva.']);
@@ -335,14 +337,15 @@ final class SemillaDemo
             $usuarios = array_values($this->usuarios);
             $mascotas = array_column($this->mascotas, 'id');
             (new CoordinadorAgenda($this->db))->ejecutar($clinica, static fn (): array => ['usuarios' => $usuarios, 'mascotas' => $mascotas], function () use ($clave): void {
-                $semana = ValoresInicialesClinica::HORARIOS;
-                $semana[5] = [6, 1, 1, 1, '08:00:00', '12:00:00', '14:00:00', '18:00:00'];
+                $semana = [];
+                foreach (range(1, 6) as $dia) {
+                    $semana[] = [$dia, 1, 1, 0, '07:00:00', '20:00:00', null, null];
+                }
+                $semana[] = [7, 0, 0, 0, null, null, null, null];
                 (new HorarioClinica($this->db))->guardar($semana);
                 $franjas = [];
                 foreach (range(1, 6) as $dia) {
-                    foreach ([['08:00', '12:00'], ['14:00', '18:00']] as [$inicio, $fin]) {
-                        $franjas[] = ['dia_semana' => $dia, 'hora_inicio' => $inicio, 'hora_fin' => $fin];
-                    }
+                    $franjas[] = ['dia_semana' => $dia, 'hora_inicio' => '07:00', 'hora_fin' => '20:00'];
                 }
                 foreach ($this->usuarios as $alias => $usuario) {
                     if (str_starts_with($alias, $clave . '-vet-')) {
@@ -382,6 +385,23 @@ final class SemillaDemo
             $resultado[$tabla] = $ambito['clinicas'] === [] ? 0 : count($this->filas('SELECT id_clinica FROM ' . $tabla . ' WHERE id_clinica IN (' . implode(',', array_fill(0, count($ambito['clinicas']), '?')) . ')', $ambito['clinicas']));
         }
         return $resultado;
+    }
+
+    /** S.1: conteo conservador sin enviar ni cambiar el cron; las citas diarias se informan por separado. */
+    public function correos(DateTimeImmutable $dia): array
+    {
+        $clinicas = (new LimpiezaDemo($this->db))->ambito()['clinicas'];
+        $recordatorios = new Recordatorio($this->db);
+        $dosis = array_filter($recordatorios->dosisPorRecordar($dia->format('Y-m-d')), static fn (array $fila): bool => in_array((int) $fila['id_clinica'], $clinicas, true));
+        $dosis = array_filter($dosis, static fn (array $fila): bool => $recordatorios->puedeEnviar((int) $fila['id_clinica'], $fila['tipo_entidad'], (int) $fila['id_entidad'], $fila['tipo_notificacion']));
+        $eventos = $clinicas === [] ? [] : $this->filas("SELECT id_evento FROM eventos_agenda WHERE id_clinica IN (" . implode(',', array_fill(0, count($clinicas), '?')) . ") AND canal='correo' AND estado IN ('pendiente','error')", $clinicas);
+        $diarios = [];
+        foreach (range(-1, 7) as $i) {
+            $cron = $dia->modify($i . ' days');
+            $citas = $recordatorios->citasDeManana($cron->modify('+1 day')->format('Y-m-d'));
+            $diarios[$cron->format('Y-m-d')] = count(array_filter($citas, static fn (array $fila): bool => in_array((int) $fila['id_clinica'], $clinicas, true) && $recordatorios->puedeEnviar((int) $fila['id_clinica'], 'cita', (int) $fila['id_cita'], 'recordatorio_cita_24h')));
+        }
+        return ['eventos_pendientes' => count($eventos), 'recordatorios_dosis' => count($dosis), 'maximo_sin_recordatorios_citas' => count($eventos) + count($dosis), 'recordatorios_citas_por_dia' => $diarios];
     }
 
     private function tipo(int $clinica): int

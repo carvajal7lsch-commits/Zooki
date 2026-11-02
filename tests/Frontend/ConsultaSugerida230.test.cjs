@@ -17,6 +17,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
     let consultas = 0;
     let validaciones = 0;
     let retrasar = 0;
+    let esCollie = true;
     const servidor = createServer(async (req, res) => {
         const url = new URL(req.url, 'http://localhost');
         const accion = url.searchParams.get('action');
@@ -45,6 +46,9 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 const dosis = peso > 0 ? `${peso / 2} mg (0,5 mg/kg) cada 24 h` : '0,5 mg/kg · calcula con el peso cada 24 h';
                 const pauta = { codigo: 'trata.prueba', farmaco: 'farmaco.prueba', medicamento: 'Fármaco sintético', dosis, via_administracion: 'Oral', duracion: '5 días', observaciones: 'Indicación sintética', precargar: true, seguridad: { ...seguridad, huella: undefined } };
                 respuesta = { success: true, plan: { examenes: ['Examen sintético'], recomendaciones: ['Recomendación sintética'] }, tratamientos: [pauta, { ...pauta, codigo: 'trata.otra', farmaco: 'farmaco.otro', medicamento: 'Otro sintético' }, { ...pauta, codigo: 'trata.alternativa', farmaco: 'farmaco.alternativa', medicamento: 'Alternativa sintética', precargar: false }, { ...pauta, codigo: 'trata.bloqueada', precargar: false, seguridad: { ...seguridad, bloqueada: true } }] };
+                const ivermectina = { ...pauta, codigo: 'trata.ivermectina', farmaco: 'farmaco.ivermectina', medicamento: 'Ivermectina', precargar: false };
+                respuesta.descartadas = esCollie ? [{ ...ivermectina, seguridad: { ...seguridad, bloqueada: true, motivos: [{ tipo: 'toxicidad', paciente: 'Collie', fuentes: [{ entidad: 'WSU', titulo: 'MDR1 in dogs', url: 'https://waddl.vetmed.wsu.edu/mdr1-in-dogs/' }] }] } }] : [];
+                if (!esCollie) respuesta.tratamientos.push(ivermectina);
                 if (retrasar) await new Promise(r => setTimeout(r, retrasar));
             }
             res.end(JSON.stringify(respuesta));
@@ -64,6 +68,7 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
     const evaluar = expresion => navegador.evaluar(expresion);
     try {
         for (const ancho of [390, 1366]) {
+            esCollie = ancho === 1366;
             await navegador.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: ancho < 768 ? 844 : 650, deviceScaleFactor: 1, mobile: ancho < 768 });
             for (const accion of ['vet_atencion', 'vet_pacientes']) {
                 await navegador.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/index.php?action=${accion}` });
@@ -108,6 +113,12 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-pauta-sugerida=\"trata.bloqueada\"]'))"), false);
                 assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-pauta-sugerida=\"trata.alternativa\"]'))"), false, 'precargar:false conserva la alternativa fuera del formulario');
                 assert.equal(await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').hidden"), false);
+                const descartada = await evaluar("formPrueba.querySelector('[data-prescripcion-descartadas]').textContent");
+                if (esCollie && accion === 'vet_atencion') {
+                    assert.equal(descartada, 'Descartada por seguridad: Ivermectina — toxicidad documentada en Collie (MDR1)');
+                    assert.equal(await evaluar("formPrueba.querySelector('[data-prescripcion-descartadas] button, [data-prescripcion-descartadas] a')"), null);
+                    assert.match(await evaluar("formPrueba.querySelector('[data-prescripcion-descartada]').title"), /WSU/);
+                } else assert.equal(descartada, '');
                 await evaluar("formPrueba.querySelector('[data-usar-diagnostico]').click()");
                 assert.equal(consultas - antes, 1, 'Usar otra vez después de completar tampoco duplica');
                 await evaluar("ponerPrueba('[data-tratamiento-campo=\"dosis\"]', 'a'.repeat(101))");
@@ -143,7 +154,8 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 await navegador.esperar("!formPrueba.querySelector('[data-tratamientos-alternativas]').hidden");
                 await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').click()");
                 await navegador.esperar("formPrueba.querySelector('[data-alternativas-lista]').matches(':popover-open')");
-                assert.equal(await evaluar("formPrueba.querySelectorAll('[data-usar-alternativa]').length"), 1, 'Solo alternativas no bloqueadas');
+                assert.equal(await evaluar("formPrueba.querySelectorAll('[data-usar-alternativa]').length"), esCollie ? 1 : 2, 'Solo alternativas no bloqueadas');
+                assert.equal(await evaluar("Boolean(formPrueba.querySelector('[data-usar-alternativa=\"trata.ivermectina\"]'))"), !esCollie, 'Collie descartada; criollo alternativa');
                 assert.equal(await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').getAttribute('aria-expanded')"), 'true');
                 assert.equal(await evaluar("(() => { const r = formPrueba.querySelector('[data-alternativas-lista]').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })()"), true, 'Alternativas cabe en escritorio y celular');
                 fs.mkdirSync(path.join(raiz, 'scratch/r/refuerzo-conocimiento'), { recursive: true });

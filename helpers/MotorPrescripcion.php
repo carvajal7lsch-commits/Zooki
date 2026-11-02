@@ -13,6 +13,7 @@ final class MotorPrescripcion
             throw new InvalidArgumentException('Elige un diagnóstico activo del conocimiento.');
         }
         $aplicables = [];
+        $descartadas = [];
         foreach ($grafo->aristas as $arista) {
             if ($arista['tipo_relacion'] !== 'trata' || $arista['origen'] !== $diagnostico || !is_array($arista['pauta'] ?? null)) {
                 continue;
@@ -24,6 +25,15 @@ final class MotorPrescripcion
             $interna = self::evaluar($arista['destino'], $contexto, $alergias, $vigentes, [], $grafo, $fecha);
             if (!$interna['bloqueada']) {
                 $aplicables[] = $arista;
+            } else {
+                // RE-2.9.1/4: informar por qué se excluye nunca habilita su precarga ni publica evidencia protegida.
+                $descartadas[$arista['destino']] = [
+                    'codigo' => $arista['codigo'],
+                    'farmaco' => $arista['destino'],
+                    'medicamento' => $grafo->nodos[$arista['destino']]['etiqueta'],
+                    'precargar' => false,
+                    'seguridad' => PrescripcionPublica::desde($interna, $grafo),
+                ];
             }
         }
         usort($aplicables, static fn (array $a, array $b): int => ($b['peso'] <=> $a['peso']) ?: strcmp($a['codigo'], $b['codigo']));
@@ -66,7 +76,7 @@ final class MotorPrescripcion
                 'seguridad' => PrescripcionPublica::desde($seguridad, $grafo),
             ];
         }
-        return ['diagnostico' => $diagnostico, 'plan' => $grafo->nodos[$diagnostico]['metadatos']['plan'] ?? ['examenes' => [], 'recomendaciones' => []], 'tratamientos' => $filas, 'version' => $grafo->version];
+        return ['diagnostico' => $diagnostico, 'plan' => $grafo->nodos[$diagnostico]['metadatos']['plan'] ?? ['examenes' => [], 'recomendaciones' => []], 'tratamientos' => $filas, 'descartadas' => array_values($descartadas), 'version' => $grafo->version];
     }
 
     /** Tres cifras significativas para dosis pequeñas; evita redondearlas a cero. */

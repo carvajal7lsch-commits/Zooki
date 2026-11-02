@@ -6970,5 +6970,93 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.collie.milbemicina",
+    "origen": "raza.collie",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_australiano.milbemicina",
+    "origen": "raza.pastor_australiano",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_shetland.milbemicina",
+    "origen": "raza.pastor_shetland",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.border_collie.milbemicina",
+    "origen": "raza.border_collie",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]

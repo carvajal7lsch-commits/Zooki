@@ -51,7 +51,7 @@ final class ComandoSemillaDemo
         }
     }
 
-    public static function ejecutar(array $argumentos): int
+    public static function ejecutar(array $argumentos, ?callable $reloj = null): int
     {
         ZonaHoraria::aplicar();
         try {
@@ -77,7 +77,7 @@ final class ComandoSemillaDemo
                 throw new RuntimeException('No se acepta --entorno=local: ' . $motivo . '. Usa el entorno real con su confirmación escrita.');
             }
             fwrite(STDOUT, 'Base de destino: ' . $db->query('SELECT DATABASE()')->fetchColumn() . ' (' . $conexion . ')' . PHP_EOL);
-            $semilla = new SemillaDemo($db);
+            $semilla = new SemillaDemo($db, $reloj);
             if ($opciones['modo'] === 'simular') {
                 $revision = $semilla->revisar();
                 fwrite(STDOUT, 'Simulación sin escritura: 5 clínicas, ' . $revision['cuentas'] . ' cuentas y ' . $revision['mascotas'] . ' mascotas; 6 meses de historia y próximas citas.' . PHP_EOL);
@@ -96,6 +96,9 @@ final class ComandoSemillaDemo
                 }
             }
             fwrite(STDOUT, PHP_EOL . 'Resultado: ' . json_encode($resultado['conteos'] ?? $resultado, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL);
+            if (isset($resultado['correos'])) {
+                fwrite(STDOUT, 'Correos previstos (máximo; recordatorios diarios de citas aparte): ' . json_encode($resultado['correos'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL);
+            }
             foreach ($resultado['niveles'] ?? [] as $nombre => $nivel) {
                 fwrite(STDOUT, $nombre . ': ' . $nivel['nivel'] . ', revisión=' . ($nivel['revision'] ? 'sí' : 'no') . PHP_EOL);
             }

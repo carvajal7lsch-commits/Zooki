@@ -245,3 +245,10 @@ Quitar un código de un conjunto completo lo desactiva; nunca lo borra ni cambia
 No se puede cambiar el tipo del concepto reutilizando su código.
 La migración conserva elementos legados inactivos, con códigos reservados y fuentes vacías que expresan ausencia de evidencia, sin inventar validaciones.
 El proceso de arranque carga únicamente después de una migración exitosa; los errores llevan el prefijo `[conocimiento]` y Apache arranca igualmente.
+
+### Corrección S.1 de demostración (2026-11-01)
+
+Se agregan «le huele feo la boca» y «aliento feo» como sinónimos de mal aliento, sin cambiar su evaluación clínica.
+Milbemicina recibe advertencia, sin bloqueo, para Collie, Pastor australiano, Pastor de Shetland y Border collie.
+La referencia de [WSU, medicamentos y MDR1](https://waddl.vetmed.wsu.edu/mdr1-in-dogs/) distingue la seguridad de Interceptor a dosis rotuladas de otras formulaciones que requieren consultar la dosis; las aristas conservan esa precisión y no deducen el genotipo por la raza.
+El conocimiento mantiene su validación veterinaria pendiente.

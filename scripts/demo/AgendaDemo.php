@@ -41,16 +41,24 @@ final class AgendaDemo
     public function preparar(DateTimeImmutable $dia): array
     {
         return $this->unidad(function () use ($dia): array {
-            $reloj = static fn (): DateTimeImmutable => $dia->setTime(7, 0);
-            $nombres = array_keys(array_filter($this->mascotas, static fn (array $m): bool => ($m['clinica'] ?? '') === 'sanroque'));
+            $reloj = static fn (): DateTimeImmutable => $dia->setTime(6, 55);
+            $nombres = array_values(array_diff(array_keys(array_filter($this->mascotas, static fn (array $m): bool => ($m['clinica'] ?? '') === 'sanroque')), ['Mila', 'Rocco', 'Max', 'Mishi', 'Toby', 'Bruno', 'Nina', 'Apolo', 'Lola']));
             $tipos = ['Consulta general/Enfermedad', 'Vacunación/Revisión rápida', 'Desparasitación', 'Control post-operatorio', 'Primera visita/Mascota nueva'];
-            foreach (range(0, 39) as $i) {
-                $fecha = $dia->modify('+' . (1 + intdiv($i, 4)) . ' days');
+            $fecha = $dia;
+            foreach (range(0, 5) as $jornada) {
                 if ($fecha->format('N') === '7') {
                     $fecha = $fecha->modify('+1 day');
                 }
-                $this->reservar($nombres[$i % count($nombres)], ['control_preventivo'], $fecha, $reloj, $this->usuarios['sanroque-vet-' . (1 + $i % 3)], $this->tipo($tipos[$i % count($tipos)]), 'futuro', (string) $i);
+                $cantidad = $jornada === 0 ? 6 : 5;
+                foreach (range(1, 3) as $numeroVet) {
+                    foreach (range(0, $cantidad - 1) as $turno) {
+                        $i = ($numeroVet - 1) * $cantidad + $turno;
+                        $this->reservar($nombres[$i], ['control_preventivo'], $fecha, $reloj, $this->usuarios['sanroque-vet-' . $numeroVet], $this->tipo($tipos[$turno % count($tipos)]), 'futuro', $numeroVet . '-' . $turno);
+                    }
+                }
+                $fecha = $fecha->modify('+1 day');
             }
+            $this->omitirCorreos();
             return $this->solicitudesGuion($dia, $reloj, 'base');
         });
     }
@@ -71,6 +79,10 @@ final class AgendaDemo
     {
         [$modelo, $entrada, $resultado] = $this->solicitud($nombre, $sintomas, [], $dia, $reloj, $vet, $tipo, $fase, $etiqueta, false);
         $horas = $modelo->horas($resultado['id_solicitud'], $entrada);
+        if ($resultado['nivel'] !== 'naranja') {
+            $ahora = ($reloj)();
+            $horas = array_values(array_filter($horas, static fn (string $hora): bool => IntervalosAgenda::fecha($dia->format('Y-m-d') . ' ' . Cita::normalizarHora($hora)) > $ahora));
+        }
         if ($horas === []) {
             throw new RuntimeException('No cabe la cita demo de ' . $nombre . ' el ' . $dia->format('Y-m-d') . '; no se fuerza ni se modifica la agenda.');
         }
@@ -95,42 +107,27 @@ final class AgendaDemo
         return $salida;
     }
 
-    /** Rechaza la escena antes de eliminar nada si los hechos anteriores o las reservas no caben. */
+    /** S.1: jornada continua aprobada, con reserva de capacidad hasta las 20:00. */
     private function horarioEscena(DateTimeImmutable $h): void
     {
         $apertura = $this->filas('SELECT * FROM horarios_clinica WHERE id_clinica=?', [$this->clinicas['sanroque']]);
         $dia = (int) $h->format('N');
-        foreach ([[-120, -95], [-90, -65], [-60, -35], [-35, -5], [0, 1]] as [$desde, $hasta]) {
+        if ($dia === 7 || $h->format('H:i:s') < '08:00:00' || $h->format('H:i:s') > '18:00:00') {
+            throw new RuntimeException('La escena solo se permite de lunes a sábado, entre 8:00 y 18:00, dentro del horario aprobado 7:00–20:00.');
+        }
+        foreach ([[-35, -5], [0, 120]] as [$desde, $hasta]) {
             $inicio = $h->modify($desde . ' minutes');
             $fin = $h->modify($hasta . ' minutes');
             if ($inicio->format('Y-m-d') !== $h->format('Y-m-d') || !CoordinacionHorarios::contiene($apertura, $dia, $inicio->format('H:i:s'), $fin->format('H:i:s'))) {
                 throw new RuntimeException('La escena relativa a esta hora no cabe en el horario aprobado. Ejecútala en jornada compatible de lunes a sábado; no se abre una excepción.');
             }
         }
-        $cuenta = 0;
-        $libre = $h->modify('+5 minutes')->getTimestamp();
-        $fila = array_values(array_filter($apertura, static fn (array $f): bool => (int) $f['dia_semana'] === $dia))[0] ?? [];
-        foreach (['morning', 'afternoon'] as $bloque) {
-            if (empty($fila['activo']) || empty($fila['bloque_' . $bloque . '_activo'])) {
-                continue;
-            }
-            $desde = SemillaDemo::fecha($h->format('Y-m-d'))->modify($fila['bloque_' . $bloque . '_inicio'])->getTimestamp();
-            $hasta = SemillaDemo::fecha($h->format('Y-m-d'))->modify($fila['bloque_' . $bloque . '_fin'])->getTimestamp();
-            for ($inicio = $desde; $inicio + 40 * 60 <= $hasta; $inicio += 30 * 60) {
-                if ($inicio >= $libre) {
-                    $cuenta++;
-                    $libre = $inicio + 40 * 60;
-                }
-            }
-        }
-        if ($cuenta < 4) {
-            throw new RuntimeException('No caben las cuatro reservas posteriores y el sobrecupo de la escena. Vuelve a ejecutarla en una jornada compatible, por ejemplo a las10:30.');
-        }
     }
 
     public function escena(): array
     {
         $ahora = ($this->reloj)();
+        $this->horarioEscena($ahora);
         $h = $ahora->setTime((int) $ahora->format('H'), intdiv((int) $ahora->format('i'), 5) * 5);
         $this->horarioEscena($h);
         return $this->unidad(function () use ($ahora, $h): array {
@@ -138,8 +135,13 @@ final class AgendaDemo
             $this->limpiarDia($h->format('Y-m-d'));
             $clinica = $this->clinicas['sanroque'];
             $vet = $this->usuarios['sanroque-vet-1'];
+            $this->completarJornadaAnterior($ahora);
+            SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
             foreach (['Nina', 'Apolo', 'Lola'] as $i => $nombre) {
-                ($this->historia)($this->mascotas[$nombre], $clinica, $vet, $h->modify('-' . (120 - 30 * $i) . ' minutes'), 'diagnostico.gastritis_aguda', false, 25);
+                $fecha = $h->modify('-' . (120 - 30 * $i) . ' minutes');
+                if ($fecha->format('H:i') >= '07:00') {
+                    ($this->historia)($this->mascotas[$nombre], $clinica, $vet, $fecha, 'diagnostico.gastritis_aguda', false, 25);
+                }
             }
             $inicio = $h->modify('-35 minutes');
             $relojPasado = static fn (): DateTimeImmutable => $inicio->modify('-5 minutes');
@@ -148,8 +150,14 @@ final class AgendaDemo
             $citas = new Cita($this->db, $this->reloj);
             $citas->iniciarAtencion($citas->getById($id), $inicio->format('Y-m-d H:i:s'));
             $rocco = 0;
-            foreach (['Rocco' => ['picazon', 'costras_piel', 'perdida_pelo'], 'Max' => ['lame_patas', 'picazon'], 'Mishi' => ['vomito'], 'Toby' => ['control_preventivo']] as $nombre => $sintomas) {
-                $cita = $this->reservar($nombre, $sintomas, $h, $this->reloj, $vet, $this->tipo(), 'escena', $nombre);
+            $posteriores = ['Rocco' => ['picazon', 'costras_piel', 'perdida_pelo'], 'Max' => ['lame_patas', 'picazon'], 'Mishi' => ['vomito'], 'Toby' => ['control_preventivo']];
+            if ($h->format('H:i') >= '17:00') {
+                $posteriores = array_slice($posteriores, 0, 2, true);
+            }
+            foreach ($posteriores as $nombre => $sintomas) {
+                $relojReserva = $nombre === 'Rocco' ? static fn (): DateTimeImmutable => $h->modify('-5 minutes') : $this->reloj;
+                $tipo = $this->tipo($nombre === 'Rocco' ? 'Consulta general/Enfermedad' : 'Vacunación/Revisión rápida');
+                $cita = $this->reservar($nombre, $sintomas, $h, $relojReserva, $vet, $tipo, 'escena', $nombre);
                 if ($nombre === 'Rocco') {
                     $rocco = $cita;
                 }
@@ -171,8 +179,44 @@ final class AgendaDemo
             $niveles = $this->solicitudesGuion($h, $this->reloj, 'escena');
             SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
             $cascada = (new CascadaAgenda($this->db, $this->reloj))->procesar($h->format('Y-m-d'));
+            $fuera = $this->filas("SELECT id_cita FROM citas WHERE id_clinica=? AND fecha=? AND estado IN ('pendiente','confirmada') AND (inicio_estimado IS NULL OR ADDTIME(fin_estimado,SEC_TO_TIME(margen_minutos*60))>CONCAT(fecha,' 20:00:00'))", [$clinica, $h->format('Y-m-d')]);
+            $revision = $this->filas("SELECT id_cita FROM citas WHERE id_clinica=? AND fecha=? AND estado_reajuste IN ('pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion')", [$clinica, $h->format('Y-m-d')]);
+            $propuestas = $this->filas("SELECT r.id_reasignacion FROM reasignaciones r JOIN citas c ON c.id_cita=r.id_cita AND c.id_clinica=r.id_clinica WHERE r.id_clinica=? AND c.fecha=? AND r.estado='pendiente'", [$clinica, $h->format('Y-m-d')]);
+            if ($fuera !== [] || $revision !== [] || $propuestas !== []) {
+                throw new RuntimeException('La jornada de San Roque no queda resuelta antes del cierre de las 20:00; se conserva la agenda anterior.');
+            }
+            $this->omitirCorreos($rocco);
             return ['dia' => $h->format('Y-m-d'), 'hora' => $h->format('H:i'), 'en_curso' => $id, 'rocco' => $rocco, 'niveles' => $niveles, 'cascada' => $cascada];
         });
+    }
+
+    private function completarJornadaAnterior(DateTimeImmutable $ahora): void
+    {
+        $clinica = $this->clinicas['sanroque'];
+        $principal = $this->usuarios['sanroque-vet-1'];
+        $citas = $this->filas("SELECT * FROM citas WHERE id_clinica=? AND fecha=? AND id_veterinario<>? AND estado IN ('pendiente','confirmada') AND hora<? ORDER BY id_veterinario,hora,id_cita", [$clinica, $ahora->format('Y-m-d'), $principal, $ahora->format('H:i:s')]);
+        foreach ($citas as $cita) {
+            // Decisión del dueño S.1: conservar las reservas y acreditar la actividad anterior, sin forzar reajustes.
+            $inicio = IntervalosAgenda::fecha($cita['fecha'] . ' ' . $cita['hora']);
+            $fin = min($inicio->modify('+' . $cita['duracion_minutos'] . ' minutes'), $ahora);
+            $vet = (int) $cita['id_veterinario'];
+            SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
+            $modelo = new Cita($this->db, $this->reloj);
+            $modelo->iniciarAtencion($cita, $inicio->format('Y-m-d H:i:s'));
+            $modelo->completarAtencion($modelo->getById((int) $cita['id_cita']), $fin->format('Y-m-d H:i:s'));
+        }
+    }
+
+    private function omitirCorreos(?int $rocco = null): void
+    {
+        // S.1: datos ficticios sin ráfaga de correos; los recordatorios diarios conservan su comportamiento real.
+        $sql = "UPDATE eventos_agenda SET estado='omitido',error_tecnico='Demo: correo omitido al preparar datos ficticios',fecha_resultado=CURRENT_TIMESTAMP WHERE id_clinica=? AND canal='correo' AND estado IN ('pendiente','error')";
+        $parametros = [$this->clinicas['sanroque']];
+        if ($rocco !== null) {
+            $sql .= ' AND (id_cita IS NULL OR id_cita<>?)';
+            $parametros[] = $rocco;
+        }
+        $this->db->prepare($sql)->execute($parametros);
     }
 
     private function limpiarDia(string $dia): void

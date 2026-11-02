@@ -214,6 +214,8 @@ $casos = [
             'renquea' => 'sintoma.cojera_leve_estable',
             'lo mordió otro perro' => 'sintoma.traumatismo',
             'herida' => 'sintoma.traumatismo',
+            'le huele feo la boca' => 'sintoma.mal_aliento',
+            'aliento feo' => 'sintoma.mal_aliento',
             'mordida' => 'sintoma.traumatismo',
             'tiene garrapatas' => 'sintoma.garrapatas',
             'se comió veneno para ratas' => 'sustancia.raticida',
@@ -271,6 +273,10 @@ $casos = [
         foreach (['collie', 'pastor_australiano', 'pastor_shetland', 'border_collie', 'pastor_aleman'] as $raza) {
             yield $raza . ' loperamida' => ['raza.' . $raza, 'farmaco.loperamida', false, true];
         }
+        foreach (['collie', 'pastor_australiano', 'pastor_shetland', 'border_collie'] as $raza) {
+            yield $raza . ' milbemicina' => ['raza.' . $raza, 'farmaco.milbemicina', false, true];
+        }
+        yield 'Criollo milbemicina' => ['raza.criollo_canino', 'farmaco.milbemicina', false, false];
     }
 
     #[DataProvider('seguridad')]
@@ -327,6 +333,11 @@ $casos = [
         $collie = self::paciente('especie.canino', 'raza.collie', 48);
         $resultado = MotorPrescripcion::sugerir('diagnostico.sarna_sarcoptica', 20, $collie, [], [], self::grafo(), self::fecha());
         $this->assertNotContains('farmaco.ivermectina', array_column($resultado['tratamientos'], 'farmaco'));
+        $descartada = array_column($resultado['descartadas'], null, 'farmaco')['farmaco.ivermectina'];
+        $this->assertFalse($descartada['precargar']);
+        $this->assertTrue($descartada['seguridad']['bloqueada']);
+        $this->assertSame('Collie', $descartada['seguridad']['motivos'][0]['paciente']);
+        $this->assertNotEmpty($descartada['seguridad']['motivos'][0]['fuentes']);
         $vigentes = [['farmaco' => 'farmaco.meloxicam', 'visible' => true]];
         $resultado = MotorPrescripcion::sugerir('diagnostico.osteoartritis', 20, $collie, [], $vigentes, self::grafo(), self::fecha());
         $this->assertSame([], array_values(array_filter($resultado['tratamientos'], static fn (array $f): bool => $f['precargar'])));

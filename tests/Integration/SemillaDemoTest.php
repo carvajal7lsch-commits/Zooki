@@ -3,6 +3,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../scripts/semilla_demo.php';
 require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+require_once __DIR__ . '/../../helpers/EnviadorRecordatorios.php';
 
 /** Plan semilla-demo: motor real, cuenta ajena protegida y catálogo de producción leído, nunca modificado en archivos. */
 final class SemillaDemoTest extends TestCase
@@ -77,6 +78,10 @@ final class SemillaDemoTest extends TestCase
         $this->assertSame(41, $segunda['conteos']['usuarios']);
         $this->assertSame(42, $segunda['conteos']['mascotas']);
         $this->assertSame(128, $segunda['conteos']['consultas']);
+        $this->assertSame(3, $segunda['correos']['recordatorios_dosis']);
+        $this->assertSame(0, $segunda['correos']['eventos_pendientes']);
+        $this->assertSame(15, $segunda['correos']['recordatorios_citas_por_dia']['2026-11-02']);
+        $this->assertSame(3, $segunda['correos']['maximo_sin_recordatorios_citas']);
         $this->assertCount(41, $segunda['cuentas']);
         foreach ($segunda['cuentas'] as $cuenta) {
             $this->assertTrue(password_verify($cuenta['clave'], $this->filas('SELECT password FROM usuarios WHERE email=?', [$cuenta['correo']])[0]['password']));
@@ -166,35 +171,106 @@ final class SemillaDemoTest extends TestCase
     {
         $this->semilla->crear('2026-11-02', 'Arboles7Lejanos');
         $clinica = $this->idClinica('sanroque');
-        $historiaAntes = $this->filas("SELECT id_consulta FROM consultas WHERE fecha_hora<'2026-11-02' ORDER BY id_consulta");
-        $primera = $this->semilla->escena();
-        $escena = $this->semilla->escena();
-        $this->assertSame($primera['cascada']['calculadas'], $escena['cascada']['calculadas']);
-        $citas = $this->filas("SELECT * FROM citas WHERE id_clinica=? AND fecha='2026-11-02' AND id_veterinario=?", [$clinica, $this->idUsuario('sanroque-vet-1')]);
-        $this->assertCount(9, $citas);
-        $this->assertCount(1, array_filter($citas, static fn (array $c): bool => $c['estado'] === 'en_curso'));
-        $this->assertCount(3, array_filter($citas, static fn (array $c): bool => $c['estado'] === 'completada'));
-        $this->assertCount(5, array_filter($citas, static fn (array $c): bool => $c['estado'] === 'confirmada'));
-        $this->assertSame([], array_values(array_filter($citas, static fn (array $c): bool => in_array($c['estado'], ['sin_cerrar', 'pausada'], true))));
-        $this->assertNotEmpty($this->filas('SELECT hora_llegada FROM citas WHERE id_cita=? AND hora_llegada IS NOT NULL', [$escena['rocco']]));
-        $this->assertSame('2026-11-02 09:55:00', $this->filas('SELECT hora_inicio_real FROM citas WHERE id_cita=?', [$escena['en_curso']])[0]['hora_inicio_real']);
-        $pendientes = array_filter($citas, static fn (array $c): bool => $c['estado'] === 'confirmada');
-        foreach ($pendientes as $cita) {
-            $this->assertNotNull($cita['inicio_estimado']);
-            $this->assertNotNull($cita['fecha_ultimo_calculo']);
+        $vet = $this->idUsuario('sanroque-vet-1');
+        $dias = $this->filas('SELECT fecha,id_veterinario,COUNT(*) AS cantidad FROM citas WHERE id_clinica=? AND fecha>=? GROUP BY fecha,id_veterinario ORDER BY fecha,id_veterinario', [$clinica, '2026-11-02']);
+        $this->assertCount(18, $dias);
+        foreach ($dias as $dia) {
+            $this->assertSame($dia['fecha'] === '2026-11-02' ? 6 : 5, (int) $dia['cantidad']);
+            $this->assertNotSame('7', (new DateTimeImmutable($dia['fecha']))->format('N'));
         }
-        $this->assertCount(1, array_filter($pendientes, static fn (array $c): bool => (bool) $c['es_sobrecupo'] && $c['prioridad'] === 'naranja'));
+        $ajenas = $this->filas('SELECT id_cita,id_veterinario,fecha,hora,duracion_minutos,margen_minutos FROM citas WHERE id_clinica=? AND id_veterinario<>? ORDER BY id_cita', [$clinica, $vet]);
+        $historiaAntes = $this->filas("SELECT id_consulta FROM consultas WHERE fecha_hora<'2026-11-02' ORDER BY id_consulta");
+        foreach (['08:00', '08:05', '09:00', '12:30', '14:00', '15:00', '16:00', '17:55', '18:00'] as $hora) {
+            $this->ahora = new DateTimeImmutable('2026-11-02T' . $hora . ':00-05:00');
+            $escena = $this->semilla->escena();
+            $citas = $this->filas("SELECT * FROM citas WHERE id_clinica=? AND fecha='2026-11-02' AND id_veterinario=?", [$clinica, $vet]);
+            $this->assertCount(1, array_filter($citas, static fn (array $c): bool => $c['estado'] === 'en_curso'), $hora);
+            $completadas = array_filter($citas, static fn (array $c): bool => $c['estado'] === 'completada');
+            $this->assertLessThanOrEqual(3, count($completadas));
+            $this->assertSame(in_array($hora, ['08:00', '08:05'], true) ? 1 : 3, count($completadas));
+            $this->assertSame([], array_values(array_filter($citas, static fn (array $c): bool => in_array($c['estado'], ['sin_cerrar', 'pausada'], true))));
+            $rocco = $this->filas('SELECT * FROM citas WHERE id_cita=?', [$escena['rocco']])[0];
+            $this->assertNotNull($rocco['hora_llegada']);
+            if (!in_array($hora, ['08:05', '17:55'], true)) {
+                $this->assertGreaterThan($rocco['fecha'] . ' ' . $rocco['hora'], $rocco['inicio_estimado']);
+            }
+            $this->assertSame($this->ahora->modify('-35 minutes')->format('Y-m-d H:i:s'), $this->filas('SELECT hora_inicio_real FROM citas WHERE id_cita=?', [$escena['en_curso']])[0]['hora_inicio_real']);
+            $pendientes = array_filter($citas, static fn (array $c): bool => $c['estado'] === 'confirmada');
+            $this->assertGreaterThanOrEqual(3, count($pendientes));
+            foreach ($pendientes as $cita) {
+                $this->assertNotNull($cita['inicio_estimado']);
+                $this->assertNotNull($cita['fecha_ultimo_calculo']);
+                $this->assertLessThanOrEqual('2026-11-02 20:00:00', (new DateTimeImmutable($cita['fin_estimado']))->modify('+' . $cita['margen_minutos'] . ' minutes')->format('Y-m-d H:i:s'), $hora);
+            }
+            $this->assertCount(1, array_filter($pendientes, static fn (array $c): bool => (bool) $c['es_sobrecupo'] && $c['prioridad'] === 'naranja'));
+            $this->assertLessThanOrEqual(5, $escena['correos']['maximo_sin_recordatorios_citas']);
+            $this->assertSame([], $this->filas("SELECT id_evento FROM eventos_agenda WHERE id_clinica=? AND canal='correo' AND estado IN ('pendiente','error') AND id_cita<>?", [$clinica, $escena['rocco']]));
+            $this->assertSame($ajenas, $this->filas('SELECT id_cita,id_veterinario,fecha,hora,duracion_minutos,margen_minutos FROM citas WHERE id_clinica=? AND id_veterinario<>? ORDER BY id_cita', [$clinica, $vet]));
+            $this->assertSame([], $this->filas("SELECT id_cita FROM citas WHERE id_clinica=? AND fecha='2026-11-02' AND estado_reajuste IN ('pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion')", [$clinica]), $hora);
+            $this->assertSame([], $this->filas("SELECT r.id_reasignacion FROM reasignaciones r JOIN citas c ON c.id_cita=r.id_cita AND c.id_clinica=r.id_clinica WHERE r.id_clinica=? AND c.fecha='2026-11-02' AND r.estado='pendiente'", [$clinica]), $hora);
+            $otras = $this->filas("SELECT * FROM citas WHERE id_clinica=? AND fecha='2026-11-02' AND id_veterinario<>? ORDER BY id_veterinario,hora", [$clinica, $vet]);
+            $extremos = [];
+            foreach ($otras as $otra) {
+                if ($otra['hora'] < $hora . ':00') {
+                    $this->assertSame('completada', $otra['estado']);
+                    $this->assertSame($otra['fecha'] . ' ' . $otra['hora'], $otra['hora_inicio_real']);
+                    $this->assertGreaterThan($otra['hora_inicio_real'], $otra['hora_fin_real']);
+                    $this->assertLessThanOrEqual($this->ahora->format('Y-m-d H:i:s'), $otra['hora_fin_real']);
+                    $anterior = $extremos[$otra['id_veterinario']] ?? '2026-11-02 07:00:00';
+                    $this->assertGreaterThanOrEqual($anterior, $otra['hora_inicio_real']);
+                    $extremos[$otra['id_veterinario']] = $otra['hora_fin_real'];
+                } else {
+                    $this->assertSame('confirmada', $otra['estado']);
+                    $this->assertNotNull($otra['inicio_estimado']);
+                    $this->assertLessThanOrEqual('2026-11-02 20:00:00', (new DateTimeImmutable($otra['fin_estimado']))->modify('+' . $otra['margen_minutos'] . ' minutes')->format('Y-m-d H:i:s'));
+                }
+            }
+        }
+        $primera = $this->semilla->escena();
+        $this->assertSame($escena['cascada']['calculadas'], $primera['cascada']['calculadas']);
+        $this->comprobarCronsSinSmtp($primera['correos']);
         $this->assertSame($historiaAntes, $this->filas("SELECT id_consulta FROM consultas WHERE fecha_hora<'2026-11-02' ORDER BY id_consulta"));
         $this->assertSame([], $this->filas('SELECT id_pausa FROM pausas_cita WHERE id_clinica=? AND fin IS NULL', [$clinica]));
-        $this->ahora = new DateTimeImmutable('2026-11-08T10:30:00-05:00');
-        $antes = $this->semilla->conteos();
-        try {
-            $this->semilla->escena();
-            $this->fail('Un domingo no admite la escena.');
-        } catch (RuntimeException $error) {
-            $this->assertStringContainsString('horario aprobado', $error->getMessage());
+        foreach (['2026-11-08T10:30:00-05:00', '2026-11-02T07:59:00-05:00', '2026-11-02T18:01:00-05:00'] as $fecha) {
+            $this->ahora = new DateTimeImmutable($fecha);
+            $antes = $this->semilla->conteos();
+            try {
+                $this->semilla->escena();
+                $this->fail('Fuera de la franja permitida se debe rechazar.');
+            } catch (RuntimeException $error) {
+                $this->assertStringContainsString('horario aprobado', $error->getMessage());
+            }
+            $this->assertSame($antes, $this->semilla->conteos());
         }
-        $this->assertSame($antes, $this->semilla->conteos());
+    }
+
+    private function comprobarCronsSinSmtp(array $previstos): void
+    {
+        $correo = new class {
+            public int $enviados = 0;
+            public function obtenerPlantillaBaseHTML(...$argumentos): string
+            {
+                return 'Correo ficticio';
+            }
+            public function limpiarDirecciones(): void
+            {
+            }
+            public function enviarCorreoPersonalizado(...$argumentos): bool
+            {
+                $this->enviados++;
+                return true;
+            }
+        };
+        $agenda = EventoAgenda::despacharPendientes(self::$db, static fn (array $evento): bool => true);
+        ob_start();
+        try {
+            (new EnviadorRecordatorios(new Recordatorio(self::$db), $correo))->ejecutar($this->ahora, 'https://demo.invalid/index.php');
+        } finally {
+            ob_end_clean();
+        }
+        $diarios = $previstos['recordatorios_citas_por_dia'][$this->ahora->format('Y-m-d')];
+        $this->assertSame($diarios + $previstos['recordatorios_dosis'], $correo->enviados);
+        $this->assertLessThanOrEqual(5, $agenda + $correo->enviados - $diarios);
     }
 
     public function testSimulacionGuardasYCodigoFaltanteNoEscriben(): void

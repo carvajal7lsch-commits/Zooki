@@ -337,12 +337,15 @@
         alternativas.dataset.tratamientosAlternativas = '';
         alternativas.hidden = true;
         alternativas.setAttribute('aria-expanded', 'false');
+        const descartadas = elemento('span');
+        descartadas.dataset.prescripcionDescartadas = '';
+        descartadas.hidden = true;
         const panelAlternativas = elemento('div', 'consulta-alternativas');
         panelAlternativas.popover = 'auto';
         panelAlternativas.dataset.alternativasLista = '';
         panelAlternativas.setAttribute('aria-label', 'Tratamientos alternativos');
         panelAlternativas.addEventListener('toggle', evento => alternativas.setAttribute('aria-expanded', String(evento.newState === 'open')));
-        aviso.append(mensaje, alternativas, deshacer);
+        aviso.append(mensaje, alternativas, descartadas, deshacer);
         form.append(panelAlternativas);
         (form.querySelector('[data-sugerencia-aviso]') || raiz).append(aviso);
         const pesoActual = () => peso && !peso.disabled ? peso.value.trim().replace(',', '.') : '';
@@ -404,6 +407,26 @@
             panelAlternativas.replaceChildren();
         }
 
+        function pintarDescartadas(filas = []) {
+            descartadas.replaceChildren();
+            // La línea pertenece a Atención; el modal compartido conserva su estructura.
+            if (!form.closest('#atencionApp')) return;
+            for (const pauta of filas) {
+                const motivo = pauta.seguridad?.motivos?.[0];
+                if (!motivo) continue;
+                const fuentes = motivo.fuentes || [];
+                const mdr1 = fuentes.some(f => /mdr1/i.test(`${f.titulo || ''} ${f.url || ''}`));
+                const razon = motivo.tipo === 'toxicidad' && motivo.paciente
+                    ? `toxicidad documentada en ${motivo.paciente}${mdr1 ? ' (MDR1)' : ''}`
+                    : motivo.mensaje;
+                const linea = elemento('span', '', `Descartada por seguridad: ${pauta.medicamento} — ${razon}`);
+                linea.dataset.prescripcionDescartada = pauta.farmaco;
+                linea.title = fuentes.map(f => `${f.entidad}: ${f.titulo}${f.url ? ' · ' + f.url : ''}`).join('\n');
+                descartadas.append(linea);
+            }
+            descartadas.hidden = descartadas.children.length === 0;
+        }
+
         alternativas.addEventListener('click', async () => {
             const operacion = ultima;
             if (!operacion || alternativas.disabled) return;
@@ -411,6 +434,7 @@
             try {
                 const respuesta = await consultar(operacion.codigo, generacion);
                 if (!respuesta || ultima !== operacion) return;
+                pintarDescartadas(respuesta.descartadas);
                 cerrarAlternativas();
                 panelAlternativas.append(elemento('strong', '', 'Tratamientos alternativos'));
                 for (const pauta of respuesta.tratamientos.filter(p => p.precargar === false && !p.seguridad.bloqueada)) {
@@ -481,6 +505,7 @@
                 cerrarAlternativas();
                 operacion.tieneAlternativas = respuesta.tratamientos.some(p => p.precargar === false && !p.seguridad.bloqueada);
                 alternativas.hidden = !operacion.tieneAlternativas;
+                pintarDescartadas(respuesta.descartadas);
                 pendiente = null;
                 planActual = respuesta.plan;
                 pintarPlan();
@@ -546,6 +571,7 @@
 
         function retirar(operacion) {
             cerrarAlternativas();
+            pintarDescartadas();
             alternativas.hidden = true;
             const cambioAnterior = cambiando;
             cambiando = true;
@@ -600,7 +626,10 @@
                 if (operacion.cargando) continue;
                 try {
                     const respuesta = await consultar(operacion.codigo, vigente);
-                    if (respuesta && operaciones.get(operacion.codigo) === operacion) tratamientos.recalcularSugeridas(operacion.filas, respuesta.tratamientos);
+                    if (respuesta && operaciones.get(operacion.codigo) === operacion) {
+                        tratamientos.recalcularSugeridas(operacion.filas, respuesta.tratamientos);
+                        if (ultima === operacion) pintarDescartadas(respuesta.descartadas);
+                    }
                 } catch (error) {
                     if (vigente !== generacion) return;
                     mensaje.textContent = 'No se pudieron recalcular las dosis. Revisa el peso y vuelve a intentarlo. ';
@@ -647,6 +676,13 @@
                 aviso.hidden = !ultima;
                 cerrarAlternativas();
                 alternativas.hidden = !ultima?.tieneAlternativas;
+                pintarDescartadas();
+                if (ultima) {
+                    const restaurada = ultima;
+                    consultar(restaurada.codigo, generacion).then(respuesta => {
+                        if (respuesta && ultima === restaurada) pintarDescartadas(respuesta.descartadas);
+                    }).catch(() => pintarDescartadas());
+                }
                 deshacer.hidden = !ultima;
                 mensaje.textContent = ultima ? 'Sugerencias recuperadas. Revisa antes de guardar. ' : '';
                 comunicarUso(ultima?.codigo || null);
@@ -664,6 +700,7 @@
                 aviso.hidden = true;
                 cerrarAlternativas();
                 alternativas.hidden = true;
+                pintarDescartadas();
             },
         };
     }

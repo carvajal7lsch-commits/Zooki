@@ -4919,5 +4919,31 @@
       }
     ],
     "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.demo_s1.mal_aliento.1",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "le huele feo la boca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "S.1 aprobada por el dueño,2026-11-01: equivalencia coloquial de mal aliento (RN-424).",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.demo_s1.mal_aliento.2",
+    "nodo": "sintoma.mal_aliento",
+    "texto": "aliento feo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "S.1 aprobada por el dueño,2026-11-01: equivalencia coloquial de mal aliento (RN-424).",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
   }
 ]
