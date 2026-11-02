@@ -849,7 +849,7 @@ class BaseV2MysqlTest extends TestCase
             copy(__DIR__ . '/../Fixtures/conocimiento/nodos.json', $carpeta . '/nodos.json');
             $cargador->cargar($carpeta);
             $this->assertSame(1, (int) $this->db->query('SELECT activo FROM grafo_nodos WHERE id_nodo = ' . $id)->fetchColumn());
-            $this->assertSame(55, $this->contar('razas'));
+            $this->assertSame(59, $this->contar('razas'));
             foreach ([[$carpeta, 0], [$carpeta . '/ausente', 1]] as [$directorio, $esperado]) {
                 $proceso = proc_open([PHP_BINARY, __DIR__ . '/../../scripts/cargar_conocimiento.php', '--revisar', '--carpeta=' . $directorio], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
                 $salida = stream_get_contents($pipes[1]);
@@ -879,7 +879,7 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame([0, 0, 0], [$segunda['altas'], $segunda['cambios'], $segunda['retiros']]);
         $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
         // Las razas y especies del conjunto se enlazan al catálogo real, sin crear taxonomía.
-        $this->assertSame(55, $this->contar('razas'));
+        $this->assertSame(59, $this->contar('razas'));
         $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE tipo IN ('especie', 'raza') AND id_especie IS NULL AND id_raza IS NULL")->fetchColumn());
         $this->assertSame(55, (int) $this->db->query("SELECT id_raza FROM grafo_nodos WHERE codigo = 'raza.gran_danes'")->fetchColumn());
         $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE codigo NOT LIKE 'legado.%' AND estado_validacion <> 'pendiente'")->fetchColumn());
@@ -1641,7 +1641,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $this->cargar('02_semilla.sql');
         $this->cargar('02_semilla.sql');
 
-        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 55, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
+        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 59, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
         $this->assertSame(
             [1 => 'administrador', 2 => 'veterinario', 4 => 'propietario', 5 => 'super-administrador'],
             $this->db->query('SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol')->fetchAll(PDO::FETCH_KEY_PAIR)
@@ -1692,7 +1692,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
                 'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
             $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
-            $this->assertSame(55, $this->contar('razas'));
+            $this->assertSame(59, $this->contar('razas'));
             $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
             $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
