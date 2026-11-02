@@ -46,7 +46,7 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
                     <button type="button" data-urgencia-identidad="provisional" aria-pressed="true">Identificar después</button>
                     <button type="button" data-urgencia-identidad="conocida" aria-pressed="false">Buscar paciente</button>
                 </div>
-                <p class="urgencia-rapida__ayuda" data-identidad-provisional>La identificación se completa después. Puedes comenzar la atención ahora.</p>
+                <p class="urgencia-rapida__ayuda" data-identidad-provisional>Puedes completar la identificación del paciente después.</p>
                 <div class="urgencia-rapida__paciente" data-identidad-conocida hidden>
                     <label>Buscar por nombre <input type="search" data-urgencia-buscar autocomplete="off" placeholder="Nombre del paciente"></label>
                     <label>Paciente <select name="id_mascota" required disabled><option value="">Elige el paciente</option></select><span data-error-campo="id_mascota" aria-live="polite"></span></label>

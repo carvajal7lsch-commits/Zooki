@@ -1288,3 +1288,5 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Se mantienen el registro único, los reintentos, la respuesta de espera/orden/pausa y el diálogo fuera del contenedor ocultable.
 - Verificación: lectura del código y diff; sin pruebas, suites ni capturas en esta iteración por la instrucción vigente; aceptación visual y funcional pendiente.
 - Retoque posterior: el botón inferior Pendientes lleva el mismo total de su encabezado y lo oculta en cero; Solo registrar llegada muestra un aviso breve con la ubicación Pendientes → Rojos; Atender ahora conserva el inicio de Atención; escribió Codex, pendiente de revisión visual, sin pruebas ni suites.
+- Corrección posterior escrita por Codex: el tipo inicial reconoce Consulta general/Enfermedad, nombre real en ValoresInicialesClinica y la semilla demo, además del nombre corto aprobado; sigue exigiendo coincidencia única en el catálogo activo.
+- La ayuda gris solo explica la identificación posterior y se oculta cuando existe un aviso del formulario; el rojo queda reservado al bloqueo real; lectura del código/diff, sin pruebas ni suites, pendiente de revisión del dueño.

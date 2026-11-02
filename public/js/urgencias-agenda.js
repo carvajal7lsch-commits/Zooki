@@ -83,6 +83,10 @@
             form.querySelector('[type="submit"]').disabled = escribiendo || !valido || Boolean(tipoIngreso && !tipoIngreso.value);
             const soloLlegada = form.querySelector('[data-ingreso-solo-llegada]');
             if (soloLlegada) soloLlegada.disabled = escribiendo || !valido;
+            if (tipoIngreso) {
+                const hayAviso = form.querySelector('[data-ingreso-configuracion]').textContent || form.querySelector('[data-aviso]').textContent;
+                form.querySelector('[data-identidad-provisional]').hidden = form.elements.namedItem('identidad').value !== 'provisional' || Boolean(hayAviso);
+            }
             return valido;
         }
 
@@ -275,11 +279,11 @@
         }
 
         function prepararTipoIngreso(form) {
-            // Decisión del dueño: Consulta general, tomada del catálogo activo y nunca de un id fijo.
-            const tipos = (catalogos?.tipos || []).filter(tipo => normalizarNombre(tipo.nombre_tipo) === 'consulta general');
+            // ValoresInicialesClinica nombra la consulta general «Consulta general/Enfermedad».
+            const tipos = (catalogos?.tipos || []).filter(tipo => ['consulta general/enfermedad', 'consulta general'].includes(normalizarNombre(tipo.nombre_tipo).replace(/\s*\/\s*/g, '/')));
             form.elements.namedItem('id_tipo_cita').value = tipos.length === 1 ? tipos[0].id_tipo_cita : '';
             form.querySelector('[data-ingreso-configuracion]').textContent = catalogos && tipos.length !== 1
-                ? 'No se pudo identificar Consulta general en los tipos activos de la clínica. Puedes registrar la llegada e ir a Urgencias.' : '';
+                ? 'No se puede iniciar la atención: revisa el tipo Consulta general/Enfermedad en la configuración de la clínica. Mientras tanto, puedes registrar la llegada.' : '';
         }
 
         function llenarPacientesIngreso(form) {
