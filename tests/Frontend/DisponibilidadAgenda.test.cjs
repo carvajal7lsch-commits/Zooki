@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const { crearComando, formatearHora } = require('../../public/js/comando-agenda.js');
+const { crearComando, formatearHora, horariosReprogramacion } = require('../../public/js/comando-agenda.js');
 
 test('C3 conecta los formularios desde el archivo JS y conserva las vistas sin eventos/CSS en línea', () => {
     const vista = fs.readFileSync('views/vet/calendario.php', 'utf8');
@@ -107,6 +107,7 @@ function contextoReprogramar(fetch) {
     const dibujadas = [];
     const boton = { disabled: false };
     const contexto = { URLSearchParams, fetch, console, _turnoSlotsReprog: 0, _reprogramarCitaId: 3,
+        _reprogramarCitaActual: { fecha: '2030-01-07', hora: '09:00:00' }, zookiHorariosReprogramacion: horariosReprogramacion,
         document: { getElementById: () => ({ dataset: { mascota: '1', tipoOriginal: '7' } }) },
         val: (id, valor) => valor === undefined ? valores[id] : valores[id] = valor,
         actualizarBotonReprog: () => { boton.disabled = !valores.reprogramar_hora; },
@@ -117,6 +118,15 @@ function contextoReprogramar(fetch) {
     vm.runInContext(funcion('public/js/calendario.js', 'cargarSlotsReprogramar', '\nasync function confirmarReprogramacion'), contexto);
     return { contexto, valores, estados, dibujadas, boton };
 }
+
+test('H-3 reprogramar excluye el horario actual solo en la misma fecha y conserva los segundos de otras opciones', () => {
+    const horas = ['08:00:30', '09:00:00', '10:00:07'];
+    const cita = { fecha: '2030-01-07', hora: '09:00:00' };
+    assert.deepEqual(horariosReprogramacion(horas, cita.fecha, cita), ['08:00:30', '10:00:07']);
+    assert.deepEqual(horariosReprogramacion(horas, '2030-01-08', cita), horas);
+    assert.deepEqual(horariosReprogramacion(['09:00:00'], cita.fecha, cita), []);
+    assert.deepEqual(horariosReprogramacion(horas, cita.fecha, null), horas);
+});
 
 for (const reprogramar of [false, true]) {
     const nombre = reprogramar ? 'reprogramar' : 'reservar';
@@ -137,7 +147,7 @@ for (const reprogramar of [false, true]) {
         const { contexto, estados } = preparar(async () => ({ json: async () => ({ success: true, sugerencias: [] }) }));
         await contexto[cargar]();
         assert.equal(estados.at(-1)[1], 'vacio');
-        assert.match(estados.at(-1)[2], /No (?:hay|quedan) horarios/);
+        assert.match(estados.at(-1)[2], reprogramar ? /^No quedan otros horarios libres ese día\./ : /No (?:hay|quedan) horarios/);
     });
     test(`C3.1 ${nombre}: descarta un error obsoleto tras la respuesta vigente`, async () => {
         let liberar;

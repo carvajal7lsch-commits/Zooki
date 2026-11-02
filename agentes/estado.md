@@ -19,6 +19,7 @@
   Decisión posterior del dueño: domingo cerrado; historia ficticia del domingo trasladada al sábado anterior al recrear con `--si`; semilla no ejecutada, base existente intacta; escrito por Codex y pendiente de revisión del dueño.
   X del popover centrada con el título y CSS renovado; comprobación puntual en Chrome a1366 de alineación/cierre/reapertura y carga a390, sin excepciones ni suites; escribió Codex, entregada, pendiente de revisión del dueño.
   Bloqueo de clics corregido por Codex: el manejador móvil ya no abre una hoja nativa invisible al pulsar una cita de escritorio; comprobación puntual de día/detalle/Reprogramar a1366/1024 y ficha móvil a390, sin errores ni envíos; entregada, pendiente de revisión del dueño.
+  Corrección del CI escrita por Codex, entregada, pendiente de revisión: seis fallos JS del run41495527310 corregidos mediante fixtures y mensajes vigentes, filtro real de reprogramación en las pruebas y sombra compartida sin cambio visual; cuatro archivos afectados,67 pruebas dirigidas en verde tras repetir solo Disponibilidad; PHP/MySQL ya verdes en GitHub, confirmación remota pendiente del push del dueño.
 
 ### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 

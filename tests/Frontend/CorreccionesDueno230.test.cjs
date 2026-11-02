@@ -47,7 +47,7 @@ for (const width of [390, 1366]) {
             await nav.esperar('calendarInstance !== null');
             const botones = await nav.evaluar(`(() => {
                 const celda = document.createElement('div');
-                celda.innerHTML = '<div class="fc-daygrid-day-top"></div>';
+                celda.innerHTML = '<div class="fc-daygrid-day-frame"><div class="fc-daygrid-day-top"></div></div>';
                 mountDayAddButton({ date: new Date('${fecha(1)}T12:00:00'), view: { type: 'dayGridMonth' }, el: celda });
                 return celda.querySelectorAll('.fc-day-add-btn').length;
             })()`);

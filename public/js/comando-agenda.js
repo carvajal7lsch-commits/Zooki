@@ -34,7 +34,7 @@
         return (Array.isArray(horas) ? horas : []).filter(hora => !cita || fecha !== cita.fecha || String(hora).slice(0, 5) !== String(cita.hora).slice(0, 5));
     }
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { crearComando, formatearHora };
+        module.exports = { crearComando, formatearHora, horariosReprogramacion };
     } else {
         raiz.zookiCrearComandoAgenda = crearComando;
         raiz.zookiHoraAgenda = formatearHora;

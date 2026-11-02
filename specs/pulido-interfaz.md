@@ -1219,3 +1219,14 @@ Corrección del bloqueo del panel (2026-11-02), escrita por Codex, entregada y p
 Las citas de FullCalendar comparten `data-agenda-evento`; antes abrían también `agendaDetalleMovil` en escritorio, invisible por CSS pero modal, dejando inerte el resto de la página; la URL del script incorpora su hash para renovar la copia cargada.
 Chrome local con clics reales a1366×768 y1024×650: seleccionar día, abrir detalle desde la lista y «+N más», abrir Reprogramar y volver a otra cita; ningún diálogo móvil abierto ni excepciones.
 A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guardar, sin suites ni capturas; sintaxis JS/PHP y diff comprobados.
+
+### Corrección del CI — Resultado (2026-11-02)
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Diagnóstico: [run41495527310](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/41495527310), seis fallos JS; PHPUnit y el job MySQL8 completos en verde.
+- Se actualiza la celda de prueba al DOM real de FullCalendar, el contexto de disponibilidad carga el filtro real y la cita actual, y se comprueba el mensaje vigente de formato de foto con su estado de error.
+- La sombra del segmento Sexo pasa a identidad.css conservando sus valores; sin cambios de diseño, motores, esquema ni workflow.
+- Regresión H-3: la hora actual se excluye solo en su fecha, se conservan segundos y los horarios de otras fechas, y una lista sin alternativas queda vacía.
+- Verificación dirigida: CorreccionesDueno230, DisponibilidadAgenda, M2C8Rediseno y PortalRetoques;67 pruebas en verde tras repetir solo DisponibilidadAgenda (21/21) por el último ajuste de su mensaje esperado.
+- Evidencia local ignorada: `scratch/ci-41495527310.log`, `scratch/ci-correcciones.log` y `scratch/ci-disponibilidad.log`; sin suites completas, cambios de base ni operaciones Git de escritura.
+- Pendiente: revisión del dueño y nuevo CI tras su push; versión2.3.0 conservada.

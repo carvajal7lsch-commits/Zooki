@@ -55,7 +55,8 @@ test('HU-5.4: foto al soltar en Registrar/Editar, validación y Quitar a360/390/
                 await click(nav,form+' .foto-campo__quitar');
                 assert.equal(await nav.evaluar(`document.querySelector('${form} input[name=foto]').files.length`),0);
                 await soltar(nav,form,'text/plain');
-                assert.match(await nav.evaluar(`document.querySelector('${form} .foto-campo__ayuda').textContent`),/no es JPG ni PNG/);
+                assert.equal(await nav.evaluar(`document.querySelector('${form} .foto-campo__ayuda').textContent`),'Solo se permiten fotos JPG o PNG.');
+                assert.equal(await nav.evaluar(`document.querySelector('${form} .foto-campo__ayuda').classList.contains('is-error')`),true);
                 await soltar(nav,form,'image/png',5*1024*1024+1);
                 assert.match(await nav.evaluar(`document.querySelector('${form} .foto-campo__ayuda').textContent`),/5 MB/);
                 assert.equal(await nav.evaluar("(()=>{const e=new DragEvent('drop',{bubbles:true,cancelable:true});document.body.dispatchEvent(e);return e.defaultPrevented})()"),true);
