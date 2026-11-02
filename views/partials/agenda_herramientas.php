@@ -21,7 +21,7 @@ if ($esVetHerramientas) {
 }
 ?>
 <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-<section class="agenda-herramientas" data-agenda-herramientas aria-label="Herramientas de agenda">
+<section class="agenda-herramientas<?= $esVetHerramientas ? ' agenda-herramientas--tarjetas' : '' ?>" data-agenda-herramientas aria-label="Herramientas de agenda">
     <?php if ($esVetHerramientas): ?>
     <header class="agenda-pendientes__head">
         <div>
@@ -46,5 +46,6 @@ if ($esVetHerramientas) {
         <?php require __DIR__ . '/urgencias_agenda.php'; ?>
     </div>
 </section>
+<script src="js/agenda-tarjetas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-tarjetas.js'), 0, 12) ?>"></script>
 <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/agenda-herramientas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

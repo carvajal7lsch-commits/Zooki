@@ -1290,3 +1290,19 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Retoque posterior: el botón inferior Pendientes lleva el mismo total de su encabezado y lo oculta en cero; Solo registrar llegada muestra un aviso breve con la ubicación Pendientes → Rojos; Atender ahora conserva el inicio de Atención; escribió Codex, pendiente de revisión visual, sin pruebas ni suites.
 - Corrección posterior escrita por Codex: el tipo inicial reconoce Consulta general/Enfermedad, nombre real en ValoresInicialesClinica y la semilla demo, además del nombre corto aprobado; sigue exigiendo coincidencia única en el catálogo activo.
 - La ayuda gris solo explica la identificación posterior y se oculta cuando existe un aviso del formulario; el rojo queda reservado al bloqueo real; lectura del código/diff, sin pruebas ni suites, pendiente de revisión del dueño.
+
+### Tarjetas de Pendientes — encargo del dueño (2026-11-02)
+
+- Escribe Codex; referencia: captura del dueño con Bruno, nivel Rojo, llegada a la derecha, resumen recortado y acciones al pie; aplicar a Rojos, Triage, Sala y Reasignar.
+- Conservar Citas del día; presentación compacta compartida, azul para las tarjetas habituales y rojo para urgencias, con datos reales disponibles en cada bandeja.
+- Conservar formularios y comandos; plegar los campos de acciones auxiliares hasta usarlos; Atender ahora y Completar ficha mantienen los flujos existentes, sin inventar síntomas, especies ni tiempos.
+- Mantener la instrucción de no ejecutar suites ni pruebas durante estos retoques; aprobación visual pendiente.
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Presentación compartida en Rojos, Triage, Sala y Reasignar: nombre/nivel, hora a la derecha si está disponible, resumen recortado con texto completo en title y acciones compactas; sin cambios en Citas del día.
+- Rojos usa su llegada real y tiempo transcurrido, con fondo/borde suaves y acciones rojas; Completar ficha acciona el formulario existente; la nota de presencia queda bajo la lista.
+- Formularios de revisión, reordenamiento y otras acciones conservados en desplegables; el celular reutiliza estos controles sin duplicar el formulario de revisión.
+- Atender desde la tarjeta toma Consulta general, conserva los controles excepcionales y redirige solo con id_cita confirmado; servidor, endpoints y reglas de seguridad intactos.
+- Verificación: lectura de código y diff; sin pruebas, suites ni capturas por instrucción del dueño; pendiente su revisión visual y funcional.

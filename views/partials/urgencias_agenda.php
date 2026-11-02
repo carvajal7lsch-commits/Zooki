@@ -10,7 +10,6 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <header class="ah-head">
         <div>
             <h3>Urgencias</h3>
-            <p>El aviso remoto no acredita llegada. La prioridad y la interrupción las decide el veterinario.</p>
         </div>
         <div class="ah-acciones">
             <?php if ($esVetUrgencia): ?>
@@ -24,6 +23,7 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <div class="ah-grupo">
         <h4 class="ah-sub">Rojos activos</h4>
         <div class="ah-lista" data-rojos-lista data-vacio="No hay urgencias activas."></div>
+        <p class="ah-tarjetas__nota">El aviso remoto no acredita la llegada. La prioridad la decide el veterinario.</p>
     </div>
     <div class="ah-grupo">
         <h4 class="ah-sub">Identidad pendiente <span class="ah-ayuda">Solo cuenta, vínculo o confirmación del titular acreditan propiedad.</span></h4>

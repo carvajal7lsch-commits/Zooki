@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Tarjetas de Pendientes — entregada, pendiente de revisión del dueño (2026-11-02)
+
+- Escribió Codex; referencia y anexo en `specs/pulido-interfaz.md`; solo Rojos, Triage, Sala y Reasignar, con Citas del día conservadas.
+- Tarjeta común compacta: nombre/nivel, llegada real con tiempo transcurrido cuando está disponible, resumen con puntos suspensivos y acciones al pie; rojo para urgencias y azul para las demás.
+- Formularios auxiliares plegados conservando sus controles y oyentes; Completar ficha usa la conciliación existente; Atender ahora usa Consulta general y abre la cita confirmada por el servidor, conservando los rechazos y la decisión excepcional.
+- Sin pruebas, suites ni capturas por instrucción vigente; revisión del código y aceptación visual/funcional pendiente; versión2.3.0 sin cambio, sin commit ni push.
+
 ### Urgencia rápida: registrar y atender — entregada, pendiente de revisión del dueño (2026-11-02)
 
 - Escribió Codex; encargo y anexo en `specs/pulido-interfaz.md`.

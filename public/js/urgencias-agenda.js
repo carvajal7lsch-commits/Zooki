@@ -127,6 +127,13 @@
                     const datos = await respuesta.json();
                     if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudo guardar.');
                     comando.reiniciar();
+                    if (destino === 'atender_rojo_ajax') {
+                        if (datos.resultado?.espera) throw new Error(datos.message || 'El paciente sigue en espera.');
+                        const cita = Number(datos.resultado?.id_cita);
+                        if (!Number.isInteger(cita) || cita < 1) throw new Error('No se pudo confirmar la apertura de Atención. Reintenta.');
+                        global.location.assign(`index.php?action=vet_atencion&id_cita=${encodeURIComponent(cita)}`);
+                        return;
+                    }
                     aviso.textContent = datos.message;
                     if (form.closest('dialog')) {
                         if (global.zookiCerrarDialogo) global.zookiCerrarDialogo(form);
@@ -141,6 +148,12 @@
                     await recargar();
                     global.dispatchEvent(new Event('agenda:urgencia'));
                 } catch (error) {
+                    if (form.dataset.urgenciaAtender && /atención pausada[\s\S]*decisión clínica/i.test(error.message)) {
+                        const decision = form.elements.namedItem('decision');
+                        decision.disabled = false;
+                        decision.required = true;
+                        decision.closest('label').hidden = false;
+                    }
                     form.querySelector('[data-aviso]').textContent = error.message;
                 } finally {
                     escribiendo = false;
@@ -160,12 +173,15 @@
             return form;
         }
 
-        function rojos(lista) {
+        function rojos(lista, pendientesIdentidad = []) {
             const contenedor = raiz.querySelector('[data-rojos-lista]');
             contenedor.replaceChildren();
             lista.forEach(s => {
                 const tarjeta = texto(contenedor, 'article', '');
                 tarjeta.className = 'ah-item ah-item--rojo';
+                tarjeta.dataset.llegada = s.fecha_llegada || '';
+                tarjeta.dataset.ingreso = s.id_ingreso || '';
+                const identidadPendiente = pendientesIdentidad.some(ingreso => String(ingreso.id_ingreso) === String(s.id_ingreso) && ingreso.estado === 'pendiente');
                 const cabeza = texto(tarjeta, 'div', '');
                 cabeza.className = 'ah-item__head';
                 texto(cabeza, 'h3', s.nombre || `Ficha #${s.id_mascota}`);
@@ -173,6 +189,8 @@
                 nivel.className = 'ah-nivel';
                 nivel.dataset.nivel = 'rojo';
                 texto(tarjeta, 'p', s.fecha_llegada ? `Llegó ${String(s.fecha_llegada).slice(11, 16)} · ${ESTADOS[s.estado] || s.estado}` : 'Aviso remoto: aún no se acredita la llegada').className = 'ah-item__meta';
+                const resumen = texto(tarjeta, 'p', [ESTADOS[s.estado] || s.estado, identidadPendiente ? 'Identidad pendiente' : ''].filter(Boolean).join(' · '));
+                resumen.className = 'ah-item__texto';
                 const datos = { id_solicitud: s.id_solicitud, version: s.version_solicitud };
                 if (!s.fecha_llegada) {
                     const f = formulario(tarjeta, 'Acreditar llegada física', 'llegada_rojo_ajax', datos);
@@ -186,9 +204,16 @@
                 }
                 if (s.estado !== 'espera_presencial' || !s.fecha_llegada) return;
                 const atender = formulario(tarjeta, 'Atender ahora', 'atender_rojo_ajax', datos);
-                opciones(campo(atender, 'id_tipo_cita', 'Tipo de atención', true, 'select'), catalogos.tipos, 'id_tipo_cita', 'nombre_tipo');
-                campo(atender, 'decision', 'Decisión clínica si ya hay una atención pausada (opcional)');
+                atender.dataset.urgenciaAtender = '1';
+                const tipo = campo(atender, 'id_tipo_cita', 'Tipo de atención', true, 'select');
+                opciones(tipo, catalogos.tipos, 'id_tipo_cita', 'nombre_tipo');
+                tipo.value = tipoConsultaGeneral();
+                tipo.closest('label').hidden = Boolean(tipo.value);
+                const decision = campo(atender, 'decision', 'Decisión clínica si ya hay una atención pausada');
+                decision.disabled = true;
+                decision.closest('label').hidden = true;
                 preparar(atender, 'atender_rojo_ajax', atender.extras);
+                if (s === lista.find(pendiente => pendiente.estado === 'espera_presencial' && pendiente.fecha_llegada)) return;
                 const ordenar = formulario(tarjeta, 'Priorizar este rojo', 'ordenar_rojo_ajax', datos);
                 campo(ordenar, 'motivo', 'Motivo clínico del cambio de orden', true);
                 preparar(ordenar, 'ordenar_rojo_ajax', ordenar.extras);
@@ -209,7 +234,7 @@
                     texto(tarjeta, 'p', 'Identidad resuelta; el contacto se conserva solo mientras haga falta.').className = 'ah-item__meta';
                     return;
                 }
-                const abrir = texto(tarjeta, 'button', 'Conciliar identidad');
+                const abrir = texto(tarjeta, 'button', 'Completar ficha');
                 abrir.type = 'button';
                 abrir.className = 'zk-btn zk-btn--sec zk-btn--mini';
                 abrir.dataset.conciliarIdentidad = String(i.id_ingreso);
@@ -278,11 +303,15 @@
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
         }
 
-        function prepararTipoIngreso(form) {
+        function tipoConsultaGeneral() {
             // ValoresInicialesClinica nombra la consulta general «Consulta general/Enfermedad».
             const tipos = (catalogos?.tipos || []).filter(tipo => ['consulta general/enfermedad', 'consulta general'].includes(normalizarNombre(tipo.nombre_tipo).replace(/\s*\/\s*/g, '/')));
-            form.elements.namedItem('id_tipo_cita').value = tipos.length === 1 ? tipos[0].id_tipo_cita : '';
-            form.querySelector('[data-ingreso-configuracion]').textContent = catalogos && tipos.length !== 1
+            return tipos.length === 1 ? String(tipos[0].id_tipo_cita) : '';
+        }
+
+        function prepararTipoIngreso(form) {
+            form.elements.namedItem('id_tipo_cita').value = tipoConsultaGeneral();
+            form.querySelector('[data-ingreso-configuracion]').textContent = catalogos && !tipoConsultaGeneral()
                 ? 'No se puede iniciar la atención: revisa el tipo Consulta general/Enfermedad en la configuración de la clínica. Mientras tanto, puedes registrar la llegada.' : '';
         }
 
@@ -308,7 +337,7 @@
                 prepararTipoIngreso(form);
                 validar(form);
             }
-            rojos(datos.rojos);
+            rojos(datos.rojos, datos.ingresos);
             ingresos(datos.ingresos);
         }
 

@@ -106,6 +106,7 @@
         if (salida && salida.textContent !== String(cantidad)) salida.textContent = cantidad;
     }
     function prepararRevision(tarjeta) {
+        if (tarjeta.classList.contains('ah-tarjeta')) return;
         const form = tarjeta.querySelector('form');
         if (!form || tarjeta.querySelector('[data-triage-revisar]')) return;
         form.classList.add('agenda-revision-form');
