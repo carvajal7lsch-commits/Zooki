@@ -263,6 +263,8 @@
             revisionActual = null;
         });
         raiz.addEventListener('click', e => {
+            // RNF-16: las citas de escritorio comparten data-agenda-evento, pero no abren la hoja móvil.
+            if (!activa()) return;
             const dia = e.target.closest('[data-inicio-semana-fecha]');
             if (dia) cambiarDia(fecha(dia.dataset.inicioSemanaFecha));
             const paso = e.target.closest('[data-inicio-semana-paso]');

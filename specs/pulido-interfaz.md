@@ -1214,3 +1214,8 @@ El dueño confirmó mantener el domingo cerrado y corregir la historia demo; las
 Retoque H-2 (2026-11-02), escrito por Codex, entregado y pendiente de revisión del dueño: X centrada dentro de su área de clic y alineada con el título del popover; revisión del CSS renovada para evitar la copia anterior.
 Chrome local a1366×768: centros alineados, cierre, clic afuera, Escape y reapertura correctos; carga a390×844 sin excepciones; sin suites ni capturas.
 El domingo conserva su sombreado de cierre; los registros demo ya cargados requieren recrear la semilla con `--si`, que no se ejecutó en este retoque.
+
+Corrección del bloqueo del panel (2026-11-02), escrita por Codex, entregada y pendiente de revisión del dueño: el clic delegado de `agenda-movil.js` solo actúa con la vista móvil activa (RNF-16).
+Las citas de FullCalendar comparten `data-agenda-evento`; antes abrían también `agendaDetalleMovil` en escritorio, invisible por CSS pero modal, dejando inerte el resto de la página; la URL del script incorpora su hash para renovar la copia cargada.
+Chrome local con clics reales a1366×768 y1024×650: seleccionar día, abrir detalle desde la lista y «+N más», abrir Reprogramar y volver a otra cita; ningún diálogo móvil abierto ni excepciones.
+A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guardar, sin suites ni capturas; sintaxis JS/PHP y diff comprobados.

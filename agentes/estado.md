@@ -18,6 +18,7 @@
   Mes: semanas de altura equilibrada, citas compactas y CSS renovados; apertura con muchas citas a1366×768/900 sin scroll interno adicional ni errores JS; sin suites ni capturas.
   Decisión posterior del dueño: domingo cerrado; historia ficticia del domingo trasladada al sábado anterior al recrear con `--si`; semilla no ejecutada, base existente intacta; escrito por Codex y pendiente de revisión del dueño.
   X del popover centrada con el título y CSS renovado; comprobación puntual en Chrome a1366 de alineación/cierre/reapertura y carga a390, sin excepciones ni suites; escribió Codex, entregada, pendiente de revisión del dueño.
+  Bloqueo de clics corregido por Codex: el manejador móvil ya no abre una hoja nativa invisible al pulsar una cita de escritorio; comprobación puntual de día/detalle/Reprogramar a1366/1024 y ficha móvil a390, sin errores ni envíos; entregada, pendiente de revisión del dueño.
 
 ### Guion Tampermonkey y escena de sustentación (2.3.0) — revisada: aprobada, revisión liviana (2026-11-01)
 
