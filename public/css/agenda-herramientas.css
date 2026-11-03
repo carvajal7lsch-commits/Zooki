@@ -395,7 +395,7 @@
     min-width: 0;
     font-size: 14px;
 }
-.urgencia-conciliacion .zk-dialogo__cuerpo > label input,
+.urgencia-conciliacion .zk-dialogo__cuerpo > label input:not([type="checkbox"]),
 .urgencia-conciliacion__buscador input,
 .urgencia-conciliacion__contacto input {
     min-width: 0;
@@ -454,4 +454,21 @@
     display: block;
     font-size: .75rem;
     line-height: 1.4;
+}
+.urgencia-conciliacion .identidad-confirmacion {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    color: var(--z-text-secondary);
+    line-height: 1.5;
+    cursor: pointer;
+}
+.urgencia-conciliacion .identidad-confirmacion input {
+    width: 18px;
+    height: 18px;
+    min-height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--z-primary);
+    cursor: pointer;
 }

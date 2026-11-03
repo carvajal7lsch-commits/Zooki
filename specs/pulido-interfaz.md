@@ -2,6 +2,8 @@
 
 ## HU-4.15 — Identificación comprensible (2026-11-02)
 
+- Decisión posterior del dueño: sustituir la explicación libre de verificación por la casilla obligatoria «Confirmé con el propietario que esta es su mascota»; conservar la declaración, autor y fecha en el registro existente; sin confirmación anticipada ni texto automático que afirme una comprobación no realizada.
+
 - Corrección del dueño: la opción Es una mascota nueva reutiliza controles y distribución de Registrar mascota: nombre/sexo, especie/raza y nacimiento/peso; sin caja adicional Completar la misma ficha; conservar los campos y la lógica existentes.
 
 - Encargo del dueño: icono en la cabecera, dos opciones segmentadas con lenguaje sencillo y buscadores de propietario/mascota que abran opciones al tocar y filtren al escribir.
@@ -16,6 +18,7 @@
 - ¿Cómo confirmaste que es su mascota? con ejemplo y ayuda; conservación de nombre/teléfono del acompañante plegada, explicada y disponible solo cuando existe ese contacto; sin alterar comprobaciones del servidor ni inventar evidencias.
 - Comprobación dirigida en Chrome: administrador/veterinario a1366/390, ambos modos, búsqueda/selección, payload y conservación de datos ante rechazo; sin excepciones ni escrituras reales; sintaxis y diff correctos.
 - Misma2.3.0; pendiente aceptación visual del dueño, sin suites completas, cambios de base, commit ni push.
+- Casilla aprobada por el dueño, escribió Codex: sustituye la explicación libre; sin marcar no permite enviar; se desmarca al cambiar identidad y conserva la declaración en evidencia_conciliacion, con autor y fecha ya registrados por el servidor; comprobación dirigida de ambos roles y tamaños, sin suites completas ni datos reales.
 - Retoque posterior del dueño, escribió Codex: Es una mascota nueva usa la estructura de Registrar mascota en tres parejas de campos, sin caja adicional; selector de sexo extraído a `mascota-sexo.css` y compartido con el modal original; mismos controles, placeholders y reglas; calendario existente reutilizado. Comprobación puntual admin/vet a1366/390: columnas en escritorio, apilado móvil, sexo obligatorio y payload conservado; sin excepciones; pendiente revisión visual del dueño.
 
 ## Notificaciones, atención abierta y Nueva urgencia — Encargo (2026-11-02)

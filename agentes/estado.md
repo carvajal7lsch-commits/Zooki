@@ -11,6 +11,7 @@
 - Escribió Codex; revisa Claude; encargo y Anexo — Resultado en `specs/pulido-interfaz.md`.
 - Completar identificación con icono y botones Ya tiene ficha / Es una mascota nueva; propietario y mascota con buscadores al tocar, filtro y teclado; datos seleccionados conservados entre modos.
 - Confirmación de propiedad explicada con ejemplo; conservación del contacto del acompañante plegada y solo si hay datos; endpoint, campos y validaciones del servidor conservados.
+- Decisión posterior del dueño aplicada por Codex: casilla obligatoria «Confirmé con el propietario que esta es su mascota» en lugar de explicación libre; solo marcada envía la declaración al registro existente con id_conciliador/fecha_conciliacion; se desmarca al cambiar propietario, mascota o modo; entregada, pendiente de revisión.
 - Comprobación dirigida Chrome admin/vet a1366/390 sin excepciones, payload conservado y rechazo sin pérdida de datos; sin suites completas, base manual, cambio de versión, commit ni push; aceptación visual pendiente.
 - Retoque del dueño por Codex: Es una mascota nueva reutiliza la estructura y controles de Registrar mascota, en tres parejas, sin la caja Completar la misma ficha; selector de sexo compartido en `mascota-sexo.css`, calendario del sistema y tamaños originales; comprobación puntual de columnas/sexo/payload en ambas vistas y tamaños, sin excepciones; entregado, pendiente de revisión visual.
 

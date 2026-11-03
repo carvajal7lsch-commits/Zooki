@@ -83,7 +83,7 @@ test('Identificación: opciones claras y buscadores conservan los datos del serv
                 const columnas = await n.evaluar(`(() => { const fila = document.querySelector('.identidad-mascota .form-grid-2-gap'); const [a,b] = [...fila.children].map(n => n.getBoundingClientRect()); return {mismaFila:Math.abs(a.top-b.top)<1, ancho:a.width, fila:fila.clientWidth}; })()`);
                 assert.equal(columnas.mismaFila, width >= 1024);
                 if (width >= 1024) assert.ok(columnas.ancho < columnas.fila * .6, JSON.stringify(columnas));
-                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.nombre.value='Luna'; f.elements.especie.value='1'; f.elements.especie.dispatchEvent(new Event('change',{bubbles:true})); f.elements.raza.value='49'; f.elements.peso.value='4,5'; f.elements.evidencia.value='El propietario confirmó su mascota desde su cuenta.'; f.elements.peso.dispatchEvent(new Event('input',{bubbles:true}));`);
+                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.nombre.value='Luna'; f.elements.especie.value='1'; f.elements.especie.dispatchEvent(new Event('change',{bubbles:true})); f.elements.raza.value='49'; f.elements.peso.value='4,5'; f.elements.evidencia.checked=true; f.elements.peso.dispatchEvent(new Event('input',{bubbles:true}));`);
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [type="submit"]').disabled`), true, 'Sexo sigue obligatorio');
                 await n.evaluar(`document.querySelector('.identidad-mascota [name="sexo"][value="Hembra"]').click();`);
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [type="submit"]').disabled`), false);
@@ -92,10 +92,13 @@ test('Identificación: opciones claras y buscadores conservan los datos del serv
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion fieldset').disabled`), true);
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_mascota_final"]').value`), '1');
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion__contacto').open`), false);
-                assert.match(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="evidencia"]').placeholder`), /propietario ingresó a su cuenta/);
-                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.evidencia.value = 'El propietario confirmó su mascota desde su cuenta.'; f.elements.evidencia.dispatchEvent(new Event('input', {bubbles:true})); f.dispatchEvent(new Event('submit', {cancelable:true}));`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="evidencia"]').type`), 'checkbox');
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="evidencia"]').checked`), false, 'Cambiar el destino requiere confirmar de nuevo');
+                await n.evaluar(`document.querySelector('.urgencia-conciliacion form').dispatchEvent(new Event('submit', {cancelable:true}));`);
+                assert.equal(await n.evaluar('__escrituras.length'), 0, 'Sin marcar la casilla no se envía');
+                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.evidencia.click(); f.dispatchEvent(new Event('submit', {cancelable:true}));`);
                 assert.equal(await n.evaluar('__escrituras.length'), 1);
-                assert.deepEqual(await n.evaluar(`Object.fromEntries([...__escrituras[0].body].filter(([k]) => ['id_ingreso', 'id_propietario', 'id_mascota_final', 'modo', 'evidencia'].includes(k)))`), { modo: 'consolidar', id_propietario: '6', id_mascota_final: '1', evidencia: 'El propietario confirmó su mascota desde su cuenta.', id_ingreso: '9' });
+                assert.deepEqual(await n.evaluar(`Object.fromEntries([...__escrituras[0].body].filter(([k]) => ['id_ingreso', 'id_propietario', 'id_mascota_final', 'modo', 'evidencia'].includes(k)))`), { modo: 'consolidar', id_propietario: '6', id_mascota_final: '1', evidencia: 'El operador confirmó con el propietario que esta es su mascota.', id_ingreso: '9' });
                 await n.evaluar(`__escrituras[0].resolve({ok:false,json:async()=>({success:false,message:'Verificación pendiente'})});`);
                 await n.esperar(`document.querySelector('.urgencia-conciliacion [data-aviso]').textContent === 'Verificación pendiente'`);
                 assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_propietario"]').value`), '6');

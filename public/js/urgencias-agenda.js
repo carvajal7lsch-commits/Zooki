@@ -181,7 +181,7 @@
                 if (entrada.type === 'hidden' || entrada.disabled || entrada.closest('fieldset[disabled]')) return;
                 if (entrada.type === 'radio' && radiosRevisados.has(entrada.name)) return;
                 if (entrada.type === 'radio') radiosRevisados.add(entrada.name);
-                const valor = entrada.type === 'radio' ? form.querySelector(`[name="${entrada.name}"]:checked`)?.value || '' : entrada.value;
+                const valor = entrada.type === 'radio' ? form.querySelector(`[name="${entrada.name}"]:checked`)?.value || '' : entrada.type === 'checkbox' && !entrada.checked ? '' : entrada.value;
                 const error = errorCampo(entrada.name, valor, entrada.required, reglas);
                 const nodo = form.querySelector(`[data-error-campo="${entrada.name}"]`);
                 // El error aparece al tocar el campo o al intentar enviar, no al abrir el formulario.
@@ -371,12 +371,20 @@
                     opciones(raza, catalogos.razas.filter(r => String(r.id_especie) === especie.value), 'id_raza', 'nombre_raza');
                     validar(f);
                 });
-                const evidencia = campo(f, 'evidencia', '¿Cómo confirmaste que es su mascota?', true);
-                evidencia.placeholder = 'Ej.: el propietario ingresó a su cuenta y confirmó que Luna es su mascota.';
-                const ayudaEvidencia = texto(evidencia.closest('label'), 'span', 'Describe la comprobación que hiciste. Saber el nombre o teléfono del acompañante no confirma que sea el propietario.');
-                ayudaEvidencia.className = 'urgencia-rapida__ayuda';
-                ayudaEvidencia.id = dialogo.id + '-ayuda-verificacion';
-                evidencia.setAttribute('aria-describedby', ayudaEvidencia.id);
+                const confirmacion = texto(f, 'label', '');
+                confirmacion.className = 'identidad-confirmacion';
+                const evidencia = document.createElement('input');
+                evidencia.type = 'checkbox';
+                evidencia.name = 'evidencia';
+                evidencia.required = true;
+                evidencia.value = 'El operador confirmó con el propietario que esta es su mascota.';
+                confirmacion.append(evidencia);
+                texto(confirmacion, 'span', 'Confirmé con el propietario que esta es su mascota');
+                const errorConfirmacion = texto(f, 'small', '');
+                errorConfirmacion.dataset.errorCampo = 'evidencia';
+                errorConfirmacion.id = dialogo.id + '-confirmacion-error';
+                errorConfirmacion.setAttribute('aria-live', 'polite');
+                evidencia.setAttribute('aria-describedby', errorConfirmacion.id);
                 const contacto = texto(f, 'details', '');
                 contacto.className = 'urgencia-conciliacion__contacto';
                 texto(contacto, 'summary', 'Conservar contacto del acompañante (opcional)');
@@ -386,6 +394,7 @@
                 contacto.hidden = !i.nombre_acompanante && !i.telefono_acompanante;
                 conservacion.disabled = contacto.hidden;
                 const ajustar = () => {
+                    evidencia.checked = false;
                     opcionesModo.querySelectorAll('button').forEach(boton => boton.setAttribute('aria-pressed', String(boton.dataset.identidadModo === modo.value)));
                     ayudaModo.textContent = modo.value === 'completar' ? 'Completa los datos de la mascota para que esta sea su ficha.' : 'Elige su ficha para que esta atención quede en su historia existente.';
                     ficha.disabled = modo.value !== 'completar';
@@ -406,6 +415,10 @@
                 preparar(f, 'conciliar_rojo_ajax', () => ({ id_ingreso: i.id_ingreso, ...(modo.value === 'completar' ? { id_mascota_final: i.id_mascota_provisional } : {}) }));
                 modo.addEventListener('change', ajustar);
                 titular.addEventListener('change', ajustar);
+                final.addEventListener('change', () => {
+                    evidencia.checked = false;
+                    validar(f);
+                });
                 ajustar();
                 const contenido = Array.from(f.children);
                 const cabecera = texto(f, 'header', '');

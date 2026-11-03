@@ -8,7 +8,7 @@
 
 ### Versión 2.3.0 (Actual)
 
-* **Identificación tras una urgencia (2026-11-02, Codex; HU-4.15):** opciones Ya tiene ficha / Es una mascota nueva, buscadores de propietario y mascota e icono de cabecera; verificación de propiedad con ejemplo y conservación del contacto del acompañante explicada y plegada. Sin cambios de conciliación ni permisos.
+* **Identificación tras una urgencia (2026-11-02, Codex; HU-4.15):** opciones Ya tiene ficha / Es una mascota nueva, buscadores de propietario y mascota e icono de cabecera; confirmación de propiedad mediante casilla obligatoria, con declaración, autor y fecha en el registro existente; conservación del contacto del acompañante explicada y plegada. Sin cambios de conciliación ni permisos.
 
 * **Notificaciones y acceso a urgencias (2026-11-02, Codex; revisa Claude):** campana con movimiento breve ante avisos sin leer y títulos legibles de urgencia; fichas sin propietario visibles en el Inicio y atenciones abiertas en Pendientes, con acceso directo y aviso breve de disponibilidad (HU-6.1, HU-4.15). Nueva urgencia abre los pacientes al tocar el buscador, con icono y hover; misma versión, sin migraciones.
 
