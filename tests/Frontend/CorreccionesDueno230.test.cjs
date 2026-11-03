@@ -88,7 +88,7 @@ for (const width of [390, 1366]) {
 
     test(`08 rojo abre llegada con mascota y evaluación conservadas a ${width}`, { skip: !buscarChrome() }, async () => {
         await comprobar(await servidorAgendaVet(), width, async nav => {
-            await nav.esperar("document.querySelector('[data-ingreso-rojo] select[name=id_mascota] option[value=\"1\"]') !== null");
+            await nav.esperar("document.querySelector('[data-ingreso-rojo] [data-urgencia-buscar]') !== null");
             await nav.evaluar(`
                 val('modal_mascota', '1');
                 triageModalC4 = { resultado: () => ({ nivel: 'rojo', id_solicitud: 123 }), resumen: () => 'Dificultad respiratoria' };
@@ -96,8 +96,19 @@ for (const width of [390, 1366]) {
             `);
             await nav.esperar("document.querySelector('#dialogoRojo').open");
             assert.equal(await nav.evaluar("document.querySelector('#dialogoRojo').open"), true);
+            assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [name=id_mascota]').value"), '1', 'El rojo conserva el paciente seleccionado al abrir');
+            await nav.evaluar(`(() => {
+                const buscador = document.querySelector('[data-ingreso-rojo] [data-urgencia-buscar]');
+                buscador.focus();
+                buscador.value = 'Luna';
+                buscador.dispatchEvent(new Event('input', { bubbles: true }));
+            })()`);
+            await nav.esperar("document.querySelector('[data-ingreso-rojo] [data-urgencia-resultados] [data-paciente=\"1\"]')");
+            await nav.evaluar("document.querySelector('[data-ingreso-rojo] [data-urgencia-resultados] [data-paciente=\"1\"]').click()");
             assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [name=id_mascota]').value"), '1');
             assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [name=id_solicitud]')?.value"), '123');
+            assert.equal(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [data-evaluacion-conservada]').hidden"), false);
+            assert.match(await nav.evaluar("document.querySelector('[data-ingreso-rojo] [data-evaluacion-conservada]').textContent"), /Dificultad respiratoria/);
         });
     });
 

@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### CI — urgencias y conciliación — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; CI41721615365 confirmó cuatro fallos JS y PHP/MySQL correctos; resultado en specs/pulido-interfaz.md.
+- Pruebas adaptadas al buscador único y a la casilla de confirmación vigente; el cierre de conciliación funciona y la recarga pendiente conserva el formulario; sin cambios del código de producto.
+- Solo los dos archivos afectados:29/29 correctas, ninguna omitida; sin suites completas ni base real; misma2.3.0, sin commit/push; pendiente revisión de Claude y CI remoto tras subir.
+
+
 ### Demo — continuidad Rocco/Mishi y descarte visible — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; Mishi primera reserva posterior y con llegada; Rocco se guarda en su tercer paso, Agenda muestra el recálculo e inicia Mishi; dos pasos en Atención dejan el bloqueo de paracetamol sin guardar; Portal conserva la evaluación real de Simón.

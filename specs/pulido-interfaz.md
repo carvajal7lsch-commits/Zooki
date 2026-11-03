@@ -1370,3 +1370,16 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Hallazgo adicional: iniciar desde el calendario permitía omitir la decisión de Sala tras superar la tolerancia; el dueño aprobó corregirlo después de esta entrega; resultado posterior en `specs/M4-agenda-grafo-ii.md`, HU-4.19 — Inicio tardío por Sala.
 - Sin suites completas, cambios de datos manuales, `.env`, migración, commit ni push; aceptación visual pendiente.
 - Historial2.3.0 actualizado; solo su PDF/Word regenerados y comprobados al día; motor y servidor temporales detenidos tras la comprobación.
+
+### CI — pruebas de urgencia y conciliación vigentes (2026-11-03)
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión de Claude.
+- [Ejecución41721615365](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/41721615365): PHP/MySQL correctos y exactamente cuatro fallos JS, en CorreccionesDueno230 (390/1366) y RCitasAdmin (admin/vet); ningún otro archivo de prueba fallido.
+- HU-4.15: CorreccionesDueno230 usa el buscador único y elige el paciente; comprueba identidad al abrir y tras buscar, id_solicitud123 y el resumen rojo conservado.
+- Conciliación: la prueba antigua escribía value en evidencia, ahora casilla obligatoria, sin marcar checked; no se enviaba ninguna petición. La interfaz cierra correctamente al confirmar y enviar; no requirió cambios de producto.
+- RCitasAdmin recorre los botones de modo y buscadores visibles, rechaza enviar sin confirmar, marca la casilla y verifica payload/CSRF/clave y cierre del diálogo original, además de su reemplazo tras releer.
+- Carrera de recarga comprobada: una respuesta automática retenida hasta después de abrir/editar conserva el mismo formulario y la mascota, tanto admin como vet; sin espera fija de10 segundos.
+- Verificación: solo node --test tests/Frontend/CorreccionesDueno230.test.cjs tests/Frontend/RCitasAdmin.test.cjs,29/29 correctas, cero omitidas; evidencia scratch/ci-41721615365-dirigido.log y registro remoto scratch/ci-41721615365.log.
+- Sin suites completas, PHP/MySQL locales, datos reales, cambios de versión, commit ni push; pendiente revisión y repetición del CI remoto tras el push del dueño.

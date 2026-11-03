@@ -139,23 +139,59 @@ for (const rol of ['admin','vet']) {
             if (rol==='admin') await nav.evaluar("document.querySelector('[data-agenda-tab=urgencias]').click();true");
             else await nav.evaluar("document.querySelector('[data-urgencias-agenda]').hidden=false;true");
             await nav.esperar("document.querySelector('[data-conciliar-identidad]')");
+            // Retener una lectura automática iniciada antes de abrir la ventana reproduce la carrera sospechada.
+            await nav.evaluar(`(() => {
+                const pedir = window.fetch;
+                window.__retenerConciliacion = new Promise(resolver => { window.__liberarConciliacion = resolver; });
+                let retener = true;
+                window.fetch = async (...args) => {
+                    const respuesta = await pedir(...args);
+                    if (retener && String(args[0]).includes('action=listar_urgencias_ajax')) {
+                        retener = false;
+                        window.__lecturaConciliacion = true;
+                        await window.__retenerConciliacion;
+                    }
+                    return respuesta;
+                };
+                dispatchEvent(new Event('agenda:urgencia'));
+            })()`);
+            await nav.esperar('window.__lecturaConciliacion === true');
             await nav.evaluar("document.querySelector('[data-conciliar-identidad]').click();true");
             assert.equal(await nav.evaluar("document.querySelector('.urgencia-conciliacion').open"),true);
             assert.equal(await nav.evaluar("document.querySelector('.urgencia-conciliacion [type=submit]').disabled"),true);
             await nav.enviar('Emulation.setDeviceMetricsOverride',{width:360,height:800,deviceScaleFactor:1,mobile:true});
             assert.equal(await nav.evaluar("(()=>{const r=document.querySelector('.urgencia-conciliacion').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;})()"),true,'La conciliación cabe en celular para '+rol);
-            await nav.evaluar("(()=>{const f=document.querySelector('.urgencia-conciliacion form');f.elements.namedItem('modo').value='completar';f.elements.namedItem('modo').dispatchEvent(new Event('change'));})()");
+            await nav.evaluar("document.querySelector('.urgencia-conciliacion [data-identidad-modo=completar]').click()");
             assert.equal(await nav.evaluar("document.querySelector('.urgencia-conciliacion fieldset').disabled"),false);
             assert.equal(await nav.evaluar("document.querySelector('.urgencia-conciliacion [name=id_mascota_final]').disabled"),true);
-            await nav.evaluar("(()=>{const f=document.querySelector('.urgencia-conciliacion form');f.elements.namedItem('modo').value='consolidar';f.elements.namedItem('modo').dispatchEvent(new Event('change'));})()");
-            await nav.evaluar(`(() => {
-                const f=document.querySelector('.urgencia-conciliacion form');
-                for(const [nombre,valor] of [['id_propietario','6'],['id_mascota_final','1'],['evidencia','Titular verificado mediante cuenta y vínculo']]) { f.elements.namedItem(nombre).value=valor;f.elements.namedItem(nombre).dispatchEvent(new Event('change',{bubbles:true})); }
-                f.requestSubmit();
-            })()`);
-            await nav.esperar("!document.querySelector('.urgencia-conciliacion').open");
+            await nav.evaluar("document.querySelector('.urgencia-conciliacion [data-identidad-modo=consolidar]').click()");
+            for (const [nombre, busqueda, id] of [['id_propietario', 'Fabio', '6'], ['id_mascota_final', 'Luna', '1']]) {
+                await nav.evaluar(`(() => {
+                    const entrada = document.querySelector('.urgencia-conciliacion [data-identidad-buscar="${nombre}"]');
+                    entrada.focus();
+                    entrada.value = ${JSON.stringify(busqueda)};
+                    entrada.dispatchEvent(new Event('input', { bubbles: true }));
+                })()`);
+                await nav.esperar(`document.querySelector('.urgencia-conciliacion [role=option][id$="-opcion-${id}"]')`);
+                await nav.evaluar(`document.querySelector('.urgencia-conciliacion [role=option][id$="-opcion-${id}"]').click()`);
+            }
+            await nav.evaluar(`window.__formConciliacion = document.querySelector('.urgencia-conciliacion form');
+                window.__liberarConciliacion();
+                new Promise(resolver => requestAnimationFrame(() => requestAnimationFrame(resolver)));`);
+            assert.equal(await nav.evaluar("document.querySelector('.urgencia-conciliacion form') === window.__formConciliacion && window.__formConciliacion.isConnected"), true, 'La respuesta automática no sustituye el formulario abierto');
+            assert.equal(await nav.evaluar("window.__formConciliacion.elements.namedItem('id_mascota_final').value"), '1');
+            assert.equal(await nav.evaluar("window.__formConciliacion.elements.namedItem('evidencia').type"), 'checkbox');
+            assert.equal(await nav.evaluar("window.__formConciliacion.querySelector('[type=submit]').disabled"), true, 'Sin confirmar la propiedad no se puede enviar');
+            await nav.evaluar('window.__formConciliacion.requestSubmit()');
+            assert.equal(servidor.llamadas.some(n => n.accion === 'conciliar_rojo_ajax'), false, 'No envía una conciliación sin la casilla');
+            assert.equal(await nav.evaluar("window.__formConciliacion.closest('dialog').open"), true);
+            await nav.evaluar("window.__formConciliacion.elements.namedItem('evidencia').click()");
+            assert.equal(await nav.evaluar("window.__formConciliacion.querySelector('[type=submit]').disabled"), false);
+            await nav.evaluar("window.__formConciliacion.querySelector('[type=submit]').click()");
+            await nav.esperar("!window.__formConciliacion.closest('dialog').open && !document.querySelector('.urgencia-conciliacion')?.open");
             const llamada=servidor.llamadas.find(n=>n.accion==='conciliar_rojo_ajax');
             assert.ok(llamada);
+            assert.match(llamada.cuerpo, /El operador confirmó con el propietario que esta es su mascota\./);
             for(const campo of ['id_ingreso','id_propietario','id_mascota_final','evidencia','clave_operacion','csrf_token']) assert.ok(llamada.cuerpo.includes('name="'+campo+'"'),campo);
         });
     });
