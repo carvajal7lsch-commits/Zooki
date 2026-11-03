@@ -406,7 +406,11 @@ function iniciarCalendario() {
             return 'popover';
         },
         events: cargarEventos,
-        eventsSet: () => window.ZookiAgendaMovil?.actualizar(),
+        eventsSet: () => {
+            // El lote ya está en FullCalendar: loading puede terminar antes de que getEvents lo publique.
+            refrescarPanel();
+            window.ZookiAgendaMovil?.actualizar();
+        },
         loading: cargando => {
             _cargando = cargando;
             if (!cargando) FilterManager.aplicar();
