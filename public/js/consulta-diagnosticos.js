@@ -684,7 +684,8 @@
                     }).catch(() => pintarDescartadas());
                 }
                 deshacer.hidden = !ultima;
-                mensaje.textContent = ultima ? 'Sugerencias recuperadas. Revisa antes de guardar. ' : '';
+                // RE-2.1.7: Atención ya informa la recuperación del borrador en su pie.
+                mensaje.textContent = ultima && !form.closest('#atencionApp') ? 'Sugerencias recuperadas. Revisa antes de guardar. ' : '';
                 comunicarUso(ultima?.codigo || null);
             },
             limpiar() {

@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Aviso único de borrador en Atención (2026-11-03, Codex; RE-2.1.7/RE-2.8.6):** la recuperación de sugerencias no repite el aviso del borrador; mantiene Deshacer, Alternativas y las advertencias de seguridad, sin cambiar el modal de Pacientes.
+
 * **Sala, triage y regresiones del CI (2026-11-03, Codex; revisa Claude):** inasistencia automática sin llegada/inicio, pasada la tolerancia y al siguiente turno del veterinario o al cierre de jornada, conservando la espera en huecos (RN-408/426); decisiones de llegada en modal y ajuste de nivel solo con presencia. Otro síntoma exige descripción, sin cambiar el cálculo; motivos rápidos y síntomas completos accesibles. Corregidas regresiones de pruebas de cascada, montos de pagos y migración/semilla; misma2.3.0, sin migración nueva.
 
 * **Identificación tras una urgencia (2026-11-02, Codex; HU-4.15):** opciones Ya tiene ficha / Es una mascota nueva, buscadores de propietario y mascota e icono de cabecera; confirmación de propiedad mediante casilla obligatoria, con declaración, autor y fecha en el registro existente; conservación del contacto del acompañante explicada y plegada. Sin cambios de conciliación ni permisos.

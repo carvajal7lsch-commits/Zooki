@@ -227,6 +227,8 @@ test('Retoques: recuperación, ficha, plan compuesto y presentación 390/1366', 
             await n.esperar("document.readyState==='complete' && !document.querySelector('[data-borrador-aviso]').hidden");
             assert.equal(await e("Boolean(document.querySelector('[data-borrador-aviso]').closest('[data-hoja-pie]'))"), true, 'El borrador recuperado se informa en el pie');
             assert.equal(await e("getComputedStyle(document.querySelector('[data-descartar-borrador]')).borderTopStyle"), 'none', 'Descartar es una acción de texto');
+            assert.equal(await e("document.querySelector('[data-sugerencia-aviso] [role=status] > span').textContent"),'','La recuperación se anuncia una sola vez, desde el borrador');
+            assert.equal(await e("document.querySelector('[data-deshacer-sugerencia]').hidden"),false,'Deshacer sigue disponible al recuperar las sugerencias');
             assert.equal(await e("document.querySelector('[data-otras-indicaciones]').value"),anterior,'Conserva el texto propio del borrador anterior');
             assert.equal(await e("document.querySelector('[data-examenes-elegibles] input').checked"),true,'Recupera la procedencia del examen anterior');
             await e("document.querySelector('[data-deshacer-sugerencia]').click()");

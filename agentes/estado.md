@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Atención — aviso único de borrador — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; al recuperar Atención se muestra solo el aviso de borrador; Deshacer, Alternativas, seguridad y el modal de Pacientes conservados; caché del script renovada.
+- Anexo en `specs/M2-grafo-clinico.md`; AtencionRetoques en Chrome390/1366 correcto, aviso único y Deshacer disponible; sin suites completas ni base real; misma2.3.0; pendiente revisión visual y descargas al cierre del bloque.
+
+
 ### M4 — Sala, triage y regresiones del CI — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; revisa Claude; decisiones del dueño y Anexo — Resultado al inicio de `specs/M4-agenda-grafo-ii.md`; misma2.3.0, sin commit ni push.

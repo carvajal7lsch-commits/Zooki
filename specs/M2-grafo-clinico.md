@@ -2369,3 +2369,11 @@ Estado: **entregada, pendiente de revisión**; decisión posterior del dueño qu
   HU, RE, Modelos e Historial reflejan el flujo vigente; se actualizan sus descargas y el diagrama.
 - **Pendientes:** revisión de Claude y prueba del dueño; sin suites, cambios de conocimiento/motores, base de trabajo ni commit/push.
   Cierre retomado el2026-11-01: vista final legible con todos los campos y botones; exportación del Historial completada tras liberar el archivo ocupado y retoque de los Word de HU/RE.
+
+### Anexo — Resultado: aviso único de borrador (2026-11-03)
+
+- Decisión del dueño; escribió Codex; entregada, pendiente de revisión de Claude y del dueño.
+- RE-2.1.7/RE-2.8.6: al recuperar Atención se muestra solo Recuperamos tu borrador, sin repetir Sugerencias recuperadas; se mantienen Deshacer, Alternativas y las advertencias de seguridad.
+- El modal de Pacientes conserva su aviso; caché del script renovada por contenido, misma2.3.0.
+- Verificación: AtencionRetoques en Chrome390/1366 correcto, con recuperación anunciada una sola vez y Deshacer disponible; sintaxis JS y diff correctos; sin suites completas ni base real.
+- PDF/Word diferidos al cierre del bloque según metodo.md §11; pendiente aceptación visual.
