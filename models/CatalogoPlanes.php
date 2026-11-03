@@ -8,4 +8,10 @@ final class CatalogoPlanes
         return $db->query("SELECT * FROM planes WHERE nombre='Profesional' AND estado=1")->fetch(PDO::FETCH_ASSOC)
             ?: throw new RuntimeException('Falta el plan profesional activo.');
     }
+
+    public static function gratuito(PDO $db): array
+    {
+        return $db->query("SELECT * FROM planes WHERE nombre='Gratuito' AND estado=1")->fetch(PDO::FETCH_ASSOC)
+            ?: throw new RuntimeException('Falta el plan gratuito activo.');
+    }
 }

@@ -1,0 +1,141 @@
+/* ============================================================
+   ZOOKI LANDING · PLANES
+   El conmutador reutiliza el aspecto de las pestanas de Roles y
+   las tarjetas el de las del bento; aqui solo va lo propio.
+   La seccion completa debe caber en una pantalla de 1366x768, por
+   eso sus medidas son mas compactas que las del resto de la pagina.
+   ============================================================ */
+
+/* Menos aire arriba y, al llegar por «Ver planes», la seccion se acomoda
+   bajo la barra fija en vez de dejar su relleno completo a la vista. */
+.lp-planes {
+    padding-top: 2.25rem;
+    scroll-margin-top: -3rem;
+}
+
+.lp-planes .lp-section-head {
+    margin-bottom: 1rem;
+}
+
+.lp-planes .lp-eyebrow {
+    margin-bottom: 0.5rem;
+}
+
+/* El ciclo activo vive en `data-ciclo` de la seccion (landing.js). */
+.lp-planes[data-ciclo="mensual"] .lp-planes__anual,
+.lp-planes[data-ciclo="anual"] .lp-planes__mensual {
+    display: none;
+}
+
+.lp-planes__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+/* Subgrid: cabecera, precio, boton y lista quedan a la misma altura en
+   ambas tarjetas aunque una tenga insignia y nota y la otra no. */
+.lp-planes__card {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 0.9rem;
+    align-content: start;
+    padding: 1.5rem 1.6rem;
+}
+
+.lp-planes__card--destacada,
+.lp-planes__card--destacada:hover {
+    border-color: var(--lp-primary);
+}
+
+/* La lista mide lo que su contenido; sin esto se estira a la fila de la otra tarjeta. */
+.lp-planes__card .lp-roles__list {
+    align-content: start;
+    gap: 0.5rem;
+}
+
+.lp-planes__card .lp-roles__list li {
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.lp-planes__card .lp-roles__list i {
+    margin-top: 0.1rem;
+}
+
+/* Nombre del plan a la izquierda y conmutador del ciclo a la derecha. */
+.lp-planes__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+}
+
+/* Conmutador compacto dentro de la tarjeta Profesional. */
+.lp-planes .lp-planes__ciclo {
+    max-width: none;
+    margin: 0;
+    padding: 0.2rem;
+    gap: 0.2rem;
+}
+
+.lp-planes__ciclo .lp-roles__tab {
+    flex: 0 0 auto;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.82rem;
+}
+
+/* Precio e insignia en la misma linea: en dos lineas la seccion ya no cabe. */
+.lp-planes__fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.65rem;
+}
+
+.lp-planes__precio {
+    font-family: var(--lp-font-display);
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--lp-text);
+}
+
+.lp-planes__periodo {
+    font-family: var(--lp-font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--lp-text-muted);
+    white-space: nowrap;
+}
+
+.lp-planes__insignia {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--lp-primary);
+    background: var(--lp-primary-soft);
+    padding: 0.25rem 0.55rem;
+    border-radius: var(--lp-radius-pill);
+    white-space: nowrap;
+}
+
+.lp-planes__nota {
+    margin-top: 0.25rem;
+    font-size: 0.82rem;
+    color: var(--lp-text-muted);
+}
+
+/* ---------- Moviles: tarjetas apiladas ---------- */
+@media (max-width: 640px) {
+    .lp-planes__grid {
+        grid-template-columns: 1fr;
+    }
+}

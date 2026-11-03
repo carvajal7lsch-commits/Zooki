@@ -11,7 +11,10 @@ class LandingController {
         $db = $this->db ?? (new Database())->getConnection();
         $clinica = Contexto::clinicaActiva();
         $oferta = $clinica === null || !(new Suscripcion($db, $clinica))->tienePagosAprobados();
-        $tarifasPublicas = TarifaSuscripcion::textos(CatalogoPlanes::profesional($db), $oferta);
+        $planProfesional = CatalogoPlanes::profesional($db);
+        $planGratuito = CatalogoPlanes::gratuito($db);
+        $ofertaLanzamiento = TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && $oferta;
+        $tarifasPublicas = TarifaSuscripcion::textos($planProfesional, $oferta);
         // Renderizar la vista de la landing page
         require_once __DIR__ . '/../views/landing/index.php';
     }

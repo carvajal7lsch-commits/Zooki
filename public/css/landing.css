@@ -5,11 +5,13 @@
    cierra la cadena para poder sobreescribir cualquier modulo.
 */
 
-@import url('landing-modules/base.css?v=1.7.3');
-@import url('landing-modules/nav.css?v=1.7.3');
-@import url('landing-modules/hero.css?v=1.7.3');
-@import url('landing-modules/secciones.css?v=1.7.3');
-@import url('landing-modules/confianza.css?v=1.7.3');
-@import url('landing-modules/footer.css?v=1.7.3');
-@import url('landing-modules/legal.css?v=1.7.3');
-@import url('landing-modules/responsive.css?v=1.7.3');
+@import url('landing-modules/base.css?v=2.3.0');
+@import url('landing-modules/nav.css?v=2.3.0');
+@import url('landing-modules/hero.css?v=2.3.0');
+@import url('landing-modules/secciones.css?v=2.3.0');
+@import url('landing-modules/confianza.css?v=2.3.0');
+@import url('landing-modules/footer.css?v=2.3.0');
+@import url('landing-modules/legal.css?v=2.3.0');
+@import url('landing-modules/funciones.css?v=2.3.0');
+@import url('landing-modules/planes.css?v=2.3.0');
+@import url('landing-modules/responsive.css?v=2.3.0');

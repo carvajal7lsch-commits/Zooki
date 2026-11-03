@@ -1,0 +1,57 @@
+/* ============================================================
+   ZOOKI LANDING · ASI TRABAJA ZOOKI
+   Una sola seccion de pestanas con el componente de Roles; aqui
+   solo va lo propio: cinco pestanas y el carnet simulado.
+   ============================================================ */
+
+/* Cinco pestanas no caben en los 700px de las tres de Roles. */
+.lp-funciones .lp-roles__tabs {
+    max-width: 900px;
+}
+
+/* Codigo QR simulado dentro de la mini interfaz del carnet. */
+.lp-ui__qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: var(--lp-text);
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-sm);
+}
+
+.lp-ui__qr i {
+    line-height: 1;
+}
+
+/* En el ancho del celular simulado la etiqueta no se parte y el valor se alinea a su borde. */
+.lp-ui--carnet .lp-ui__k {
+    white-space: nowrap;
+}
+
+.lp-ui--carnet .lp-ui__v {
+    text-align: right;
+}
+
+/* ---------- Tablets y celulares ----------
+   Las cinco pestanas se parten en tres filas; en su lugar van en una
+   sola fila que se desliza de lado, sin desbordar la pagina. */
+@media (max-width: 992px) {
+    .lp-funciones .lp-roles__tabs {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .lp-funciones .lp-roles__tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .lp-funciones .lp-roles__tab {
+        flex: 0 0 auto;
+    }
+}

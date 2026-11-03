@@ -139,34 +139,41 @@
     }
 
     /* ------------------------------------------------------------
-       Pestanas de roles
+       Pestanas (Roles y Grafos)
+       Cada contenedor `.lp-roles` se inicializa por separado: con una
+       busqueda global, las pestanas de una seccion apagaban los paneles
+       de la otra. El panel de cada pestana es el de su `aria-controls`.
        ------------------------------------------------------------ */
-    function initRoleTabs() {
-        var tabs = document.querySelectorAll('.lp-roles__tab');
-        var panels = document.querySelectorAll('.lp-roles__panel');
+    function initTabGroup(container) {
+        var tabs = container.querySelectorAll('.lp-roles__tab');
+        var panels = container.querySelectorAll('.lp-roles__panel');
         if (!tabs.length || !panels.length) return;
 
-        function activate(targetId) {
+        function activate(target) {
             tabs.forEach(function (tab) {
-                var isActive = tab.dataset.role === targetId;
+                var isActive = tab === target;
                 tab.classList.toggle('is-active', isActive);
                 tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
                 tab.setAttribute('tabindex', isActive ? '0' : '-1');
             });
 
+            var panelId = target.getAttribute('aria-controls');
             panels.forEach(function (panel) {
-                panel.classList.toggle('is-active', panel.id === 'rol-' + targetId);
+                panel.classList.toggle('is-active', panel.id === panelId);
             });
+
+            // En el celular la fila de pestañas se desliza de lado: la elegida queda a la vista.
+            target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         }
 
         tabs.forEach(function (tab) {
             tab.addEventListener('click', function () {
-                activate(tab.dataset.role);
+                activate(tab);
             });
         });
 
         // Navegacion con flechas segun el patron ARIA de pestanas.
-        var tabList = document.querySelector('.lp-roles__tabs');
+        var tabList = container.querySelector('.lp-roles__tabs');
         if (tabList) {
             tabList.addEventListener('keydown', function (event) {
                 if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
@@ -180,9 +187,35 @@
 
                 event.preventDefault();
                 next.focus();
-                activate(next.dataset.role);
+                activate(next);
             });
         }
+    }
+
+    function initRoleTabs() {
+        document.querySelectorAll('.lp-roles').forEach(initTabGroup);
+    }
+
+    /* ------------------------------------------------------------
+       Ciclo de pago de los planes (Mensual / Anual)
+       El CSS muestra el precio segun `data-ciclo` de la seccion.
+       ------------------------------------------------------------ */
+    function initPlanCycle() {
+        var section = document.querySelector('.lp-planes[data-ciclo]');
+        if (!section) return;
+
+        var options = section.querySelectorAll('.lp-planes__opcion');
+
+        options.forEach(function (option) {
+            option.addEventListener('click', function () {
+                section.dataset.ciclo = option.dataset.cicloOpcion;
+                options.forEach(function (other) {
+                    var isActive = other === option;
+                    other.classList.toggle('is-active', isActive);
+                    other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+            });
+        });
     }
 
     /* ------------------------------------------------------------
@@ -233,6 +266,7 @@
         initScrollSpy();
         initReveal();
         initRoleTabs();
+        initPlanCycle();
         initFaq();
     });
 })();
