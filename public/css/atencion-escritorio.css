@@ -1030,15 +1030,19 @@ body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-primary {
     }
     #atencionApp [data-sugerencia-aviso] {
         min-width: 0;
-        flex: 1;
+        flex: 0 1 auto;
     }
     #atencionApp [data-sugerencia-aviso] > div {
+        justify-content: flex-start;
         margin: 0;
         padding: 0;
         background: transparent;
         gap: 4px;
         min-width: 0;
         font-size: 12px;
+    }
+    #atencionApp [data-sugerencia-aviso] span:empty {
+        display: none;
     }
     #atencionApp [data-sugerencia-aviso] span {
         min-width: 0;

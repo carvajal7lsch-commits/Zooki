@@ -2385,3 +2385,10 @@ Estado: **entregada, pendiente de revisión**; decisión posterior del dueño qu
 - Composición desde medicamento, motivo, paciente y evidencia MDR1 del motor; sin nombre fijo de ivermectina, sin alterar precargas, reglas clínicas ni el modal de Pacientes.
 - Guion de Rocco resalta esa fila y mantiene el marco alineado tras redistribuir las columnas; CSS/JS con caché por contenido; Chrome sobre la semilla temporal1366×768/390×844: motivo completo, enlace válido y cero excepciones JS; página de768px en escritorio, sin suites de Atención; evidencia scratch/r/userscript/resultado.json.
 - Misma2.3.0; PDF/Word al cierre del bloque según metodo.md §11; pendiente aceptación visual.
+
+### Anexo — Resultado: acciones compactas al inicio del pie (2026-11-03)
+
+- Pidió el dueño; escribió Codex; entregada, pendiente de revisión.
+- RE-2.1.7/RE-2.8.6: Alternativas y Deshacer quedan juntos al inicio del pie de escritorio, sin el espacio reservado por un mensaje vacío; sin cambios de etiquetas, tipografía ni comportamiento.
+- Deshacer retira solo la última sugerencia incorporada que no se haya editado, conservando entradas propias; Descartar elimina el borrador local y reinicia los campos de la consulta sin guardar, sin eliminar historia clínica.
+- Revisión del CSS y diff correctos; sin suites; pendiente comprobación visual del dueño; misma2.3.0, caché CSS por contenido ya existente y descargas al cierre del bloque.

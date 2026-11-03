@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Atención — acciones del pie alineadas al inicio — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; Alternativas y Deshacer agrupados al inicio del pie de escritorio, sin repartir espacios cuando el aviso de sugerencias está vacío; misma tipografía y funciones, móvil conservado.
+- Revisión puntual del CSS y diff; sin suites; anexo en specs/M2-grafo-clinico.md; pendiente aceptación visual del dueño, misma2.3.0, sin commit ni push.
+
+
 ### CI — urgencias y conciliación — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; CI41721615365 confirmó cuatro fallos JS y PHP/MySQL correctos; resultado en specs/pulido-interfaz.md.
