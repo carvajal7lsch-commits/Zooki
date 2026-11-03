@@ -15,7 +15,7 @@ final class FinanzasFixture
         $reloj = static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00');
         $reserva = (new PagoSuscripcion($db, 1, $config, $reloj))->reservar('mensual', 0, 1);
         $cliente = new ClienteWompiFalso();
-        $tx = ['id' => 's4_tx', 'reference' => $reserva['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        $tx = ['id' => 's4_tx', 'reference' => $reserva['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => $reserva['checkout']['amountInCents'], 'currency' => 'COP'];
         foreach (['APPROVED', 'VOIDED'] as $n => $estado) {
             $tx['status'] = $estado;
             $cliente->respuestas['s4_tx'] = $tx;

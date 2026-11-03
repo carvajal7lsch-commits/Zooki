@@ -26,7 +26,7 @@ final class CorreccionesDueno230Test extends TestCase
         (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $this->como(2, Roles::VETERINARIO);
         $this->reloj = static fn () => IntervalosAgenda::fecha('2030-01-07 07:40:00');
-        $this->entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07',
+        $this->entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.',
             'sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]];
     }
 
@@ -128,6 +128,8 @@ final class CorreccionesDueno230Test extends TestCase
         $citas = new Cita($this->db, $this->reloj);
         $id = $citas->registrar($this->entrada + ['hora' => '08:00', 'motivo' => 'Cirugía']);
         $siguiente = $citas->registrar(['id_mascota' => 2, 'id_tipo_cita' => 3, 'hora' => '10:15', 'motivo' => 'Control'] + $this->entrada);
+        // RN-426: el paciente llegó puntual; los30 minutos de demora son del veterinario.
+        $this->db->prepare('UPDATE citas SET hora_llegada=? WHERE id_cita=?')->execute(['2030-01-07 08:00:00', $id]);
         $citas->iniciarAtencion($citas->getById($id), '2030-01-07 08:30:00');
         $this->assertSame('2030-01-07 10:45:00', $citas->getById($siguiente)['inicio_estimado']);
         $citas->completarAtencion($citas->getById($id), '2030-01-07 09:00:00');

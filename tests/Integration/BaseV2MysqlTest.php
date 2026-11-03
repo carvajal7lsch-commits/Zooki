@@ -122,7 +122,7 @@ class BaseV2MysqlTest extends TestCase
         $this->comoVeterinario(1, 2);
         $reloj = static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00');
         $agenda = new SolicitudAgenda($this->db, $reloj);
-        $entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07',
+        $entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.',
             'sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]];
         foreach (['verde', 'naranja', 'rojo'] as $nivel) {
             $r = $agenda->evaluar($entrada);
@@ -1759,6 +1759,8 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
     {
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
+        // La plataforma cambia el catálogo después de aplicar las migraciones de la versión.
+        $this->migrador()->migrar();
         $this->db->exec("UPDATE planes SET precio_mensual = 120000 WHERE id_plan = 2");
         $this->db->exec("UPDATE colores_base SET nombre_color = 'Café oscuro' WHERE id_color = 3");
 
