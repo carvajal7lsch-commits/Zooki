@@ -18,7 +18,7 @@ test('R cabecera: movimiento accesible, sin amarillos ni onclick y título comú
     const js = leer('public/js/dashboard.js');
     const parcial = leer('views/partials/cabecera_cuenta.php');
     assert.match(css, /prefers-reduced-motion: reduce/);
-    assert.match(css, /animation: campana-aviso 7s/);
+    assert.match(css, /animation: campana-aviso 2\.5s/);
     assert.doesNotMatch(js, /onclick=/);
     assert.doesNotMatch(parcial, /Alertas Cl/);
     assert.match(parcial, /<h3 id="notifTitulo">Notificaciones<\/h3>/);

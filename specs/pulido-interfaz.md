@@ -31,7 +31,7 @@
 ### Anexo — Resultado
 
 - Escribió Codex; entregada, pendiente de revisión de Claude y del dueño; misma2.3.0, sin commit ni push.
-- Campana de administrador/veterinario con sacudida breve cada7 segundos si hay avisos sin leer; se detiene al abrir el menú o marcar leídos y respeta movimiento reducido; ROJO_PRESENTE y DERIVACION_ROJA se leen como urgencias, incluidos avisos antiguos.
+- Campana de administrador/veterinario con sacudida breve cada2,5 segundos si hay avisos sin leer (frecuencia ajustada por el dueño); se detiene al abrir el menú o marcar leídos y respeta movimiento reducido; ROJO_PRESENTE y DERIVACION_ROJA se leen como urgencias, incluidos avisos antiguos.
 - Corregido el JOIN que ocultaba citas de fichas provisionales sin propietario; nombre «Paciente por identificar» y enlace a Atención; todas las atenciones abiertas del veterinario aparecen en Pendientes; aviso breve azul con Continuar atención.
 - Nueva urgencia: lista completa de pacientes autorizados al pulsar Buscar paciente o tocar el campo, incluso si ya tenía foco; búsqueda por los tres criterios y selección conservadas; icono y hover de cierre/acciones, sin rediseño.
 - Verificación: InicioVeterinarioTest y PanelTest,20 pruebas/114 aserciones con SQLite en memoria; campana en ambos roles y buscador con12 pacientes a1366/390 comprobados en Chrome, sin excepciones; pruebas dirigidas de los clics en verde, sintaxis PHP/JS y diff correctos.

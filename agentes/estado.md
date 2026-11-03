@@ -19,6 +19,7 @@
 
 - Escribió Codex; revisa Claude; encargo y Anexo — Resultado en `specs/pulido-interfaz.md`; misma2.3.0, sin commit ni push.
 - Campana con movimiento breve ante avisos sin leer, detenida al abrir y con movimiento reducido; títulos legibles para avisos rojos antiguos y nuevos.
+- Retoque de frecuencia solicitado por el dueño, escribió Codex: ciclo de2,5 segundos en lugar de7, conservando la duración de la sacudida; caché CSS renovada; entregado, pendiente de revisión visual, sin suites completas.
 - Inicio conserva urgencias sin propietario identificado; Pendientes incluye las atenciones abiertas de hoy; aviso breve azul con acceso directo a Atención; RE-6.1.10 e Historial alineados.
 - Nueva urgencia abre todos los pacientes autorizados al tocar el buscador o Buscar paciente; mantiene selección/búsqueda y agrega icono/hover sin rediseñar.
 - Verificación dirigida:20 pruebas PHP/114 aserciones con SQLite; campana admin/vet y buscador a1366/390 en Chrome sin excepciones, sintaxis y diff correctos; sin suites completas ni base manual; aceptación del dueño y PDF/Word al cierre del bloque pendientes.

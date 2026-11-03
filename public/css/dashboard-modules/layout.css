@@ -379,12 +379,12 @@ a.cabecera-clinica:hover {
 .cabecera-cuenta .notif-btn[data-pendientes="true"][aria-expanded="false"] > .bi-bell {
     display: inline-block;
     transform-origin: 50% 15%;
-    animation: campana-aviso 7s ease-in-out infinite;
+    animation: campana-aviso 2.5s ease-in-out infinite;
 }
 @keyframes campana-aviso {
-    0%, 12%, 100% { transform: rotate(0); }
-    2%, 6%, 10% { transform: rotate(13deg); }
-    4%, 8% { transform: rotate(-13deg); }
+    0%, 34%, 100% { transform: rotate(0); }
+    6%, 17%, 28% { transform: rotate(13deg); }
+    11%, 22% { transform: rotate(-13deg); }
 }
 @media (prefers-reduced-motion: reduce) {
     .cabecera-cuenta .notif-btn[data-pendientes="true"][aria-expanded="false"] > .bi-bell {
