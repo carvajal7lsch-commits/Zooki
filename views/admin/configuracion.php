@@ -199,7 +199,8 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
             ['estadoSuscripcion' => $estadoSuscripcion, 'profesionalSuscripcion' => $profesionalSuscripcion,
                 'pagoDisponible' => $pagoDisponible, 'mensajePago' => $mensajePago, 'historialPagos' => $historialPagos,
                 'fuentePago' => $fuentePago, 'automaticoDisponible' => $automaticoDisponible, 'mensajeAutomatico' => $mensajeAutomatico,
-                'requiereAceptacion' => $requiereAceptacion, 'retornoPago' => $retornoPago, 'origenSuscripcion' => $origenSuscripcion] = $datosSuscripcion;
+                'requiereAceptacion' => $requiereAceptacion, 'retornoPago' => $retornoPago, 'origenSuscripcion' => $origenSuscripcion,
+                'ofertaLanzamientoDisponible' => $ofertaLanzamientoDisponible] = $datosSuscripcion;
             require __DIR__ . '/suscripcion.php';
             ?>
         </div>

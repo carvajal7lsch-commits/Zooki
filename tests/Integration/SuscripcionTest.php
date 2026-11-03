@@ -57,7 +57,7 @@ final class SuscripcionTest extends TestCase
         $this->assertSame('Profesional', $estado['plan_efectivo']['nombre']);
         $this->assertNull((new LimitePlan($this->db, 2))->resumen()['mascotas']['limite']);
         $r = (new MantenimientoSuscripciones($this->db, fn () => $this->ahora))->ejecutar(true);
-        $this->assertSame([2], $r['tarifas_personalizadas']);
+        $this->assertSame([], $r['tarifas_personalizadas'], 'El catálogo no se compara con un precio histórico fijo.');
         $this->assertSame(0, (int) $this->db->query('SELECT precio_mensual FROM planes WHERE id_plan=2')->fetchColumn());
     }
 

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/InicializadorClinica.php';
 require_once __DIR__ . '/ConsentimientoDatos.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/VerificacionEmail.php';
+require_once __DIR__ . '/CatalogoPlanes.php';
 
 /**
  * HU-0.1/0.2: excepción pública de plataforma. Ninguna lectura de negocio se
@@ -22,6 +23,11 @@ final class RegistroClinica
 
     public function __construct(private PDO $db)
     {
+    }
+
+    public function planProfesional(): array
+    {
+        return CatalogoPlanes::profesional($this->db);
     }
 
     /** RE-0.1.6: contador diario con fila única bloqueada; también serializa envíos concurrentes. */

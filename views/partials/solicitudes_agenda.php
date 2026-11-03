@@ -9,11 +9,10 @@
             <label class="ah-filtro"><span class="ah-oculto">Mostrar</span>
                 <select data-solicitudes-filtro><option value="0">Pendientes</option><option value="1">Revisadas</option></select>
             </label>
-            <button type="button" class="zk-icono" data-solicitudes-actualizar title="Actualizar" aria-label="Actualizar solicitudes"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
         </div>
     </header>
     <p class="ah-estado" data-solicitudes-error role="status"></p>
     <div class="ah-lista" data-solicitudes-lista data-vacio="No hay solicitudes en esta vista."></div>
 </section>
 <script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-<script src="js/agenda-solicitudes.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/agenda-solicitudes.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-solicitudes.js'), 0, 12) ?>"></script>

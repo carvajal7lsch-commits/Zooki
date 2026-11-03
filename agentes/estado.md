@@ -6,6 +6,37 @@
 
 ## Ahora
 
+### M0-S — Precio Profesional y oferta de lanzamiento — entregada, pendiente de revisión (2026-11-02)
+
+- Escribió Codex; revisa Claude; decisión y anexo en `specs/M0-S-suscripcion-pagos.md`; misma2.3.0, sin commit ni push.
+- Catálogo único en planes:40.000 COP/mes y400.000 COP/año; migración19 repetible y semilla sin sobrescritura; cron sin comparar ni imponer tarifas históricas; órdenes anteriores conservan el monto.
+- Primer pago mensual aprobado sin aprobados previos concede2 meses bajo el bloqueo por clínica y auditoría; siguientes1 y anual12; interruptor único `TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA`; oferta oculta tras un aprobado, también al consultar estado.
+- Verificación autorizada:68 pruebas/780 aserciones en las seis clases solicitadas; ocho aperturas Chrome de Suscripción disponible/usada, portada y registro a1366×768 y390×844 sin excepciones; SQLite efímero y Wompi falso, sin cobros reales ni `.env`.
+- BaseV2MysqlTest y su proceso de concurrencia actualizados para tarifa nueva, oferta y migración19; no ejecutados, quedan para CI conforme al alcance; sin suites completas ni cambios de la base manual.
+- RN/HU/RE, ROI, Ficha, Visión, Modelos e Historial actualizados; seis pares PDF/Word del portal regenerados y al día; diagrama de acreditación renderizado (18 nodos); Visión/Modelos conservan su publicación actual.
+- ROI bruto: equilibrio operativo medio con2 clínicas; inversión recuperable en12 meses con15 mensuales nuevas con oferta,14 sin oferta o16 anuales; pendientes revisión de Claude y aceptación del dueño.
+
+### HU-4.19 — Inicio tardío por Sala — entregada, pendiente de revisión (2026-11-02)
+
+- Escribió Codex; revisa Claude; decisión aprobada y Anexo — Resultado en `specs/M4-agenda-grafo-ii.md`.
+- El modelo relee llegada y tolerancia bajo el coordinador y rechaza iniciar directamente una reserva tardía sin cambiar estado ni sello; Calendario ofrece Resolver en Sala y Atención Ir a Sala; las atenciones anteriores sin_cerrar conservan Registrar consulta.
+- Sala muestra No asistió cuando corresponde y mantiene siguiente hueco/reprogramar; enlaces enfocan el caso y conservan la pestaña pedida aunque carguen otros pendientes; llegada puntual no se penaliza por demora del veterinario.
+- Verificación dirigida:59 pruebas PHP/272 aserciones; reglas, botones y enlace directo probados en JS; Chrome real a1366×768 y390×844 contra semilla temporal `zooki_test_base_v2`, sin excepciones; sin suites completas ni datos manuales tocados.
+- RN-426, RE-4.19.3, Modelos e Historial2.3.0 alineados; diagrama renderizado (88 nodos); pendientes revisión de Claude y aceptación del dueño; sin migración, cambio de versión, commit ni push.
+
+### Pendientes — buscador único, revisión compacta y recarga automática — entregada, pendiente de revisión (2026-11-02)
+
+- Escribió Codex; contrato y anexo en `specs/pulido-interfaz.md`; Nueva urgencia busca por mascota/propietario/cédula con un solo campo; datos autorizados por clínica y vínculo activo.
+- Revisar nivel con campos de38px; cuatro bandejas sin Recargar, sincronizadas cada10 segundos sin sustituir formularios abiertos o en edición ni solapar consultas.
+- Verificación:12 pruebas JS dirigidas correctas y Chrome a1366×768/390×844 contra semilla en motor temporal `zooki_test_base_v2`; búsquedas y recarga correctas, texto conservado y consola sin excepciones; sin suites completas ni cambios de datos manuales.
+- Revisión de llegadas: registrar presencia tarde está permitido por RN-426; reservas de otro día no pueden iniciarse y atenciones antiguas sin_cerrar sí pueden completarse por RN-409; acceso directo de inicio tardío corregido en la entrega HU-4.19 posterior, tras aprobación del dueño.
+- Pendientes: revisión de Claude y aceptación visual del dueño; misma2.3.0, sin commit ni push.
+
+### Limpieza local de urgencias de prueba (2026-11-02)
+
+- Ejecutó Codex por confirmación expresa del dueño: eliminadas7 urgencias de Clínica Sur en el XAMPP local, sus7 ingresos y fichas provisionales y una cita urgente sin consulta; comprobadas cero urgencias activas y cero pausas abiertas; la cita anterior10 figura sin_cerrar en la lectura final, con recálculo pendiente.
+- Respaldo previo en `scratch/urgencias-local-antes-20261102-190420.sql`; operación transaccional limitada a los registros revisados; sin cambios del código de la aplicación ni lectura o escritura de `.env`.
+
 ### HU-4.15 — Urgencia presencial directa — entregada, pendiente de revisión (2026-11-02)
 
 - Escribió Codex; revisa Claude (arquitecto); contrato y anexo en `specs/M4-agenda-grafo-ii.md`; sustituye los criterios anteriores de elección del tipo desde JavaScript.

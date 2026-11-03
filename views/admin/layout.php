@@ -152,7 +152,7 @@
     <?php if (!empty($datosSuscripcion['pagoDisponible'])): ?>
     <script src="https://checkout.wompi.co/widget.js"></script>
     <?php endif; ?>
-    <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/suscripcion.js'), 0, 12) ?>"></script>
     <script src="js/suscripcion-pantalla.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/fuente-suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>

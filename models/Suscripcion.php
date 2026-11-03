@@ -4,6 +4,7 @@ require_once __DIR__ . '/../helpers/TarifaSuscripcion.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorPlataforma.php';
 require_once __DIR__ . '/Auditoria.php';
+require_once __DIR__ . '/CatalogoPlanes.php';
 
 /** HU-0.5: única lectura contractual/efectiva, también para cuotas e Inicio. */
 final class Suscripcion
@@ -39,8 +40,14 @@ final class Suscripcion
 
     public function profesional(): array
     {
-        return $this->db->query("SELECT * FROM planes WHERE nombre='Profesional'")->fetch(PDO::FETCH_ASSOC)
-            ?: throw new RuntimeException('Falta el plan profesional.');
+        return CatalogoPlanes::profesional($this->db);
+    }
+
+    public function tienePagosAprobados(?int $excluir = null): bool
+    {
+        $q = $this->db->prepare("SELECT 1 FROM pagos_suscripcion p WHERE p.id_clinica=? AND (? IS NULL OR p.id_pago<>?) AND (p.estado='confirmado' OR EXISTS (SELECT 1 FROM intentos_pago i WHERE i.id_pago=p.id_pago AND i.estado='aprobado')) LIMIT 1");
+        $q->execute([$this->clinica, $excluir, $excluir]);
+        return (bool)$q->fetchColumn();
     }
 
     public function bloqueada(callable $operacion): mixed

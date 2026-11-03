@@ -22,6 +22,20 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testMigracion19PreciosRepetibleYSemillaSinSobrescribir(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("UPDATE planes SET precio_mensual=89990,precio_anual=899900 WHERE nombre='Profesional'");
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->assertSame([40000, 400000], array_map('intval', $this->db->query("SELECT precio_mensual,precio_anual FROM planes WHERE nombre='Profesional'")->fetch(PDO::FETCH_NUM)));
+        $this->db->exec("UPDATE planes SET precio_mensual=45000 WHERE nombre='Profesional'");
+        $this->cargar('02_semilla.sql');
+        $this->assertSame(45000, (int)$this->db->query("SELECT precio_mensual FROM planes WHERE nombre='Profesional'")->fetchColumn());
+        $this->assertSame(0, (int)$this->db->query("SELECT precio_mensual FROM planes WHERE nombre='Gratuito'")->fetchColumn());
+    }
+
     public function testMigracion18RazasYCargaRealSonRepetibles(): void
     {
         $this->cargar('01_schema.sql');
@@ -156,7 +170,7 @@ class BaseV2MysqlTest extends TestCase
             putenv('APP_URL');
         }
         if ($fase !== 'checkout_workers') {
-            $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+            $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso'));
         }
         $resultados = $this->competirS2($fase);
@@ -205,7 +219,7 @@ class BaseV2MysqlTest extends TestCase
         } finally {
             putenv('APP_URL');
         }
-        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
         foreach ([1, 2] as $timestamp) {
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
         }
@@ -292,7 +306,7 @@ class BaseV2MysqlTest extends TestCase
         $fuente = new FuentePago($this->db, 1, $cliente, ClienteWompiFalso::configuracion('test', '1', '1'), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
         $version = AutorizacionCobro::contratos($cliente->datosComercio)['version'];
         $fuente->guardar('CARD', 'tok_test_mysql', true, true, $version, 1);
-        $fuente->automatico(true, $version, 8999000, 1);
+        $fuente->automatico(true, $version, 4000000, 1);
     }
 
     public function testS3DosTrabajadoresUnSoloPost(): void
@@ -370,7 +384,7 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, $this->contar('pagos_suscripcion'));
         $this->assertSame(1, $this->contar('intentos_pago'));
         $this->assertSame(0, $this->contar('suscripcion_periodos'));
-        $this->assertSame(8999000, $resultados[0]['resultado']['total_centavos']);
+        $this->assertSame(4000000, $resultados[0]['resultado']['total_centavos']);
     }
 
     public function testS2DosEventosConcurrentesAcreditanUnaVezConAuditoria(): void
@@ -387,13 +401,13 @@ class BaseV2MysqlTest extends TestCase
         } finally {
             putenv($urlAnterior === false ? 'APP_URL' : 'APP_URL=' . $urlAnterior);
         }
-        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
         foreach ([1, 2] as $timestamp) {
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
         }
         $this->competirS2('acreditar');
         $this->assertSame(1, $this->contar('suscripcion_periodos'));
-        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2026-12-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado='procesado'")->fetchColumn());
         $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
@@ -522,7 +536,9 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('12_suscripcion_pagos.sql');
         $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertNull($this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=2')->fetchColumn());
-        $this->assertSame([89990,899900], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->assertSame([40000,400000], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
         $this->db->exec('UPDATE planes SET precio_mensual=123456,precio_anual=1234560 WHERE id_plan=2');
         $this->db->exec('ALTER TABLE clinicas DROP COLUMN aviso_vencimiento_2_dias');
         $this->db->exec('DROP TABLE wompi_eventos');
@@ -1173,7 +1189,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('05_limites_plan_gratuito.sql');
         $this->cargar('02_semilla.sql');
         $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
-        $this->assertSame(89990, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+        $this->assertSame(40000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
     }
 
     public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
@@ -1659,7 +1675,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql', '18_razas_mdr1.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql', '18_razas_mdr1.sql', '19_precios_lanzamiento.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

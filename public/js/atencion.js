@@ -213,6 +213,10 @@
         try {
             const r = await postJson('index.php?action=iniciar_cita_ajax', new URLSearchParams({ id_cita: idCita }));
             if (!r.success) {
+                if (r.campo === 'llegada') {
+                    globalThis.location.assign(`index.php?action=vet_agenda&resolver_llegada=${encodeURIComponent(idCita)}#llegadas`);
+                    return;
+                }
                 zookiAviso(r.message || 'No se pudo iniciar la atención.');
                 return;
             }

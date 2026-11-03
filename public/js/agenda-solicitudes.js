@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aviso = raiz.querySelector('[data-solicitudes-error]');
     const filtro = raiz.querySelector('[data-solicitudes-filtro]');
     let turno = 0;
+    let escribiendo = false;
     function elemento(tipo, texto) {
         const nodo = document.createElement(tipo);
         if (texto) nodo.textContent = texto;
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const anios = Math.floor(n / 12);
         return anios + (anios === 1 ? ' año' : ' años') + (n % 12 ? ' ' + (n % 12) + ' m' : '');
     }
-    async function cargar() {
+    async function cargar(automatica = false) {
         const actual = ++turno;
         aviso.textContent = '';
         try {
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 aviso.textContent = r.message;
                 return;
             }
+            if (automatica === true && panelAgendaEnEdicion(raiz)) return;
             lista.replaceChildren();
             const etiquetas = r.etiquetas || {};
             for (const caso of r.solicitudes) {
@@ -118,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const datos = new URLSearchParams({ id_solicitud: caso.id_solicitud, huella: caso.huella_entrada, nivel: nivel.value, motivo: motivo.value.trim() });
                         datos.set('clave_operacion', clave.clave(datos));
                         enviando = true;
+                        escribiendo = true;
                         aprobar.disabled = true;
                         try {
                             const respuesta = await (await fetch('index.php?action=revisar_triage_agenda_ajax', { method: 'POST', body: datos })).json();
@@ -127,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             mensaje.textContent = 'Respuesta no recibida. Reintenta la misma revisión.';
                         } finally {
                             enviando = false;
+                            escribiendo = false;
                             aprobar.disabled = !motivo.value.trim();
                         }
                     });
@@ -151,10 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (turno === actual) aviso.textContent = 'No se pudieron consultar las solicitudes.';
         }
     }
-    raiz.querySelector('[data-solicitudes-actualizar]').addEventListener('click', cargar);
     filtro.addEventListener('change', cargar);
-    // D: el panel de pestañas avisa al mostrarse (antes era un <details>).
-    raiz.addEventListener('agenda:mostrar', cargar);
+    sincronizarPanelAgenda(raiz, cargar, () => escribiendo);
 });
 
 const comandosOrdenC4 = new Map();

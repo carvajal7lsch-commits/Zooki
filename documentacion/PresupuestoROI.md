@@ -8,7 +8,10 @@
 
 ## 1. Resumen ejecutivo
 
-Zooki es un proyecto formativo desarrollado por un único aprendiz. Este documento separa dos cosas que suelen confundirse: **lo que costó construirlo** (la inversión) y **cuánto podría retornar** si se ofrece como servicio (SaaS) a varias clínicas. La inversión real de desarrollo es de **≈ $5.800.000 COP (~$1.772 USD)**. Con el precio del plan profesional ($100.000 COP/mes por clínica), la plataforma **recupera esa inversión dentro del primer año a partir de 6 clínicas de pago**; con 5 clínicas tarda unos 13 meses. Por encima de ese punto el retorno crece rápido, porque el costo de atender una clínica más es casi nulo.
+Zooki es un proyecto formativo de un único aprendiz, con una inversión estimada de **$5.800.000 COP (~$1.772 USD)**.
+Profesional cuesta **$40.000 COP/mes** o **$400.000 COP/año**.
+Con la oferta «Paga 1, lleva 2», una clínica nueva que paga mensualmente durante doce meses realiza once pagos ($440.000); el equilibrio operativo medio requiere dos clínicas y recuperar la inversión dentro del primer año requiere quince.
+Son proyecciones brutas con los costos existentes, antes de comisiones de pasarela y otros costos no cuantificados.
 
 ## 2. Inversión del proyecto (costo real)
 
@@ -54,10 +57,12 @@ Zooki v2.0 opera como plataforma multi-inquilino con una estrategia **freemium**
 
 | Plan | Precio (RN-008) | Qué incluye |
 |---|---|---|
-| Gratuito | $0 | Todas las capacidades, **incluidos los dos grafos en funcionamiento**, limitadas por **volumen**: 5 mascotas vinculadas, 30 citas por mes y 2 cuentas de personal (RN-003). |
-| Profesional | **$100.000 COP / mes por clínica** · **$960.000 COP / año** con pago anual anticipado (equivale a $80.000/mes, 20 % de descuento) | Las mismas capacidades **sin límites de volumen**. |
+| Gratuito | $0 | Todas las capacidades, **incluidos los dos grafos en funcionamiento**, limitadas por **volumen**: 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal (RN-003). |
+| Profesional | **$40.000 COP / mes por clínica** · **$400.000 COP / año** anticipado: dos meses gratis (equivale a $33.333,33/mes; ahorro del16,67 % frente a doce mensualidades) | Las mismas capacidades **sin límites de volumen**. |
 
-**Método de facturación.** El cobro es por **suscripción** (mensual, o anual con descuento). El **cobro real mediante pasarela de pago se pospone a una fase posterior** (RF-F.1); en la v2.0 el sistema gestiona el **estado del plan y sus límites** (RN-003), y congela los beneficios si la suscripción no está al día.
+**Método de facturación.** Suscripción mensual o anual con Wompi (HU-0.5), preservando importes de las órdenes existentes.
+La oferta de lanzamiento «Paga 1, lleva 2» concede dos meses calendario al primer pago mensual aprobado de cada clínica sin aprobados previos; no aplica al anual ni a pagos posteriores y puede apagarse en un único interruptor.
+No se cambia la inversión ni los costos de infraestructura de este estudio por modificar el precio.
 
 > A diferencia de un freemium que oculta lo principal, en Zooki el plan gratuito incluye los grafos funcionando para que la clínica compruebe su valor **antes** de pagar; lo que limita es el volumen. Ese es el gancho de conversión. Las capas avanzadas (aprendizaje del grafo con los datos de la propia clínica) se prevén para una versión posterior (RF-F.8) y serán un beneficio adicional del plan profesional.
 
@@ -65,27 +70,48 @@ Zooki v2.0 opera como plataforma multi-inquilino con una estrategia **freemium**
 
 ## 5. Proyección de retorno (ROI)
 
-**Supuestos:** inversión inicial $5.800.000 · plan profesional **$100.000/mes** por clínica (RN-008) · costo operativo de la plataforma ≈ $50.000/mes (hosting compartido, repartido entre todas las clínicas) · se consideran solo las clínicas de **pago**.
+**Supuestos:** inversión inicial $5.800.000; costo operativo compartido $50.000/mes ($600.000/año); todas las clínicas de pago entran al comienzo, permanecen doce meses y pagan oportunamente.
+La oferta está activa y ninguna tiene pagos aprobados previos.
+No se suman meses gratis al anual.
 
-| Clínicas de pago | Ingreso anual | Costo operativo anual | Utilidad anual | ROI 1.er año | Recuperación (payback) |
+| Modalidad | Cobros por clínica durante12 meses | Ingreso anual por clínica |
+|---|---|---|
+| Mensual con oferta inicial |11 pagos de $40.000; el primero cubre meses1 y2 | $440.000 |
+| Mensual sin oferta |12 pagos de $40.000 | $480.000 |
+| Anual anticipado |1 pago de $400.000 por12 meses | $400.000 |
+
+### Primer año mensual con oferta
+
+| Clínicas de pago | Ingreso anual | Costo operativo anual | Utilidad anual | ROI1.er año | Recuperación aproximada |
 |---|---|---|---|---|---|
-| 3 | $3.600.000 | $600.000 | $3.000.000 | −48% | ~23 meses |
-| 5 | $6.000.000 | $600.000 | $5.400.000 | −7% | ~13 meses |
-| 10 | $12.000.000 | $600.000 | $11.400.000 | +97% | ~6 meses |
-| 15 | $18.000.000 | $600.000 | $17.400.000 | +200% | ~4 meses |
-| 20 | $24.000.000 | $600.000 | $23.400.000 | +303% | ~3 meses |
+|3 | $1.320.000 | $600.000 | $720.000 | −87,6 % |85 meses |
+|5 | $2.200.000 | $600.000 | $1.600.000 | −72,4 % |40 meses |
+|10 | $4.400.000 | $600.000 | $3.800.000 | −34,5 % |18 meses |
+|15 | $6.600.000 | $600.000 | $6.000.000 | +3,4 % |12 meses |
+|20 | $8.800.000 | $600.000 | $8.200.000 | +41,4 % |9 meses |
 
-**Fórmulas usadas:**
-
-- Utilidad anual = Ingreso anual − Costo operativo anual.
-- ROI 1.er año = (Utilidad anual − Inversión inicial) ÷ Inversión inicial × 100.
-- Recuperación (meses) = Inversión inicial ÷ (ingreso mensual − costo operativo mensual).
-
-**Lectura.** Con 3 clínicas de pago la inversión tarda casi dos años en recuperarse, y con 5 apenas pasa del año (unos 13 meses). A partir de **6 clínicas** se recupera dentro del primer año, y de ahí hacia arriba el retorno crece rápido (con 20 clínicas el ROI del primer año supera el 300%), porque el costo marginal de atender una clínica más es casi nulo: la misma instancia multi-inquilino sirve a todas. Si las clínicas pagan el año por anticipado ($80.000 de mes efectivo), el ingreso baja un 20 % pero mejora la caja inicial.
+Utilidad anual = ingreso anual − $600.000.
+ROI del primer año = (utilidad anual − $5.800.000) ÷ $5.800.000 ×100.
+La recuperación aproximada de la cohorte mensual con oferta resuelve:40.000 × N × (m −1) −50.000 × m =5.800.000, para m≥2.
+Se redondea hacia arriba al mes completo y se supone permanencia también después del primer año cuando haga falta.
+No es una promesa de ingresos ni una estimación descontada; una adopción gradual o bajas alargan el plazo.
 
 ## 6. Punto de equilibrio
 
-Con los supuestos anteriores, el **punto de equilibrio operativo** (cubrir el costo mensual de la plataforma) se alcanza con **1 clínica de pago** ($100.000 > $50.000/mes). El **punto de equilibrio de la inversión** (recuperar los $5.800.000 dentro del primer año) se logra con **6 clínicas** que pagan mes a mes (unos 10,5 meses), o con **7** si todas pagan el año anticipado. Con 10 clínicas se recupera en unos 6 meses y con 20 en unos 3.
+El equilibrio operativo estable requiere **2 clínicas**:2 × $40.000 > $50.000 al mes.
+Con la oferta, el ingreso medio del primer año también cubre operación desde dos clínicas:2 × $440.000 > $600.000 al año.
+Durante los dos meses iniciales, el ingreso devengado equivale a $20.000/mes por clínica y se requieren **3 clínicas** para cubrir ese tramo.
+En caja, el segundo mes de la cohorte no tiene un nuevo pago: se debe reservar parte del cobro inicial para cubrirlo.
+El anual requiere dos clínicas para cubrir operación del año ($800.000 > $600.000), aunque se cobra anticipadamente.
+
+| Modalidad | Clínicas mínimas para recuperar inversión y operación en12 meses |
+|---|---|
+| Mensual con oferta |15: techo(($5.800.000 + $600.000) ÷ $440.000) |
+| Mensual sin oferta |14: techo(($5.800.000 + $600.000) ÷ $480.000) |
+| Anual anticipado |16: techo(($5.800.000 + $600.000) ÷ $400.000) |
+
+Con15 clínicas mensuales y oferta se obtiene una utilidad anual de $6.000.000, superior a la inversión de $5.800.000.
+El descuento anual es del16,67 % frente a doce mensualidades ordinarias; comparado con el primer año mensual promocional de $440.000, su ahorro es del9,09 %.
 
 ## 7. Supuestos y notas
 
@@ -94,7 +120,7 @@ Con los supuestos anteriores, el **punto de equilibrio operativo** (cubrir el co
 - Se supone que todas las clínicas de pago pagan desde el primer mes; una adopción gradual alarga la recuperación.
 - Montos en COP; USD a TRM $3.273 (5-oct-2026), solo de referencia.
 - El **costo operativo** y el **número de clínicas** son parámetros editables; cámbialos para ver otros escenarios.
-- No se incluye impuesto ni pasarela de pago (fase futura); tampoco costos de marketing o soporte, que escalarían con la adopción.
+- Proyección bruta: no se descuentan comisiones Wompi, costos de marketing, soporte ni otros costos no cuantificados; incorporarlos reduce ROI y puede elevar los umbrales. Los precios vigentes son total sin IVA según RN-008.
 - Los servicios externos se usan en su plan gratuito, que tiene topes: Brevo, por ejemplo, permite 300 correos al día. Con muchas clínicas los recordatorios superan ese tope y el costo operativo debe incluir un plan de pago de correo.
 - La ventaja económica del modelo SaaS multi-inquilino es que el costo de infraestructura se **comparte** entre todas las clínicas: sumar una clínica más casi no agrega costo.
 

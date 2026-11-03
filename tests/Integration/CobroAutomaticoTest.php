@@ -229,7 +229,7 @@ final class CobroAutomaticoTest extends TestCase
         $this->receptor(ClienteWompiFalso::cuerpo($tx));
         $this->receptor(ClienteWompiFalso::cuerpo($tx));
         $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
-        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2026-12-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
     }
 
     public function testApiCaidaDejaInboxDurableYConciliacionLoRetoma(): void
@@ -264,7 +264,7 @@ final class CobroAutomaticoTest extends TestCase
         $this->trabajador()->procesar(1);
         $this->confirmar('APPROVED');
         $this->assertNull($this->fuente()->actual());
-        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2026-12-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertCount(1, $this->posts());
     }
 

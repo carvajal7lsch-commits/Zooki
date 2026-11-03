@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/Turnstile.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/TarifaSuscripcion.php';
 
 final class RegistroClinicaController
 {
@@ -20,6 +21,7 @@ final class RegistroClinicaController
 
     public function formulario(): void
     {
+        $tarifasPublicas = TarifaSuscripcion::textos($this->registro->planProfesional(), true);
         // M0.1: resultado de un envío sin JavaScript (ver procesar()).
         $resultadoRegistro = $_SESSION['registro_clinica_resultado'] ?? null;
         unset($_SESSION['registro_clinica_resultado']);

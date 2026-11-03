@@ -17,9 +17,10 @@
         herramientas.before(marca);
         const orden = ['urgencias', 'triage', 'llegadas', 'reasignaciones'];
         const conteos = Object.fromEntries(orden.map(clave => [clave, 0]));
-        let vista = orden.some(clave => global.location.hash === '#' + clave) ? 'pendientes' : 'citas';
+        const pestanaPedida = orden.find(clave => global.location.hash === '#' + clave);
+        let vista = pestanaPedida ? 'pendientes' : 'citas';
         let esMovil = false;
-        let eleccionManual = false;
+        let eleccionManual = Boolean(pestanaPedida);
 
         const cantidad = selector => herramientas.querySelectorAll(selector).length;
         function elegirPrioridad() {
@@ -101,7 +102,8 @@
                 if (!movil) destino.append(herramientas);
                 if (movil) marcaRojo.after(rojo);
                 else destinoRojo.append(rojo);
-                mostrarVista(vista);
+                // Un enlace directo a Sala expresa una elección; el conteo de otra bandeja no la sustituye.
+                mostrarVista(vista, !pestanaPedida);
             }
         };
         // La bandeja de triage es diferida; se consulta también para contarla antes de abrir sus tarjetas.

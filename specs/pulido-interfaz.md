@@ -1314,3 +1314,22 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Atender ahora abre Atención directamente; pausa y prioridad solo solicitan motivo cuando el servidor lo exige, en el mismo modal; el reintento conserva llegada y datos.
 - Verificación dirigida autorizada:6 pruebas/31 aserciones y cuatro recorridos reales a1366×768 y390×844 con Identificar después y Rocco, sin excepciones de consola; sin suites completas ni capturas comparativas.
 - RN-427, RE-4.15.2/4/5 y diagrama actualizados; PDF/Word de Reglas, Requisitos e Historial al día; Modelos conserva sus descargas actuales por decisión del dueño; pendiente revisión de Claude y del dueño.
+
+### Pendientes — buscador, revisión compacta y actualización automática (2026-11-02)
+
+- Encargo del dueño: Nueva urgencia con un solo buscador de mascota, propietario o cédula; quitar el selector adicional y mostrar coincidencias para elegir, manteniendo la identificación posterior y los permisos existentes (HU-4.15, RNF-11, RN-115).
+- Corregir el alto excesivo de los campos al desplegar Revisar nivel, sin rediseñar las tarjetas; quitar Recargar de Rojos, Triage, Sala y Reasignar y sincronizar cada10 segundos y después de acciones, conservando formularios en edición.
+- Revisión solicitada de llegadas y citas antiguas: RN-426 permite registrar la presencia del mismo día fuera de tolerancia, ofreciendo siguiente hueco/reprogramar/no asistió; RN-407 impide iniciar una cita de otro día y RN-409 permite completar una atención anterior sin cerrar; no se cambia esa política sin decisión del dueño.
+- Escribe Codex; revisión de Claude y aceptación visual del dueño pendientes; verificación dirigida de lo tocado, sin suites completas ni cambios de versión.
+
+#### Anexo — Resultado
+
+- Escribió Codex; interfaz entregada, pendiente de revisión de Claude y del dueño.
+- Buscador único con resultados por mascota, propietario o cédula; confirma la selección, permite teclado y muestra ausencia de coincidencias; documento limitado al vínculo activo de la clínica (RN-115).
+- Revisar nivel: eliminada la conversión accidental de flex-basis horizontal a alturas de130/200px; campos de38px, formulario de126px en escritorio y132px en celular, sin reducir tipografía.
+- Rojos, Triage, Sala y Reasignar: sin Recargar; sincronización cada10 segundos, al volver a la pestaña y tras acciones; sin consultas solapadas ni reemplazo de campos en edición, tampoco si la edición comienza durante la consulta.
+- Verificación:12 pruebas JS dirigidas correctas; Chrome real a1366×768 y390×844 con semilla en motor temporal `zooki_test_base_v2`, búsquedas por los tres criterios, validación de selección y conservación del texto durante la recarga; consola sin excepciones; evidencia en `scratch/r/pendientes-buscador/resultado.json`.
+- Revisión temporal: el servidor rechaza iniciar reservas de otro día; sin_cerrar permite terminar una atención anterior (RN-409); la llegada tardía conserva su hecho real y las alternativas de RN-426.
+- Hallazgo adicional: iniciar desde el calendario permitía omitir la decisión de Sala tras superar la tolerancia; el dueño aprobó corregirlo después de esta entrega; resultado posterior en `specs/M4-agenda-grafo-ii.md`, HU-4.19 — Inicio tardío por Sala.
+- Sin suites completas, cambios de datos manuales, `.env`, migración, commit ni push; aceptación visual pendiente.
+- Historial2.3.0 actualizado; solo su PDF/Word regenerados y comprobados al día; motor y servidor temporales detenidos tras la comprobación.

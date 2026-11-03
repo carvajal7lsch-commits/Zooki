@@ -38,11 +38,11 @@ async function pagina(rol, ejecutar) {
         await navegador.enviar('Page.setDocumentContent',{frameId:arbol.frameTree.frame.id,html:`<!doctype html><html><body>${html}</body></html>`});
         await navegador.esperar("document.readyState === 'complete'");
         await navegador.evaluar(`window.__lecturas=[];window.__escrituras=[];
-          window.__catalogos={mascotas:[{id_mascota:1,id_propietario:6,nombre:'Luna'}],propietarios:[{id_usuario:6,nombre_completo:'Fabio'}],tipos:[{id_tipo_cita:1,nombre_tipo:'Consulta'}],especies:[{id_especie:1,nombre_especie:'Canino'}],razas:[{id_raza:49,id_especie:1,nombre_raza:'Sin raza definida'}]};
+          window.__catalogos={mascotas:[{id_mascota:1,id_propietario:6,nombre:'Luna',propietario:'Fabio',documento_propietario:'12345678'}],propietarios:[{id_usuario:6,nombre_completo:'Fabio'}],tipos:[{id_tipo_cita:1,nombre_tipo:'Consulta'}],especies:[{id_especie:1,nombre_especie:'Canino'}],razas:[{id_raza:49,id_especie:1,nombre_raza:'Sin raza definida'}]};
           window.fetch=(url,opciones)=>new Promise(resolve=>{
             (opciones ? __escrituras : __lecturas).push({url,resolve,body:opciones?.body});
           });`);
-        for (const archivo of ['comando-agenda','configuracion-clinica','urgencias-agenda','ausencias-agenda']) await navegador.evaluar(fs.readFileSync(path.join(__dirname,`../../public/js/${archivo}.js`),'utf8'));
+        for (const archivo of ['agenda-herramientas','dialogos-zooki','comando-agenda','configuracion-clinica','urgencias-agenda','ausencias-agenda']) await navegador.evaluar(fs.readFileSync(path.join(__dirname,`../../public/js/${archivo}.js`),'utf8'));
         await navegador.esperar('__lecturas.length >= 2');
         await navegador.evaluar(`for(const q of __lecturas) q.resolve({ok:true,json:async()=>q.url.includes('listar_urgencias')?{success:true,catalogos:__catalogos,rojos:[],ingresos:[]}:q.url.includes('coordinacion')?{success:true,veterinarios:[{id_usuario:2,nombre_completo:'Beto'}]}:{success:true,ausencias:[]}});`);
         await ejecutar(navegador);
@@ -53,21 +53,21 @@ async function pagina(rol, ejecutar) {
 }
 
 const chrome = { skip:buscarChrome() ? false : 'Sin Chrome para el DOM aislado' };
-test('C7 DOM real: provisional, campos opcionales, restricción, doble envío y replay tras respuesta perdida',chrome,async () => {
+test('C7 DOM real: llegada provisional, doble envío y replay tras respuesta perdida',chrome,async () => {
     await pagina('vet',async n => {
-        await n.esperar("document.querySelector('[name=id_mascota]').options.length===2");
+        await n.esperar("document.querySelector('[data-urgencia-resultados] [data-paciente]')");
         await n.evaluar(`var f=document.querySelector('[data-ingreso-rojo]');
             f.elements.identidad.value='provisional';f.elements.identidad.dispatchEvent(new Event('change',{bubbles:true}));
             f.elements.motivo.value='Rojo clínico';f.elements.motivo.dispatchEvent(new Event('input',{bubbles:true}));
-            f.dispatchEvent(new Event('submit',{cancelable:true}));f.dispatchEvent(new Event('submit',{cancelable:true}));`);
+            f.querySelector('[data-ingreso-solo-llegada]').click();f.querySelector('[data-ingreso-solo-llegada]').click();`);
         assert.equal(await n.evaluar('__escrituras.length'),1);
         assert.equal(await n.evaluar("__escrituras[0].body.has('id_mascota')"),false);
-        assert.equal(await n.evaluar("__escrituras[0].body.get('nombre_acompanante')"),'');
+        assert.equal(await n.evaluar("__escrituras[0].body.has('nombre_acompanante')"),false);
         await n.evaluar("__escrituras[0].resolve({ok:false,json:async()=>({success:false,message:'Respuesta perdida'})})");
         await n.esperar("!document.querySelector('[data-ingreso-rojo] [type=submit]').disabled");
-        await n.evaluar("document.querySelector('[data-ingreso-rojo]').dispatchEvent(new Event('submit',{cancelable:true}))");
+        await n.evaluar("document.querySelector('[data-ingreso-solo-llegada]').click()");
         assert.equal(await n.evaluar("__escrituras[0].body.get('clave_operacion')===__escrituras[1].body.get('clave_operacion')"),true);
-        await n.evaluar("__escrituras[1].resolve({ok:true,json:async()=>({success:true,message:'Llegada registrada'})})");
+        await n.evaluar("__escrituras[1].resolve({ok:true,json:async()=>({success:true,resultado:{id_solicitud:3},message:'Llegada registrada'})})");
         await n.esperar('__lecturas.length>=3');
         await n.evaluar(`__lecturas.at(-1).resolve({ok:true,json:async()=>({success:true,catalogos:__catalogos,rojos:[{id_solicitud:3,id_mascota:9,nombre:'<img src=x onerror=error()>',fecha_llegada:'2030-01-07 09:00:00',estado:'espera_presencial'}],ingresos:[]})})`);
         await n.esperar("document.querySelector('[data-rojos-lista] h3') !== null");

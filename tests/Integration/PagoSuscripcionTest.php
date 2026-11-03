@@ -72,6 +72,55 @@ final class PagoSuscripcionTest extends TestCase
         return (new ConciliadorPago($this->db, $this->cliente, $this->config, fn () => $this->ahora))->procesar($id);
     }
 
+    public static function ofertaLanzamiento(): array
+    {
+        return ['primer mensual' => ['mensual', true, '2026-12-25 00:00:00', 2],
+            'anual' => ['anual', true, '2027-10-25 00:00:00', 12],
+            'oferta apagada' => ['mensual', false, '2026-11-25 00:00:00', 1]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('ofertaLanzamiento')]
+    public function testOfertaPrimerPagoSegundoPagoAnualYApagado(string $ciclo, bool $activa, string $fin, int $meses): void
+    {
+        $this->db->exec('UPDATE planes SET precio_mensual=40000,precio_anual=400000 WHERE id_plan=2');
+        $orden = $this->reservar($ciclo);
+        $this->assertSame($ciclo === 'anual' ? 40000000 : 4000000, $orden['total_centavos']);
+        $tx = $this->remoto($orden);
+        $this->cliente->respuestas['tx_1'] = $tx;
+        $evento = $this->evento($tx);
+        $conciliador = new ConciliadorPago($this->db, $this->cliente, $this->config, fn () => $this->ahora, $activa);
+        $this->assertTrue($conciliador->procesar($evento));
+        $this->assertSame($fin, $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $auditoria = json_decode($this->db->query("SELECT datos_nuevos FROM auditoria_sistema WHERE tabla_afectada='pagos_suscripcion' ORDER BY id_auditoria DESC LIMIT 1")->fetchColumn(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame($meses, $auditoria['meses_concedidos']);
+        $this->assertSame($meses === 2 ? 'paga_1_lleva_2' : null, $auditoria['oferta_lanzamiento']);
+        $this->assertFalse((new Suscripcion($this->db, 2))->tienePagosAprobados(), 'El pago de Norte no consume la oferta de Sur.');
+        $this->conciliar($this->evento($tx, 2));
+        $this->assertSame(1, (int)$this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
+        $otra = $this->pagos()->reservar('mensual', 1, 1);
+        $tx2 = $this->remoto($otra, 'tx_segundo');
+        $this->cliente->respuestas['tx_segundo'] = $tx2;
+        $this->assertTrue($conciliador->procesar($this->evento($tx2, 3)));
+        $this->assertSame(VigenciaSuscripcion::extender(VigenciaSuscripcion::fecha($fin), 'mensual', 25)->format('Y-m-d H:i:s'), $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+    }
+
+    public function testCheckoutAnteriorConservaImporteTrasMigrarPrecioYElCronNoLoRevierte(): void
+    {
+        require_once __DIR__ . '/../../helpers/MantenimientoSuscripciones.php';
+        $orden = $this->reservar();
+        $this->assertSame(8999000, $orden['total_centavos'], 'Orden anterior a la migración.');
+        $this->db->exec('UPDATE planes SET precio_mensual=40000,precio_anual=400000 WHERE id_plan=2');
+        $tx = $this->remoto($orden);
+        $this->cliente->respuestas['tx_1'] = $tx;
+        $this->assertTrue($this->conciliar($this->evento($tx)));
+        $this->assertSame(8999000, (int)$this->db->query('SELECT total_centavos FROM pagos_suscripcion')->fetchColumn());
+        (new MantenimientoSuscripciones($this->db, fn () => $this->ahora))->ejecutar(false, 'vencimientos');
+        $this->assertSame([40000, 400000], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
+        $this->assertTrue((new Suscripcion($this->db, 1))->tienePagosAprobados());
+        $textos = TarifaSuscripcion::textos((new Suscripcion($this->db, 1))->profesional(), false);
+        $this->assertStringNotContainsString('Oferta de lanzamiento', $textos['mensual']);
+    }
+
     public function testAncla31CambioDeCicloYTarifaAnteriorSeConservan(): void
     {
         $this->ahora = VigenciaSuscripcion::fecha('2027-02-20 08:00:00');
@@ -81,15 +130,15 @@ final class PagoSuscripcionTest extends TestCase
         $tx = $this->remoto($orden);
         $this->cliente->respuestas['tx_1'] = $tx;
         $this->assertTrue($this->conciliar($this->evento($tx)));
-        $this->assertSame('2027-03-31 00:00:00', $this->db->query('SELECT fin FROM suscripcion_periodos')->fetchColumn());
+        $this->assertSame('2027-04-30 00:00:00', $this->db->query('SELECT fin FROM suscripcion_periodos')->fetchColumn());
         $this->assertSame(8999000, (int) $this->db->query('SELECT total_centavos FROM pagos_suscripcion')->fetchColumn());
         $this->assertSame('2027-01-31 00:00:00', $this->db->query('SELECT periodo_inicio FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $anual = $this->pagos()->reservar('anual', 1, 1);
         $tx = $this->remoto($anual, 'anual');
         $this->cliente->respuestas['anual'] = $tx;
         $this->conciliar($this->evento($tx, 2));
-        $this->assertSame('2028-03-31 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
-        $this->assertSame('2027-03-31 00:00:00', $this->db->query('SELECT inicio FROM suscripcion_periodos ORDER BY id_periodo DESC LIMIT 1')->fetchColumn());
+        $this->assertSame('2028-04-30 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2027-04-30 00:00:00', $this->db->query('SELECT inicio FROM suscripcion_periodos ORDER BY id_periodo DESC LIMIT 1')->fetchColumn());
     }
 
     #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
@@ -189,7 +238,7 @@ final class PagoSuscripcionTest extends TestCase
         $id = $this->evento($tx);
         $this->cliente->respuestas['tx_1'] = $tx;
         $this->assertTrue($this->conciliar($id));
-        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2026-12-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertFalse($this->conciliar($id));
         $this->assertFalse((new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso')) && $this->conciliar($id));
         $otro = $this->evento($tx, 2);

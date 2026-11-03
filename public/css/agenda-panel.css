@@ -257,7 +257,50 @@
 }
 .urgencia-rapida__paciente {
     display: grid;
-    gap: 12px;
+    gap: 6px;
+}
+.urgencia-rapida__resultados {
+    display: grid;
+    max-height: 210px;
+    overflow-y: auto;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+}
+.urgencia-rapida__resultados[hidden] {
+    display: none;
+}
+.urgencia-rapida__resultados button {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--z-text);
+    font: inherit;
+    font-size: .85rem;
+    text-align: left;
+    cursor: pointer;
+}
+.urgencia-rapida__resultados button:hover,
+.urgencia-rapida__resultados button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+}
+.urgencia-rapida__resultados button span,
+.urgencia-rapida__resultados p {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .75rem;
+}
+.urgencia-rapida__resultados p {
+    padding: 12px;
+}
+.urgencia-rapida__resultados button strong,
+.urgencia-rapida__resultados button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .urgencia-rapida__excepcion {
     display: grid;
@@ -420,6 +463,17 @@
 }
 .ah-tarjeta__desplegable .ah-item__form label {
     flex: none;
+}
+/* El flex-basis horizontal heredado se convertía en130/200px de alto al plegar la revisión. */
+.ah-tarjeta__desplegable .ah-item__form > select,
+.ah-tarjeta__desplegable .ah-item__form > input {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+}
+.ah-tarjeta__desplegable .ah-item__form > button {
+    align-self: flex-start;
 }
 .ah-tarjetas__nota {
     margin: 0;

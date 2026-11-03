@@ -30,6 +30,11 @@ function preparar() {
     const contexto = {
         document: { querySelector: () => bloque, createElement: () => new Elemento(), addEventListener: (_, fn) => { iniciar = fn; } },
         FormData,
+        sincronizarPanelAgenda: (_, cargar) => {
+            actualizar.eventos.refrescar = cargar;
+            cargar();
+        },
+        panelAgendaEnEdicion: () => false,
         zookiCrearComandoAgenda: () => crearComando(() => new Uint8Array(32).fill(++secuencia)),
         fetch: (url, opciones) => {
             llamadas.push({ url, opciones });
@@ -80,7 +85,7 @@ test('C5 bloquea doble envío y conserva clave al perder la respuesta', async ()
 test('C5 descarta respuestas y errores de una lectura anterior', async () => {
     const p = preparar();
     const antigua = p.pendientes.shift();
-    const nueva = p.actualizar.eventos.click();
+    const nueva = p.actualizar.eventos.refrescar();
     p.pendientes.shift().resolver({ success: true, propuestas: [propuesta] });
     await nueva;
     antigua.rechazar(new Error('Error obsoleto'));

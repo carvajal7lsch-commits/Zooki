@@ -31,6 +31,10 @@
                 </div>
 
                 <ul class="lp-hero__trust">
+                    <?php if (isset($tarifasPublicas)): ?>
+                    <li><?= htmlspecialchars($tarifasPublicas['mensual'], ENT_QUOTES, 'UTF-8') ?></li>
+                    <li><?= htmlspecialchars($tarifasPublicas['anual'], ENT_QUOTES, 'UTF-8') ?></li>
+                    <?php endif; ?>
                     <li><i class="ri-shield-check-line" aria-hidden="true"></i> Acceso por roles</li>
                     <li><i class="ri-lock-2-line" aria-hidden="true"></i> Contraseñas cifradas</li>
                     <li><i class="ri-file-list-3-line" aria-hidden="true"></i> Auditoría completa</li>

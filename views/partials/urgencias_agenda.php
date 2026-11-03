@@ -15,7 +15,6 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
             <?php if ($esVetUrgencia): ?>
             <button type="button" class="zk-btn zk-btn--peligro" data-abrir-dialogo="dialogoRojo"><i class="fas fa-plus" aria-hidden="true"></i> Urgencia</button>
             <?php endif; ?>
-            <button type="button" class="zk-icono" data-urgencias-actualizar title="Actualizar" aria-label="Actualizar urgencias"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
         </div>
     </header>
     <div data-urgencias-csrf hidden><?php Csrf::field(); ?></div>
@@ -48,8 +47,11 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
                 </div>
                 <p class="urgencia-rapida__ayuda" data-identidad-provisional>Puedes completar la identificación del paciente después.</p>
                 <div class="urgencia-rapida__paciente" data-identidad-conocida hidden>
-                    <label>Buscar por nombre <input type="search" data-urgencia-buscar autocomplete="off" placeholder="Nombre del paciente"></label>
-                    <label>Paciente <select name="id_mascota" required disabled><option value="">Elige el paciente</option></select><span data-error-campo="id_mascota" aria-live="polite"></span></label>
+                    <input type="hidden" name="id_mascota" value="" disabled>
+                    <label for="urgenciaBuscarPaciente">Buscar paciente</label>
+                    <input id="urgenciaBuscarPaciente" type="search" data-urgencia-buscar autocomplete="off" placeholder="Mascota, propietario o cédula" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="urgenciaPacientes" aria-describedby="urgenciaPacienteError">
+                    <div id="urgenciaPacientes" class="urgencia-rapida__resultados" role="listbox" aria-label="Pacientes encontrados" data-urgencia-resultados hidden></div>
+                    <span id="urgenciaPacienteError" data-error-campo="id_mascota" aria-live="polite"></span>
                 </div>
                 <div class="urgencia-rapida__excepcion" data-ingreso-excepcion hidden>
                     <p class="urgencia-rapida__ayuda" data-ingreso-excepcion-titulo></p>

@@ -18,6 +18,7 @@ $paginaHistorial = static fn (int $pagina): string => EnlaceAjustes::suscripcion
 $medioTexto = $fuentePago ? ($fuentePago['tipo'] === 'NEQUI' ? 'Nequi' : (($fuentePago['marca'] ?: 'Tarjeta') . ($fuentePago['ultimos_cuatro'] ? ' · termina en ' . $fuentePago['ultimos_cuatro'] : ''))) : 'No tienes un medio guardado.';
 $automaticoActivo = $fuentePago && (int) $fuentePago['cobro_automatico'] === 1;
 $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['precio_mensual'] * 10;
+$textosTarifa = TarifaSuscripcion::textos($profesional, !empty($ofertaLanzamientoDisponible));
 ?>
 <?php // Rediseño v2 (aprobado 2026-10-26): «Mi plan» e «Historial de pagos» en pestañas; pagar y el medio de pago en ventanas. ?>
 <section class="suscripcion" aria-label="Suscripción" data-suscripcion-pantalla data-suscripcion-origen="<?= $h($origenSuscripcion) ?>" data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
@@ -83,7 +84,8 @@ $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['pre
                 <div class="suscripcion__accion">
                     <div class="suscripcion__accion-texto">
                         <p class="suscripcion__accion-titulo">Renovar el plan</p>
-                        <p class="suscripcion__ayuda"><?= $h($monto($profesional['precio_mensual'])) ?> al mes o <?= $h($monto($profesional['precio_anual'])) ?> al año<?= $anualConAhorro ? ' (paga 10, usa 12)' : '' ?></p>
+                        <p class="suscripcion__ayuda" data-tarifa-mensual data-sin-oferta="<?= $h(TarifaSuscripcion::textos($profesional, false)['mensual']) ?>"><?= $h($textosTarifa['mensual']) ?></p>
+                        <p class="suscripcion__ayuda"><?= $h($textosTarifa['anual']) ?></p>
                     </div>
                     <button type="button" class="suscripcion__abrir-renovar" data-abrir-dialogo="suscripcionRenovarDialogo" aria-haspopup="dialog"><i class="fas fa-credit-card" aria-hidden="true"></i>Pagar o renovar</button>
                 </div>
@@ -210,10 +212,13 @@ $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['pre
                     </label>
                     <label class="suscripcion__ciclo">
                         <input type="radio" name="suscripcion_ciclo" value="anual" data-total="<?= $h($monto($profesional['precio_anual'])) ?>" data-unidad="COP / año">
-                        <span class="suscripcion__ciclo-nombre">Anual<?php if ($anualConAhorro): ?> <span class="suscripcion__ahorro">paga 10, usa 12</span><?php endif; ?></span>
+                        <span class="suscripcion__ciclo-nombre">Anual<?php if ($anualConAhorro): ?> <span class="suscripcion__ahorro">2 meses gratis</span><?php endif; ?></span>
                         <span class="suscripcion__ciclo-precio"><?= $h($monto($profesional['precio_anual'])) ?></span>
                     </label>
                 </fieldset>
+                <?php if (!empty($ofertaLanzamientoDisponible)): ?>
+                <p class="suscripcion__ayuda" data-oferta-lanzamiento>Paga 1, lleva 2: solo tu primer pago mensual aprobado incluye otro mes gratis; no aplica al anual.</p>
+                <?php endif; ?>
                 <p class="suscripcion__total"><span>Total a pagar</span><span><strong data-suscripcion-total><?= $h($monto($profesional['precio_mensual'])) ?></strong> <span data-suscripcion-unidad>COP / mes</span></span></p>
                 <p class="suscripcion__ayuda">Un cambio de precio conserva los periodos ya comprados. Wompi se abre a pantalla completa y al terminar vuelves aquí.</p>
                 <p id="suscripcionMensaje" class="suscripcion__ayuda suscripcion__mensaje" role="status" aria-live="polite"><?= $h($mensajePago ?? 'Disponible pronto') ?></p>

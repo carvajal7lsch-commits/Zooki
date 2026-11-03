@@ -160,6 +160,10 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 - **Valoración referencial de mercado** (si se contratara externamente, todos los roles: Scrum Master, Frontend, Backend, BD & DevOps y QA): las mismas 145 h a la tarifa de cada rol ≈ **$6.430.000 COP**. El aprendiz cobra todos los roles a tarifa de junior.
 - **Infraestructura y herramientas.** Servidor propio (VPS), MySQL, almacenamiento en filesystem, PHPMailer con Brevo, Algolia, Cloudflare Turnstile, Google Identity, GitHub y Docker/Dokploy: propios o en su plan gratuito.
 
+Profesional: **$40.000 COP/mes o $400.000 COP/año (2 meses gratis)**, según RN-008.
+La oferta de lanzamiento concede dos meses al primer pago mensual aprobado sin pagos aprobados previos; se puede apagar desde un único interruptor.
+Con los supuestos del presupuesto (sin comisiones), el equilibrio operativo requiere dos clínicas; recuperar la inversión en el primer año con la oferta requiere quince clínicas de pago.
+
 ## 10. Resultados Esperados e Impacto
 
 - Reducción cercana al 90% en el uso de papel para historias clínicas.

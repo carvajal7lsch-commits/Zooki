@@ -79,6 +79,14 @@
                 entrada.setAttribute('aria-invalid', error ? 'true' : 'false');
                 valido = valido && !error;
             });
+            if (form.hasAttribute('data-ingreso-rojo')) {
+                const paciente = form.elements.namedItem('id_mascota');
+                const faltaPaciente = !paciente.disabled && !paciente.value;
+                const buscador = form.querySelector('[data-urgencia-buscar]');
+                form.querySelector('[data-error-campo="id_mascota"]').textContent = faltaPaciente && (buscador.dataset.tocado || form.dataset.intento) ? 'Selecciona un paciente de los resultados.' : '';
+                buscador.setAttribute('aria-invalid', String(faltaPaciente && Boolean(buscador.dataset.tocado || form.dataset.intento)));
+                valido = valido && !faltaPaciente;
+            }
             form.querySelector('[type="submit"]').disabled = escribiendo || !valido;
             const soloLlegada = form.querySelector('[data-ingreso-solo-llegada]');
             if (soloLlegada) soloLlegada.disabled = escribiendo || !valido;
@@ -269,15 +277,38 @@
         }
 
         function llenarPacientesIngreso(form) {
-            const select = form.elements.namedItem('id_mascota');
-            const previo = select.value;
-            const busqueda = normalizarNombre(form.querySelector('[data-urgencia-buscar]').value);
-            const pacientes = (catalogos?.mascotas || []).filter(mascota => normalizarNombre(mascota.nombre).includes(busqueda));
-            opciones(select, pacientes, 'id_mascota', 'nombre');
-            select.value = previo;
+            const buscador = form.querySelector('[data-urgencia-buscar]');
+            const resultados = form.querySelector('[data-urgencia-resultados]');
+            const busqueda = normalizarNombre(buscador.value);
+            const pacientes = (catalogos?.mascotas || []).filter(mascota => [mascota.nombre, mascota.propietario, mascota.documento_propietario].some(valor => normalizarNombre(valor).includes(busqueda))).slice(0, 8);
+            resultados.replaceChildren();
+            buscador.removeAttribute('aria-activedescendant');
+            if (!catalogos || !pacientes.length) texto(resultados, 'p', catalogos ? 'No hay pacientes que coincidan.' : 'Cargando pacientes…');
+            pacientes.forEach(mascota => {
+                const boton = texto(resultados, 'button', '');
+                boton.type = 'button';
+                boton.id = `urgenciaPaciente-${mascota.id_mascota}`;
+                boton.dataset.paciente = mascota.id_mascota;
+                boton.setAttribute('role', 'option');
+                boton.setAttribute('aria-selected', 'false');
+                boton.tabIndex = -1;
+                texto(boton, 'strong', mascota.nombre);
+                texto(boton, 'span', [mascota.propietario, mascota.documento_propietario].filter(Boolean).join(' · '));
+                boton.addEventListener('click', () => {
+                    form.elements.namedItem('id_mascota').value = mascota.id_mascota;
+                    buscador.value = [mascota.nombre, mascota.propietario].filter(Boolean).join(' · ');
+                    buscador.dataset.tocado = '1';
+                    resultados.hidden = true;
+                    buscador.setAttribute('aria-expanded', 'false');
+                    buscador.removeAttribute('aria-activedescendant');
+                    validar(form);
+                });
+            });
+            resultados.hidden = document.activeElement !== buscador || form.elements.namedItem('identidad').value !== 'conocida';
+            buscador.setAttribute('aria-expanded', String(!resultados.hidden));
         }
 
-        async function recargar() {
+        async function recargar(automatica = false) {
             const turno = ++lectura;
             const respuesta = await global.fetch('index.php?action=listar_urgencias_ajax');
             const datos = await respuesta.json();
@@ -289,6 +320,7 @@
                 llenarPacientesIngreso(form);
                 validar(form);
             }
+            if (automatica && panelAgendaEnEdicion(raiz)) return;
             rojos(datos.rojos, datos.ingresos);
             ingresos(datos.ingresos);
         }
@@ -526,7 +558,9 @@
                 ingreso.querySelector('[data-identidad-provisional]').hidden = !provisional;
                 const conocida = ingreso.querySelector('[data-identidad-conocida]');
                 conocida.hidden = provisional;
-                conocida.querySelector('select').disabled = provisional;
+                ingreso.elements.namedItem('id_mascota').disabled = provisional;
+                ingreso.querySelector('[data-urgencia-resultados]').hidden = true;
+                ingreso.querySelector('[data-urgencia-buscar]').setAttribute('aria-expanded', 'false');
                 ingreso.querySelectorAll('[data-urgencia-identidad]').forEach(boton => {
                     boton.setAttribute('aria-pressed', String(boton.dataset.urgenciaIdentidad === ingreso.elements.namedItem('identidad').value));
                 });
@@ -539,17 +573,47 @@
                     if (boton.dataset.urgenciaIdentidad === 'conocida') ingreso.querySelector('[data-urgencia-buscar]').focus();
                 });
             });
-            ingreso.querySelector('[data-urgencia-buscar]').addEventListener('input', () => {
+            const buscador = ingreso.querySelector('[data-urgencia-buscar]');
+            buscador.addEventListener('input', () => {
+                ingreso.elements.namedItem('id_mascota').value = '';
+                buscador.dataset.tocado = '1';
                 llenarPacientesIngreso(ingreso);
                 validar(ingreso);
+            });
+            buscador.addEventListener('focus', () => llenarPacientesIngreso(ingreso));
+            buscador.addEventListener('keydown', evento => {
+                const resultados = ingreso.querySelector('[data-urgencia-resultados]');
+                if (evento.key === 'Escape' && !resultados.hidden) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    resultados.hidden = true;
+                    buscador.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+                if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(evento.key)) return;
+                evento.preventDefault();
+                if (resultados.hidden) llenarPacientesIngreso(ingreso);
+                const opciones = Array.from(resultados.querySelectorAll('[role="option"]'));
+                if (!opciones.length) return;
+                const actual = opciones.findIndex(opcion => opcion.id === buscador.getAttribute('aria-activedescendant'));
+                if (evento.key === 'Enter') {
+                    if (actual >= 0) opciones[actual].click();
+                    return;
+                }
+                const siguiente = actual < 0 ? (evento.key === 'ArrowDown' ? 0 : opciones.length - 1) : (actual + (evento.key === 'ArrowDown' ? 1 : -1) + opciones.length) % opciones.length;
+                opciones.forEach((opcion, indice) => opcion.setAttribute('aria-selected', String(indice === siguiente)));
+                buscador.setAttribute('aria-activedescendant', opciones[siguiente].id);
+                opciones[siguiente].scrollIntoView({ block: 'nearest' });
+            });
+            document.addEventListener('click', evento => {
+                if (evento.target === buscador || evento.target.closest('[data-urgencia-resultados]')) return;
+                ingreso.querySelector('[data-urgencia-resultados]').hidden = true;
+                buscador.setAttribute('aria-expanded', 'false');
             });
             // RNF-16: desde la barra puede abrirse con Pendientes oculto; el diálogo nativo debe tener caja visible.
             document.body.append(ingreso.closest('dialog'));
         }
-        raiz.querySelector('[data-urgencias-actualizar]').addEventListener('click', () => {
-            if (!escribiendo) recargar().catch(error => { aviso.textContent = error.message; });
-        });
-        recargar().catch(error => { aviso.textContent = error.message; });
+        sincronizarPanelAgenda(raiz, automatica => recargar(automatica).catch(error => { aviso.textContent = error.message; }), () => escribiendo);
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);

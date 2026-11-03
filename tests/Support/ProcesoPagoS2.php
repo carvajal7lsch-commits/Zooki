@@ -54,7 +54,7 @@ try {
         $cliente = new ClienteWompiFalso();
         $referencia = $db->query('SELECT referencia FROM intentos_pago ORDER BY id_intento LIMIT 1')->fetchColumn();
         $cliente->porReferencia[$referencia] = [];
-        $cliente->respuestas['tx_simultanea'] = ['id' => 'tx_simultanea', 'status' => 'APPROVED', 'reference' => $referencia, 'currency' => 'COP', 'amount_in_cents' => 8999000];
+        $cliente->respuestas['tx_simultanea'] = ['id' => 'tx_simultanea', 'status' => 'APPROVED', 'reference' => $referencia, 'currency' => 'COP', 'amount_in_cents' => (int)$db->query('SELECT total_centavos FROM pagos_suscripcion ORDER BY id_pago LIMIT 1')->fetchColumn()];
         $cliente->antesDeConsultar = static function () use ($db): void {
             if ($db->inTransaction()) {
                 throw new RuntimeException('HTTP dentro del candado.');
@@ -86,7 +86,7 @@ try {
     } else {
         $cliente = new ClienteWompiFalso();
         $referencia = $db->query('SELECT referencia FROM intentos_pago ORDER BY id_intento LIMIT 1')->fetchColumn();
-        $cliente->respuestas['tx_simultanea'] = ['id' => 'tx_simultanea', 'status' => 'APPROVED', 'reference' => $referencia, 'currency' => 'COP', 'amount_in_cents' => 8999000];
+        $cliente->respuestas['tx_simultanea'] = ['id' => 'tx_simultanea', 'status' => 'APPROVED', 'reference' => $referencia, 'currency' => 'COP', 'amount_in_cents' => (int)$db->query('SELECT total_centavos FROM pagos_suscripcion ORDER BY id_pago LIMIT 1')->fetchColumn()];
         $cliente->antesDeConsultar = static function () use ($db): void {
             if ($db->inTransaction()) {
                 throw new RuntimeException('GET con transacción abierta.');

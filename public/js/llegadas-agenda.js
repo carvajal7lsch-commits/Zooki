@@ -20,6 +20,17 @@
         const aviso = raiz.querySelector('[data-llegadas-aviso]');
         let lectura = 0;
         let escribiendo = false;
+        let citaPedida = new URLSearchParams(global.location.search).get('resolver_llegada');
+
+        function enfocarCitaPedida() {
+            if (!/^[1-9]\d*$/.test(String(citaPedida))) return;
+            const tarjeta = raiz.querySelector(`[data-llegada-cita="${citaPedida}"]`);
+            if (!tarjeta || raiz.hidden) return;
+            aviso.textContent = 'Resuelve esta cita desde Sala: registra la llegada real si corresponde y elige siguiente hueco o reprogramar. Si no vino, marca «No asistió».';
+            tarjeta.scrollIntoView({ block: 'nearest' });
+            tarjeta.querySelector('button')?.focus({ preventScroll: true });
+            citaPedida = null;
+        }
 
         function texto(padre, tipo, contenido) {
             const nodo = document.createElement(tipo);
@@ -121,7 +132,8 @@
                 ++lectura;
                 raiz.querySelectorAll('button').forEach(b => { b.disabled = true; });
                 try {
-                    const r = await (await fetch(`index.php?action=${accion}_llegada_ajax`, { method: 'POST', body: cuerpo })).json();
+                    const destino = accion.endsWith('_ajax') ? accion : `${accion}_llegada_ajax`;
+                    const r = await (await fetch(`index.php?action=${destino}`, { method: 'POST', body: cuerpo })).json();
                     if (!r.success) throw new Error(r.message || 'No se pudo guardar.');
                     aviso.textContent = r.message;
                     comando.reiniciar();
@@ -165,19 +177,22 @@
             });
         }
 
-        async function recargar() {
+        async function recargar(automatica = false) {
             const turno = ++lectura;
             try {
                 const r = await (await fetch('index.php?action=listar_llegadas_ajax')).json();
                 if (turno !== lectura) return;
                 if (!r.success) throw new Error(r.message || 'No se pudo consultar.');
+                if (automatica && panelAgendaEnEdicion(raiz)) return;
                 for (const nombre of ['citas', 'solicitudes', 'espera', 'historial']) raiz.querySelector(`[data-llegadas-${nombre}]`).replaceChildren();
                 r.resultado.citas.forEach(c => {
                     const tarjeta = item(raiz.querySelector('[data-llegadas-citas]'), `${hora(c.hora)} · ${c.mascota || 'Cita ' + c.id_cita}`, c.prioridad, c.origen === 'llegada_sin_reserva' ? 'Llegada sin reserva' : 'Con reserva');
-                    formulario(tarjeta, 'Registrar llegada', 'registrar', { id_cita: c.id_cita }, () => {}, (resultado, form) => {
+                    tarjeta.dataset.llegadaCita = String(c.id_cita);
+                    formulario(tarjeta, c.hora_llegada ? 'Resolver llegada' : 'Registrar llegada', 'registrar', { id_cita: c.id_cita }, () => {}, (resultado, form) => {
                         form.remove();
                         decisiones(tarjeta, c.id_cita, resultado.opciones);
                     });
+                    if (c.llegada_tardia) formulario(tarjeta, 'No asistió', 'marcar_no_asistio_ajax', { id_cita: c.id_cita }, () => {}, null, true);
                     const ajuste = texto(tarjeta, 'details', '');
                     ajuste.className = 'ah-mini';
                     texto(ajuste, 'summary', 'Ajustar nivel');
@@ -221,13 +236,17 @@
                     const linea = texto(raiz.querySelector('[data-llegadas-historial]'), 'p', `${fechaHora(h.fecha_hora)} · Cita ${h.registro_id} · ${NIVELES[antes.nivel_anterior] || antes.nivel_anterior || '—'} → ${NIVELES[despues.nivel_ajustado] || despues.nivel_ajustado || '—'}${despues.motivo ? ' · ' + despues.motivo : ''}`);
                     linea.className = 'ah-item__meta';
                 });
+                enfocarCitaPedida();
             } catch (error) {
                 if (turno === lectura) aviso.textContent = error.message;
             }
         }
 
         global.__vetLlegada = raiz.dataset.veterinario;
-        raiz.querySelector('[data-llegadas-actualizar]').addEventListener('click', () => { if (!escribiendo) recargar(); });
-        recargar();
+        document.addEventListener('agenda:resolver-llegada', evento => {
+            citaPedida = evento.detail.idCita;
+            enfocarCitaPedida();
+        });
+        sincronizarPanelAgenda(raiz, recargar, () => escribiendo);
     });
 })(globalThis);

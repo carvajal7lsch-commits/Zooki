@@ -323,6 +323,53 @@ final class AgendaPeticionesTest extends TestCase
         $this->assertSame('en_curso', $this->db->query("SELECT estado FROM citas WHERE id_cita = $id")->fetchColumn());
     }
 
+    public static function iniciosSegunLlegada(): array
+    {
+        return [
+            'limite exacto' => ['09:10:00', null, 10, true],
+            'un segundo tarde' => ['09:10:01', null, 10, false],
+            'cinco horas tarde' => ['14:00:00', null, 10, false],
+            'tolerancia configurada' => ['09:15:00', null, 20, true],
+            'llegada puntual con demora del veterinario' => ['09:30:00', '09:08:00', 10, true],
+            'llegada real tardia' => ['09:30:00', '09:15:00', 10, false],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('iniciosSegunLlegada')]
+    public function testInicioDirectoRespetaToleranciaYHoraReal(string $hora, ?string $llegada, int $tolerancia, bool $permitido): void
+    {
+        $reserva = $this->agendar();
+        $id = (int)$reserva['id_cita'];
+        $this->db->prepare('UPDATE clinicas SET tolerancia_llegada_min=? WHERE id_clinica=1')->execute([$tolerancia]);
+        $this->db->prepare('UPDATE citas SET hora_llegada=? WHERE id_cita=? AND id_clinica=1')->execute([$llegada === null ? null : self::FECHA . ' ' . $llegada, $id]);
+        $this->ahora = self::FECHA . ' ' . $hora;
+        $_POST = ['id_cita' => (string)$id];
+        $resultado = $this->ejecutar(fn (CitaController $c) => $c->iniciarAtencionAjax());
+        $this->assertSame($permitido, $resultado['success']);
+        if (!$permitido) {
+            $this->assertSame(422, http_response_code());
+            $this->assertSame('llegada', $resultado['campo']);
+            $this->assertStringContainsString('Sala', $resultado['message']);
+            $this->assertNull($this->db->query('SELECT hora_inicio_real FROM citas WHERE id_cita=' . $id)->fetchColumn());
+        }
+        $this->assertSame($permitido ? 'en_curso' : 'confirmada', $this->db->query('SELECT estado FROM citas WHERE id_cita=' . $id)->fetchColumn());
+    }
+
+    public function testAtencionAntiguaSinCerrarSeRetomaSinNuevoInicio(): void
+    {
+        $reserva = $this->agendar();
+        $id = (int)$reserva['id_cita'];
+        $this->db->prepare("UPDATE citas SET estado='sin_cerrar',hora_inicio_real=? WHERE id_cita=? AND id_clinica=1")->execute([self::FECHA . ' 09:00:00', $id]);
+        $this->ahora = '2030-02-07 19:00:00';
+        $_POST = ['id_cita' => (string)$id];
+        $resultado = $this->ejecutar(fn (CitaController $c) => $c->iniciarAtencionAjax());
+        $this->assertTrue($resultado['success']);
+        $this->assertStringContainsString('vet_atencion', $resultado['redirect_url']);
+        $cita = $this->db->query('SELECT estado,hora_inicio_real FROM citas WHERE id_cita=' . $id)->fetch(PDO::FETCH_ASSOC);
+        $this->assertSame('sin_cerrar', $cita['estado']);
+        $this->assertSame(self::FECHA . ' 09:00:00', $cita['hora_inicio_real']);
+    }
+
     // ── RN-G02: el propietario ──────────────────────────────────────────
 
     public function testElPropietarioSoloCancelaCitasDeSusMascotasConVinculoActivo(): void

@@ -10,7 +10,8 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
     {
         $this->autorizar([Roles::ADMIN,Roles::VETERINARIO]);
         return [
-            'mascotas'=>$this->filas("SELECT m.id_mascota,m.id_propietario,m.nombre FROM mascotas m JOIN usuarios u ON u.id_usuario=m.id_propietario AND u.estado=1 JOIN propietario_clinica pc ON pc.id_propietario=m.id_propietario AND pc.id_clinica=? AND pc.estado='activo' LEFT JOIN mascota_clinica mc ON mc.id_mascota=m.id_mascota AND mc.id_clinica=pc.id_clinica WHERE m.estado=1 AND m.ficha_por_completar=0 AND (mc.estado='activo' OR mc.id_mascota IS NULL) ORDER BY m.nombre,m.id_mascota",[$this->clinica()]),
+            // RN-115: documento y propietario solo con su vínculo activo en la clínica del contexto.
+            'mascotas'=>$this->filas("SELECT m.id_mascota,m.id_propietario,m.nombre,u.nombre_completo AS propietario,u.documento AS documento_propietario FROM mascotas m JOIN usuarios u ON u.id_usuario=m.id_propietario AND u.estado=1 JOIN propietario_clinica pc ON pc.id_propietario=m.id_propietario AND pc.id_clinica=? AND pc.estado='activo' LEFT JOIN mascota_clinica mc ON mc.id_mascota=m.id_mascota AND mc.id_clinica=pc.id_clinica WHERE m.estado=1 AND m.ficha_por_completar=0 AND (mc.estado='activo' OR mc.id_mascota IS NULL) ORDER BY m.nombre,m.id_mascota",[$this->clinica()]),
             'propietarios'=>$this->filas("SELECT u.id_usuario,u.nombre_completo FROM usuarios u JOIN propietario_clinica pc ON pc.id_propietario=u.id_usuario WHERE pc.id_clinica=? AND pc.estado='activo' AND u.estado=1 ORDER BY u.nombre_completo,u.id_usuario",[$this->clinica()]),
             'tipos'=>$this->filas('SELECT id_tipo_cita,nombre_tipo FROM tipos_cita WHERE id_clinica=? AND activo=1 ORDER BY id_tipo_cita',[$this->clinica()]),
             'especies'=>$this->filas('SELECT id_especie,nombre_especie FROM especies ORDER BY id_especie'),

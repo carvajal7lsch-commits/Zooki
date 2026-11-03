@@ -10,6 +10,7 @@ require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 require_once __DIR__ . '/../helpers/ReglaAtencion.php';
 require_once __DIR__ . '/../helpers/ReglaCambioCita.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 
 /**
  * C3: disponibilidad única y escritura coordinada sobre el modelo v2. Cada cita es de un
@@ -56,7 +57,7 @@ class Cita extends ModeloClinica
                 ' . ContactoPropietario::columna('p.email', 'pcv', 'email') . ',
                 ' . ContactoPropietario::columna('p.telefono', 'pcv', 'propietario_telefono') . ',
                 tc.nombre_tipo AS tipo_cita_nombre,
-                cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion, cl.url_logo AS clinica_logo,
+                cl.tolerancia_llegada_min, cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion, cl.url_logo AS clinica_logo,
                 cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
@@ -503,6 +504,10 @@ class Cita extends ModeloClinica
                 require_once __DIR__ . '/UrgenciaAgenda.php';
                 $urgencias = new UrgenciaAgenda($this->conn, static fn () => IntervalosAgenda::fecha($ahora));
                 if (str_starts_with($cambio, "estado='en_curso'") && in_array($actual['estado'], self::ESTADOS_ABIERTOS, true)) {
+                    // RE-4.19.3: ni una petición directa ni una instantánea antigua omiten la decisión de Sala.
+                    if (ReglaAtencion::llegadaFueraDeTolerancia($actual, (int)$actual['tolerancia_llegada_min'], IntervalosAgenda::fecha($ahora))) {
+                        throw new CampoInvalido('llegada', 'Resuelve la llegada desde Sala.', 'La cita superó la tolerancia de llegada. Resuélvela desde Sala: siguiente hueco, reprogramar o «No asistió».');
+                    }
                     $urgencias->exigirInicioOrdinario((int) $actual['id_veterinario']);
                 }
                 $ok = $this->transicion($actual, $estados, $cambio . ",estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1", [$ahora]);

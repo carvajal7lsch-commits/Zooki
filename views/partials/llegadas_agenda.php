@@ -5,9 +5,6 @@
             <h3>Llegadas de hoy</h3>
             <p>Registrar la llegada no inicia la atención. Un rojo se recibe por Urgencias.</p>
         </div>
-        <div class="ah-acciones">
-            <button type="button" class="zk-icono" data-llegadas-actualizar title="Actualizar" aria-label="Actualizar llegadas"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
-        </div>
     </header>
     <div data-llegadas-csrf hidden><?php Csrf::field(); ?></div>
     <p class="ah-estado" role="status" data-llegadas-aviso></p>
@@ -28,5 +25,5 @@
         <div class="ah-lista" data-llegadas-historial data-vacio="Sin reclasificaciones."></div>
     </details>
 </section>
-<script src="js/llegadas-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="js/llegadas-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/llegadas-agenda.js'), 0, 12) ?>" defer></script>
 <?php endif; ?>

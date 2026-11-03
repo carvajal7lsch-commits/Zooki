@@ -155,10 +155,15 @@ El borrador local se guarda por clínica, cita y veterinario, con procedencia de
 flowchart TD
   A([Veterinario va a atender]) --> B{Como atiende?}
 
-  B -- Desde una cita (calendario) --> C{"Puede iniciar? Es el vet asignado, es el dia de la cita, faltan 15 min o menos e identidad/version son vigentes (RN-407)"}
+  B -- Desde una cita (calendario) --> ABI{"Atencion ya iniciada o sin cerrar?"}
+  ABI -- Si --> CTX
+  ABI -- No --> C{"Puede iniciar? Es el vet asignado, es el dia de la cita, faltan 15 min o menos e identidad/version son vigentes (RN-407)"}
   C -- No --> C1[/"Mensaje: no puede iniciar esta atencion"/]
   C1 --> ZF([Fin])
-  C -- Si --> D[Iniciar atencion y sellar hora_inicio_real]
+  C -- Si --> TAR{"Llegada real o, si falta, hora actual supera tolerancia de clinica?"}
+  TAR -- Si --> SAL["Resolver en Sala: siguiente hueco, reprogramar o No asistio; no iniciar desde Calendario/Atencion/API (RN-426)"]
+  SAL --> ZF
+  TAR -- No --> D[Iniciar atencion y sellar hora_inicio_real]
   D --> CTX
 
   B -- "Sin reserva / urgencia" --> PR{"Presencia fisica acreditada?"}
@@ -1540,7 +1545,7 @@ flowchart TD
   LOCK -- "Orden cerrada: aprobado tardio" --> REV
   P -- "Mismo pago" --> DUP["No-op; evento procesado"]
   P -- "Otro cargo" --> REV
-  P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nReservar recibo por pago y destinatario; auditar; commit"]
+  P -- No --> TX["Primer pago mensual sin aprobados previos y oferta activa: 2 meses; mensual posterior 1; anual 12\nInsertar periodo unico; auditar oferta; actualizar vigencia y plan\nReservar recibo por pago y destinatario; auditar; commit"]
   TX --> FIN["Suspension administrativa intacta"]
 ```
 

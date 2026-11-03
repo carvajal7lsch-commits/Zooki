@@ -149,6 +149,8 @@ class CitaController
             'tipo' => 'cita',
             'fecha' => $cita['fecha'],
             'hora' => $cita['hora'],
+            'hora_llegada' => $cita['hora_llegada'],
+            'tolerancia_llegada_min' => (int)$cita['tolerancia_llegada_min'],
             'estado' => $cita['estado'],
             'motivo' => $cita['motivo'],
             'id_veterinario' => (int) $cita['id_veterinario'],
@@ -513,6 +515,7 @@ class CitaController
         $ahora = $this->ahora();
         // RN-407: la vista solo ofrece «Iniciar atención» desde 15 minutos antes.
         $esDiaDeLaCita = ReglaAtencion::puedeIniciar($cita['fecha'], $cita['hora'], $ahora);
+        $inicioRequiereSala = ReglaAtencion::llegadaFueraDeTolerancia($cita, (int)$cita['tolerancia_llegada_min'], $ahora);
 
         $mascota = (new Mascota($this->db))->getById($cita['id_mascota']);
         $consultaModel = new Consulta($this->db);

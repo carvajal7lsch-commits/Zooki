@@ -19,7 +19,7 @@ $enCurso = in_array($estadoActual, ['en_curso', 'sin_cerrar'], true);
 $abierta = in_array($estadoActual, ['pendiente', 'confirmada'], true);
 // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora
 // ($esDiaDeLaCita viene del controlador con esa regla ya aplicada).
-$porIniciar = $abierta && $esDiaDeLaCita;
+$porIniciar = $abierta && $esDiaDeLaCita && empty($inicioRequiereSala);
 $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);
 $nombrePropietario = (string) (($propietario['nombre_completo'] ?? '') ?: ($mascota['propietario_nombre'] ?? ''));
 $hoyIso = date('Y-m-d');
@@ -111,6 +111,12 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                         <button type="button" class="atencion__btn atencion__btn--primario" id="btnIniciarAtencion">
                             <i class="fas fa-play"></i> Iniciar atención
                         </button>
+                    </div>
+                <?php elseif ($abierta && !empty($inicioRequiereSala)): ?>
+                    <div class="atencion__aviso">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>La cita superó la tolerancia de llegada. Resuélvela desde Sala: siguiente hueco, reprogramar o «No asistió».</span>
+                        <a class="atencion__btn atencion__btn--primario" href="index.php?action=vet_agenda&amp;resolver_llegada=<?= (int)$cita['id_cita'] ?>#llegadas">Ir a Sala</a>
                     </div>
                 <?php elseif ($abierta): ?>
                     <div class="atencion__aviso">

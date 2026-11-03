@@ -276,6 +276,8 @@ async function cargarEventos(info, exito, fallo) {
                     propietario_nombre: e.propietario_nombre || '',
                     tipo_cita_nombre: e.tipo_cita_nombre || '',
                     inicio_estimado: e.inicio_estimado || '',
+                    hora_llegada: e.hora_llegada || '',
+                    tolerancia_llegada_min: e.tolerancia_llegada_min,
                     fin_estimado: e.fin_estimado || '',
                     estado_reajuste: e.estado_reajuste || '',
                     prioridad: e.prioridad || '',
@@ -595,6 +597,24 @@ function itemPanel(ev) {
         </button>`;
 }
 
+function llegadaCitaTardia(ev, ahora = new Date()) {
+    const minutos = Number(ev.extendedProps.tolerancia_llegada_min);
+    if (!Number.isInteger(minutos) || minutos < 0) return false;
+    const sello = ev.extendedProps.hora_llegada;
+    const llegada = sello ? new Date(String(sello).replace(' ', 'T')) : ahora;
+    return llegada.getTime() > ev.start.getTime() + minutos * 60000;
+}
+
+function irASalaCita(idCita) {
+    const detalle = document.getElementById('agendaDetalleMovil');
+    if (detalle?.open) detalle.close();
+    document.querySelector('[data-agenda-vista="pendientes"]')?.click();
+    const pestana = document.querySelector('[data-agenda-tab="llegadas"]');
+    pestana?.click();
+    pestana?.focus();
+    document.dispatchEvent(new CustomEvent('agenda:resolver-llegada', { detail: { idCita } }));
+}
+
 function mostrarDetalleCita(eventId) {
     const ev = calendarInstance && calendarInstance.getEventById(eventId);
     if (!ev) { renderPanelDia(); return; }
@@ -617,8 +637,9 @@ function mostrarDetalleCita(eventId) {
     // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora.
     const iniciaDesde = new Date(ev.start.getTime() - MINUTOS_ANTES_DE_INICIAR * 60000);
     const enDiaDeInicio = esSuCita && abierta && esHoy(ev.start);
-    const puedeIniciar = enDiaDeInicio && new Date() >= iniciaDesde;
-    const esperaInicio = enDiaDeInicio && !puedeIniciar;
+    const requiereSala = enDiaDeInicio && llegadaCitaTardia(ev);
+    const puedeIniciar = enDiaDeInicio && !requiereSala && new Date() >= iniciaDesde;
+    const esperaInicio = enDiaDeInicio && new Date() < iniciaDesde;
     // RN-409: una atención abierta se completa registrando su consulta
     const puedeContinuar = esSuCita && enAtencion;
     const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
@@ -627,6 +648,7 @@ function mostrarDetalleCita(eventId) {
 
     // Una sola acción principal, según el estado; el resto, secundarias.
     const primaria = puedeIniciar ? ['iniciar', 'fa-play', 'Iniciar atención']
+        : requiereSala ? ['sala', 'fa-door-open', 'Resolver en Sala']
         : esperaInicio ? ['esperar', 'fa-clock', `Disponible desde las ${formatHora(iniciaDesde)}`]
         : puedeContinuar ? ['continuar', 'fa-stethoscope', estado === 'sin_cerrar' ? 'Registrar consulta' : 'Continuar atención']
         : puedeConfirmar ? ['confirmar', 'fa-check', 'Confirmar cita']
@@ -703,6 +725,7 @@ function manejarClicPanel(e) {
         case 'detalle': mostrarDetalleCita(id); break;
         case 'volver': renderPanelDia(); break;
         case 'iniciar': iniciarAtencionCita(id); break;
+        case 'sala': irASalaCita(id); break;
         case 'continuar': continuarAtencionCita(id); break;
         case 'confirmar': confirmarCita(id); break;
         case 'reprogramar': abrirModalReprogramar(id); break;
@@ -726,6 +749,10 @@ async function iniciarAtencionCita(idCita) {
     try {
         const r = await postCita('iniciar_cita_ajax', { id_cita: idCita });
         if (!r.success) {
+            if (r.campo === 'llegada') {
+                irASalaCita(idCita);
+                return;
+            }
             mostrarToast(r.message || 'No se pudo iniciar la atención.', 'error');
             return;
         }

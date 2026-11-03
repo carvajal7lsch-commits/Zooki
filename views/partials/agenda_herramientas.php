@@ -7,7 +7,7 @@ $esVetHerramientas = Contexto::rolActivo() === Roles::VETERINARIO;
 if (!empty($agendaAdminIntegrada) && !$esVetHerramientas) {
     require __DIR__ . '/solicitudes_agenda.php';
     require __DIR__ . '/urgencias_agenda.php';
-    echo '<script src="js/agenda-herramientas.js?v=' . htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') . '"></script>';
+    echo '<script src="js/agenda-herramientas.js?v=' . htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') . '&amp;r=' . substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-herramientas.js'), 0, 12) . '"></script>';
     return;
 }
 $pestanasAgenda = ['triage' => ['Triage', 'fas fa-stethoscope']];
@@ -48,4 +48,4 @@ if ($esVetHerramientas) {
 </section>
 <script src="js/agenda-tarjetas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-tarjetas.js'), 0, 12) ?>"></script>
 <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-<script src="js/agenda-herramientas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/agenda-herramientas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-herramientas.js'), 0, 12) ?>"></script>

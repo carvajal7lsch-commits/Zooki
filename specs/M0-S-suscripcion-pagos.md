@@ -1,5 +1,30 @@
 # M0-S — Suscripción y cobro con Wompi
 
+## Decisión del dueño — precios y lanzamiento (2026-11-02, 2.3.0)
+
+- Sustituye los precios históricos de este plan: Profesional40.000 COP/mes y400.000 COP/año, equivalente a pagar10 meses y usar12 («2 meses gratis»).
+- «Paga1, lleva2»: al acreditar el primer pago mensual aprobado de una clínica sin pagos aprobados previos, concede2 meses calendario; segundo pago1 mes, anual12 meses; concesiones manuales no son pagos.
+- Un interruptor único de plataforma permite apagar la oferta; se comprueba al acreditar bajo el candado de clínica y se auditan oferta y meses concedidos; un replay conserva el periodo único.
+- Precio vigente solo desde planes en la base; migración19 repetible actualiza Profesional y02_semilla solo inserta; cron sin comparación con una tarifa histórica; órdenes anteriores conservan su importe registrado.
+- Suscripción del administrador oculta la oferta cuando hay un pago aprobado previo; portada y registro anuncian precios del mismo catálogo; no se cambia el diseño ni se activa dinero real.
+- Documentación económica recalculada con inversión/costos existentes, primer año mensual con11 cobros por la oferta y anual de400.000; proyecciones brutas antes de comisiones y soporte no cuantificados.
+- Escribe Codex; revisa Claude; pruebas limitadas a las seis clases de pagos/suscripción indicadas por el dueño, sin suites completas; misma2.3.0, sin commit ni push.
+
+### Anexo — Resultado de precios y lanzamiento
+
+- Escribió Codex; revisa Claude (arquitecto); entregada, pendiente de revisión.
+- RN-008/RE-0.5.1/16: catálogo único en la base, migración19 repetible y02_semilla sin sobrescribir; cron sin importes mágicos y checkout anterior acreditado por su monto guardado.
+- Oferta comprobada bajo el bloqueo de clínica al acreditar: primer mensual2 meses, siguiente1, anual12 y oferta apagada1; auditoría del pago con `oferta_lanzamiento=paga_1_lleva_2` y `meses_concedidos`; replay no duplica y otro inquilino conserva su elegibilidad.
+- Interruptor de producción único: `TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA`; el argumento interno opcional del conciliador permite probar apagado, sin exponer controles al navegador.
+- Suscripción, portada y registro leen el mismo catálogo; no se anuncia la oferta a clínicas con aprobados previos, y consultar estado la retira del DOM si acaba de consumirse.
+- Verificación:68 pruebas/780 aserciones en PagoSuscripcionTest, CobroAutomaticoTest, RecuperacionPagoTest, PagosPlataformaTest, AutorizacionCobroTest y VigenciaSuscripcionTest; sin suites completas, cobros reales ni lectura/escritura de `.env`.
+- Ocho aperturas Chrome: disponible/usada, portada y registro a1366×768 y390×844, precios y elegibilidad correctos, sin excepciones; evidencia en `scratch/r/lanzamiento/resultado.json`.
+- BaseV2MysqlTest actualizado: centavos, vigencia promocional, migración19 dos veces y semilla conservadora; ProcesoPagoS2 lee el monto de la orden; ejecución de MySQL/concurrencia pendiente del CI por alcance del dueño.
+- Expectativa de `SuscripcionTest` alineada con eliminar la comparación del cron contra un precio histórico; no se ejecutó esa clase adicional, respetando las seis autorizadas.
+- RN/HU/RE, presupuesto/ROI, Ficha, Visión, Modelos e Historial alineados; sin identificadores ni conteos nuevos; seis pares PDF/Word regenerados, índices actualizados y revisión al día; diagrama de pagos renderizado (18 nodos).
+- Proyección bruta con oferta:11 cobros/$440.000 por clínica el primer año; equilibrio operativo medio2 clínicas y recuperación anual15 (sin oferta14, anual16); sin comisiones u otros costos no cuantificados y con permanencia supuesta.
+- Pendientes: revisión de Claude, aceptación del dueño y CI; misma2.3.0, sin cambiar datos manuales ni aplicar migraciones al entorno del dueño; sin commit ni push.
+
 > Estado: **S4 y cierre 2.1.0 entregados, pendientes de revisión** · S1, S2 y S3 aprobadas e integradas · Aprobación y ajustes vinculantes en §9/§9.1
 > Entrega: v2.1 · Fecha: 2026-10-24 · Rama comprobada: `release/v2.1.0`
 > Escribe: **Codex** · Revisa: **Claude (arquitecto)** · Aprueba, integra y despliega: dueño del producto

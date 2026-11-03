@@ -3337,3 +3337,23 @@ README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mj
 - Evidencia local: `scratch/r/urgencia-directa/resultado.json` y logs; motor temporal detenido y eliminado; sin consultar la base manual ni leer o escribir `.env`.
 - RN/RE/Modelos/Historial alineados; Mermaid renderizado (47 nodos); tres pares PDF/Word regenerados, con descargas al día; no se agregaron descargas de Modelos.
 - Pendientes: revisión de Claude y aceptación visual/funcional del dueño; sin suites completas, migración, cambio de versión, commit ni push.
+
+## HU-4.19 — Cerrar el inicio directo fuera de tolerancia (2026-11-02)
+
+- Decisión confirmada del dueño: pasada la tolerancia de llegada, la reserva ordinaria se resuelve desde Sala mediante siguiente hueco, reprogramar o No asistió; no se inicia directamente desde Calendario ni Atención.
+- Revalidar en el modelo bajo el coordinador, usando la tolerancia configurada y la llegada real si existe; una llegada puntual no se convierte en tardía porque el veterinario se retrase.
+- Mantener RN-409: una atención anterior en_curso/sin_cerrar se sigue documentando; no se crea un inicio nuevo ni se cambia su sello real.
+- Verificar bordes exactos, configuración, ingreso puntual con demora del veterinario, acceso directo sin llegada y cierre antiguo; conservar urgencias y decisiones existentes de Sala.
+- Escribe Codex; revisa Claude; dentro de2.3.0, sin migraciones, suites completas, commit ni push.
+
+### Anexo — Resultado
+
+- Escribió Codex; revisa Claude (arquitecto); entregada, pendiente de revisión.
+- RN-426/RE-4.19.3: regla compartida de llegada real y tolerancia por clínica; relectura bajo el coordinador rechaza el inicio directo tardío sin cambiar estado ni hora_inicio_real; límite exacto permitido y demora del veterinario sin penalización al paciente puntual.
+- Calendario muestra Resolver en Sala; Atención ofrece Ir a Sala y una respuesta tardía del servidor lleva allí; No asistió disponible desde la tarjeta de Sala, con el endpoint y la idempotencia existentes.
+- Los enlaces enfocan el caso sin registrar llegada automáticamente; se conserva la pestaña explícita frente al orden inicial de otros pendientes; RN-409 conserva Registrar consulta para atenciones anteriores sin cambiar su inicio real.
+- PHP dirigido: ReglaAtencionTest, CitaEstadoTest, AgendaPeticionesTest y AgendaC8Test correctos,59 pruebas/272 aserciones; incluyen límite, configuración, llegada real, instantánea obsoleta y atención sin cerrar de un mes anterior.
+- JS dirigido:8 pruebas correctas de reglas, presentación de acciones, cierre de la hoja móvil y enlace directo a Sala, además del control de sincronización; sin suites completas.
+- Chrome con semilla y endpoints reales sobre MariaDB temporal `zooki_test_base_v2`: Calendario → Sala y Atención → Sala a1366×768 y390×844, caso enfocado, No asistió visible y consola sin excepciones; evidencia en `scratch/r/llegada-tardia/resultado.json`; motor detenido y eliminado.
+- RN/RE, diagrama de consulta e Historial2.3.0 alineados; Mermaid renderizado (88 nodos); PDF/Word de Reglas, Requisitos e Historial regenerados y al día, con índices actualizados; Modelos conserva sus descargas actuales.
+- Pendientes: revisión de Claude y aceptación del dueño; sin modificar datos manuales ni `.env`, sin migraciones, subida de versión, commit ni push.

@@ -36,6 +36,7 @@ final class SuscripcionController
         $servicio = new Suscripcion($this->db, (int) Contexto::clinicaActiva(), $this->reloj);
         $estadoSuscripcion = $servicio->estado();
         $profesionalSuscripcion = $servicio->profesional();
+        $ofertaLanzamientoDisponible = TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && !$servicio->tienePagosAprobados();
         $pagoDisponible = false;
         $mensajePago = '';
         try {
@@ -74,7 +75,7 @@ final class SuscripcionController
         }
         $origenSuscripcion = ($_GET['desde'] ?? '') === 'inicio' ? 'inicio' : 'configuracion';
         return compact('estadoSuscripcion', 'profesionalSuscripcion', 'pagoDisponible', 'mensajePago', 'historialPagos',
-            'fuentePago', 'automaticoDisponible', 'mensajeAutomatico', 'requiereAceptacion', 'retornoPago', 'origenSuscripcion');
+            'fuentePago', 'automaticoDisponible', 'mensajeAutomatico', 'requiereAceptacion', 'retornoPago', 'origenSuscripcion', 'ofertaLanzamientoDisponible');
     }
 
     private function pagos(): PagoSuscripcion

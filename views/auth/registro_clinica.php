@@ -33,6 +33,9 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                 <h2>Registra tu clínica</h2>
             </div>
             <p class="form-subtitle">Empieza con el plan gratuito. Confirma el registro desde tu correo para activar la clínica.</p>
+            <?php if (isset($tarifasPublicas)): ?>
+            <p class="form-subtitle">Profesional: <?= $e($tarifasPublicas['mensual']) ?><br><?= $e($tarifasPublicas['anual']) ?></p>
+            <?php endif; ?>
             <?php // M0.1: el indicador solo aparece con JavaScript; sin él se ven los tres pasos a la vez. ?>
             <ol class="registro-pasos" id="registroPasos" aria-label="Pasos del registro" hidden>
                 <li data-paso-indicador="1"><span class="registro-pasos-numero">1</span><span class="registro-pasos-nombre">Clínica</span></li>
