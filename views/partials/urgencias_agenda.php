@@ -72,14 +72,67 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     </dialog>
     <?php endif; ?>
     <template data-completar-ficha>
-        <fieldset>
-            <legend>Completar la misma ficha</legend>
-            <label>Nombre <input name="nombre" <?= ValidadorMascota::atributosHtml('nombre') ?> required><span data-error-campo="nombre"></span></label>
-            <label>Especie <select name="especie" required></select><span data-error-campo="especie"></span></label>
-            <label>Raza <select name="raza" required></select><span data-error-campo="raza"></span></label>
-            <label>Sexo <select name="sexo" required><option value="">Elige</option><option>Macho</option><option>Hembra</option></select><span data-error-campo="sexo"></span></label>
-            <label>Peso (kg) <input name="peso" <?= ValidadorMascota::atributosHtml('peso') ?> required><span data-error-campo="peso"></span></label>
-            <label>Nacimiento <span class="ah-opcional">(opcional)</span> <input name="fecha_nacimiento" type="date"><span data-error-campo="fecha_nacimiento"></span></label>
+        <fieldset class="identidad-mascota" aria-label="Datos de la mascota">
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Nombre de la mascota *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-paw field-icon" aria-hidden="true"></i>
+                        <input type="text" name="nombre" required placeholder="Ej.: Firulais" autocomplete="off" <?= ValidadorMascota::atributosHtml('nombre') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="nombre" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Sexo *</label>
+                    <div class="mascota-sexo">
+                        <div class="segmento" role="group" aria-label="Sexo obligatorio">
+                            <?php foreach (ValidadorMascota::SEXOS as $sexoIdentidad): ?>
+                            <label class="segmento__opcion">
+                                <input type="radio" name="sexo" value="<?= htmlspecialchars($sexoIdentidad, ENT_QUOTES, 'UTF-8') ?>" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                <span><i class="fas <?= $sexoIdentidad === 'Macho' ? 'fa-mars' : 'fa-venus' ?>" aria-hidden="true"></i> <?= htmlspecialchars($sexoIdentidad, ENT_QUOTES, 'UTF-8') ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="sexo" aria-live="polite"></small>
+                </div>
+            </div>
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Especie *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-cat field-icon" aria-hidden="true"></i>
+                        <select name="especie" required <?= ValidadorMascota::atributosHtml('especie') ?>></select>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="especie" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Raza *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-dna field-icon" aria-hidden="true"></i>
+                        <select name="raza" required <?= ValidadorMascota::atributosHtml('raza') ?>></select>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="raza" aria-live="polite"></small>
+                </div>
+            </div>
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Fecha de nacimiento <span class="ah-opcional">(opcional)</span></label>
+                    <div class="input-wrapper">
+                        <i class="far fa-calendar-alt field-icon" aria-hidden="true"></i>
+                        <input type="text" name="fecha_nacimiento" placeholder="Selecciona la fecha…" <?= ValidadorMascota::atributosHtml('fecha_nacimiento') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="fecha_nacimiento" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Peso (kg) *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-weight field-icon" aria-hidden="true"></i>
+                        <input type="text" name="peso" required placeholder="Ej.: 4,5" <?= ValidadorMascota::atributosHtml('peso') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="peso" aria-live="polite"></small>
+                </div>
+            </div>
         </fieldset>
     </template>
 </section>

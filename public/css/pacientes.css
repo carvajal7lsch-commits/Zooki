@@ -1,3 +1,5 @@
+@import url('mascota-sexo.css?v=1');
+
 /* Presentación de pacientes extraída de la vista.
    M2 C8 (H5): solo las variables de identidad (css/identidad.css), sin colores sueltos. */
 .pacientes-estilo-0 { display: none; }
@@ -2054,51 +2056,3 @@ select.mascota-extra__control:focus,
     color: var(--z-text-muted);
     font-size: 12px;
 }
-.mascota-sexo .segmento {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 4px;
-    padding: 4px;
-    border: 1px solid var(--z-primary-borde);
-    border-radius: 12px;
-    background: var(--z-bg-light);
-}
-.mascota-sexo .segmento__opcion {
-    position: relative;
-    margin: 0;
-}
-.mascota-sexo .segmento__opcion input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-.mascota-sexo .segmento__opcion span {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: .35rem;
-    min-height: 38px;
-    border-radius: 9px;
-    color: var(--z-text-muted);
-    font-size: .85rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-.mascota-sexo input:checked + span {
-    background: var(--z-surface);
-    color: var(--z-primary);
-    box-shadow: var(--z-shadow-segmento);
-}
-.mascota-sexo input:focus-visible + span {
-    outline: 2px solid var(--z-primary);
-    outline-offset: 1px;
-}
-.mascota-sexo input:disabled + span {
-    opacity: .6;
-}
-

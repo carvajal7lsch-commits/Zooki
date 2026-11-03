@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (($_GET['action'] ?? '') === 'vet_pacientes'): ?>
-    <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/pacientes.css'), 0, 12) ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -45,7 +45,7 @@
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
     <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/calendario.css'), 0, 12) ?>">
-    <link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/agenda-herramientas.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/agenda-panel.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/agenda-panel.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/triage-captura.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>

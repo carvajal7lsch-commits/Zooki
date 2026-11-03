@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../config/App.php';
 require_once __DIR__ . '/../../helpers/Csrf.php';
 ?>
 <link rel="stylesheet" href="css/estados-cita.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-<link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+<link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/agenda-herramientas.css'), 0, 12) ?>">
 <link rel="stylesheet" href="css/admin-citas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="css/portal/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">

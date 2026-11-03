@@ -1,5 +1,23 @@
 # Pulido de interfaz — pendientes
 
+## HU-4.15 — Identificación comprensible (2026-11-02)
+
+- Corrección del dueño: la opción Es una mascota nueva reutiliza controles y distribución de Registrar mascota: nombre/sexo, especie/raza y nacimiento/peso; sin caja adicional Completar la misma ficha; conservar los campos y la lógica existentes.
+
+- Encargo del dueño: icono en la cabecera, dos opciones segmentadas con lenguaje sencillo y buscadores de propietario/mascota que abran opciones al tocar y filtren al escribir.
+- Explicar la confirmación de propiedad y la conservación opcional del contacto con ayudas y ejemplos; conservar los campos, permisos y comprobaciones del servidor (RE-4.15.3/9/10).
+- Escribe Codex; sin rediseñar otros modales ni cambiar la lógica de conciliación; revisión puntual de la interfaz y su envío.
+
+### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión de Claude y del dueño.
+- Cabecera Completar identificación con icono azul; opciones Ya tiene ficha / Es una mascota nueva como botones segmentados, con explicación de cada camino.
+- Propietario y Mascota del propietario con lista al tocar, filtro al escribir y teclado; la mascota solo ofrece fichas del propietario elegido; conserva IDs y payload del endpoint existente.
+- ¿Cómo confirmaste que es su mascota? con ejemplo y ayuda; conservación de nombre/teléfono del acompañante plegada, explicada y disponible solo cuando existe ese contacto; sin alterar comprobaciones del servidor ni inventar evidencias.
+- Comprobación dirigida en Chrome: administrador/veterinario a1366/390, ambos modos, búsqueda/selección, payload y conservación de datos ante rechazo; sin excepciones ni escrituras reales; sintaxis y diff correctos.
+- Misma2.3.0; pendiente aceptación visual del dueño, sin suites completas, cambios de base, commit ni push.
+- Retoque posterior del dueño, escribió Codex: Es una mascota nueva usa la estructura de Registrar mascota en tres parejas de campos, sin caja adicional; selector de sexo extraído a `mascota-sexo.css` y compartido con el modal original; mismos controles, placeholders y reglas; calendario existente reutilizado. Comprobación puntual admin/vet a1366/390: columnas en escritorio, apilado móvil, sexo obligatorio y payload conservado; sin excepciones; pendiente revisión visual del dueño.
+
 ## Notificaciones, atención abierta y Nueva urgencia — Encargo (2026-11-02)
 
 - Decisión del dueño: campana con movimiento breve mientras haya avisos sin leer y títulos legibles para los códigos de urgencia, en administrador y veterinario.

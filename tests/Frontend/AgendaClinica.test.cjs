@@ -27,7 +27,7 @@ test('C7 contacto opcional no acredita titularidad; validación coincide con lí
     assert.notEqual(errorCampo('evidencia','x'.repeat(256),true,reglas),'');
 });
 
-async function pagina(rol, ejecutar) {
+async function pagina(rol, ejecutar, ingresos = []) {
     const php = process.env.PHP_BINARY || (process.platform === 'win32' && fs.existsSync('C:\\xampp\\php\\php.exe') ? 'C:\\xampp\\php\\php.exe' : 'php');
     const html = execFileSync(php,[path.join(__dirname,'apoyo/agenda-clinica-vistas.php'),rol],{ encoding:'utf8',env:{...process.env,TRUSTED_PROXIES:'127.0.0.2',ZOOKI_TEST_MYSQL_HOST:'',ZOOKI_TEST_MYSQL_DB:'zooki_test_base_v2'} });
     assert.doesNotMatch(html,/Fatal error|Warning:/);
@@ -37,6 +37,7 @@ async function pagina(rol, ejecutar) {
         const arbol = await navegador.enviar('Page.getFrameTree');
         await navegador.enviar('Page.setDocumentContent',{frameId:arbol.frameTree.frame.id,html:`<!doctype html><html><body>${html}</body></html>`});
         await navegador.esperar("document.readyState === 'complete'");
+        await navegador.evaluar(`window.__ingresos = ${JSON.stringify(ingresos)};`);
         await navegador.evaluar(`window.__lecturas=[];window.__escrituras=[];
           window.__catalogos={mascotas:[{id_mascota:1,id_propietario:6,nombre:'Luna',propietario:'Fabio',documento_propietario:'12345678'}],propietarios:[{id_usuario:6,nombre_completo:'Fabio'}],tipos:[{id_tipo_cita:1,nombre_tipo:'Consulta'}],especies:[{id_especie:1,nombre_especie:'Canino'}],razas:[{id_raza:49,id_especie:1,nombre_raza:'Sin raza definida'}]};
           window.fetch=(url,opciones)=>new Promise(resolve=>{
@@ -44,7 +45,7 @@ async function pagina(rol, ejecutar) {
           });`);
         for (const archivo of ['agenda-herramientas','dialogos-zooki','comando-agenda','configuracion-clinica','urgencias-agenda','ausencias-agenda']) await navegador.evaluar(fs.readFileSync(path.join(__dirname,`../../public/js/${archivo}.js`),'utf8'));
         await navegador.esperar('__lecturas.length >= 2');
-        await navegador.evaluar(`for(const q of __lecturas) q.resolve({ok:true,json:async()=>q.url.includes('listar_urgencias')?{success:true,catalogos:__catalogos,rojos:[],ingresos:[]}:q.url.includes('coordinacion')?{success:true,veterinarios:[{id_usuario:2,nombre_completo:'Beto'}]}:{success:true,ausencias:[]}});`);
+        await navegador.evaluar(`for(const q of __lecturas) q.resolve({ok:true,json:async()=>q.url.includes('listar_urgencias')?{success:true,catalogos:__catalogos,rojos:[],ingresos:__ingresos}:q.url.includes('coordinacion')?{success:true,veterinarios:[{id_usuario:2,nombre_completo:'Beto'}]}:{success:true,ausencias:[]}});`);
         await ejecutar(navegador);
         assert.deepEqual(navegador.errores,[]);
     } finally {
@@ -53,6 +54,57 @@ async function pagina(rol, ejecutar) {
 }
 
 const chrome = { skip:buscarChrome() ? false : 'Sin Chrome para el DOM aislado' };
+
+test('Identificación: opciones claras y buscadores conservan los datos del servidor', chrome, async () => {
+    for (const rol of ['vet', 'admin']) {
+        for (const width of [1366, 390]) {
+            await pagina(rol, async n => {
+                await n.esperar("document.querySelector('[data-conciliar-identidad]')");
+                const estilos = ['identidad.css', 'styles.css', 'mascota-sexo.css', 'dialogos-zooki.css', 'agenda-herramientas.css', 'agenda-panel.css'].map(archivo => fs.readFileSync('public/css/' + archivo, 'utf8').replace(/@import[^;]+;/g, '')).join('\n');
+                await n.evaluar(`var estilos = document.createElement('style'); estilos.textContent = ${JSON.stringify(estilos)}; document.head.append(estilos);`);
+                await n.enviar('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: width < 768 });
+                await n.evaluar(`document.querySelector('[data-urgencias-agenda]').hidden = false; document.querySelector('[data-conciliar-identidad]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion[open] h3').textContent`), 'Completar identificación');
+                assert.equal(await n.evaluar(`!!document.querySelector('.urgencia-conciliacion h3 .fa-id-card')`), true);
+                await n.evaluar(`document.querySelector('[data-identidad-buscar="id_propietario"]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('[data-identidad-buscar="id_propietario"]').getAttribute('aria-expanded')`), 'true');
+                await n.evaluar(`var buscar = document.querySelector('[data-identidad-buscar="id_propietario"]'); buscar.value='No existe'; buscar.dispatchEvent(new Event('input', {bubbles:true}));`);
+                assert.equal(await n.evaluar(`document.querySelectorAll('#conciliarIdentidad-9-id_propietario-opciones button').length`), 0);
+                await n.evaluar(`var buscar = document.querySelector('[data-identidad-buscar="id_propietario"]'); buscar.value='Fab'; buscar.dispatchEvent(new Event('input', {bubbles:true})); buscar.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', bubbles:true})); buscar.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true}));`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_propietario"]').value`), '6');
+                await n.evaluar(`document.querySelector('[data-identidad-buscar="id_mascota_final"]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('[data-identidad-buscar="id_mascota_final"]').getAttribute('aria-expanded')`), 'true');
+                await n.evaluar(`document.querySelector('#conciliarIdentidad-9-id_mascota_final-opcion-1').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_mascota_final"]').value`), '1');
+                await n.evaluar(`document.querySelector('[data-identidad-modo="completar"]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion fieldset').hidden`), false);
+                assert.equal(await n.evaluar(`document.querySelectorAll('.identidad-mascota .form-grid-2-gap').length`), 3);
+                assert.equal(await n.evaluar(`document.querySelectorAll('.identidad-mascota .mascota-sexo input[type="radio"]').length`), 2);
+                const columnas = await n.evaluar(`(() => { const fila = document.querySelector('.identidad-mascota .form-grid-2-gap'); const [a,b] = [...fila.children].map(n => n.getBoundingClientRect()); return {mismaFila:Math.abs(a.top-b.top)<1, ancho:a.width, fila:fila.clientWidth}; })()`);
+                assert.equal(columnas.mismaFila, width >= 1024);
+                if (width >= 1024) assert.ok(columnas.ancho < columnas.fila * .6, JSON.stringify(columnas));
+                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.nombre.value='Luna'; f.elements.especie.value='1'; f.elements.especie.dispatchEvent(new Event('change',{bubbles:true})); f.elements.raza.value='49'; f.elements.peso.value='4,5'; f.elements.evidencia.value='El propietario confirmó su mascota desde su cuenta.'; f.elements.peso.dispatchEvent(new Event('input',{bubbles:true}));`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [type="submit"]').disabled`), true, 'Sexo sigue obligatorio');
+                await n.evaluar(`document.querySelector('.identidad-mascota [name="sexo"][value="Hembra"]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [type="submit"]').disabled`), false);
+                assert.equal(await n.evaluar(`document.querySelector('[data-identidad-modo="completar"]').getAttribute('aria-pressed')`), 'true');
+                await n.evaluar(`document.querySelector('[data-identidad-modo="consolidar"]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion fieldset').disabled`), true);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_mascota_final"]').value`), '1');
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion__contacto').open`), false);
+                assert.match(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="evidencia"]').placeholder`), /propietario ingresó a su cuenta/);
+                await n.evaluar(`var f = document.querySelector('.urgencia-conciliacion form'); f.elements.evidencia.value = 'El propietario confirmó su mascota desde su cuenta.'; f.elements.evidencia.dispatchEvent(new Event('input', {bubbles:true})); f.dispatchEvent(new Event('submit', {cancelable:true}));`);
+                assert.equal(await n.evaluar('__escrituras.length'), 1);
+                assert.deepEqual(await n.evaluar(`Object.fromEntries([...__escrituras[0].body].filter(([k]) => ['id_ingreso', 'id_propietario', 'id_mascota_final', 'modo', 'evidencia'].includes(k)))`), { modo: 'consolidar', id_propietario: '6', id_mascota_final: '1', evidencia: 'El propietario confirmó su mascota desde su cuenta.', id_ingreso: '9' });
+                await n.evaluar(`__escrituras[0].resolve({ok:false,json:async()=>({success:false,message:'Verificación pendiente'})});`);
+                await n.esperar(`document.querySelector('.urgencia-conciliacion [data-aviso]').textContent === 'Verificación pendiente'`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion [name="id_propietario"]').value`), '6');
+                await n.evaluar(`document.querySelector('.urgencia-conciliacion [data-cerrar-dialogo]').click();`);
+                assert.equal(await n.evaluar(`document.querySelector('.urgencia-conciliacion').open`), false);
+            }, [{ id_ingreso: 9, id_mascota_provisional: 99, nombre: 'Paciente sin identificar', nombre_acompanante: 'Acompañante', estado: 'pendiente' }]);
+        }
+    }
+});
 
 test('Nueva urgencia: tocar el buscador abre todas las mascotas sin escribir', chrome, async () => {
     await pagina('vet', async n => {

@@ -68,15 +68,127 @@
             return entrada;
         }
 
+        function hacerBuscable(selector, placeholder, vacio) {
+            const label = selector.closest('label');
+            const contenedor = document.createElement('div');
+            contenedor.className = 'urgencia-conciliacion__buscador';
+            label.replaceWith(contenedor);
+            contenedor.append(label);
+            const entrada = document.createElement('input');
+            entrada.type = 'search';
+            entrada.placeholder = placeholder;
+            entrada.autocomplete = 'off';
+            entrada.maxLength = reglas.nombreMax;
+            entrada.id = selector.form.closest('dialog').id + '-' + selector.name;
+            label.htmlFor = entrada.id;
+            entrada.dataset.identidadBuscar = selector.name;
+            entrada.setAttribute('role', 'combobox');
+            entrada.setAttribute('aria-autocomplete', 'list');
+            entrada.setAttribute('aria-expanded', 'false');
+            const resultados = document.createElement('div');
+            resultados.className = 'urgencia-rapida__resultados';
+            resultados.id = entrada.id + '-opciones';
+            resultados.setAttribute('role', 'listbox');
+            resultados.setAttribute('aria-label', placeholder);
+            entrada.setAttribute('aria-controls', resultados.id);
+            const error = label.querySelector('[data-error-campo]');
+            error.id = entrada.id + '-error';
+            entrada.setAttribute('aria-describedby', error.id);
+            selector.hidden = true;
+            label.insertBefore(entrada, selector);
+            contenedor.append(resultados);
+            const cerrar = () => {
+                resultados.hidden = true;
+                entrada.setAttribute('aria-expanded', 'false');
+                entrada.removeAttribute('aria-activedescendant');
+            };
+            const mostrar = () => {
+                if (entrada.disabled) return;
+                const busqueda = selector.value ? '' : normalizarNombre(entrada.value);
+                const opciones = Array.from(selector.options).filter(opcion => opcion.value && normalizarNombre(opcion.textContent).includes(busqueda));
+                resultados.replaceChildren();
+                entrada.removeAttribute('aria-activedescendant');
+                if (!opciones.length) texto(resultados, 'p', vacio);
+                opciones.forEach(opcion => {
+                    const boton = texto(resultados, 'button', opcion.textContent);
+                    boton.type = 'button';
+                    boton.id = entrada.id + '-opcion-' + opcion.value;
+                    boton.setAttribute('role', 'option');
+                    boton.setAttribute('aria-selected', String(opcion.value === selector.value));
+                    boton.tabIndex = -1;
+                    boton.addEventListener('mousedown', evento => evento.preventDefault());
+                    boton.addEventListener('click', evento => {
+                        evento.preventDefault();
+                        selector.value = opcion.value;
+                        selector.dataset.tocado = '1';
+                        entrada.value = opcion.textContent;
+                        selector.dispatchEvent(new Event('change', { bubbles: true }));
+                        entrada.focus();
+                        cerrar();
+                    });
+                });
+                resultados.hidden = false;
+                entrada.setAttribute('aria-expanded', 'true');
+            };
+            entrada.addEventListener('focus', mostrar);
+            entrada.addEventListener('click', mostrar);
+            entrada.addEventListener('input', () => {
+                selector.value = '';
+                selector.dataset.tocado = '1';
+                selector.dispatchEvent(new Event('change', { bubbles: true }));
+                mostrar();
+            });
+            entrada.addEventListener('keydown', evento => {
+                if (evento.key === 'Escape' && !resultados.hidden) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    cerrar();
+                    return;
+                }
+                if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(evento.key)) return;
+                evento.preventDefault();
+                if (resultados.hidden) mostrar();
+                const botones = Array.from(resultados.querySelectorAll('button'));
+                if (!botones.length) return;
+                const actual = botones.findIndex(boton => boton.id === entrada.getAttribute('aria-activedescendant'));
+                if (evento.key === 'Enter') {
+                    if (actual >= 0) botones[actual].click();
+                    return;
+                }
+                const siguiente = actual < 0 ? (evento.key === 'ArrowDown' ? 0 : botones.length - 1) : (actual + (evento.key === 'ArrowDown' ? 1 : -1) + botones.length) % botones.length;
+                botones.forEach((boton, indice) => boton.setAttribute('aria-selected', String(indice === siguiente)));
+                entrada.setAttribute('aria-activedescendant', botones[siguiente].id);
+                botones[siguiente].scrollIntoView({ block: 'nearest' });
+            });
+            contenedor.addEventListener('focusout', evento => {
+                if (!contenedor.contains(evento.relatedTarget)) cerrar();
+            });
+            selector.form.addEventListener('click', evento => {
+                if (!contenedor.contains(evento.target)) cerrar();
+            });
+            cerrar();
+            return () => {
+                entrada.disabled = selector.disabled;
+                entrada.value = selector.value ? selector.selectedOptions[0].textContent : '';
+                cerrar();
+            };
+        }
+
         function validar(form) {
             let valido = true;
+            const radiosRevisados = new Set();
             form.querySelectorAll('[name]').forEach(entrada => {
                 if (entrada.type === 'hidden' || entrada.disabled || entrada.closest('fieldset[disabled]')) return;
-                const error = errorCampo(entrada.name, entrada.value, entrada.required, reglas);
+                if (entrada.type === 'radio' && radiosRevisados.has(entrada.name)) return;
+                if (entrada.type === 'radio') radiosRevisados.add(entrada.name);
+                const valor = entrada.type === 'radio' ? form.querySelector(`[name="${entrada.name}"]:checked`)?.value || '' : entrada.value;
+                const error = errorCampo(entrada.name, valor, entrada.required, reglas);
                 const nodo = form.querySelector(`[data-error-campo="${entrada.name}"]`);
                 // El error aparece al tocar el campo o al intentar enviar, no al abrir el formulario.
                 if (nodo) nodo.textContent = entrada.dataset.tocado === '1' || form.dataset.intento === '1' ? error : '';
                 entrada.setAttribute('aria-invalid', error ? 'true' : 'false');
+                const buscadorIdentidad = entrada.closest('label')?.querySelector('[data-identidad-buscar]');
+                if (buscadorIdentidad) buscadorIdentidad.setAttribute('aria-invalid', String(Boolean(error && (entrada.dataset.tocado === '1' || form.dataset.intento === '1'))));
                 valido = valido && !error;
             });
             if (form.hasAttribute('data-ingreso-rojo')) {
@@ -216,17 +328,42 @@
                 dialogo.id = 'conciliarIdentidad-' + i.id_ingreso;
                 dialogo.setAttribute('aria-labelledby', dialogo.id + '-titulo');
                 abrir.addEventListener('click', () => global.zookiAbrirDialogo(dialogo.id));
-                const f = formulario(dialogo, 'Conciliar identidad verificada', 'conciliar_rojo_ajax', {});
+                const f = formulario(dialogo, 'Guardar identificación', 'conciliar_rojo_ajax', {});
                 f.className = 'zk-dialogo__form';
-                const modo = campo(f, 'modo', 'Resolver', true, 'select');
-                opciones(modo, [{ id: 'consolidar', nombre: 'Consolidar sobre ficha existente' }, { id: 'completar', nombre: 'Completar esta ficha' }], 'id', 'nombre');
+                const modo = document.createElement('input');
+                modo.type = 'hidden';
+                modo.name = 'modo';
                 modo.value = 'consolidar';
-                const titular = campo(f, 'id_propietario', 'Titular con cuenta y vínculo verificados', true, 'select');
+                f.append(modo);
+                const opcionesModo = texto(f, 'div', '');
+                opcionesModo.className = 'urgencia-rapida__opciones';
+                opcionesModo.setAttribute('role', 'group');
+                opcionesModo.setAttribute('aria-label', '¿La mascota ya tiene ficha?');
+                for (const [valor, nombre] of [['consolidar', 'Ya tiene ficha'], ['completar', 'Es una mascota nueva']]) {
+                    const boton = texto(opcionesModo, 'button', nombre);
+                    boton.type = 'button';
+                    boton.dataset.identidadModo = valor;
+                    boton.addEventListener('click', () => {
+                        modo.value = valor;
+                        modo.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                }
+                const ayudaModo = texto(f, 'p', '');
+                ayudaModo.className = 'urgencia-rapida__ayuda';
+                const titular = campo(f, 'id_propietario', 'Propietario', true, 'select');
                 opciones(titular, catalogos.propietarios, 'id_usuario', 'nombre_completo');
-                const final = campo(f, 'id_mascota_final', 'Ficha definitiva del titular', true, 'select');
+                hacerBuscable(titular, 'Busca por nombre del propietario', 'No hay propietarios que coincidan. Debe tener cuenta vinculada a esta clínica.');
+                const final = campo(f, 'id_mascota_final', 'Mascota del propietario', true, 'select');
+                const actualizarMascotas = hacerBuscable(final, 'Busca por nombre de la mascota', 'No hay mascotas que coincidan para este propietario. Si es nueva, elige «Es una mascota nueva».');
                 const fragmento = raiz.querySelector('[data-completar-ficha]').content.cloneNode(true);
                 f.append(fragmento);
                 const ficha = f.querySelector('fieldset');
+                ficha.querySelectorAll('.input-group').forEach(grupo => {
+                    const entrada = grupo.querySelector('input, select');
+                    if (entrada.name === 'sexo') return;
+                    entrada.id = dialogo.id + '-mascota-' + entrada.name;
+                    grupo.querySelector('label').htmlFor = entrada.id;
+                });
                 const especie = f.elements.namedItem('especie');
                 const raza = f.elements.namedItem('raza');
                 opciones(especie, catalogos.especies, 'id_especie', 'nombre_especie');
@@ -234,14 +371,36 @@
                     opciones(raza, catalogos.razas.filter(r => String(r.id_especie) === especie.value), 'id_raza', 'nombre_raza');
                     validar(f);
                 });
-                campo(f, 'evidencia', 'Referencia de cuenta, vínculo o confirmación usada y verificación de relación', true);
-                campo(f, 'motivo_conservacion', 'Motivo excepcional para conservar contacto (opcional)');
+                const evidencia = campo(f, 'evidencia', '¿Cómo confirmaste que es su mascota?', true);
+                evidencia.placeholder = 'Ej.: el propietario ingresó a su cuenta y confirmó que Luna es su mascota.';
+                const ayudaEvidencia = texto(evidencia.closest('label'), 'span', 'Describe la comprobación que hiciste. Saber el nombre o teléfono del acompañante no confirma que sea el propietario.');
+                ayudaEvidencia.className = 'urgencia-rapida__ayuda';
+                ayudaEvidencia.id = dialogo.id + '-ayuda-verificacion';
+                evidencia.setAttribute('aria-describedby', ayudaEvidencia.id);
+                const contacto = texto(f, 'details', '');
+                contacto.className = 'urgencia-conciliacion__contacto';
+                texto(contacto, 'summary', 'Conservar contacto del acompañante (opcional)');
+                texto(contacto, 'p', 'El nombre y teléfono del acompañante se eliminan cuando termina la atención y se confirma la identidad. Si aún necesitas conservarlos, explica por qué.').className = 'urgencia-rapida__ayuda';
+                const conservacion = campo(contacto, 'motivo_conservacion', '¿Por qué necesitas conservar ese contacto?');
+                conservacion.placeholder = 'Ej.: falta coordinar el traslado con el acompañante.';
+                contacto.hidden = !i.nombre_acompanante && !i.telefono_acompanante;
+                conservacion.disabled = contacto.hidden;
                 const ajustar = () => {
+                    opcionesModo.querySelectorAll('button').forEach(boton => boton.setAttribute('aria-pressed', String(boton.dataset.identidadModo === modo.value)));
+                    ayudaModo.textContent = modo.value === 'completar' ? 'Completa los datos de la mascota para que esta sea su ficha.' : 'Elige su ficha para que esta atención quede en su historia existente.';
                     ficha.disabled = modo.value !== 'completar';
                     ficha.hidden = ficha.disabled;
-                    final.disabled = modo.value === 'completar';
-                    final.closest('label').hidden = final.disabled;
+                    const fecha = f.elements.namedItem('fecha_nacimiento');
+                    if (!ficha.disabled && !fecha._flatpickr) {
+                        if (global.SelectorFechas) global.SelectorFechas.iniciar(fecha, { appendTo: dialogo, altInput: false });
+                        else fecha.type = 'date';
+                    }
+                    final.disabled = modo.value === 'completar' || !titular.value;
+                    final.closest('label').hidden = modo.value === 'completar';
+                    const seleccionAnterior = final.value;
                     opciones(final, catalogos.mascotas.filter(m => String(m.id_propietario) === titular.value), 'id_mascota', 'nombre');
+                    if (Array.from(final.options).some(opcion => opcion.value === seleccionAnterior)) final.value = seleccionAnterior;
+                    actualizarMascotas();
                     validar(f);
                 };
                 preparar(f, 'conciliar_rojo_ajax', () => ({ id_ingreso: i.id_ingreso, ...(modo.value === 'completar' ? { id_mascota_final: i.id_mascota_provisional } : {}) }));
@@ -251,13 +410,17 @@
                 const contenido = Array.from(f.children);
                 const cabecera = texto(f, 'header', '');
                 cabecera.className = 'zk-dialogo__head';
-                const titulo = texto(cabecera, 'h3', 'Conciliar identidad');
+                const titulo = texto(cabecera, 'h3', '');
+                const icono = texto(titulo, 'i', '');
+                icono.className = 'fas fa-id-card';
+                icono.setAttribute('aria-hidden', 'true');
+                titulo.append(document.createTextNode('Completar identificación'));
                 titulo.id = dialogo.id + '-titulo';
                 const cerrar = texto(cabecera, 'button', '×');
                 cerrar.type = 'button';
                 cerrar.className = 'zk-dialogo__cerrar';
                 cerrar.setAttribute('data-cerrar-dialogo', '');
-                cerrar.setAttribute('aria-label', 'Cerrar conciliación');
+                cerrar.setAttribute('aria-label', 'Cerrar identificación');
                 const cuerpo = texto(f, 'div', '');
                 cuerpo.className = 'zk-dialogo__cuerpo';
                 const guardar = f.querySelector('[type="submit"]');
