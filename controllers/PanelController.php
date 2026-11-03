@@ -96,13 +96,8 @@ class PanelController
             ];
         }
 
-        // Las atenciones de hoy ya se ven en la agenda con su botón; aquí solo
-        // se listan las que exigen algo aparte: las abiertas de días anteriores
-        // y las que quedaron sin cerrar.
-        $pendientes = array_values(array_filter(
-            $this->conAccion($this->panel->atencionesAbiertas($idVeterinario), $ahora),
-            fn($c) => $c['estado'] === 'sin_cerrar' || $c['fecha'] !== $hoy
-        ));
+        // HU-6.1 / HU-4.15: también se puede retomar desde Pendientes una urgencia de hoy.
+        $pendientes = $this->conAccion($this->panel->atencionesAbiertas($idVeterinario), $ahora);
 
         $recordatorios = $this->panel->recordatoriosDeSusPacientes(
             $idVeterinario,

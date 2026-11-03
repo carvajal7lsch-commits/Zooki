@@ -24,7 +24,19 @@ $resumenDia = $dia['citas'] === 0
     <span class="inicio-meta"><?= $hDia($resumenDia) ?></span>
 </div>
 <?php if ($dia['aviso'] !== null): ?>
-    <p class="inicio-aviso" role="status">No se pueden mostrar los huecos libres: <?= $hDia($dia['aviso']) ?></p>
+    <?php
+    $atencionesDia = array_values(array_filter($dia['lineas'], static fn($linea) => $linea['tipo'] === 'cita' && in_array($linea['cita']['estado'], ['en_curso', 'pausada', 'sin_cerrar'], true)));
+    $atencionDia = $atencionesDia[0]['cita'] ?? null;
+    ?>
+    <div class="inicio-aviso" role="status">
+        <?php if ($atencionDia !== null): ?>
+            <span>La atención de <strong><?= $hDia($atencionDia['mascota']) ?></strong> sigue abierta. Registra la consulta al terminar para actualizar los horarios libres.</span>
+            <a href="<?= $hDia($urlCita($atencionDia)) ?>">Continuar atención <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        <?php else: ?>
+            <span>Los horarios libres están pendientes de actualización.</span>
+            <a href="index.php?action=vet_agenda">Revisar agenda <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        <?php endif; ?>
+    </div>
 <?php endif; ?>
 <?php if ($dia['citas'] > 0): ?>
     <ol class="inicio-lineas<?= count($dia['lineas']) <= 3 ? ' inicio-lineas--breve' : '' ?>" aria-label="Agenda del día">

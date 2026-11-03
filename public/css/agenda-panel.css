@@ -212,6 +212,28 @@
 #dialogoRojo .zk-dialogo__pie {
     flex-wrap: wrap;
 }
+#dialogoRojoTitulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#dialogoRojoTitulo > i {
+    color: var(--z-danger);
+}
+#dialogoRojo .zk-dialogo__cerrar:hover,
+#dialogoRojo .zk-dialogo__cerrar:focus-visible {
+    color: var(--z-primary);
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+}
+#dialogoRojo .zk-btn--sec:not(:disabled):hover {
+    color: var(--z-primary);
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+}
+#dialogoRojo .zk-btn--peligro:not(:disabled):hover {
+    filter: brightness(.9);
+}
 #dialogoRojo .zk-dialogo__cuerpo {
     display: grid;
     gap: 14px;

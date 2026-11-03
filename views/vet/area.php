@@ -56,9 +56,10 @@ $pendientes = [];
 if ($panel['pendientes']) {
     $primero = $panel['pendientes'][0];
     $n = count($panel['pendientes']);
-    $pendientes[] = ['clave' => 'cerrar', 'n' => $n, 'texto' => 'Sin cerrar',
+    $hayAtencionHoy = count(array_filter($panel['pendientes'], fn($c) => $c['estado'] === 'en_curso' && $c['fecha'] === $panel['hoy'])) > 0;
+    $pendientes[] = ['clave' => 'cerrar', 'n' => $n, 'texto' => $hayAtencionHoy ? 'Atenciones abiertas' : 'Sin cerrar',
         'detalle' => $primero['mascota'] . ', ' . mb_strtolower($primero['dia']) . ' ' . ResumenPanel::hora($primero['hora']) . ($n > 1 ? ' y ' . ($n - 1) . ' más' : ''),
-        'accion' => 'Cerrar', 'etiqueta' => 'Cerrar la atención de ' . $primero['mascota'], 'href' => $atencionUrl($primero)];
+        'accion' => 'Continuar', 'etiqueta' => 'Continuar la atención de ' . $primero['mascota'], 'href' => $atencionUrl($primero)];
 }
 if ($panel['triages']) {
     $n = count($panel['triages']);

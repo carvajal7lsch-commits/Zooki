@@ -36,7 +36,7 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
             <input type="hidden" name="motivo" value="Ingreso de urgencia presencial">
             <input type="hidden" name="decision" value="">
             <header class="zk-dialogo__head">
-                <h3 id="dialogoRojoTitulo">Nueva urgencia</h3>
+                <h3 id="dialogoRojoTitulo"><i class="fas fa-kit-medical" aria-hidden="true"></i> Nueva urgencia</h3>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </header>
             <div class="zk-dialogo__cuerpo">

@@ -279,8 +279,8 @@
         function llenarPacientesIngreso(form) {
             const buscador = form.querySelector('[data-urgencia-buscar]');
             const resultados = form.querySelector('[data-urgencia-resultados]');
-            const busqueda = normalizarNombre(buscador.value);
-            const pacientes = (catalogos?.mascotas || []).filter(mascota => [mascota.nombre, mascota.propietario, mascota.documento_propietario].some(valor => normalizarNombre(valor).includes(busqueda))).slice(0, 8);
+            const busqueda = form.elements.namedItem('id_mascota').value ? '' : normalizarNombre(buscador.value);
+            const pacientes = (catalogos?.mascotas || []).filter(mascota => [mascota.nombre, mascota.propietario, mascota.documento_propietario].some(valor => normalizarNombre(valor).includes(busqueda)));
             resultados.replaceChildren();
             buscador.removeAttribute('aria-activedescendant');
             if (!catalogos || !pacientes.length) texto(resultados, 'p', catalogos ? 'No hay pacientes que coincidan.' : 'Cargando pacientes…');
@@ -570,7 +570,10 @@
                 boton.addEventListener('click', () => {
                     ingreso.elements.namedItem('identidad').value = boton.dataset.urgenciaIdentidad;
                     ingreso.elements.namedItem('identidad').dispatchEvent(new Event('change'));
-                    if (boton.dataset.urgenciaIdentidad === 'conocida') ingreso.querySelector('[data-urgencia-buscar]').focus();
+                    if (boton.dataset.urgenciaIdentidad === 'conocida') {
+                        ingreso.querySelector('[data-urgencia-buscar]').focus();
+                        llenarPacientesIngreso(ingreso);
+                    }
                 });
             });
             const buscador = ingreso.querySelector('[data-urgencia-buscar]');
@@ -581,6 +584,7 @@
                 validar(ingreso);
             });
             buscador.addEventListener('focus', () => llenarPacientesIngreso(ingreso));
+            buscador.addEventListener('click', () => llenarPacientesIngreso(ingreso));
             buscador.addEventListener('keydown', evento => {
                 const resultados = ingreso.querySelector('[data-urgencia-resultados]');
                 if (evento.key === 'Escape' && !resultados.hidden) {
@@ -606,7 +610,8 @@
                 opciones[siguiente].scrollIntoView({ block: 'nearest' });
             });
             document.addEventListener('click', evento => {
-                if (evento.target === buscador || evento.target.closest('[data-urgencia-resultados]')) return;
+                // Buscar paciente enfoca el campo antes de que este clic llegue al documento.
+                if (evento.target === buscador || evento.target.closest('[data-urgencia-resultados], [data-urgencia-identidad="conocida"]')) return;
                 ingreso.querySelector('[data-urgencia-resultados]').hidden = true;
                 buscador.setAttribute('aria-expanded', 'false');
             });

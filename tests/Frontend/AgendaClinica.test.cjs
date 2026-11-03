@@ -53,6 +53,30 @@ async function pagina(rol, ejecutar) {
 }
 
 const chrome = { skip:buscarChrome() ? false : 'Sin Chrome para el DOM aislado' };
+
+test('Nueva urgencia: tocar el buscador abre todas las mascotas sin escribir', chrome, async () => {
+    await pagina('vet', async n => {
+        await n.esperar("document.querySelector('[data-urgencia-resultados] [data-paciente]')");
+        await n.evaluar(`__catalogos.mascotas = Array.from({length:12}, (_,i) => ({id_mascota:i+1, nombre:'Mascota '+(i+1), propietario:'Titular', documento_propietario:String(i+1)}));`);
+        for (const width of [1366, 390]) {
+            await n.enviar('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: width < 768 });
+            await n.evaluar(`zookiAbrirDialogo('dialogoRojo'); document.querySelector('[data-urgencia-identidad="conocida"]').click();`);
+            assert.equal(await n.evaluar(`document.querySelector('[data-urgencia-buscar]').getAttribute('aria-expanded')`), 'true');
+            assert.equal(await n.evaluar(`document.querySelectorAll('[data-urgencia-resultados] [data-paciente]').length`), 12);
+            await n.evaluar(`document.querySelector('[data-paciente="12"]').click();`);
+            assert.equal(await n.evaluar(`document.querySelector('[data-ingreso-rojo]').elements.id_mascota.value`), '12');
+            assert.equal(await n.evaluar(`document.querySelector('[data-urgencia-resultados]').hidden`), true);
+            await n.evaluar(`document.querySelector('[data-urgencia-buscar]').click();`);
+            assert.equal(await n.evaluar(`document.querySelector('[data-urgencia-resultados]').hidden`), false);
+            await n.evaluar(`var b = document.querySelector('[data-urgencia-buscar]'); b.value='Mascota 3'; b.dispatchEvent(new Event('input', {bubbles:true}));`);
+            assert.equal(await n.evaluar(`document.querySelectorAll('[data-urgencia-resultados] [data-paciente]').length`), 1);
+            await n.evaluar(`document.querySelector('#dialogoRojo [data-cerrar-dialogo]').click();`);
+            assert.equal(await n.evaluar(`document.querySelector('#dialogoRojo').open`), false);
+            await n.evaluar(`var b = document.querySelector('[data-urgencia-buscar]'); b.value=''; b.dispatchEvent(new Event('input', {bubbles:true}));`);
+        }
+        assert.equal(await n.evaluar('__escrituras.length'), 0);
+    });
+});
 test('C7 DOM real: llegada provisional, doble envío y replay tras respuesta perdida',chrome,async () => {
     await pagina('vet',async n => {
         await n.esperar("document.querySelector('[data-urgencia-resultados] [data-paciente]')");

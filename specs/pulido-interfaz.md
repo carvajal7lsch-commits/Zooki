@@ -1,5 +1,21 @@
 # Pulido de interfaz — pendientes
 
+## Notificaciones, atención abierta y Nueva urgencia — Encargo (2026-11-02)
+
+- Decisión del dueño: campana con movimiento breve mientras haya avisos sin leer y títulos legibles para los códigos de urgencia, en administrador y veterinario.
+- HU-6.1 / HU-4.15: las urgencias con identificación pendiente deben verse en Tu día y Pendientes y permitir continuar Atención; el aviso de disponibilidad debe ser breve y ofrecer una acción real, sin alterar la capacidad calculada.
+- Nueva urgencia: al tocar Buscar paciente se muestran las mascotas disponibles de la clínica, sin escribir; conservar búsqueda, selección y teclado; agregar icono y hover de botones sin rediseñar.
+- Escribe Codex; revisión de Claude y aceptación del dueño pendientes; comprobaciones dirigidas, sin suites completas ni cambios de datos manuales.
+
+### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión de Claude y del dueño; misma2.3.0, sin commit ni push.
+- Campana de administrador/veterinario con sacudida breve cada7 segundos si hay avisos sin leer; se detiene al abrir el menú o marcar leídos y respeta movimiento reducido; ROJO_PRESENTE y DERIVACION_ROJA se leen como urgencias, incluidos avisos antiguos.
+- Corregido el JOIN que ocultaba citas de fichas provisionales sin propietario; nombre «Paciente por identificar» y enlace a Atención; todas las atenciones abiertas del veterinario aparecen en Pendientes; aviso breve azul con Continuar atención.
+- Nueva urgencia: lista completa de pacientes autorizados al pulsar Buscar paciente o tocar el campo, incluso si ya tenía foco; búsqueda por los tres criterios y selección conservadas; icono y hover de cierre/acciones, sin rediseño.
+- Verificación: InicioVeterinarioTest y PanelTest,20 pruebas/114 aserciones con SQLite en memoria; campana en ambos roles y buscador con12 pacientes a1366/390 comprobados en Chrome, sin excepciones; pruebas dirigidas de los clics en verde, sintaxis PHP/JS y diff correctos.
+- Pendientes: aceptación visual del dueño y revisión de Claude; PDF/Word de Requisitos e Historial al cierre del bloque según metodo§11; sin suites completas ni acceso a la base manual.
+
 ## Pulido final P1 — Encargo (2026-10-26)
 
 **Escribe Codex; revisa Claude (arquitecto). Aprobado por el dueño.** Versión 2.2.0 por cambios de servidor; el dueño renombra la rama. Sin esquema nuevo, migraciones ni operaciones Git de escritura.

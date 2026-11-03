@@ -13,12 +13,13 @@ const leer = archivo => fs.readFileSync(path.join(RAIZ, archivo), 'utf8');
 
 const aviso = (id, tipo, leida = 0, extra = {}) => ({ id, tipo, titulo: 'Aviso ' + id, mensaje: 'Mensaje ' + id, leida, enlace: null, fecha_creacion: '2026-10-27 08:00:00', ...extra });
 
-test('R cabecera: sin timbre ni amarillos, sin onclick generado y título común', () => {
+test('R cabecera: movimiento accesible, sin amarillos ni onclick y título común', () => {
     const css = leer('public/css/dashboard-modules/layout.css');
     const js = leer('public/js/dashboard.js');
     const parcial = leer('views/partials/cabecera_cuenta.php');
-    assert.doesNotMatch(css, /ringing|bell-ring|badge-ping/);
-    assert.doesNotMatch(js, /ringing|onclick=/);
+    assert.match(css, /prefers-reduced-motion: reduce/);
+    assert.match(css, /animation: campana-aviso 7s/);
+    assert.doesNotMatch(js, /onclick=/);
     assert.doesNotMatch(parcial, /Alertas Cl/);
     assert.match(parcial, /<h3 id="notifTitulo">Notificaciones<\/h3>/);
     const bloque = css.slice(css.indexOf('/* Notificaciones — mockup aprobado'), css.indexOf('/* Cards and Tables */'));
@@ -87,15 +88,15 @@ test('R cabecera: contador, ventana, avisos y pastilla de la clínica en admin y
             await nav.enviar('Page.navigate', { url: base + '/?rol=' + rol });
             await nav.esperar("document.readyState === 'complete' && !!document.querySelector('#pendingVaccinesList .notif-empty')");
 
-            // Campana: gris sin nuevas, número exacto de 1 a 9 y «9+» desde 10, sin timbre.
+            // Movimiento solo con avisos sin leer, sin cambiar el tamaño del botón.
             for (const [cantidad, texto] of [[0, null], [1, '1'], [5, '5'], [9, '9'], [10, '9+'], [27, '9+']]) {
                 await recargarAvisos([aviso(1, 'NUEVA_CITA', cantidad ? 0 : 1)], cantidad);
                 const campana = await nav.evaluar(`(() => {
                     const b = document.getElementById('notifBadge');
                     const bell = document.getElementById('notifBell');
-                    return { oculto: b.hidden && b.getClientRects().length === 0, texto: b.textContent, etiqueta: bell.getAttribute('aria-label'), ringing: bell.classList.contains('ringing'), sinLeer: document.getElementById('notifCount').textContent, color: getComputedStyle(b).backgroundColor };
+                    return { oculto: b.hidden && b.getClientRects().length === 0, texto: b.textContent, etiqueta: bell.getAttribute('aria-label'), movimiento: getComputedStyle(bell.querySelector('.bi-bell')).animationName, sinLeer: document.getElementById('notifCount').textContent, color: getComputedStyle(b).backgroundColor };
                 })()`);
-                assert.equal(campana.ringing, false);
+                assert.equal(campana.movimiento, cantidad ? 'campana-aviso' : 'none');
                 assert.equal(campana.sinLeer, `${cantidad} sin leer`);
                 if (texto === null) {
                     assert.equal(campana.oculto, true, 'Sin nuevas no hay contador');
@@ -107,6 +108,12 @@ test('R cabecera: contador, ventana, avisos y pastilla de la clínica en admin y
                 assert.equal(campana.color, 'rgb(239, 68, 68)', 'Contador en --z-danger');
                 assert.equal(campana.etiqueta, `Notificaciones, ${cantidad} ${cantidad === 1 ? 'nueva' : 'nuevas'}`);
             }
+
+            await recargarAvisos([aviso(1, 'ROJO_PRESENTE', 0, { titulo: 'ROJO_PRESENTE' }), aviso(2, 'DERIVACION_ROJA', 1, { titulo: 'DERIVACION_ROJA' })], 1);
+            assert.deepEqual(await nav.evaluar(`[...document.querySelectorAll('.notif-item__title')].map(n => n.textContent)`), ['Urgencia con llegada registrada', 'Urgencia reportada por un propietario']);
+            await nav.enviar('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+            assert.equal(await nav.evaluar(`getComputedStyle(document.querySelector('#notifBell .bi-bell')).animationName`), 'none');
+            await nav.enviar('Emulation.setEmulatedMedia', { features: [] });
 
             // Tres piezas de 40 px; avatar sin nombre ni flecha; título común.
             const piezas = await nav.evaluar(`(() => {

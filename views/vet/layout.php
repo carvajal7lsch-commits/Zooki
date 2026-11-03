@@ -26,7 +26,7 @@
     <?php // M2 C8 (H5): variables de identidad (azul de marca y neutros del portal) para la consulta y el vínculo. ?>
     <link rel="stylesheet" href="css/identidad.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/styles.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-    <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/dashboard.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/medical-module.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -54,7 +54,7 @@
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <?php // HU-6.1: el Inicio del veterinario tiene su propia hoja (diseño aprobado 2026-10-22), encima de la común con el del administrador. ?>
-    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/inicio-comun.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/inicio-vet.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
@@ -156,7 +156,7 @@
     <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/cabecera-cuenta.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/dashboard.js'), 0, 12) ?>"></script>
     <?php if ($__action !== 'vet_pacientes'): ?>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>

@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Notificaciones y acceso a urgencias (2026-11-02, Codex; revisa Claude):** campana con movimiento breve ante avisos sin leer y títulos legibles de urgencia; fichas sin propietario visibles en el Inicio y atenciones abiertas en Pendientes, con acceso directo y aviso breve de disponibilidad (HU-6.1, HU-4.15). Nueva urgencia abre los pacientes al tocar el buscador, con icono y hover; misma versión, sin migraciones.
+
 * **Precios y lanzamiento (2026-11-02, Codex; revisa Claude):** Profesional40.000 COP/mes o400.000 COP/año (2 meses gratis). Primer pago mensual aprobado sin aprobados previos:2 meses por1, con interruptor único y auditoría; siguientes1 mes, anual12. Catálogo único, cron sin tarifa histórica y órdenes anteriores respetadas; migración19 repetible y semilla actualizadas. Suscripción, portada y registro anuncian condiciones; presupuesto/ROI y documentación alineados, misma2.3.0.
 
 * **Inicio tardío por Sala (2026-11-02, Codex; revisa Claude):** Calendario, Atención y el servidor impiden iniciar directamente una reserva que superó la tolerancia de llegada; ofrecen resolverla desde Sala, con siguiente hueco, reprogramar o No asistió. Usa la llegada real y la tolerancia de la clínica, sin penalizar la demora del veterinario; las atenciones anteriores sin cerrar conservan su inicio y permiten registrar la consulta. RN-426 y RE-4.19.3; misma versión, sin migración.
