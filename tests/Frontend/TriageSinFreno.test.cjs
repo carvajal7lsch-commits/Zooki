@@ -36,7 +36,7 @@ for (const portal of [false, true]) {
                         document.querySelector('#booking_tipo_cita').dispatchEvent(new Event('change', { bubbles: true }));
                     `);
                 } else {
-                    await nav.esperar("typeof abrirCitaModal === 'function' && document.querySelectorAll('[data-agenda-evento]').length === 6");
+                    await nav.esperar("typeof abrirCitaModal === 'function' && document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]').length === 6");
                     await nav.evaluar(`abrirCitaModal(new Date('${fecha(1)}T12:00:00'))`);
                     await nav.esperar("document.querySelector('#modal_tipo_cita option[value=\"1\"]') !== null");
                     await nav.evaluar(`
@@ -46,14 +46,20 @@ for (const portal of [false, true]) {
                         document.querySelector('#cm_siguiente').click();
                     `);
                 }
+                await nav.evaluar(`document.querySelector('${raiz} [data-triage-otro]').click(); document.querySelector('${raiz} [data-triage-calcular]').click();`);
+                assert.match(await nav.evaluar(`document.querySelector('${raiz} [data-triage-validacion]').textContent`), /Explica qué observaste/);
+                assert.equal(servidor.llamadas.filter(l => l.accion === 'calcular_triage_ajax').length, 0);
                 await nav.evaluar(`
-                    document.querySelector('${raiz} [data-triage-otro]').click();
+                    document.querySelector('${raiz} [data-triage-otro-detalle]').value = 'Camina de lado y no aparece entre las opciones.';
+                    document.querySelector('${raiz} [data-triage-otro-detalle]').dispatchEvent(new Event('input', {bubbles:true}));
                     document.querySelector('${raiz} [data-triage-calcular]').click();
                 `);
                 await nav.esperar(`document.querySelector('${raiz} [data-triage-resultado]').dataset.nivel === '${triage.nivel}'`);
                 const mensaje = await nav.evaluar(`document.querySelector('${raiz} [data-triage-resultado]').textContent`);
                 assert.ok(mensaje.includes(triage.message));
                 if (!portal && !rojo) {
+                    await nav.evaluar(`document.querySelector('${raiz} [data-triage-revision] .motivos-revision button').click();`);
+                    assert.equal(await nav.evaluar(`document.querySelector('${raiz} [data-triage-validacion]').textContent`), '', 'Elegir un motivo no exige escribir otro');
                     assert.equal(await nav.evaluar("document.querySelector('#cm_siguiente').disabled"), false);
                     await nav.evaluar("document.querySelector('#cm_siguiente').click()");
                 }

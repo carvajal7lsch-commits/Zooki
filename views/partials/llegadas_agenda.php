@@ -1,4 +1,5 @@
 <?php if (Contexto::rolActivo() === Roles::VETERINARIO): ?>
+<?php require __DIR__ . '/motivos_revision.php'; ?>
 <section id="agenda-panel-llegadas" class="agenda-herramientas__panel" role="tabpanel" aria-labelledby="agenda-tab-llegadas" hidden data-llegadas-agenda data-clinica="<?= (int) Contexto::clinicaActiva() ?>" data-veterinario="<?= (int) Contexto::idUsuario() ?>">
     <header class="ah-head">
         <div>

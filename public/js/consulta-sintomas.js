@@ -93,7 +93,7 @@
         }
 
         function cambiar(nuevos) {
-            marcados = nuevos;
+            marcados = nuevos.map(sintoma => ({ ...sintoma, etiqueta: opciones.etiqueta ? opciones.etiqueta(sintoma) : sintoma.etiqueta }));
             pintarChips();
             mostrarAviso(marcados.length >= maximo ? `Marcaste el máximo de ${maximo} síntomas.` : '', false);
             alCambiar(marcados.slice());
@@ -119,7 +119,7 @@
                 lista.replaceChildren(...sugerencias.map(sintoma => {
                     const item = elemento('li');
                     item.setAttribute('role', 'presentation');
-                    const boton = elemento('button', 'consulta-sintomas__opcion', sintoma.etiqueta);
+                    const boton = elemento('button', 'consulta-sintomas__opcion', opciones.etiqueta ? opciones.etiqueta(sintoma) : sintoma.etiqueta);
                     boton.type = 'button';
                     boton.tabIndex = -1;
                     boton.dataset.codigo = sintoma.codigo;

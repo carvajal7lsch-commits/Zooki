@@ -1,5 +1,28 @@
 # M4 — Agenda inteligente y Grafo II
 
+## Decisiones del dueño — Sala y revisión de triage (2026-11-02)
+
+- Escribe Codex; revisa Claude; alcance aprobado por el dueño durante la revisión del CI, dentro de2.3.0.
+- RN-408/426, precisión posterior del dueño: pasada la tolerancia, marcar automáticamente No asistió solo sin llegada ni inicio real cuando ya llegue la hora de otra cita posterior del mismo veterinario; un hueco permite esperar hasta esa siguiente reserva, y la última del día espera hasta el cierre configurado de la clínica. Respetar el límite exacto, otras clínicas, pacientes presentes y atenciones iniciadas; auditar y recalcular con los candados de agenda.
+- Otro síntoma sustituye el rótulo Otro / no sé y exige explicar qué observó el propietario; la descripción se conserva para revisión y no calcula el nivel; mantener el amarillo provisional y las alarmas del motor.
+- Revisión con motivos breves seleccionables y detalle libre opcional; conservar motivo y revisor en auditoría; textos clínicos completos accesibles desde la tarjeta.
+- Sala muestra Ajustar nivel solo con presencia registrada; las decisiones de llegada se abren en el modal del sistema, sin expandir tarjetas ni ofrecer formularios vacíos de reprogramación al registrar presencia.
+- CI: corregir las cuatro regresiones identificadas en la ejecución41578290982, sin desactivar pruebas; comprobaciones dirigidas de lo afectado, sin suite completa local.
+
+### Anexo — Resultado (2026-11-03)
+
+- Escribió Codex; entregada, pendiente de revisión de Claude y del dueño; dentro de2.3.0, sin commit ni push.
+- Regla final: sin llegada/inicio, pasada la tolerancia y al siguiente turno posterior del mismo veterinario o cierre configurado; un hueco permite esperar; no se infiere ausencia por demora del veterinario.
+- Barrido bajo el coordinador, relectura, clínica aislada, auditoría atómica y recálculo; se evalúa en consultas de Agenda/Inicio/Sala y en el vigilante existente; no se requiere migración ni cron nuevo.
+- Sala: decisiones de llegada en modal, sin expandir tarjetas; Ajustar nivel solo con presencia; revisión con motivos rápidos y detalle opcional; Ver detalle completo permite leer síntomas/tiempos/datos antes recortados.
+- Otro síntoma exige explicación validada en cliente/servidor y conservada en contexto; no interpreta texto para calcular ni altera el motor; registros anteriores conservados; Nala de la semilla mantiene amarillo y revisión.
+- [CI41578290982](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/41578290982): frontend omitido al fallar PHP; corregidos `CorreccionesDueno230Test::test06FinRealLiberaReservaYRecuperaRetrasoEnLaCascada` y tres casos de `BaseV2MysqlTest`.
+- Casos MySQL corregidos: `testS4Migracion14DobleParcialPreservaOutboxYDespachaRecibo`, `testS4MigracionRepetidaParcialYRevisionAuditadaConDatosReales` y `testLaSemillaNoSobrescribeNiRecreaLoQueCambioLaPlataforma`; fixtures usan monto de su orden y plataforma cambia precios después de migrar.
+- Verificación PHP:97 casos/537 aserciones consolidados de las nueve clases afectadas, más otro veterinario1/3; CI MySQL3/15 y semilla real1/87, exclusivamente `zooki_test_base_v2`; sin suites completas ni datos manuales tocados.
+- JS dirigido: captura/validación, motivos rápidos, mismos comandos/huella, Sala1366/390, Portal, agenda móvil y síntomas compartidos en verde; pruebas previas ajustadas a la lista móvil y al orden aprobado, sin ocultar fallos.
+- RN/HU/RE, CasosTriage y diagramas alineados; dos Mermaid renderizados (133 nodos); Reglas, Historias, Requisitos e Historial con PDF/Word regenerados e índices; Modelos conserva su publicación sin descargas.
+- Pendientes: revisión visual del dueño y de Claude; GitHub volverá a ejecutar ambos jobs al hacer push; no se afirma un CI remoto verde sin esa ejecución.
+
 > **Subetapa revisada (2026-10-29): Correcciones de la prueba del dueño (2.3.0).** Escribió Codex; revisó y cerró Claude (Codex se quedó sin uso antes del anexo). Encargo aprobado de nueve puntos: propuesta de horario y bloqueo de apertura; acceso a agenda solo con horario aprobado; calendario cerrado; propietario/veterinario y vínculos automáticos de mascotas; obligatorios en Pacientes; cirugía/solo_personal y liberación anticipada; horarios por triage; transferencia de rojo a Urgencias; plazo de cambios tardíos. Reproducción antes de cada arreglo, migración 15 doble, suites PHP/JS y diagramas/documentación en esta entrega. No existen planes separados de M1/M7 en el checkout: sus contratos se consultan en este plan y M5; no se inventan cierres de esos módulos.
 >
 > **Decisiones confirmadas por el dueño (2026-10-29):** amarillo puede elegir cualquier horario libre; el más cercano es Recomendado. Naranja muestra los tres primeros y se asigna al primero. Plazo de cambios 0–1440 minutos, default 30; 0 desactiva. Una cita completada libera desde su fin real, sin margen posterior (sustituye ese extremo de RN-412). Las mascotas creadas por un propietario se vinculan a sus clínicas activas, conservando límites y aislamiento. Sin conocimiento, tratamientos ni demo; versión sigue 2.3.0. Base de verificación explícita `zooki_test_base_v2`.

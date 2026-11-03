@@ -1156,7 +1156,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 **Criterios de aceptación:**
 
 - Existe el estado "no asistió".
-- Lo marca el veterinario asignado, y solo cuando la hora de la cita ya pasó.
+- Se marca automáticamente según RN-408: sin llegada ni inicio, pasada la tolerancia y al llegar el siguiente turno del veterinario o el cierre de jornada; el hueco libre permite esperar.
+- El veterinario asignado conserva la decisión manual tras la tolerancia; las presencias y atenciones iniciadas se respetan.
 - Una cita marcada así libera el espacio.
 - Se puede reportar la tasa de ausentismo.
 
@@ -1301,7 +1302,9 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - La disponibilidad se calcula como `horario clínica ∩ horario del veterinario − ausencias`, por duración + margen del tipo de cita (RN-415).
 - La reserva se concreta con bloqueo (si el espacio se ocupó antes, se busca otro); al crear se registran tipo, duración, margen y prioridad, se notifica y queda en auditoría.
 
-**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423 · **Requisitos:** RF-4.7 · **Dependencias:** HU-4.1, HU-4.11, HU-2.8
+**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423, RN-424 · **Requisitos:** RF-4.7 · **Dependencias:** HU-4.1, HU-4.11, HU-2.8
+
+**Decisión del dueño (2026-11-02):** Otro síntoma requiere explicar qué observó el propietario; el texto se conserva para revisión y no calcula el nivel.
 
 ### HU-4.14 — Reajuste de agenda en vivo (efecto cascada)
 
@@ -1411,6 +1414,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Reglas de negocio:** RN-419, RN-209 · **Requisitos:** RF-4.12 · **Dependencias:** HU-4.13
 
+**Decisión del dueño (2026-11-02):** Los motivos de revisión pueden elegirse en opciones rápidas con detalle libre opcional; se conserva el motivo auditado.
+
 ### HU-4.19 — Manejar la llegada tarde del propietario
 
 | Prioridad | Estado | Estimación | Origen |
@@ -1422,9 +1427,12 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 **Criterios de aceptación:**
 
 - El personal registra la hora de llegada del propietario.
-- Dentro de la tolerancia configurada (por defecto, 10 minutos), la cita se atiende en el tiempo que queda. Si el tipo de cita no cabe, el veterinario elige: atender igual (el retraso se propaga, HU-4.14) o reprogramar.
-- Pasada la tolerancia, el veterinario elige: marcar «no asistió», atender en el siguiente espacio libre o reprogramar.
+- Dentro de la tolerancia configurada (por defecto, 10 minutos, incluido el límite exacto), el veterinario elige atender completo con cascada o reprogramar; la reducción de duración solo se permite si la elige expresamente y cabe, y puede elegir otro veterinario compatible.
+- Pasada la tolerancia y sin llegada ni inicio, la reserva espera durante el hueco y se marca «no asistió» al llegar la hora del siguiente turno del mismo veterinario o al cierre de jornada, según RN-408.
+- Una llegada registrada durante el hueco se resuelve en un modal de Sala: siguiente horario libre o reprogramar; Ajustar nivel solo aparece si el paciente llegó.
 - En todos los casos la agenda se recalcula y la decisión queda en auditoría.
+
+**Decisión del dueño (2026-11-02):** Una reserva sin llegada puede esperar durante el hueco hasta el siguiente turno del mismo veterinario o el cierre; tras la tolerancia se aplica la inasistencia automática de RN-408. Sala muestra Ajustar nivel solo con llegada registrada y resuelve las decisiones de llegada en un modal.
 
 **Reglas de negocio:** RN-426, RN-408, RN-412 · **Requisitos:** RF-4.14 · **Dependencias:** HU-4.14, HU-4.7
 
@@ -2248,7 +2256,7 @@ Auditoría automática de la Fase 3: de **127 reglas de negocio**, **127** está
 | RN-421 | HU-4.15, HU-7.4, HU-7.5 |
 | RN-422 | HU-4.13, HU-7.5 |
 | RN-423 | HU-4.13, HU-4.17 |
-| RN-424 | HU-2.11 |
+| RN-424 | HU-2.11, HU-4.13 |
 | RN-425 | HU-2.11 |
 | RN-426 | HU-4.19, HU-6.1, HU-7.5 |
 | RN-427 | HU-4.15, HU-7.4 |

@@ -24,7 +24,7 @@ final class AgendaC4Test extends TestCase
         $_SESSION = ['id_usuario' => 2];
         Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
         $this->agenda = new SolicitudAgenda($this->db, static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00'));
-        $this->entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07',
+        $this->entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.',
             'sintomas' => [['codigo' => 'sintoma.control_preventivo', 'tiempo' => 'no_aplica']]];
     }
 
@@ -77,6 +77,29 @@ final class AgendaC4Test extends TestCase
         $this->db->exec("UPDATE mascotas SET fecha_nacimiento='2029-12-01' WHERE id_mascota=1");
         $this->expectException(InvalidArgumentException::class);
         $this->agenda->horas($r['id_solicitud'], $this->entrada);
+    }
+
+    public function testOtroSintomaExigeDescripcionYLaConservaSinUsarlaComoReglaClinica(): void
+    {
+        $entrada = $this->entrada;
+        $entrada['sintomas'] = [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']];
+        foreach (['', str_repeat('a', 256), "Texto\npartido", ['no es texto']] as $invalida) {
+            $entrada['otro_sintoma'] = $invalida;
+            try {
+                $this->agenda->evaluar($entrada);
+                $this->fail('Otro síntoma necesita una descripción válida');
+            } catch (InvalidArgumentException $error) {
+                $this->assertStringContainsString('Explica qué observaste', $error->getMessage());
+            }
+        }
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM solicitudes_agenda')->fetchColumn());
+        $entrada['otro_sintoma'] = '  Camina de lado y no aparece entre las opciones.  ';
+        $r = $this->agenda->evaluar($entrada);
+        $this->assertSame('amarillo', $r['nivel']);
+        $this->assertTrue($r['revision']);
+        $fila = $this->agenda->obtener($r['id_solicitud']);
+        $contexto = json_decode($fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(trim($entrada['otro_sintoma']), $contexto['entrada']['otro_sintoma']);
     }
     public function testRevisionInmediataPermiteReservarYMarcaElAviso(): void
     {

@@ -717,6 +717,7 @@ class CitaController
         try {
             require_once __DIR__ . '/../helpers/VigilanteAtenciones.php';
             (new VigilanteAtenciones($this->db))->revisar($this->ahora());
+            (new CascadaAgenda($this->db, fn () => $this->ahora()))->marcarInasistencias($this->ahora()->format('Y-m-d'));
         } catch (Throwable $e) {
             error_log('No se pudieron revisar las atenciones abiertas: ' . $e->getMessage());
         }

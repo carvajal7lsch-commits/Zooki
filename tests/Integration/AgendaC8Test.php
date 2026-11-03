@@ -61,7 +61,7 @@ final class AgendaC8Test extends TestCase
     private function evaluar(int $pet = 1, string $nivel = 'verde'): int
     {
         $s = new SolicitudAgenda($this->db, $this->reloj());
-        $r = $s->evaluar(['id_mascota' => $pet, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'sintomas' => [['codigo' => $nivel === 'verde' ? 'sintoma.control_preventivo' : 'sintoma.otro_no_se', 'tiempo' => $nivel === 'verde' ? 'no_aplica' : 'no_se']]]);
+        $r = $s->evaluar(['id_mascota' => $pet, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.', 'sintomas' => [['codigo' => $nivel === 'verde' ? 'sintoma.control_preventivo' : 'sintoma.otro_no_se', 'tiempo' => $nivel === 'verde' ? 'no_aplica' : 'no_se']]]);
         if ($nivel !== 'verde') {
             $s->revisar($r['id_solicitud'], $nivel, 'Revisión explícita C8', $r['huella'], null);
         }

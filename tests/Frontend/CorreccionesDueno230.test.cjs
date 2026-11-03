@@ -137,7 +137,7 @@ for (const width of [390, 1366]) {
                         await nav.evaluar("seleccionarMascota('1', 'Doki', 'Fabio Propietario'); val('modal_tipo_cita', '1'); onModalTipoCitaChange(); document.querySelector('#cm_siguiente').click()");
                     }
                     const raiz = portal ? '#portalBookingModal' : '#citaModalOverlay';
-                    await nav.evaluar(`document.querySelector('${raiz} [data-triage-otro]').click(); document.querySelector('${raiz} [data-triage-calcular]').click()`);
+                    await nav.evaluar(`document.querySelector('${raiz} [data-triage-otro]').click(); document.querySelector('${raiz} [data-triage-otro-detalle]').value='Camina de lado.'; document.querySelector('${raiz} [data-triage-calcular]').click()`);
                     await nav.esperar(`document.querySelector('${raiz} [data-triage-resultado]').dataset.nivel === '${nivel}'`);
                     if (!portal) await nav.evaluar("document.querySelector('#cm_siguiente').click()");
                     const slots = portal ? '#booking_slots' : '#modal_slots_container';

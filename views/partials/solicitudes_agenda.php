@@ -1,4 +1,7 @@
-<?php require_once __DIR__ . '/../../config/App.php'; ?>
+<?php
+require_once __DIR__ . '/../../config/App.php';
+require __DIR__ . '/motivos_revision.php';
+?>
 <section class="agenda-herramientas__panel" id="agenda-panel-triage" role="tabpanel" aria-labelledby="agenda-tab-triage" data-agenda-solicitudes data-puede-revisar="<?= Contexto::rolActivo() === Roles::VETERINARIO ? '1' : '0' ?>">
     <header class="ah-head">
         <div>

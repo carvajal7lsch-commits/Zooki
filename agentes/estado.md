@@ -2,9 +2,18 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-11-02
+**Actualizado:** 2026-11-03
 
 ## Ahora
+
+### M4 — Sala, triage y regresiones del CI — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; revisa Claude; decisiones del dueño y Anexo — Resultado al inicio de `specs/M4-agenda-grafo-ii.md`; misma2.3.0, sin commit ni push.
+- No asistió automático solo sin llegada/inicio, pasada la tolerancia y al siguiente turno posterior del mismo veterinario o al cierre configurado si es la última reserva; el hueco permite esperar; clínica aislada, auditoría atómica y cascada recalculada; barrido en Agenda/Inicio/Sala y vigilante existente.
+- Registrar llegada abre decisiones en modal; Ajustar nivel solo con presencia; motivos rápidos con detalle opcional y texto completo accesible; Otro síntoma exige descripción sin cambiar el cálculo ni las alarmas; Nala conserva amarillo con revisión y la semilla agrega su explicación.
+- CI41578290982: un error de cascada y tres fallos MySQL, frontend omitido; corregidos fixture de llegada puntual, monto falso tomado de la orden y orden de migración/semilla; pruebas móviles alineadas con las tarjetas y la lista móvil aprobadas.
+- Verificación:97 casos SQLite/537 aserciones y un caso adicional de otro veterinario/3 aserciones; tres regresiones MySQL/15 aserciones; semilla repetible con motor real1 caso/87 aserciones en `zooki_test_base_v2`; JS dirigido de Sala, triage, Portal y componentes compartidos en verde, sin excepciones; sin suites completas ni base manual.
+- RN/HU/RE, CasosTriage, Modelos e Historial actualizados; dos diagramas renderizados (133 nodos); cuatro PDF/Word regenerados con índices; pendiente revisión visual del dueño, de Claude y repetición del CI tras el push del dueño.
 
 ### HU-4.15 — Identificación comprensible — entregada, pendiente de revisión (2026-11-02)
 

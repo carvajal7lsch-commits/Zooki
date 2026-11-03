@@ -19,6 +19,9 @@ final class LlegadaAgenda extends ServicioAgendaClinica
 
     private function abierta(array $cita): void
     {
+        if ($cita['estado'] === 'no_asistio') {
+            throw new InvalidArgumentException('La reserva quedó como «No asistió». Si el paciente llegó ahora, agenda un nuevo horario.');
+        }
         if (!in_array($cita['estado'], Cita::ESTADOS_ABIERTOS, true)) {
             throw new InvalidArgumentException('La cita ya no admite esta decisión. Recarga la agenda.');
         }
@@ -73,6 +76,8 @@ final class LlegadaAgenda extends ServicioAgendaClinica
 
     public function llegada(int $id, ?string $clave): array
     {
+        $cita = $this->cita($id);
+        (new CascadaAgenda($this->conn, $this->reloj))->marcarInasistencias($cita['fecha']);
         $resultado = $this->comando($id, 'llegada_c8', [], $clave, function (array $cita) use ($id): array {
             if ($cita['fecha'] !== ($this->reloj)()->format('Y-m-d')) {
                 throw new InvalidArgumentException('La llegada se registra en la fecha de la cita.');
@@ -380,6 +385,7 @@ final class LlegadaAgenda extends ServicioAgendaClinica
     public function leer(): array
     {
         $this->autorizar([Roles::VETERINARIO]);
+        (new CascadaAgenda($this->conn, $this->reloj))->marcarInasistencias(($this->reloj)()->format('Y-m-d'));
         $citas = $this->filas("SELECT id_cita,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=citas.id_mascota) AS mascota,fecha,hora,estado,origen,prioridad,prioridad_calculada,hora_llegada FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=? AND estado IN ('pendiente','confirmada') ORDER BY hora,id_cita", [$this->clinica(), Contexto::idUsuario(), ($this->reloj)()->format('Y-m-d')]);
         $minutos = (int)$this->filas('SELECT tolerancia_llegada_min FROM clinicas WHERE id_clinica=?', [$this->clinica()])[0]['tolerancia_llegada_min'];
         foreach ($citas as &$cita) {

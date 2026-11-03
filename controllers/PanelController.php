@@ -382,6 +382,7 @@ class PanelController
         try {
             require_once __DIR__ . '/../helpers/VigilanteAtenciones.php';
             (new VigilanteAtenciones($this->db))->revisar($ahora);
+            (new CascadaAgenda($this->db, fn () => $ahora))->marcarInasistencias($ahora->format('Y-m-d'));
         } catch (Throwable $e) {
             error_log('No se pudieron revisar las atenciones abiertas: ' . $e->getMessage());
         }

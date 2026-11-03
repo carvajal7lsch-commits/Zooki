@@ -128,6 +128,8 @@
                     contenedor.append(fila);
                 }
             }
+            const otroCampo = buscar('[data-triage-otro-campo]');
+            if (otroCampo) otroCampo.hidden = !episodios.has('sintoma.otro_no_se');
             invalidar();
         }
 
@@ -186,18 +188,17 @@
             controles[grupo] = raiz.ZookiSintomas.crear(buscar(`[data-triage-grupo="${grupo}"]`), {
                 idMascota: () => opciones.seleccion().id_mascota,
                 alCambiar: () => tiempos(),
+                etiqueta: sintoma => sintoma.codigo === 'sintoma.otro_no_se' ? 'Otro síntoma' : sintoma.etiqueta,
                 urlBusqueda: (texto, mascota) => raiz.ZookiSintomas.urlBusqueda(texto, mascota) + (grupo === 'exposiciones' ? '&exposiciones=1' : '')
             });
         }
         buscar('[data-triage-otro]').addEventListener('click', () => {
-            if (!controles.sintomas.marcados().some(m => m.codigo === 'sintoma.otro_no_se')) controles.sintomas.poner([...controles.sintomas.marcados(), { codigo: 'sintoma.otro_no_se', etiqueta: 'Otro / no sé' }]);
+            if (!controles.sintomas.marcados().some(m => m.codigo === 'sintoma.otro_no_se')) controles.sintomas.poner([...controles.sintomas.marcados(), { codigo: 'sintoma.otro_no_se', etiqueta: 'Otro síntoma' }]);
+            buscar('[data-triage-otro-detalle]')?.focus();
         });
+        buscar('[data-triage-otro-detalle]')?.addEventListener('input', invalidar);
         buscar('[data-triage-vacunacion]').addEventListener('change', invalidar);
         buscar('[data-triage-celo]').addEventListener('input', invalidar);
-        buscar('[data-triage-motivo]')?.addEventListener('input', evento => {
-            const valor = evento.target.value.trim();
-            aviso.textContent = !valor || valor.length > 255 ? 'Indica el motivo de la revisión (1 a 255 caracteres).' : '';
-        });
 
         function datos() {
             const seleccion = opciones.seleccion();
@@ -215,6 +216,7 @@
             }
             if (buscar('[data-triage-vacunacion]').value) forma.append('vacunacion', buscar('[data-triage-vacunacion]').value);
             if (buscar('[data-triage-celo]').value) forma.append('dias_desde_celo', buscar('[data-triage-celo]').value);
+            if (episodios.has('sintoma.otro_no_se')) forma.append('otro_sintoma', buscar('[data-triage-otro-detalle]')?.value.trim() || '');
             return forma;
         }
 
@@ -243,6 +245,7 @@
                         nivelCalculado = r.nivel || '';
                         if (nivel && r.nivel) nivel.value = r.nivel;
                         if (motivoRevision) motivoRevision.value = '';
+                        obtenerMotivoRevision.reiniciar?.();
                         avisoRevision.textContent = '';
                     }
                     const mostrar = r.revision && revision.hidden;
@@ -274,6 +277,11 @@
             const tiemposInvalidos = [...episodios.values()].some(e => e.tiempo === 'conocido' && (e.minutos === '' || e.minutos === undefined || !Number.isFinite(Number(e.minutos)) || Number(e.minutos) < 0));
             if (!seleccion.id_mascota || !seleccion.fecha || ('id_clinica' in seleccion && !seleccion.id_clinica) || episodios.size === 0 || tiemposInvalidos) {
                 aviso.textContent = 'Completa mascota, clínica, fecha y al menos una marca con su tiempo.';
+                return;
+            }
+            if (episodios.has('sintoma.otro_no_se') && !buscar('[data-triage-otro-detalle]')?.value.trim()) {
+                aviso.textContent = 'Explica qué observaste en Otro síntoma.';
+                buscar('[data-triage-otro-detalle]')?.focus();
                 return;
             }
             aviso.textContent = '';
@@ -315,6 +323,7 @@
         // a «Calcular», y Confirmar solo se habilita con motivo.
         const aprobar = buscar('[data-triage-aprobar]');
         const motivoRevision = buscar('[data-triage-motivo]');
+        const obtenerMotivoRevision = motivoRevision && raiz.ZookiMotivosRevision ? raiz.ZookiMotivosRevision.crear(motivoRevision) : () => motivoRevision?.value.trim() || '';
         const avisoRevision = buscar('[data-triage-revision-aviso]') || aviso;
         // Confirmar el nivel calculado es un clic; el motivo solo se exige si el veterinario lo cambia.
         const nivelRevision = buscar('[data-triage-nivel]');
@@ -322,13 +331,13 @@
         const cambiaNivel = () => Boolean(nivelRevision && nivelCalculado && nivelRevision.value !== nivelCalculado);
         const habilitarRevision = () => {
             if (!aprobar || !motivoRevision) return;
-            const texto = motivoRevision.value.trim();
+            const texto = obtenerMotivoRevision();
             aprobar.disabled = ocupada || texto.length > 255 || (cambiaNivel() && !texto);
             aprobar.textContent = cambiaNivel() ? 'Guardar nivel' : 'Confirmar nivel';
-            motivoRevision.placeholder = cambiaNivel() ? 'Por qué cambias el nivel (obligatorio)' : 'Motivo (opcional)';
+            motivoRevision.placeholder = 'Detalle adicional (opcional)';
         };
         motivoRevision?.addEventListener('input', () => {
-            avisoRevision.textContent = cambiaNivel() && !motivoRevision.value.trim() ? 'Escribe por qué cambias el nivel.' : '';
+            avisoRevision.textContent = cambiaNivel() && !obtenerMotivoRevision() ? 'Elige un motivo para cambiar el nivel.' : '';
             habilitarRevision();
         });
         nivelRevision?.addEventListener('change', () => {
@@ -339,10 +348,10 @@
         aprobar?.addEventListener('click', () => {
             if (ocupada) return;
             const actual = estado.consultar(opciones.seleccion());
-            const escrito = motivoRevision.value.trim();
+            const escrito = obtenerMotivoRevision();
             const motivo = escrito || (cambiaNivel() ? '' : MOTIVO_CONFIRMA);
             if (!actual?.revision || !motivo || motivo.length > 255) {
-                avisoRevision.textContent = actual?.revision ? 'Escribe por qué cambias el nivel (máximo 255 caracteres).' : 'Vuelve a calcular el nivel antes de confirmar.';
+                avisoRevision.textContent = actual?.revision ? 'Elige un motivo o escribe un detalle (máximo 255 caracteres).' : 'Vuelve a calcular el nivel antes de confirmar.';
                 return;
             }
             avisoRevision.textContent = '';
@@ -371,6 +380,8 @@
                 actualizarCelo();
                 const seleccion = opciones.seleccion();
                 if (mascotaAnterior && mascotaAnterior !== seleccion.id_mascota) {
+                    const detalleOtro = buscar('[data-triage-otro-detalle]');
+                    if (detalleOtro) detalleOtro.value = '';
                     mascotaAnterior = seleccion.id_mascota;
                     controles.sintomas.limpiar();
                     controles.exposiciones.limpiar();
@@ -380,6 +391,9 @@
                 return r?.success && r.reservable ? r.id_solicitud : '';
             },
             reiniciar() {
+                const detalleOtro = buscar('[data-triage-otro-detalle]');
+                if (detalleOtro) detalleOtro.value = '';
+                obtenerMotivoRevision.reiniciar?.();
                 controles.sintomas.limpiar();
                 controles.exposiciones.limpiar();
                 comando.reiniciar();

@@ -58,7 +58,7 @@
         }
 
         const acciones = nodo('div', 'ah-tarjeta__acciones');
-        Array.from(tarjeta.children).filter(elemento => ['FORM', 'BUTTON', 'DETAILS'].includes(elemento.tagName)).forEach(elemento => {
+        Array.from(tarjeta.children).filter(elemento => ['FORM', 'BUTTON', 'DETAILS'].includes(elemento.tagName) && !elemento.classList.contains('triage-detalle-completo')).forEach(elemento => {
             let accion = elemento;
             let boton = elemento;
             if (elemento.tagName === 'FORM') {

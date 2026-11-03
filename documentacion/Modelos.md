@@ -160,8 +160,13 @@ flowchart TD
   ABI -- No --> C{"Puede iniciar? Es el vet asignado, es el dia de la cita, faltan 15 min o menos e identidad/version son vigentes (RN-407)"}
   C -- No --> C1[/"Mensaje: no puede iniciar esta atencion"/]
   C1 --> ZF([Fin])
-  C -- Si --> TAR{"Llegada real o, si falta, hora actual supera tolerancia de clinica?"}
-  TAR -- Si --> SAL["Resolver en Sala: siguiente hueco, reprogramar o No asistio; no iniciar desde Calendario/Atencion/API (RN-426)"]
+  C -- Si --> IAR{"Sin llegada ni inicio real?"}
+  IAR -- No --> TAR{"Llegada real o, si falta, hora actual supera tolerancia de clinica?"}
+  IAR -- Si --> IAT{"Tolerancia vencida y siguiente turno del mismo vet o cierre de jornada?"}
+  IAT -- Si --> IAN["No asistio automatico: auditar, liberar espacio y recalcular cascada"]
+  IAN --> ZF
+  IAT -- "No: puede esperar en el hueco" --> TAR
+  TAR -- Si --> SAL["Sala: registrar llegada y abrir modal con siguiente horario o reprogramar; ajustar nivel solo si llego; no iniciar desde otro acceso (RN-426)"]
   SAL --> ZF
   TAR -- No --> D[Iniciar atencion y sellar hora_inicio_real]
   D --> CTX
@@ -284,6 +289,9 @@ flowchart TD
 
 ## 4. Proceso de negocio — Agendamiento y llegada sin reserva
 
+**Decisión del dueño (2026-11-02):** Otro síntoma exige describir lo observado, conservándolo en el contexto sin interpretar el texto para el cálculo; el motor mantiene su nivel provisional y alarmas.
+Sala no ofrece reclasificar a quien no ha llegado; registrar presencia abre las decisiones en un modal y no inicia la atención.
+
 Solo propietario y veterinario crean citas; el administrador conserva gestión administrativa autorizada, sin crear ni atender.
 La misma disponibilidad de servidor valida sugerencias, reserva y cambios: clínica ∩ veterinario, menos cierres, ausencias efectivas y ocupación, por duración+margen, en intervalos [inicio,fin).
 No se promete atención ni se pausa por un cálculo rojo remoto.
@@ -329,7 +337,7 @@ flowchart TD
   OK -- No --> DISP
   OK -- Si --> RES["Cita unica con tipo/duracion/margen/nivel/origen; llegada conserva origen"]
   RES --> COR["Despachar avisos tras commit; fallo SMTP no revierte cita"]
-  PEN -. "Antes o despues de reservar" .-> VET["Veterinario confirma o ajusta con motivo"]
+  PEN -. "Antes o despues de reservar" .-> VET["Veterinario confirma o ajusta con motivo rapido y detalle opcional; auditar"]
   VET --> VAL["Revalidar entrada/contexto/version; calculado y aprobado separados; autor, fecha y auditoria"]
   VAL --> VIG{Evaluacion y huella vigentes?}
   VIG -- No --> OBS[/"Revision obsoleta; reevaluar sin modificar la reserva"/]

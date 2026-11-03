@@ -108,7 +108,7 @@ final class SolicitudAgenda extends ModeloClinica
         $sintomas = ValidadorTriage::episodios($entrada['sintomas'] ?? [], false, $grafo);
         $exposiciones = ValidadorTriage::episodios($entrada['exposiciones'] ?? [], true, $grafo);
         if (!$sintomas && !$exposiciones) {
-            throw new InvalidArgumentException('Confirma una marca del catálogo u Otro / no sé. La nota no calcula.');
+            throw new InvalidArgumentException('Selecciona un síntoma del catálogo u Otro síntoma y explica qué observaste.');
         }
         $ahora = ($this->reloj)();
         if ($fechaEvaluacion !== null) {
@@ -143,6 +143,11 @@ final class SolicitudAgenda extends ModeloClinica
         foreach (['sintomas', 'exposiciones', 'vacunacion', 'dias_desde_celo'] as $campo) {
             if (array_key_exists($campo, $datos)) {
                 $entrada[$campo] = $datos[$campo];
+            }
+        }
+        foreach ((array) ($entrada['sintomas'] ?? []) as $episodio) {
+            if (is_array($episodio) && ($episodio['codigo'] ?? '') === 'sintoma.otro_no_se') {
+                $entrada['otro_sintoma'] = ValidadorTriage::detalleOtro($datos['otro_sintoma'] ?? '');
             }
         }
         $this->autorizar($entrada);

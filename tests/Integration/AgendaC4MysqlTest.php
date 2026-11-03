@@ -59,7 +59,7 @@ final class AgendaC4MysqlTest extends TestCase
     private function solicitud(int $mascota): array
     {
         $agenda = new SolicitudAgenda($this->db, static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00'));
-        $entrada = ['id_mascota' => $mascota, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07',
+        $entrada = ['id_mascota' => $mascota, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.',
             'sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]];
         $r = $agenda->evaluar($entrada);
         $agenda->revisar($r['id_solicitud'], 'naranja', 'Carrera C4', $r['huella'], hash('sha256', 'revision' . $mascota));

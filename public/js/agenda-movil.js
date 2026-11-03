@@ -122,7 +122,7 @@
             dialogo.querySelector('[data-agenda-revision-paciente]').textContent = tarjeta.querySelector('strong').textContent;
             const contexto = dialogo.querySelector('[data-agenda-revision-contexto]');
             contexto.replaceChildren();
-            tarjeta.querySelectorAll('.ah-item__texto, .ah-item__meta').forEach(dato => contexto.append(nodo('p', dato.textContent)));
+            tarjeta.querySelectorAll('.ah-item__texto, .ah-item__meta, .triage-detalle').forEach(dato => contexto.append(nodo('p', dato.textContent)));
             const select = form.querySelector('select');
             form.querySelector('input').id = 'agendaRevisionMotivo';
             const niveles = dialogo.querySelector('[data-agenda-revision-niveles]');

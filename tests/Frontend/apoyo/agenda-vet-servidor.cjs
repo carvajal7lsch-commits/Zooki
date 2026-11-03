@@ -97,6 +97,6 @@ async function servidorAgendaVet({ iconos = true, triage = null, contextoAgenda 
         res.end(fs.readFileSync(archivo));
     });
     await new Promise(r => servidor.listen(0, '127.0.0.1', r));
-    return { url: 'http://127.0.0.1:' + servidor.address().port, citas, solicitudes, propuestas, llamadas, pendientes, retener: valor => { retener = valor; }, cerrar: async () => { servidor.closeAllConnections(); await new Promise(r => servidor.close(r)); } };
+    return { url: 'http://127.0.0.1:' + servidor.address().port, citas, solicitudes, llegadas, propuestas, llamadas, pendientes, retener: valor => { retener = valor; }, cerrar: async () => { servidor.closeAllConnections(); await new Promise(r => servidor.close(r)); } };
 }
 module.exports = { servidorAgendaVet, fecha };

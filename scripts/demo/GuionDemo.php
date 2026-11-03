@@ -92,7 +92,7 @@ final class GuionDemo
             'Simón' => [['intentos_orinar_minimo', 'dolor_orinar'], 'rojo', []],
             'Luna' => [['sed_aumentada', 'secrecion_genital', 'decaimiento'], 'naranja', ['dias_desde_celo' => 35]],
             'Kira' => [['vomito', 'diarrea'], 'naranja', []],
-            'Nala' => [['otro_no_se'], 'amarillo', []],
+            'Nala' => [['otro_no_se'], 'amarillo', ['otro_sintoma' => 'Camina de lado y el propietario no reconoce ese cambio entre los síntomas del catálogo.']],
             'Toby' => [['control_preventivo'], 'verde', []],
         ];
     }

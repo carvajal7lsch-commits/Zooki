@@ -674,7 +674,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.7.1 | El sistema debe permitir marcar una cita como "no asistió". | Funcional | Se marca la cita como no asistida. | Media |
+| RE-4.7.1 | El sistema debe registrar la inasistencia automáticamente según RN-408 y conservar la acción manual del veterinario asignado tras la tolerancia. | Funcional | Sin llegada ni inicio real: espera durante el hueco; pasada la tolerancia y al empezar la siguiente cita posterior del mismo veterinario, marca no_asistio; sin otra posterior, lo hace al cierre configurado. No cuenta canceladas/no asistidas como siguiente turno. No cambia llegadas registradas ni atenciones iniciadas; es idempotente, aislado por clínica y atómico con auditoría/cascada. | Media |
 | RE-4.7.2 | El sistema debe liberar el espacio de una cita no asistida. | Funcional | Tras marcar «no asistió», esa franja vuelve a ofrecerse como disponible al agendar. | Media |
 | RE-4.7.3 | El sistema debe permitir reportar la tasa de ausentismo. | Funcional | El administrador ve en el Inicio el porcentaje de no asistencia del mes de su clínica (RE-6.2.12). | Baja |
 
@@ -740,7 +740,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.13.1 | El Grafo I debe calcular el nivel de triage a partir de los síntomas; el propietario no lo elige. | Funcional | El nivel se asigna automáticamente. | Alta |
+| RE-4.13.1 | El Grafo I debe calcular el nivel de triage a partir de los síntomas; el propietario no lo elige. Otro síntoma exige una descripción de lo observado. | Funcional | Sin descripción, Otro síntoma se rechaza en cliente y servidor sin crear solicitud. Una descripción válida de1 a255 caracteres se conserva y se muestra completa al personal, sin interpretar su texto para calcular el nivel. La falta de cobertura mantiene revisión y nivel provisional según RN-418. | Alta |
 | RE-4.13.2 | El sistema debe verificar el límite del plan antes de reservar, salvo en los casos 🔴. | Restricción | Con la clínica al límite, un 🟡 se rechaza y un 🔴 se deriva a urgencia igual. | Alta |
 | RE-4.13.3 | El sistema debe ofrecer horarios por nivel aprobado o provisional. | Funcional | Verde y amarillo muestran todos los horarios libres del día, el primero «Recomendado», y permiten elegir cualquiera en portal y Nueva cita. Naranja muestra los tres más cercanos, se asigna al primero libre y explica «Nivel naranja: se le asigna el primer horario libre para atenderlo cuanto antes»; respeta RN-422. Rojo deriva sin horarios. Revisión pendiente/inmediata permite reservar con aviso; revisión posterior aplica reclasificación con motivo/auditoría, rojo a Urgencias y descenso conserva espacio. | Alta |
 | RE-4.13.4 | La disponibilidad debe ser horario clínica ∩ horario veterinario, menos cierres puntuales, ausencias aprobadas y ocupación, por duración más margen. | Cálculo | Sugerencias y guardado restan exactamente esos intervalos; contactos o calendarios ajenos no se exponen. | Alta |
@@ -748,7 +748,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.13.6 | Al crear la cita, el sistema debe registrar el tipo, la duración, el margen y la prioridad, notificar y auditar. | Funcional | La cita queda creada y notificada. | Alta |
 | RE-4.13.7 | Cada franja continua original del veterinario por fecha admite el tope naranja de clínica (default 2), sin multiplicarlo por ausencias parciales. | Restricción | El tercero excedente avisa sin insertarse; dividir la franja no duplica cupos; completadas consumen y canceladas/no_asistio liberan. Orden fecha_registro/id_cita; cambio veterinario exige motivo/auditoría. | Alta |
 
-**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423
+**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423, RN-424
 
 ### HU-4.14 — Reajuste de agenda en vivo (efecto cascada)
 
@@ -805,7 +805,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.18.1 | El veterinario debe poder cambiar el nivel de triage con motivo obligatorio. | Funcional | Sin motivo, el cambio se rechaza. | Alta |
+| RE-4.18.1 | El veterinario debe poder cambiar el nivel de triage con motivo obligatorio mediante opciones rápidas y detalle libre opcional. | Funcional | Cambiar el nivel sin motivo se rechaza; elegir un motivo rápido permite guardar sin redactar. Confirmar el nivel calculado guarda la confirmación del veterinario. Motivo compuesto de hasta255 caracteres, sin perder datos ante un error. | Alta |
 | RE-4.18.2 | El cambio debe auditarse y guardar el nivel calculado y el ajustado. | Seguridad | La entrada de auditoría muestra ambos niveles y el motivo. | Alta |
 | RE-4.18.3 | Si el ajuste cambia la ubicación, la agenda debe reacomodarse y notificar. | Funcional | La cita se mueve según el nuevo nivel y llega el aviso. | Media |
 | RE-4.18.4 | Las reclasificaciones deben verse al personal autorizado de la clínica solo sobre sus propios casos asociados al propietario. | Funcional | El historial no incluye reclasificaciones de Sur al consultar Norte ni genera sanciones/puntuación automática; conserva calculado/ajustado, motivo, autor y fecha. | Baja |
@@ -818,7 +818,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.19.1 | El sistema debe registrar la hora de llegada del propietario. | Funcional | La cita guarda la hora de llegada. | Alta |
 | RE-4.19.2 | Dentro de la tolerancia, el veterinario decide atender el servicio completo con cascada o reprogramar; si no alcanza el tiempo, también se ofrecen duración reducida explícita si cabe y otro veterinario compatible. | Funcional | A los 8 y exactamente 10 minutos, con tolerancia 10, conserva el servicio completo salvo decisión veterinaria explícita; una reducción exige duración y capacidad, sin cambiar el snapshot original. Las alternativas no asignan automáticamente otro veterinario. | Alta |
-| RE-4.19.3 | Pasada la tolerancia, el veterinario debe resolver la reserva desde Sala: marcar «no asistió», atender en el siguiente espacio libre o reprogramar; no se admite iniciar directamente desde otro acceso. | Funcional | Con15 minutos de retraso aparecen las tres opciones; una petición directa de inicio se rechaza sin cambiar estado ni sello. Se respeta el límite exacto y la tolerancia configurada, usando la llegada real si existe; una llegada puntual con demora del veterinario no se convierte en tardía. Las atenciones anteriores ya iniciadas/sin cerrar siguen permitiendo registrar su consulta, sin reiniciar ni cambiar hora_inicio_real (RN-409). | Alta |
+| RE-4.19.3 | Pasada la tolerancia, una reserva sin llegada espera mientras haya hueco hasta la siguiente cita posterior del mismo veterinario o el cierre de jornada; allí se marca no asistió según RN-408. Una llegada registrada durante el hueco se resuelve desde Sala mediante un modal. | Funcional | La tolerancia sola no cierra una reserva con hueco libre. No se ajusta nivel de un paciente que no ha llegado. Registrar llegada abre las opciones de siguiente horario disponible o reprogramar en modal; sin horarios no se ofrece una acción inválida. La llegada puntual no se penaliza por demora veterinaria; el inicio directo tardío sigue rechazado y las atenciones antiguas ya iniciadas/sin cerrar conservan RN-409. | Alta |
 | RE-4.19.4 | La agenda debe recalcularse y la decisión registrarse en auditoría. | Seguridad | Las citas siguientes muestran su nueva hora estimada y la decisión queda auditada. | Media |
 
 **Reglas de negocio:** RN-426, RN-408, RN-412
@@ -1255,7 +1255,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-4.10 | RN-404, RN-405 | RE-4.10.1, RE-4.10.2, RE-4.10.3 |
 | HU-4.11 | RN-706, RN-703, RN-415 | RE-4.11.1, RE-4.11.2, RE-4.11.3, RE-4.11.4, RE-4.11.5 |
 | HU-4.12 | RN-414, RN-415 | RE-4.12.1, RE-4.12.2, RE-4.12.3, RE-4.12.4, RE-4.12.5 |
-| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
+| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423, RN-424 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
 | HU-4.14 | RN-412, RN-413, RN-415, RN-428, RN-429 | RE-4.14.1, RE-4.14.2, RE-4.14.3, RE-4.14.4, RE-4.14.5, RE-4.14.6, RE-4.14.7 |
 | HU-4.15 | RN-411, RN-415, RN-420, RN-421, RN-427, RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | RE-4.15.1, RE-4.15.2, RE-4.15.3, RE-4.15.4, RE-4.15.5, RE-4.15.6, RE-4.15.7, RE-4.15.8, RE-4.15.9, RE-4.15.10 |
 | HU-4.16 | RN-803 | RE-4.16.1, RE-4.16.2 |

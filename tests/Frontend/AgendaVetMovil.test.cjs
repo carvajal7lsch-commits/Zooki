@@ -9,7 +9,7 @@ async function conAgenda(ejecutar) {
     try {
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
         await nav.enviar('Page.navigate', { url: servidor.url });
-        await nav.esperar("document.querySelectorAll('[data-agenda-evento]').length === 6");
+        await nav.esperar("document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]').length === 6");
         // Estas regresiones verifican las hojas; RN-430 se prueba con su plazo en CorreccionesDueno230.
         await nav.evaluar("const agenda = document.querySelector('.agenda'); const contexto = JSON.parse(agenda.dataset.contextoAgenda); contexto.anticipacion_cambios_min = 0; agenda.dataset.contextoAgenda = JSON.stringify(contexto)");
         await ejecutar(nav, servidor);
@@ -27,14 +27,14 @@ async function tab(nav, clave) {
 
 test('Agenda móvil: pestañas, conteos, misma fuente y filtros, semana cruzando mes y hoja del mes', { skip: !buscarChrome() }, async () => {
     await conAgenda(async (nav, servidor) => {
-        const inicial = await nav.evaluar(`({ claves: Array.from(document.querySelectorAll('[data-agenda-tab]'), n => n.dataset.agendaTab), conteos: Array.from(document.querySelectorAll('[data-agenda-conteo]'), n => n.textContent), filas: Array.from(document.querySelectorAll('[data-agenda-evento]'), n => n.dataset.agendaEvento), fuente: calendarInstance.getEvents().map(e => e.id), puntos: Array.from(document.querySelectorAll('.agenda-prioridad'), n => n.dataset.nivel), dias: document.querySelectorAll('[data-inicio-semana-fecha]').length })`);
-        assert.deepEqual(inicial.claves, ['agenda', 'triage', 'llegadas', 'reasignaciones', 'urgencias']);
-        assert.deepEqual(inicial.conteos, ['6', '1', '3', '1', '1']);
+        const inicial = await nav.evaluar(`({ claves: Array.from(document.querySelectorAll('[data-agenda-tab]'), n => n.dataset.agendaTab), conteos: Array.from(document.querySelectorAll('[data-agenda-conteo]'), n => n.textContent), filas: Array.from(document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]'), n => n.dataset.agendaEvento), fuente: calendarInstance.getEvents().map(e => e.id), puntos: Array.from(document.querySelectorAll('.agenda-prioridad'), n => n.dataset.nivel), dias: document.querySelectorAll('[data-inicio-semana-fecha]').length })`);
+        assert.deepEqual(inicial.claves, ['agenda', 'urgencias', 'triage', 'llegadas', 'reasignaciones']);
+        assert.deepEqual(inicial.conteos, ['6', '1', '1', '3', '1']);
         assert.deepEqual(inicial.filas, inicial.fuente);
         assert.deepEqual(inicial.puntos, ['naranja', 'amarillo']);
         assert.equal(inicial.dias, 7);
         await nav.evaluar(`document.querySelector('[data-abrir-dialogo="agendaFiltrosMovil"]').click(); document.querySelector('[data-tipo="vacunacion"].filter-btn').click();`);
-        const filtradas = await nav.evaluar(`({ ids: Array.from(document.querySelectorAll('[data-agenda-evento]'), n => n.dataset.agendaEvento), fuente: calendarInstance.getEvents().filter(e => FilterManager.esVisible(e)).map(e => e.id), punto: !document.querySelector('[data-agenda-filtros-activos]').hidden })`);
+        const filtradas = await nav.evaluar(`({ ids: Array.from(document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]'), n => n.dataset.agendaEvento), fuente: calendarInstance.getEvents().filter(e => FilterManager.esVisible(e)).map(e => e.id), punto: !document.querySelector('[data-agenda-filtros-activos]').hidden })`);
         assert.deepEqual(filtradas.ids, filtradas.fuente);
         assert.equal(filtradas.ids.length, 5);
         assert.equal(filtradas.punto, true);
@@ -49,8 +49,8 @@ test('Agenda móvil: pestañas, conteos, misma fuente y filtros, semana cruzando
         assert.equal(await nav.evaluar('toLocalDateStr(_selectedDate)'), '2030-03-10');
         assert.ok(servidor.llamadas.some(l => l.accion === 'listar_citas_ajax' && l.consulta.includes('2030-03')));
         await nav.evaluar(`document.querySelector('[data-agenda-hoy]').click()`);
-        await nav.esperar("document.querySelectorAll('[data-agenda-evento]').length === 6");
-        await nav.evaluar(`document.querySelector('[data-agenda-evento="3"]').click()`);
+        await nav.esperar("document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]').length === 6");
+        await nav.evaluar(`document.querySelector('[data-agenda-dia-lista] [data-agenda-evento="3"]').click()`);
         assert.equal(await nav.evaluar("document.getElementById('agendaDetalleMovil').open"), true);
         assert.match(await nav.evaluar("document.getElementById('agendaPanel').textContent"), /Luna/);
         await nav.evaluar(`document.querySelector('#agendaPanel [data-accion="reprogramar"]').click()`);
@@ -64,29 +64,24 @@ test('Agenda móvil: pestañas, conteos, misma fuente y filtros, semana cruzando
 test('Agenda móvil: revisión conserva huella y POST; llegadas y reasignaciones conservan sus comandos', { skip: !buscarChrome() }, async () => {
     await conAgenda(async (nav, servidor) => {
         await tab(nav, 'triage');
-        await nav.evaluar(`document.querySelector('[data-triage-revisar]').click()`);
-        const revision = await nav.evaluar(`({ abierta: document.getElementById('agendaRevisionMovil').open, niveles: Array.from(document.querySelectorAll('[data-agenda-revision-niveles] button'), b => ({ nivel:b.dataset.nivel, alto:b.getBoundingClientRect().height, seleccionado:b.getAttribute('aria-pressed') })), bloqueado: document.querySelector('#agendaRevisionMovil [type="submit"]').disabled })`);
-        assert.equal(revision.abierta, true);
-        assert.equal(revision.bloqueado, true);
-        assert.equal(revision.niveles.length, 4);
-        assert.ok(revision.niveles.every(n => n.alto >= 44));
-        assert.equal(revision.niveles.find(n => n.seleccionado === 'true').nivel, 'naranja');
-        await nav.evaluar(`document.getElementById('agendaRevisionMotivo').dispatchEvent(new Event('input',{bubbles:true}));`);
-        assert.match(await nav.evaluar("document.querySelector('#agendaRevisionMovil .ah-error').textContent"), /obligatorio/);
-        await nav.evaluar(`document.querySelector('[data-agenda-revision-niveles] [data-nivel="amarillo"]').click(); const motivo=document.getElementById('agendaRevisionMotivo'); motivo.value='Revisión clínica presencial'; motivo.dispatchEvent(new Event('input',{bubbles:true})); document.querySelector('#agendaRevisionMovil [type="submit"]').click();`);
-        await nav.esperar("!document.getElementById('agendaRevisionMovil').open");
+        await nav.evaluar(`document.querySelector('[data-solicitudes-lista] .ah-tarjeta__acciones summary').click()`);
+        assert.equal(await nav.evaluar(`document.querySelector('[data-solicitudes-lista] form select').options.length`), 4);
+        await nav.evaluar(`var nivel=document.querySelector('[data-solicitudes-lista] form select'); nivel.value='amarillo'; nivel.dispatchEvent(new Event('change',{bubbles:true}));`);
+        assert.equal(await nav.evaluar(`document.querySelector('[data-solicitudes-lista] [type="submit"]').disabled`), true);
+        await nav.evaluar(`[...document.querySelectorAll('[data-solicitudes-lista] .motivos-revision button')].find(b=>b.textContent.includes('estable')).click(); document.querySelector('[data-solicitudes-lista] [type="submit"]').click();`);
+        await nav.esperar(`document.querySelector('[data-solicitudes-lista] form [type="submit"]') !== null`);
         const revisionPost = servidor.llamadas.find(l => l.accion === 'revisar_triage_agenda_ajax');
         const datos = new URLSearchParams(revisionPost.cuerpo);
         assert.equal(datos.get('id_solicitud'), '7');
         assert.equal(datos.get('huella'), 'huella-original-prueba');
         assert.equal(datos.get('nivel'), 'amarillo');
-        assert.equal(datos.get('motivo'), 'Revisión clínica presencial');
+        assert.equal(datos.get('motivo'), 'Paciente estable tras valoración');
         assert.match(datos.get('clave_operacion'), /^[a-f0-9]{64}$/);
         await tab(nav, 'llegadas');
         await nav.evaluar(`document.querySelector('[data-llegadas-citas] form [type="submit"]').click()`);
-        await nav.esperar("document.querySelector('[data-llegadas-citas] .ah-decisiones') !== null");
+        await nav.esperar("document.querySelector('.llegada-dialogo[open] .ah-decisiones') !== null");
         assert.ok(servidor.llamadas.some(l => l.accion === 'registrar_llegada_ajax' && /id_cita[\s\S]*3/.test(l.cuerpo) && l.cuerpo.includes('csrf_token')));
-        await nav.evaluar(`document.querySelector('[data-llegadas-citas] .ah-decisiones form [type="submit"]').click()`);
+        await nav.evaluar(`document.querySelector('.llegada-dialogo .ah-decisiones form [type="submit"]').click()`);
         await dejarPintar(nav);
         assert.ok(servidor.llamadas.some(l => l.accion === 'decidir_llegada_ajax' && l.cuerpo.includes('completa')));
         await tab(nav, 'reasignaciones');
@@ -106,7 +101,7 @@ test('Nueva cita móvil: tres pasos, cálculo real, volver, fecha, un primario y
         await nav.evaluar(`seleccionarMascota('1','Doki','Fabio Propietario'); val('modal_tipo_cita','1'); onModalTipoCitaChange(); document.getElementById('cm_siguiente').click();`);
         assert.equal(await nav.evaluar('pasoCitaModal'), 1);
         assert.equal((await primarios()).length, 1);
-        await nav.evaluar(`document.querySelector('[data-triage-otro]').click(); document.querySelector('#citaModalOverlay [data-triage-calcular]').click();`);
+        await nav.evaluar(`document.querySelector('[data-triage-otro]').click(); document.querySelector('#citaModalOverlay [data-triage-otro-detalle]').value='Camina de lado.'; document.querySelector('#citaModalOverlay [data-triage-calcular]').click();`);
         await nav.esperar("triageModalC4?.consulta() === 123");
         assert.deepEqual(await primarios(), ['cm_siguiente']);
         await nav.evaluar(`document.getElementById('cm_siguiente').click()`);

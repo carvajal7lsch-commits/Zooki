@@ -1,5 +1,7 @@
 # Semilla de demostración para la sustentación (2.3.0)
 
+**Ajuste de Sala y triage (2026-11-03, escribió Codex):** Nala conserva su caso amarillo con revisión; la semilla agrega la descripción «Camina de lado…» para Otro síntoma, obligatoria en las evaluaciones nuevas, sin cambiar el resultado del motor ni añadir pacientes.
+
 > Plan de una sola entrega. Arquitecto: Claude. Ejecutor: Codex. Va **después** de «Refuerzo del conocimiento tras pruebas (2.3.0)», porque usa Collie, ivermectina y los fármacos nuevos.
 
 **Estado:** S.1 revisada; guion de navegador y ajuste de escena entregados, pendientes de revisión de Claude.

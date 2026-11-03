@@ -3,6 +3,20 @@ require_once __DIR__ . '/ConocimientoClinico.php';
 
 final class ValidadorTriage
 {
+    public const DETALLE_MAX = 255;
+
+    public static function detalleOtro(mixed $valor): string
+    {
+        if (!is_string($valor) || preg_match('/\p{C}/u', $valor)) {
+            throw new InvalidArgumentException('Explica qué observaste en Otro síntoma (1 a 255 caracteres).');
+        }
+        $detalle = preg_replace('/\s+/u', ' ', trim($valor));
+        if ($detalle === '' || mb_strlen($detalle) > self::DETALLE_MAX) {
+            throw new InvalidArgumentException('Explica qué observaste en Otro síntoma (1 a 255 caracteres).');
+        }
+        return $detalle;
+    }
+
     public static function episodios(mixed $entrada, bool $exposiciones, ConocimientoClinico $grafo): array
     {
         if (!is_array($entrada) || !array_is_list($entrada)) {

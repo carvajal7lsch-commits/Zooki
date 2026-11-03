@@ -166,7 +166,7 @@
     <?php // M2 C8 (H6): flechas, Enter y Esc en los buscadores con lista (síntomas, fármacos y nodos de alergias). ?>
     <script src="js/combobox.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C5a: la consulta que comparten el modal y Atención: síntomas, diagnósticos sugeridos y avisos junto al campo. ?>
-    <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/consulta-sintomas.js'), 0, 12) ?>"></script>
     <script src="js/consulta-ficha.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-plan.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

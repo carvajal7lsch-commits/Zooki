@@ -33,7 +33,7 @@ Aprobadas el 05/10/2026 e incorporadas a las [Reglas de Negocio](ReglasNegocio.m
 | P3 | **Las combinaciones escalan:** tres o más síntomas moderados, o uno moderado con signos de deshidratación o decaimiento, suben un nivel. | Ningún síntoma solo parece grave, pero juntos sí. | RN-416 |
 | P4 | **Modificadores del paciente:** la raza (braquicéfalos con síntomas respiratorios; razas grandes o gigantes con abdomen distendido), la edad (menor de 6 meses, geriátrico), el estado (sin vacunas, hembra entera, gato macho) y el historial (epilepsia conocida, alergias registradas en cualquier clínica) cambian el nivel. | El mismo texto no significa lo mismo en un bulldog que en un labrador. | RN-416 |
 | P5 | **El tiempo cuenta:** para tóxicos y para el inicio de los síntomas, el formulario pregunta hace cuánto pasó, y el nivel depende de esa respuesta. | Un tóxico recién ingerido tiene una ventana de tratamiento; dos días después, otra. | RN-416, RN-424 |
-| P6 | **Sin cobertura, «Otro / no sé» o sin regla aplicable a las marcas: nunca 🟢 por defecto.** El caso queda en 🟡 con la marca «revisión del personal», y las alarmas universales (P1) siguen aplicando. | Un caso que el sistema no entiende no puede terminar al final de la fila. | RN-418 |
+| P6 | **Sin cobertura, «Otro síntoma» o sin regla aplicable a las marcas: nunca 🟢 por defecto.** El caso queda en 🟡 con la marca «revisión del personal», y las alarmas universales (P1) siguen aplicando. | Un caso que el sistema no entiende no puede terminar al final de la fila. | RN-418 |
 | P7 | **El veterinario puede ajustar el nivel**, con motivo obligatorio y registro en auditoría. La diferencia entre el nivel calculado y el ajustado queda guardada para mejorar el grafo. | La decisión final es del veterinario (RN-209), pero debe quedar trazada. | RN-419 |
 | P8 | **Una urgencia 🔴 nunca se bloquea** por el límite del plan ni por una suscripción en mora. | El modelo de negocio no puede impedir atender una emergencia. | RN-420 |
 
@@ -122,7 +122,7 @@ Un triage que manda todo a urgencias llena la agenda de sobrecupos y deja de ser
 Los relatos anteriores no se interpretan automáticamente.
 El dato ausente sigue desconocido, con revisión cuando haga falta; no se supone vacunación, raza, edad ni hora.
 La opción temporal «No aplica» se limita a atención preventiva.
-T-22 marca «Otro / no sé»; T-23 prueba primero el buscador y luego las dos marcas confirmadas.
+T-22 marca «Otro síntoma» y describe lo observado; T-23 prueba primero el buscador y luego las dos marcas confirmadas.
 Buscar «bomita» no añade sangre ni selecciona un síntoma.
 T-16 y T-20 son esperados provisionales con las limitaciones expresas de sus filas.
 
@@ -151,7 +151,7 @@ T-16 y T-20 son esperados provisionales con las limitaciones expresas de sus fil
 | T-19 | Episodio convulsivo finalizado, único, corto y habitual; recuperado. | Pasado, duración exacta sin dato. | Perro con epilepsia conocida y tratamiento; edad/raza sin dato. | 🟡 | Alerta global de epilepsia + medicación conocida, o historia autorizada; no interpretar una consulta protegida; sin evidencia de patrón habitual, revisión. |
 | T-20 | No come; no defeca. | Desde ayer. | Conejo, 2 años. | 🟡 provisional + revisión inmediata; reservable | P6: conejo sin cobertura específica; no cargar naranja como regla aprobada; ninguna respuesta tranquilizadora elimina la revisión ni su aviso inmediato. |
 | T-21 | Dificultad para respirar, con ayuda visible «mueve mucho la cola al respirar»; plumaje erizado. | Sin dato. | Loro; edad/raza sin dato. | 🔴 | P1 universal; la marca explícita sustituye la interpretación automática del relato, aunque aves no tengan cobertura específica. |
-| T-22 | «Otro / no sé»; nota opcional «está raro». | «No sé». | Perro; resto sin dato. | 🟡 + revisión | P6; una nota sola no satisface la captura ni calcula un nivel. |
+| T-22 | «Otro síntoma»; descripción obligatoria de lo observado «camina de lado». | «No sé». | Perro; resto sin dato. | 🟡 + revisión | P6; una nota sola no satisface la captura ni calcula un nivel. |
 | T-23 | Buscar «bomita sangre» y «desaido»; confirmar Vómito con sangre y Decaimiento. | «No sé» si no se conoce. | Gato; resto sin dato. | 🟠 | Búsqueda tolerante + selección explícita; sangre en vómito no equivale por sí sola a hemorragia incontrolable P1; P3/combinación. |
 | T-24 | Control preventivo / vacunación, sin síntomas de alarma marcados. | No aplica, motivo preventivo explícito. | Perro, 3 años. | 🟢 | Entrada reconocida del catálogo para atención preventiva; añadir P1 sigue dando rojo. |
 | T-25 | Picor de oídos leve; sin otras alarmas marcadas. | Una semana. | Gato, 4 años, come y juega. | 🟢 | Regla de molestia leve estable; no tratar la ausencia de marcas como síntoma desconocido si la entrada sí está cubierta. |

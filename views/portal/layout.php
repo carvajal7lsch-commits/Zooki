@@ -136,8 +136,8 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/comando-agenda.js?v=<?= $v ?>"></script>
 <script src="js/validacion-mascota.js?v=<?= $v ?>"></script>
 <script src="js/combobox.js?v=<?= $v ?>"></script>
-<script src="js/consulta-sintomas.js?v=<?= $v ?>"></script>
-<script src="js/triage-agenda.js?v=<?= $v ?>"></script>
+<script src="js/consulta-sintomas.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/consulta-sintomas.js'), 0, 12) ?>"></script>
+<script src="js/triage-agenda.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/triage-agenda.js'), 0, 12) ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
 <script src="js/carnet.js?v=<?= $v ?>"></script>
 <script src="js/portal-movil.js?v=<?= $v ?>"></script>
