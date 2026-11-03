@@ -197,6 +197,16 @@ final class SemillaDemoTest extends TestCase
             $this->assertSame('Rocco', $this->filas('SELECT nombre FROM mascotas WHERE id_mascota=?', [$rocco['id_mascota']])[0]['nombre']);
             $this->assertNotNull($rocco['hora_llegada']);
             $this->assertLessThan($rocco['hora_inicio_real'], $rocco['hora_llegada']);
+
+            $mishi = $this->filas('SELECT * FROM citas WHERE id_cita=?', [$escena['mishi']])[0];
+            $this->assertSame('Mishi', $this->filas('SELECT nombre FROM mascotas WHERE id_mascota=?', [$mishi['id_mascota']])[0]['nombre']);
+            $this->assertSame('confirmada', $mishi['estado']);
+            $this->assertSame($rocco['id_veterinario'], $mishi['id_veterinario']);
+            $this->assertNotNull($mishi['hora_llegada']);
+            $this->assertNull($mishi['hora_inicio_real']);
+            $siguientes = array_values(array_filter($citas, static fn (array $c): bool => in_array($c['estado'], ['pendiente', 'confirmada'], true)));
+            usort($siguientes, static fn (array $a, array $b): int => [$a['hora'], $a['id_cita']] <=> [$b['hora'], $b['id_cita']]);
+            $this->assertSame($mishi['id_cita'], $siguientes[0]['id_cita'], $hora);
             $this->assertSame([], $this->filas("SELECT c.id_cita FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_clinica=? AND c.fecha='2026-11-02' AND m.nombre='Mila' AND c.estado<>'completada'", [$clinica]));
             $this->assertCount(1, $this->filas("SELECT c.id_cita FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_clinica=? AND c.fecha='2026-11-02' AND m.nombre='Mila' AND c.estado='completada'", [$clinica]));
             $this->assertSame([], $this->filas("SELECT s.id_solicitud FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_clinica=? AND m.nombre='Simón' AND JSON_UNQUOTE(JSON_EXTRACT(s.contexto_triage,'$.entrada.fecha'))='2026-11-02'", [$clinica]));

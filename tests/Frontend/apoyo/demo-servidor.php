@@ -7,14 +7,15 @@ if (getenv('ZOOKI_ENTORNO_PRUEBAS') !== '1' || !getenv('ZOOKI_TEST_MYSQL_HOST'))
 $raizDemo = dirname(__DIR__, 3);
 $rutaDemo = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($rutaDemo !== '/index.php' && $rutaDemo !== '/') {
-    if (str_starts_with($rutaDemo, '/__dependencia/')) {
+    if (str_starts_with($rutaDemo, '/__dependencia/') || str_starts_with($rutaDemo, '/webfonts/')) {
         $nombre = basename($rutaDemo);
         $archivo = $raizDemo . '/scratch/r/userscript/dependencias/' . $nombre;
         if (!is_file($archivo)) {
             http_response_code(404);
             exit;
         }
-        header('Content-Type: application/javascript');
+        $tipo = match (pathinfo($archivo, PATHINFO_EXTENSION)) { 'css' => 'text/css', 'woff2' => 'font/woff2', default => 'application/javascript' };
+        header('Content-Type: ' . $tipo);
         readfile($archivo);
         exit;
     }
@@ -54,15 +55,27 @@ $fecha = new DateTimeImmutable('2026-11-02T10:30:00-05:00');
 $reloj = static fn () => $fecha;
 $accion = $_GET['action'] ?? 'vet_agenda';
 file_put_contents($raizDemo . '/scratch/r/userscript/peticiones.log', ($_SERVER['REQUEST_METHOD'] ?? 'GET') . ' ' . $accion . PHP_EOL, FILE_APPEND);
-// El arnés permite el único alta autorizada por el dueño: evaluación de la solicitud demo, nunca guardar/reservar.
-$permitidasPost = ['sugerir_diagnosticos_ajax', 'sugerir_tratamientos_ajax', 'validar_prescripcion_ajax', 'calcular_triage_ajax'];
+// Decisión del dueño, 2026-11-03: guardar solo Rocco, iniciar solo Mishi y evaluar Simón; nunca reservar.
+$permitidasPost = ['sugerir_diagnosticos_ajax', 'sugerir_tratamientos_ajax', 'validar_prescripcion_ajax', 'calcular_triage_ajax', 'registrar_consulta_ajax', 'iniciar_cita_ajax'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($accion, $permitidasPost, true)) {
     http_response_code(403);
     exit('Mutación ajena al guion');
 }
+if (in_array($accion, ['registrar_consulta_ajax', 'iniciar_cita_ajax'], true)) {
+    $q = $db->prepare('SELECT m.nombre,c.id_veterinario,c.hora_llegada FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_cita=? AND c.id_clinica=?');
+    $q->execute([$_POST['id_cita'] ?? 0, Contexto::clinicaActiva()]);
+    $citaDemo = $q->fetch(PDO::FETCH_ASSOC);
+    $nombrePermitido = $accion === 'registrar_consulta_ajax' ? 'Rocco' : 'Mishi';
+    if (!$citaDemo || $citaDemo['nombre'] !== $nombrePermitido || (int) $citaDemo['id_veterinario'] !== Contexto::idUsuario()) {
+        http_response_code(403);
+        exit('Paciente ajeno a la mutación autorizada del guion');
+    }
+}
 try {
     Security::autorizar($accion);
     $controladores = [
+        'registrar_consulta_ajax' => ['ConsultaController', 'registrarAjax'],
+        'iniciar_cita_ajax' => ['CitaController', 'iniciarAtencionAjax'],
         'listar_citas_ajax' => ['CitaController', 'listarSemanaAjax'],
         'listar_veterinarios_ajax' => ['CitaController', 'listarVeterinariosAjax'],
         'listar_tipos_cita_ajax' => ['CitaController', 'listarTiposCitaAjax'],
@@ -97,6 +110,7 @@ try {
         $argumentos = [$db];
         if (in_array($clase, ['CitaController', 'LlegadaAgendaController', 'ReasignacionController'], true)) $argumentos[] = $reloj;
         if (in_array($clase, ['TriageController', 'DiagnosticoController'], true)) $argumentos[] = $fecha;
+        if ($clase === 'ConsultaController') $argumentos = [$db, null, null, $reloj];
         (new $clase(...$argumentos))->$metodo();
         exit;
     }

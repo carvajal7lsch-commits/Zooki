@@ -155,12 +155,16 @@ final class AgendaDemo
             (new LlegadaAgenda($this->db, $relojPasado))->llegada($id, $this->clave('escena', $h->format('Y-m-d'), 'llegada-Rocco'));
             $citas->iniciarAtencion($citas->getById($id), $inicio->format('Y-m-d H:i:s'));
             $rocco = $id;
-            $posteriores = ['Max' => ['lame_patas', 'picazon'], 'Mishi' => ['vomito'], 'Toby' => ['control_preventivo'], 'Lola' => ['control_preventivo']];
+            $posteriores = ['Mishi' => ['vomito'], 'Max' => ['lame_patas', 'picazon'], 'Toby' => ['control_preventivo'], 'Lola' => ['control_preventivo']];
             if ($h->format('H:i') >= '17:00') {
                 $posteriores = array_slice($posteriores, 0, 2, true);
             }
             foreach ($posteriores as $nombre => $sintomas) {
-                $this->reservar($nombre, $sintomas, $h, $this->reloj, $vet, $this->tipo('Vacunación/Revisión rápida'), 'escena', $nombre);
+                $reserva = $this->reservar($nombre, $sintomas, $h, $this->reloj, $vet, $this->tipo('Vacunación/Revisión rápida'), 'escena', $nombre);
+                if ($nombre === 'Mishi') {
+                    $mishi = $reserva;
+                    (new LlegadaAgenda($this->db, $this->reloj))->llegada($mishi, $this->clave('escena', $h->format('Y-m-d'), 'llegada-Mishi'));
+                }
             }
             SemillaDemo::como($vet, $clinica, Roles::VETERINARIO);
             $paciente = (new PacienteDiagnostico($this->db))->contexto($this->mascotas['Bruno']['id'], $this->grafo, $ahora, []);
@@ -171,6 +175,10 @@ final class AgendaDemo
                 throw new RuntimeException('El motor no da naranja al sobrecupo demo. No se fuerza.');
             }
             $horas = (new DisponibilidadAgenda($this->db, $this->reloj))->sugerir($vet, $this->mascotas['Bruno']['id'], $h->format('Y-m-d'), 30, 10, null, true);
+            // El naranja conserva su sobrecupo, después de la primera reserva del guion.
+            $citaMishi = $citas->getById($mishi);
+            $despuesDeMishi = ReglaAtencion::inicio($citaMishi['fecha'], $citaMishi['hora'])->modify('+' . ((int) $citaMishi['duracion_minutos'] + (int) $citaMishi['margen_minutos']) . ' minutes')->format('H:i:s');
+            $horas = array_values(array_filter($horas, static fn (string $hora): bool => Cita::normalizarHora($hora) >= $despuesDeMishi));
             if ($horas === []) {
                 throw new RuntimeException('No cabe el sobrecupo demo en la jornada.');
             }
@@ -185,7 +193,7 @@ final class AgendaDemo
                 throw new RuntimeException('La jornada de San Roque no queda resuelta antes del cierre de las 20:00; se conserva la agenda anterior.');
             }
             $this->omitirCorreos($rocco);
-            return ['dia' => $h->format('Y-m-d'), 'hora' => $h->format('H:i'), 'en_curso' => $id, 'rocco' => $rocco, 'niveles' => $niveles, 'cascada' => $cascada];
+            return ['dia' => $h->format('Y-m-d'), 'hora' => $h->format('H:i'), 'en_curso' => $id, 'rocco' => $rocco, 'mishi' => $mishi, 'niveles' => $niveles, 'cascada' => $cascada];
         });
     }
 
@@ -231,7 +239,7 @@ final class AgendaDemo
                 $operaciones[] = $this->clave('base', $dia, $accion . $etiqueta);
             }
         }
-        foreach (['sobrecupo', 'llegada-Rocco'] as $etiqueta) {
+        foreach (['sobrecupo', 'llegada-Rocco', 'llegada-Mishi'] as $etiqueta) {
             $operaciones[] = $this->clave('escena', $dia, $etiqueta);
         }
         $raices = ['citas' => $citas, 'solicitudes_agenda' => $solicitudes, 'operaciones_agenda' => $this->filas('SELECT id_operacion FROM operaciones_agenda WHERE id_clinica=? AND clave_operacion IN (' . implode(',', array_fill(0, count($operaciones), '?')) . ')', [$clinica, ...$operaciones])];

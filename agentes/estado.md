@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Demo — continuidad Rocco/Mishi y descarte visible — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; Mishi primera reserva posterior y con llegada; Rocco se guarda en su tercer paso, Agenda muestra el recálculo e inicia Mishi; dos pasos en Atención dejan el bloqueo de paracetamol sin guardar; Portal conserva la evaluación real de Simón.
+- Descarte completo debajo de los medicamentos con escudo, rojo suave y Ver fuente, compuesto desde la respuesta del motor; anexo en specs/M2-grafo-clinico.md y specs/semilla-demo.md; demo/LEEME.md actualizado.
+- Verificación: cuatro casos de SemillaDemoTest comprobados, repetido solo el de escena1/1182 con nueve relojes; Chrome sobre semilla temporal zooki_test_base_v2 correcto: solo Rocco guardado, Mishi iniciada sin guardar, cero reservas y Simón derivado; --escena restaura conteos, motivo completo390/1366 y sin scroll en1366×768 ni excepciones JS. Misma2.3.0, sin commit/push; revisión de Claude/dueño y descargas al cierre pendientes.
+
+
 ### Atención — aviso único de borrador — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; al recuperar Atención se muestra solo el aviso de borrador; Deshacer, Alternativas, seguridad y el modal de Pacientes conservados; caché del script renovada.

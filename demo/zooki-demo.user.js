@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Zooki · Guion de sustentación
 // @namespace    zooki.demo
-// @version      1.0.0
-// @description  Un paso por tecla sobre los controles reales de Zooki; nunca guarda consultas ni reserva citas.
+// @version      1.1.0
+// @description  Un paso por tecla sobre los controles reales de Zooki; solo guarda la consulta de Rocco; nunca reserva citas.
 // @match        https://zooki.secarvajal.com/*
 // @match        https://zooki-pruebas.secarvajal.com/*
 // @match        http://localhost:3000/*
@@ -82,22 +82,30 @@
     let campoManual = null;
     let clicManual = 0;
     let marcados = [];
+    let fotogramaMarca = null;
+    let geometriaMarca = '';
     const sintomasRocco = [['picazón', 'sintoma.picazon'], ['costras', 'sintoma.costras_piel'], ['se le cae el pelo', 'sintoma.perdida_pelo']];
     const sintomasMishi = [['fiebre', 'sintoma.fiebre'], ['decaída', 'sintoma.decaimiento'], ['vómito', 'sintoma.vomito']];
 
     function detectar() {
         const accion = new URL(location.href).searchParams.get('action');
-        if (accion === 'vet_agenda' && document.querySelector('.agenda')) return 'agenda';
-        if (accion === 'vet_atencion' && document.querySelector('#atencionApp')) return 'rocco';
-        if (accion === 'vet_pacientes' && document.querySelector('#modalConsulta')) return 'mishi';
+        if (accion === 'vet_agenda' && document.querySelector('.agenda')) {
+            const cerrada = typeof calendarInstance !== 'undefined' && calendarInstance?.getEvents().some(e => dia(e.start) === dia(new Date()) && normalizar(e.extendedProps.mascota_nombre || e.title) === 'rocco' && e.extendedProps.estado === 'completada');
+            return cerrada ? 'agenda_mishi' : 'agenda';
+        }
+        if (accion === 'vet_atencion' && document.querySelector('#atencionApp')) {
+            const nombre = document.querySelector('[data-nombre-mascota]')?.dataset.nombreMascota;
+            return ['rocco', 'mishi'].includes(normalizar(nombre)) ? normalizar(nombre) : '';
+        }
         if (accion === 'portal_propietario' && document.querySelector('#portalBookingForm')) return 'portal';
         return '';
     }
 
     const nombres = {
         agenda: ['Resaltar Rocco en curso y las siguientes estimadas'],
-        rocco: ['Marcar los tres síntomas de sarna', 'Usar sarna sarcóptica y ver la seguridad MDR1'],
-        mishi: ['Abrir la consulta de Mishi y marcar tres síntomas', 'Elegir paracetamol y ver el bloqueo felino'],
+        rocco: ['Marcar los tres síntomas de sarna', 'Usar sarna y leer el descarte MDR1 bajo los tratamientos', 'Finalizar consulta de Rocco'],
+        agenda_mishi: ['Mostrar la agenda recalculada e iniciar Atención de Mishi'],
+        mishi: ['Marcar fiebre, decaimiento y vómito en Atención de Mishi', 'Elegir paracetamol y ver el bloqueo felino'],
         portal: ['Evaluar Simón: crea una solicitud de demo, nunca una reserva']
     };
 
@@ -112,11 +120,14 @@
 
     function pintar() {
         const pasos = nombres[escenario] || [];
-        titulo.textContent = pasos.length ? `Paso ${Math.min(paso + 1, pasos.length)}/${pasos.length}: ${pasos[paso] || 'Escenario terminado'}` : 'Abre Agenda, Atención de Rocco, Pacientes o Portal';
+        titulo.textContent = pasos.length ? `Paso ${Math.min(paso + 1, pasos.length)}/${pasos.length}: ${pasos[paso] || 'Escenario terminado'}` : 'Abre Agenda, Atención de Rocco o Mishi, o Portal';
         siguiente.disabled = ocupado || !pasos.length || paso >= pasos.length;
     }
 
     function limpiarMarcas() {
+        cancelAnimationFrame(fotogramaMarca);
+        fotogramaMarca = null;
+        geometriaMarca = '';
         sombra.querySelectorAll('.marca').forEach(n => n.remove());
         marcados = [];
     }
@@ -132,11 +143,24 @@
         }
     }
 
+    // Atención redistribuye sus columnas al recibir las pautas; el marco sigue la fila real.
+    function seguirMarcas() {
+        const geometria = marcados.filter(visible).map(nodo => {
+            const r = nodo.getBoundingClientRect();
+            return [r.left, r.top, r.width, r.height].join(',');
+        }).join('|');
+        if (geometria !== geometriaMarca) {
+            geometriaMarca = geometria;
+            dibujar();
+        }
+        fotogramaMarca = marcados.length ? requestAnimationFrame(seguirMarcas) : null;
+    }
+
     function resaltar(nodos) {
         limpiarMarcas();
         marcados = nodos.filter(Boolean);
         marcados[0]?.scrollIntoView({ block: innerWidth < 768 ? 'center' : 'nearest' });
-        dibujar();
+        seguirMarcas();
     }
     window.addEventListener('resize', dibujar);
     document.addEventListener('scroll', dibujar, true);
@@ -225,8 +249,32 @@
 
     async function agenda() {
         const calendario = await esperar(() => typeof calendarInstance !== 'undefined' && calendarInstance?.getEvents()?.length && calendarInstance, 'la Agenda real cargada');
+        // Hoy vuelve a pintar la lista con los eventos que ya terminó de cargar el calendario.
+        clic(document.querySelector('[data-nav="today"]'));
         const hoy = dia(new Date());
         const citas = calendario.getEvents().filter(e => e.extendedProps.tipo === 'cita' && dia(e.start) === hoy);
+        if (escenario === 'agenda_mishi') {
+            if (!normalizar(document.querySelector('.cabecera-clinica')?.textContent).includes('san roque')) throw new Error('Este paso solo inicia citas de la demo de San Roque.');
+            const rocco = citas.find(e => normalizar(e.extendedProps.mascota_nombre || e.title) === 'rocco' && e.extendedProps.estado === 'completada');
+            const mishi = citas.find(e => normalizar(e.extendedProps.mascota_nombre || e.title) === 'mishi' && String(e.extendedProps.id_veterinario) === String(rocco?.extendedProps.id_veterinario));
+            if (!rocco || !mishi || !['pendiente', 'confirmada'].includes(mishi.extendedProps.estado) || !mishi.extendedProps.hora_llegada) throw new Error('La escena debe tener Rocco completado y Mishi en sala, sin iniciar.');
+            detalle.replaceChildren();
+            const lista = crear('ol');
+            for (const cita of citas.filter(e => String(e.extendedProps.id_veterinario) === String(mishi.extendedProps.id_veterinario) && ['pendiente', 'confirmada'].includes(e.extendedProps.estado)).sort((a, b) => a.start - b.start)) {
+                lista.append(crear('li', `${cita.extendedProps.mascota_nombre || cita.title}: ${cita.extendedProps.inicio_estimado || 'sin estimación publicada'}`));
+            }
+            detalle.append(lista);
+            clic(document.querySelector('[data-agenda-vista="citas"]'));
+            const tarjeta = await esperar(() => document.querySelector(`.agenda-item[data-id="${CSS.escape(String(mishi.id))}"]`), 'la cita de Mishi en el día');
+            resaltar([tarjeta]);
+            informar('Rocco completado. Estas son las nuevas estimaciones de Zooki; iniciando Mishi desde su cita.');
+            await pausa(1500);
+            clic(tarjeta);
+            const id = String(mishi.extendedProps.id_cita || String(mishi.id).replace(/^cita[_-]/, ''));
+            const iniciar = await esperar(() => document.querySelector(`[data-accion="iniciar"][data-id="${CSS.escape(id)}"]`), 'el botón real Iniciar atención de Mishi');
+            clic(iniciar);
+            return;
+        }
         const actual = citas.find(e => normalizar(e.extendedProps.mascota_nombre || e.title) === 'rocco' && e.extendedProps.estado === 'en_curso');
         if (!actual) throw new Error('No está Rocco en curso hoy: ejecuta la nueva --escena con la veterinaria principal.');
         const posteriores = citas.filter(e => String(e.extendedProps.id_veterinario) === String(actual.extendedProps.id_veterinario) && ['pendiente', 'confirmada'].includes(e.extendedProps.estado)).sort((a, b) => a.start - b.start).slice(0, 3);
@@ -257,38 +305,50 @@
             const candidato = await esperar(() => document.querySelector('[data-usar-diagnostico="diagnostico.sarna_sarcoptica"]'), 'sarna sarcóptica calculada por Zooki');
             resaltar([candidato.closest('article') || candidato]);
             informar('Zooki calculó los diagnósticos. No se guardó la consulta.');
-        } else {
+        } else if (paso === 1) {
             const sarna = await esperar(() => document.querySelector('[data-usar-diagnostico="diagnostico.sarna_sarcoptica"]'), 'el diagnóstico de sarna');
             resaltar([sarna.closest('article') || sarna]);
             await pausa(1200);
             clic(sarna);
             await esperar(() => form.querySelector('[data-tratamiento-campo="farmaco"][value="farmaco.selamectina"]') || [...form.querySelectorAll('[data-tratamiento-campo="farmaco"]')].find(n => n.value === 'farmaco.selamectina'), 'la selamectina precargada');
-            const descarte = await esperar(() => form.querySelector('[data-prescripcion-descartada="farmaco.ivermectina"]'), 'la ivermectina descartada por MDR1');
+            const descarte = await esperar(() => {
+                const fila = form.querySelector('[data-tratamientos] .consulta-descartada[data-prescripcion-descartada="farmaco.ivermectina"]');
+                return visible(fila) && fila.querySelector('a[href]') ? fila : null;
+            }, 'la fila de ivermectina descartada por MDR1 con su fuente');
             resaltar([descarte]);
             informar('Selamectina y descarte de ivermectina provienen de Zooki. Consulta sin guardar.');
+        } else {
+            if (!normalizar(document.querySelector('.cabecera-clinica')?.textContent).includes('san roque')) throw new Error('Solo se permite cerrar Rocco en la demo de San Roque.');
+            await prepararConsulta(form, '28', 'Demo: Rocco');
+            const diagnostico = form.querySelector('[data-consulta-campo="diagnostico"]');
+            const selamectina = [...form.querySelectorAll('[data-tratamiento-campo="farmaco"]')].some(n => n.value === 'farmaco.selamectina');
+            if (!normalizar(diagnostico.value).includes('sarna sarcoptica') || !selamectina) throw new Error('Completa el paso 2: sarna sarcóptica y selamectina deben estar elegidas.');
+            clic(document.querySelector('#atencionApp [data-consulta-ir="2"]'));
+            await esperar(() => form.querySelector('[data-consulta-tres]').dataset.pasoActual === '2', 'el paso Cierre con los campos válidos');
+            const control = form.querySelector('[data-control-activo]');
+            if (control.checked) {
+                control.checked = false;
+                control.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            // Decisión del dueño, 2026-11-03: Rocco es la única consulta que el guion guarda.
+            if (document.querySelector('#atencionApp').dataset.consultaRegistrada !== '1') clic(document.querySelector('#btnFinalizarAtencion'));
+            const cierre = await esperar(() => document.querySelector('.consulta-cierre-dialogo[open]'), 'la confirmación real Atención registrada de Rocco');
+            const volver = [...cierre.querySelectorAll('button')].find(n => normalizar(n.textContent) === 'volver a la agenda');
+            clic(volver);
         }
     }
 
     async function mishi() {
-        let form = document.querySelector('#formConsulta');
+        const form = document.querySelector('#formConsultaAtencion');
+        if (normalizar(document.querySelector('[data-nombre-mascota]')?.dataset.nombreMascota) !== 'mishi') throw new Error('Abre la Atención de Mishi desde su cita.');
         if (paso === 0) {
-            const abierta = visible(document.querySelector('#modalConsulta'));
-            if (abierta && normalizar(document.querySelector('#consultationPetName')?.textContent) !== 'mishi') throw new Error('Cierra la consulta de otro paciente antes de continuar.');
-            if (!abierta) {
-                const fila = [...document.querySelectorAll('#petsTable tbody tr[data-id], .pet-card[data-id]')].find(n => normalizar(n.querySelector('.pet-name-cell, .card-title-mini')?.textContent) === 'mishi');
-                if (!fila || typeof window.openConsultationModal !== 'function') throw new Error('No se encontró Mishi o el modal real de consulta en Pacientes.');
-                // Vista ya implementada por Zooki; abrirla no registra una consulta.
-                window.openConsultationModal(Number(fila.dataset.id), 'Mishi');
-            }
-            form = await esperar(() => visible(document.querySelector('#modalConsulta')) && document.querySelector('#formConsulta'), 'el modal de Mishi');
             await prepararConsulta(form, '4.2', 'Demo: Mishi');
             await marcar(form.querySelector('[data-sintomas]'), sintomasMishi);
             const candidato = await esperar(() => form.querySelector('[data-usar-diagnostico]'), 'diagnósticos del Grafo I para Mishi');
             resaltar([candidato]);
             informar('Diagnósticos calculados por Zooki para Mishi. Consulta sin guardar.');
         } else {
-            if (normalizar(document.querySelector('#consultationPetName')?.textContent) !== 'mishi') throw new Error('La consulta abierta no es Mishi.');
-            clic(form.querySelector('[data-consulta-ir="1"]'));
+            clic(document.querySelector('#atencionApp [data-consulta-ir="1"]'));
             await pausa(900);
             const antes = form.querySelectorAll('[data-tratamiento]').length;
             let fila = [...form.querySelectorAll('[data-tratamiento]')].find(n => n.querySelector('[data-tratamiento-campo="farmaco"]')?.value === 'farmaco.paracetamol');
@@ -352,7 +412,7 @@
         informar('Ejecutando este paso en Zooki…');
         pintar();
         try {
-            await ({ agenda, rocco, mishi, portal }[escenario])();
+            await ({ agenda, agenda_mishi: agenda, rocco, mishi, portal }[escenario])();
             if (turno === generacion) paso++;
         } catch (error) {
             if (turno === generacion) informar(error.message || 'No se pudo completar este paso.', true);

@@ -21,6 +21,11 @@ async function prepararDependencias() {
         'fullcalendar.js': 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js',
         'sweetalert.js': 'https://cdn.jsdelivr.net/npm/sweetalert2@11',
         'chart.js': 'https://cdn.jsdelivr.net/npm/chart.js',
+        'flatpickr.css': 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
+        'fontawesome.css': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+        'fa-solid-900.woff2': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+        'fa-regular-400.woff2': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
+        'fa-brands-400.woff2': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2',
         'flatpickr.js': 'https://cdn.jsdelivr.net/npm/flatpickr',
         'flatpickr-es.js': 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js',
         'telefono.js': 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js',
@@ -38,7 +43,7 @@ async function prepararDependencias() {
     fs.writeFileSync(path.join(carpeta, 'mapa.json'), JSON.stringify(Object.fromEntries(Object.entries(urls).map(([nombre, url]) => [url, '/__dependencia/' + nombre]))));
 }
 
-test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, sin guardar consultas', { skip: !process.env.ZOOKI_TEST_MYSQL_HOST || !buscarChrome() ? 'Necesita Chrome y el motor temporal de pruebas' : false, timeout: 360000 }, async () => {
+test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, cierra solo Rocco e inicia Mishi', { skip: !process.env.ZOOKI_TEST_MYSQL_HOST || !buscarChrome() ? 'Necesita Chrome y el motor temporal de pruebas' : false, timeout: 360000 }, async () => {
     fs.mkdirSync(salida, { recursive: true });
     await prepararDependencias();
     fs.writeFileSync(path.join(salida, 'peticiones.log'), '');
@@ -118,28 +123,45 @@ test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, sin
         await paso(/descarte de ivermectina/);
         assert.match(await evaluar("document.querySelector('[data-prescripcion-descartada=\"farmaco.ivermectina\"]').textContent"), /Collie.*MDR1/);
         assert.ok(await evaluar("[...document.querySelectorAll('[data-tratamiento-campo=\"farmaco\"]')].some(n => n.value === 'farmaco.selamectina')"));
-        await capturar('03-rocco-tratamiento-1366');
-        const campoManual = await evaluar(`(() => {
-            const campo = document.querySelector('[data-consulta-campo="diagnostico"]');
-            campo.scrollIntoView({ block: 'center' });
-            campo.addEventListener('keydown', e => { window.teclaManualDemo = { impedida: e.defaultPrevented }; }, { once: true });
-            const r = campo.getBoundingClientRect();
-            return { x: r.left + 20, y: r.top + 15 };
+        await navegador.esperar(`(() => {
+            const fila = document.querySelector('[data-prescripcion-descartada="farmaco.ivermectina"]');
+            const marco = ${panel}.querySelector('.marca');
+            if (!fila || !marco) return false;
+            return Math.abs(fila.getBoundingClientRect().top - marco.getBoundingClientRect().top - 3) < 1;
         })()`);
-        await navegador.enviar('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...campoManual });
-        await navegador.enviar('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...campoManual });
-        await tecla('q');
-        assert.equal(await evaluar('window.teclaManualDemo.impedida'), false);
-        assert.match(await evaluar(`${panel}.querySelector('h2').textContent`), /Escenario terminado/);
-        await evaluar(`${panel}.querySelector('.acciones button:last-child').focus()`);
-        await tecla('q');
-        assert.match(await evaluar(`${panel}.querySelector('h2').textContent`), /Paso 1\/2/);
-        // La navegación del arnés no pulsa Guardar; se descarta solo la página abierta sin guardar.
-        await evaluar('window.onbeforeunload = null');
-        await navegar('vet_pacientes');
-        await navegador.esperar("typeof window.openConsultationModal === 'function'");
+        await capturar('03-rocco-tratamiento-1366');
+        const lectura = [];
+        for (const [ancho, alto] of [[390, 844], [1366, 768]]) {
+            await navegador.enviar('Emulation.setDeviceMetricsOverride', { width: ancho, height: alto, deviceScaleFactor: 1, mobile: ancho < 768 });
+            await evaluar('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))');
+            const medida = await evaluar(`(() => {
+                const fila = document.querySelector('[data-prescripcion-descartada="farmaco.ivermectina"]');
+                const texto = fila.querySelector('p');
+                return { ancho:innerWidth, alto:innerHeight, pagina:document.scrollingElement.scrollHeight, texto: texto.textContent, enlace:texto.querySelector('a').href, altoTexto:texto.clientHeight, contenido:texto.scrollHeight, enTratamientos:Boolean(fila.closest('[data-tratamientos]')), enPie:Boolean(fila.closest('[data-hoja-pie]')), blanco:getComputedStyle(texto).whiteSpace };
+            })()`);
+            assert.equal(medida.enTratamientos, true);
+            assert.equal(medida.enPie, false);
+            assert.equal(medida.blanco, 'normal');
+            assert.ok(medida.contenido <= medida.altoTexto + 1);
+            console.log('Lectura del descarte:', JSON.stringify(medida));
+            assert.ok(medida.ancho < 1024 || medida.pagina <= medida.alto, JSON.stringify(medida));
+            lectura.push(medida);
+        }
+        await tecla('s');
+        await navegador.esperar("new URL(location.href).searchParams.get('action') === 'vet_agenda' && document.getElementById('zkdemo-guion')");
+        await navegador.esperar("typeof calendarInstance !== 'undefined' && calendarInstance?.getEvents().some(e => e.title === 'Rocco' && e.extendedProps.estado === 'completada')");
+        const trasRocco = semilla('contar');
+        assert.equal(trasRocco.consultas, inicial.consultas + 1);
+        const mishi = trasRocco.citas.find(c => c.nombre === 'Mishi' && c.id_veterinario === rocco.id_veterinario && ['confirmada', 'pendiente'].includes(c.estado));
+        assert.ok(mishi.hora_llegada);
+        assert.equal(mishi.hora_inicio_real, null);
+        await navegador.esperar(`${panel}.querySelector('h2').textContent.includes('iniciar Atención de Mishi')`);
+        await tecla('s');
+        await navegador.esperar(`new URL(location.href).searchParams.get('action') === 'vet_atencion' && new URL(location.href).searchParams.get('id_cita') === '${mishi.id_cita}' && document.querySelector('[data-consulta-campo="peso"]')?.matches(':enabled') && document.getElementById('zkdemo-guion')`);
+        const mishiIniciada = semilla('contar').citas.find(c => c.id_cita === mishi.id_cita);
+        assert.equal(mishiIniciada.estado, 'en_curso');
         await paso(/diagnósticos calculados|Diagnósticos calculados/);
-        const diagnosticosMishi = await evaluar("[...document.querySelectorAll('#formConsulta [data-diagnostico]')].map(n => n.dataset.diagnostico)");
+        const diagnosticosMishi = await evaluar("[...document.querySelectorAll('#formConsultaAtencion [data-diagnostico]')].map(n => n.dataset.diagnostico)");
         assert.ok(diagnosticosMishi.length > 0);
         await capturar('04-mishi-sintomas-1366');
         await paso(/bloqueo y su fuente/);
@@ -149,8 +171,8 @@ test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, sin
         assert.ok(await evaluar("Boolean(document.querySelector('.consulta-tratamiento--bloqueo .consulta-tratamiento__fuente a'))"));
         await capturar('05-mishi-paracetamol-1366');
         const clinicaAntes = semilla('contar');
-        assert.equal(clinicaAntes.consultas, inicial.consultas);
-        assert.equal(clinicaAntes.tratamientos, inicial.tratamientos);
+        assert.equal(clinicaAntes.consultas, trasRocco.consultas);
+        assert.equal(clinicaAntes.tratamientos, trasRocco.tratamientos);
         assert.equal(clinicaAntes.solicitudes_simon.length, 0);
         await evaluar('window.onbeforeunload = null');
         await navegador.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -166,8 +188,8 @@ test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, sin
         assert.equal(final.solicitudes_simon.length, 1);
         assert.equal(final.solicitudes_simon[0].estado, 'derivada');
         assert.equal(final.solicitudes_simon[0].id_cita, null);
-        assert.equal(final.consultas, inicial.consultas);
-        assert.equal(final.tratamientos, inicial.tratamientos);
+        assert.equal(final.consultas, trasRocco.consultas);
+        assert.equal(final.tratamientos, trasRocco.tratamientos);
         assert.equal(final.citas.length, inicial.citas.length);
         await tecla('q');
         await tecla('s');
@@ -177,10 +199,16 @@ test('Guion Tampermonkey: Agenda, Rocco, Mishi y evaluación real de Simón, sin
         assert.equal((await fetch('http://localhost:31300/demo/zooki-demo.user.js')).status, 404);
         const peticiones = fs.readFileSync(path.join(salida, 'peticiones.log'), 'utf8');
         assert.equal((peticiones.match(/POST calcular_triage_ajax/g) || []).length, 1);
-        assert.doesNotMatch(peticiones, /POST (registrar_consulta_ajax|portal_agendar_cita_ajax|iniciar_cita_ajax|cancelar|eliminar)/);
-        assert.equal(semilla('escena').solicitudes_simon.length, 0);
+        assert.equal((peticiones.match(/POST registrar_consulta_ajax/g) || []).length, 1);
+        assert.equal((peticiones.match(/POST iniciar_cita_ajax/g) || []).length, 1);
+        assert.doesNotMatch(peticiones, /POST (portal_agendar_cita_ajax|cancelar|eliminar)/);
+        const rehecha = semilla('escena');
+        assert.equal(rehecha.solicitudes_simon.length, 0);
+        assert.equal(rehecha.consultas, inicial.consultas);
+        assert.equal(rehecha.tratamientos, inicial.tratamientos);
+        assert.equal(rehecha.citas.filter(c => c.nombre === 'Mishi' && c.estado === 'en_curso').length, 0);
         assert.deepEqual(navegador.errores, []);
-        evidencias.push({ escritorio: '1366x768', portal: '390x844', sarna: true, ivermectinaDescartada: true, selamectina: true, diagnosticosMishi, paracetamolBloqueadoConFuente: true, simon: 'rojo/derivada, una solicitud, sin cita', consultasGuardadas: 0, reservasCreadas: 0, excepciones: navegador.errores });
+        evidencias.push({ escritorio: '1366x768', portal: '390x844', sarna: true, ivermectinaDescartada: true, selamectina: true, diagnosticosMishi, paracetamolBloqueadoConFuente: true, simon: 'rojo/derivada, una solicitud, sin cita', consultasGuardadas: 1, pacienteGuardado: 'Rocco', mishiIniciadaSinGuardar: true, lectura, reservasCreadas: 0, excepciones: navegador.errores });
         fs.writeFileSync(path.join(salida, 'resultado.json'), JSON.stringify(evidencias, null, 2));
     } catch (error) {
         if (navegador) {

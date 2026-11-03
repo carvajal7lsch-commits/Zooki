@@ -6,6 +6,15 @@
 
 **Estado:** S.1 revisada; guion de navegador y ajuste de escena entregados, pendientes de revisión de Claude.
 
+## Decisión del dueño — continuidad del guion (2026-11-03)
+
+- Sustituye el ensayo sin guardar de la decisión inicial: Rocco se finaliza desde Atención en el tercer paso del userscript; es la única consulta que guarda.
+- Mishi tiene la primera reserva de la veterinaria principal después de Rocco, con llegada registrada y sin inicio; el naranja queda posterior a esa primera reserva y la jornada conserva cierre20:00 sin reajustes ni propuestas abiertas.
+- Orden: Agenda → Rocco (3 pasos) → Agenda (resaltar recálculo e iniciar Mishi desde su cita) → Atención de Mishi (síntomas y bloqueo de paracetamol, sin guardar) → Portal.
+- --escena rehace el día, incluida la consulta/tratamientos de Rocco y el inicio de Mishi; Simón conserva una única evaluación real desde el Portal, limpiada al repetir.
+- El descarte se lee debajo de los tratamientos, con motivo/paciente/fuente del motor, escudo, rojo suave y enlace Ver fuente; no se modifica el conocimiento ni el motor.
+- Verificación autorizada: solo SemillaDemoTest y recorrido Chrome contra la semilla temporal; escribe Codex y revisa Claude.
+
 ## Objetivo
 
 Que en la sustentación (5 minutos) Zooki se vea como una plataforma en uso: una clínica principal llena y creíble donde lucen los dos grafos, una segunda clínica en plan gratuito que muestra el freemium y el panel del super-administrador con varias clínicas en estados distintos.
@@ -255,3 +264,14 @@ Semilla (`fe730c9`) **aprobada con corrección antes de producción**. Corrida r
 - La corrección se aplica al ejecutar de nuevo `--si`; `--escena` no rehace los seis meses de historia y no corrige los registros ya sembrados.
 - Se conserva la jornada lunes–sábado7:00–20:00; sintaxis PHP comprobada, sin ejecutar suites, integraciones ni la semilla por instrucción del dueño; no se tocó la base cargada.
 - Regresión agregada a `SemillaDemoTest` para impedir citas demo en domingo; escrita y sin ejecutar por esa misma instrucción.
+
+## Anexo — Resultado: continuidad de Rocco y Mishi (2026-11-03)
+
+- Escribió Codex; entregada, pendiente de revisión de Claude y del dueño.
+- Mishi es la primera reserva posterior con llegada registrada; sobrecupo después de esa reserva y cero reajustes/propuestas pendientes hasta20:00.
+- Rocco: síntomas → sarna/selamectina/descarte → Finalizar atención y Volver a la agenda, mediante los controles reales; sin próximo control ni reserva adicional.
+- Agenda muestra nuevas estimaciones y pulsa Iniciar atención de Mishi; dos pasos en Atención muestran diagnósticos y bloqueo felino con fuente sin guardar Mishi; Portal conserva la evaluación real de Simón.
+- El descarte deja el pie y se lee en una fila completa con escudo y enlace; motivo, medicamento y paciente derivados de la respuesta clínica, sin caso fijo por fármaco; el marco del guion sigue su posición real tras redistribuir la hoja.
+- Verificación: los cuatro casos de SemillaDemoTest comprobados; repetido solo el caso afectado de escena,1/1182 aserciones y nueve relojes08:00–18:00; recorrido Chrome CDP correcto en motor temporal zooki_test_base_v2, sin otras suites ni datos manuales.
+- Chrome: una consulta guardada (Rocco), Mishi iniciada sin guardar, cero reservas y una derivación de Simón; --escena recupera los conteos iniciales; sin excepciones JS. Descarte completo390×844/1366×768 y página de768px en escritorio; evidencia scratch/r/userscript/resultado.json y navegador.log.
+- Misma2.3.0, sin migraciones, motores ni conocimiento; instalación actualizada de Tampermonkey pendiente del dueño; descargas al cierre del bloque.
