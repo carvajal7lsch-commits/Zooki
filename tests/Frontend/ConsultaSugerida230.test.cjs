@@ -115,8 +115,8 @@ test('Consulta sugerida 2.3.0: modal y Atención a 390/1366, completar, no dupli
                 assert.equal(await evaluar("formPrueba.querySelector('[data-tratamientos-alternativas]').hidden"), false);
                 const descartada = await evaluar("formPrueba.querySelector('[data-prescripcion-descartadas]').textContent");
                 if (esCollie && accion === 'vet_atencion') {
-                    assert.equal(descartada, 'Descartada por seguridad: Ivermectina — toxicidad documentada en Collie (MDR1)');
-                    assert.equal(await evaluar("formPrueba.querySelector('[data-prescripcion-descartadas] button, [data-prescripcion-descartadas] a')"), null);
+                    assert.match(descartada, /^Ivermectina descartada: los Collie pueden tener la mutación MDR1.*toxicidad neurológica grave\. Ver fuente$/);
+                    assert.equal(await evaluar("formPrueba.querySelector('[data-prescripcion-descartadas] a').textContent"), 'Ver fuente');
                     assert.match(await evaluar("formPrueba.querySelector('[data-prescripcion-descartada]').title"), /WSU/);
                 } else assert.equal(descartada, '');
                 await evaluar("formPrueba.querySelector('[data-usar-diagnostico]').click()");

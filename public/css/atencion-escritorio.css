@@ -1594,3 +1594,50 @@ body:has(#atencionApp) [data-alerta-presentacion=compacta] .btn-modal-primary {
         background: var(--z-primary-soft);
     }
 }
+
+/* RE-2.9.4: el motivo de descarte se lee junto a las pautas, sin recortarse en el pie. */
+#atencionApp .consulta-descartadas {
+    display: grid;
+    gap: 6px;
+    flex: none;
+    min-width: 0;
+}
+#atencionApp .consulta-descartadas[hidden] {
+    display: none;
+}
+#atencionApp .consulta-descartada {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--z-danger-borde);
+    border-radius: 10px;
+    background: var(--z-danger-soft);
+    color: var(--z-danger-dark);
+    font-size: 13px;
+    line-height: 19px;
+}
+#atencionApp .consulta-descartada > i {
+    margin-top: 2px;
+}
+#atencionApp .consulta-descartada p {
+    min-width: 0;
+    margin: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#atencionApp .consulta-descartada strong {
+    font-weight: 600;
+}
+#atencionApp .consulta-descartada a {
+    color: var(--z-primary);
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+#atencionApp .consulta-descartada a:hover,
+#atencionApp .consulta-descartada a:focus-visible {
+    color: var(--z-primary-dark);
+}

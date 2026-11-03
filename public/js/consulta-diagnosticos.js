@@ -337,15 +337,18 @@
         alternativas.dataset.tratamientosAlternativas = '';
         alternativas.hidden = true;
         alternativas.setAttribute('aria-expanded', 'false');
-        const descartadas = elemento('span');
+        const descartadas = elemento('div', 'consulta-descartadas');
         descartadas.dataset.prescripcionDescartadas = '';
+        descartadas.setAttribute('role', 'status');
         descartadas.hidden = true;
         const panelAlternativas = elemento('div', 'consulta-alternativas');
         panelAlternativas.popover = 'auto';
         panelAlternativas.dataset.alternativasLista = '';
         panelAlternativas.setAttribute('aria-label', 'Tratamientos alternativos');
         panelAlternativas.addEventListener('toggle', evento => alternativas.setAttribute('aria-expanded', String(evento.newState === 'open')));
-        aviso.append(mensaje, alternativas, descartadas, deshacer);
+        aviso.append(mensaje, alternativas, deshacer);
+        if (form.closest('#atencionApp')) form.querySelector('[data-tratamientos-lista]').after(descartadas);
+        else aviso.append(descartadas);
         form.append(panelAlternativas);
         (form.querySelector('[data-sugerencia-aviso]') || raiz).append(aviso);
         const pesoActual = () => peso && !peso.disabled ? peso.value.trim().replace(',', '.') : '';
@@ -416,12 +419,26 @@
                 if (!motivo) continue;
                 const fuentes = motivo.fuentes || [];
                 const mdr1 = fuentes.some(f => /mdr1/i.test(`${f.titulo || ''} ${f.url || ''}`));
-                const razon = motivo.tipo === 'toxicidad' && motivo.paciente
-                    ? `toxicidad documentada en ${motivo.paciente}${mdr1 ? ' (MDR1)' : ''}`
-                    : motivo.mensaje;
-                const linea = elemento('span', '', `Descartada por seguridad: ${pauta.medicamento} — ${razon}`);
+                const razon = motivo.tipo === 'toxicidad' && motivo.paciente && mdr1
+                    ? `los ${motivo.paciente} pueden tener la mutación MDR1 y la ${pauta.medicamento.toLocaleLowerCase('es')} puede causarles toxicidad neurológica grave.`
+                    : `${motivo.mensaje}${motivo.paciente ? ' Paciente: ' + motivo.paciente + '.' : ''}`;
+                const linea = elemento('div', 'consulta-descartada');
                 linea.dataset.prescripcionDescartada = pauta.farmaco;
                 linea.title = fuentes.map(f => `${f.entidad}: ${f.titulo}${f.url ? ' · ' + f.url : ''}`).join('\n');
+                const escudo = elemento('i', 'fas fa-shield-alt');
+                escudo.setAttribute('aria-hidden', 'true');
+                const contenido = elemento('p');
+                contenido.append(elemento('strong', '', `${pauta.medicamento} descartada: `), document.createTextNode(razon));
+                const fuente = fuentePrincipal(fuentes.filter(f => urlSegura(f.url)));
+                if (fuente?.url) {
+                    const enlace = elemento('a', '', 'Ver fuente');
+                    enlace.href = fuente.url;
+                    enlace.target = '_blank';
+                    enlace.rel = 'noopener noreferrer';
+                    enlace.title = fuente.texto;
+                    contenido.append(document.createTextNode(' '), enlace);
+                }
+                linea.append(escudo, contenido);
                 descartadas.append(linea);
             }
             descartadas.hidden = descartadas.children.length === 0;

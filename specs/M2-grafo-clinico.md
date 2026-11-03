@@ -2377,3 +2377,11 @@ Estado: **entregada, pendiente de revisión**; decisión posterior del dueño qu
 - El modal de Pacientes conserva su aviso; caché del script renovada por contenido, misma2.3.0.
 - Verificación: AtencionRetoques en Chrome390/1366 correcto, con recuperación anunciada una sola vez y Deshacer disponible; sintaxis JS y diff correctos; sin suites completas ni base real.
 - PDF/Word diferidos al cierre del bloque según metodo.md §11; pendiente aceptación visual.
+
+### Anexo — Resultado: descartes legibles junto al tratamiento (2026-11-03)
+
+- Decisión del dueño; escribió Codex; entregada, pendiente de revisión de Claude y del dueño.
+- RE-2.9.4: fila propia debajo de los medicamentos en Atención, con escudo, rojo suave, motivo completo y Ver fuente; sustituye la línea recortada del pie.
+- Composición desde medicamento, motivo, paciente y evidencia MDR1 del motor; sin nombre fijo de ivermectina, sin alterar precargas, reglas clínicas ni el modal de Pacientes.
+- Guion de Rocco resalta esa fila y mantiene el marco alineado tras redistribuir las columnas; CSS/JS con caché por contenido; Chrome sobre la semilla temporal1366×768/390×844: motivo completo, enlace válido y cero excepciones JS; página de768px en escritorio, sin suites de Atención; evidencia scratch/r/userscript/resultado.json.
+- Misma2.3.0; PDF/Word al cierre del bloque según metodo.md §11; pendiente aceptación visual.
