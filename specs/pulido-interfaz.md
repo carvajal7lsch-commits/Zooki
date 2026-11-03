@@ -1,5 +1,13 @@
 # Pulido de interfaz — pendientes
 
+## Calendario — panel inicial del día (2026-11-03)
+
+- Encargo del dueño: mostrar las citas de hoy automáticamente al entrar, conservando el día seleccionado y el diseño (RE-4.1.5).
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- El panel se refresca en `eventsSet`, cuando FullCalendar ya publicó el lote; `loading` puede terminar antes y dejar la lista vacía.
+- Chrome con FullCalendar6.1.8 real a1366×768/390×844: seis elementos de hoy al entrar sin clic, cuatro citas y dos recordatorios; sin excepciones JS; sin suites ni escrituras.
+- Misma2.3.0; pendiente aceptación visual del dueño, sin commit ni push.
+
 ## HU-4.15 — Identificación comprensible (2026-11-02)
 
 - Decisión posterior del dueño: sustituir la explicación libre de verificación por la casilla obligatoria «Confirmé con el propietario que esta es su mascota»; conservar la declaración, autor y fecha en el registro existente; sin confirmación anticipada ni texto automático que afirme una comprobación no realizada.

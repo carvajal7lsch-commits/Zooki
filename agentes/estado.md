@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### M0-S — Profesional desde el registro y Calendario inicial — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; revisa Claude; intención Profesional mensual/anual validada y persistida; primer acceso administrador abre Suscripción una vez, sin cambiar Gratis; descarte con CSRF/auditoría y oferta de Inicio cerrable por clínica.
+- Migración20, esquema/MER/drawDB y HU/RE/Modelos§12.1/Historial alineados; anexos en specs/M0-S-suscripcion-pagos.md y specs/pulido-interfaz.md; misma2.3.0.
+- Solo8 pruebas PHP nuevas/51 aserciones correctas en SQLite; pantallas abiertas en Chrome1366/390 sin excepciones ni desborde horizontal; sin pagos/correos. Calendario llena el panel de hoy tras incorporar las citas, sin clic, con FullCalendar real.
+- Descargas de HU/RE/MER/Historial regeneradas; Modelos actualizado en portal; pendiente revisión del dueño/Claude y migración20 en CI, sin suites completas, base manual, commit ni push.
+
 ### Atención — acciones del pie alineadas al inicio — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; Alternativas y Deshacer agrupados al inicio del pie de escritorio, sin repartir espacios cuando el aviso de sugerencias está vacío; misma tipografía y funciones, móvil conservado.

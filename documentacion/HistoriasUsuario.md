@@ -65,6 +65,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - El registro de clínicas no admite Google, y exige aceptar la política de tratamiento de datos.
 - Crea la clínica en estado "pendiente de verificación" junto con su usuario administrador inicial; la clínica no opera hasta confirmar el correo.
 - Envía un correo de verificación con un enlace temporal.
+- «Empezar con Profesional» conserva el ciclo mensual o anual elegido en la portada; el servidor valida una lista cerrada y guarda la intención con la clínica pendiente. El registro normal empieza gratis; elegir Profesional no cobra ni concede beneficios antes de pagar (decisión del dueño, 2026-11-03).
 - La operación queda registrada en auditoría.
 
 **Reglas de negocio:** RN-001, RN-002, RN-010, RN-011, RN-G06, RN-G19, RN-G20 · **Requisitos:** RF-0.1, RF-0.3 · **Dependencias:** —
@@ -84,6 +85,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - En la misma operación, la clínica recibe su copia de los catálogos iniciales: tipos de cita, horarios de atención, vacunas base con las especies a las que aplican, laboratorios y productos de desparasitación. Así puede agendar y registrar desde el primer día; si la activación falla, no queda ninguna copia a medias.
 - Si el plazo expira sin verificar, se elimina la clínica pendiente y solo su administrador nuevo sin otros vínculos. Nunca se elimina una cuenta preexistente.
 - Tras activar, el administrador inicia sesión y queda acotado a su `id_clinica`.
+- Si eligió Profesional y no tiene pagos aprobados, el primer acceso al contexto administrador abre Suscripción con ese ciclo preseleccionado. La redirección inicial ocurre una vez por clínica; «Seguir con el plan gratis por ahora» descarta la intención con POST y CSRF, sin alterar el plan ni los pagos.
 - La activación queda registrada en auditoría.
 
 **Reglas de negocio:** RN-002, RN-003, RN-005, RN-G11 · **Requisitos:** RF-0.1 · **Dependencias:** HU-0.1
@@ -156,6 +158,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - **Implementada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
 - Cada transición se audita. **Implementada (2.1.0):** plataforma consulta pagos e incidencias sin datos clínicos; las revisa con nota auditada, conservando la evidencia. Los ajustes manuales siguen separados de pagos.
 - Uso del plan abre Ajustes › Suscripción conservando el regreso a Inicio. La sección comparte la hoja y el menú de Ajustes; Mi plan e Historial son pestañas interiores y la paginación conserva pestaña y origen (decisión del dueño, 2026-10-26). Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
+- Una intención Profesional pendiente muestra «Elegiste el plan Profesional: actívalo ahora», Pagar con Wompi y la opción de seguir gratis; la clínica opera en Gratis hasta la aprobación. Inicio muestra una oferta discreta y cerrable mientras la campaña esté activa y no existan pagos aprobados; el cierre se recuerda por clínica en ese navegador (decisión del dueño, 2026-11-03).
 
 Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referencia y último día incluido al acreditarse un periodo por cualquier vía, sin duplicados.
 

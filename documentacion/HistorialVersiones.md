@@ -8,6 +8,10 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Profesional desde el registro (2026-11-03, Codex):** la portada conserva el ciclo elegido; el registro guarda la intención validada y activa siempre en Gratis. El primer acceso administrador abre Suscripción una vez, con pago Wompi o continuación gratis; Inicio ofrece la campaña vigente a clínicas sin pagos aprobados. Migración20 repetible, aislamiento y CSRF; HU-0.1/0.2/0.5 y diagrama de registro alineados, misma2.3.0.
+
+* **Calendario al entrar (2026-11-03, Codex):** el panel del día seleccionado se actualiza cuando FullCalendar incorpora las citas, sin exigir un clic para mostrar la actividad de hoy.
+
 * **Guion continuo y descarte visible (2026-11-03, Codex):** Mishi en sala como primera reserva después de Rocco; el guion finaliza solo Rocco, muestra el recálculo e inicia la Atención de Mishi, donde deja el bloqueo felino sin guardar. Descartes completos debajo de los tratamientos con escudo, motivo del motor y Ver fuente (RE-2.9.4); escena repetible sin cambiar motores ni conocimiento.
 
 * **Aviso único de borrador en Atención (2026-11-03, Codex; RE-2.1.7/RE-2.8.6):** la recuperación de sugerencias no repite el aviso del borrador; mantiene Deshacer, Alternativas y las advertencias de seguridad, sin cambiar el modal de Pacientes.

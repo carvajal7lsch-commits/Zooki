@@ -157,6 +157,8 @@ erDiagram
         int limite_personal
     }
     clinicas {
+        enum intencion_profesional_ciclo
+        datetime intencion_profesional_mostrada_en
         int id_clinica PK
         varchar nombre
         varchar nit UK
@@ -888,7 +890,7 @@ erDiagram
 ## Detalle de Entidades Principales
 
 ### 1. Plataforma y suscripción (SaaS) — nuevo
-*   **clinicas**: Cada inquilino de la plataforma; su `id_clinica` aísla los datos. Incluye nombre, `nit` (único, validado con el dígito de verificación de la DIAN; RN-010), dirección, teléfono, logo y el plan vigente. Su `estado` es `pendiente_verificacion` hasta que confirma el correo (RN-002), y luego `activa`, `suspendida` o `baja` (RN-012). Guarda también los parámetros de la agenda, con valores por defecto: `telefono_urgencias` (RN-421), `tope_sobrecupos` (2, RN-422), `tolerancia_llegada_min` (10, RN-426), `plazo_reasignacion_min` (10, RN-428) `umbral_aviso_min` (15, RN-429) y `anticipacion_cambios_min` (30, rango 0–1440, 0 desactiva; RN-430).
+*   **clinicas**: La elección opcional de Profesional se conserva en `intencion_profesional_ciclo` (mensual/anual o NULL) desde el registro pendiente; `intencion_profesional_mostrada_en` registra su primer ofrecimiento al iniciar sesión, sin otorgar beneficios ni cobrar (HU-0.1/0.5). Cada inquilino de la plataforma; su `id_clinica` aísla los datos. Incluye nombre, `nit` (único, validado con el dígito de verificación de la DIAN; RN-010), dirección, teléfono, logo y el plan vigente. Su `estado` es `pendiente_verificacion` hasta que confirma el correo (RN-002), y luego `activa`, `suspendida` o `baja` (RN-012). Guarda también los parámetros de la agenda, con valores por defecto: `telefono_urgencias` (RN-421), `tope_sobrecupos` (2, RN-422), `tolerancia_llegada_min` (10, RN-426), `plazo_reasignacion_min` (10, RN-428) `umbral_aviso_min` (15, RN-429) y `anticipacion_cambios_min` (30, rango 0–1440, 0 desactiva; RN-430).
 *   **planes**: Catálogo **global** de planes (gratuito y profesional) con sus precios (mensual/anual) y límites (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL significa sin límite; RN-003).
 *   **suscripciones**: Estado de la suscripción de cada clínica (`activa`/`suspendida`/`cancelada`), ciclo de cobro, indicador `al_dia` y vigencia.
 *   **plantillas_comunicacion**: Plantillas de correo/notificación por clínica (asunto, cuerpo, formato) y parámetros de envío (días de anticipación, hora). Es la base de las comunicaciones del Módulo 8 (reputación y comunicaciones); la bitácora de envíos reutiliza `notificaciones`.

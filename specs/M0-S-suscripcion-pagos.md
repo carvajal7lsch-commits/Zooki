@@ -1,5 +1,25 @@
 # M0-S — Suscripción y cobro con Wompi
 
+## Decisión del dueño — Profesional desde el registro (2026-11-03)
+
+- Landing conserva el registro Gratis y permite solicitar Profesional mensual/anual mediante una lista cerrada validada en servidor.
+- La intención se guarda en la clínica pendiente; activar correo sigue asignando Gratis y no cobra ni concede Profesional.
+- El primer acceso al contexto administrador ofrece Suscripción con ese ciclo, solo sin pagos aprobados; se registra que se presentó para no redirigir cada inicio. Continuar gratis descarta la intención por POST con CSRF.
+- Inicio muestra una oferta discreta cerrable solo si está activa y no hay pagos aprobados; cierre recordado en este navegador por clínica.
+- Migración20 repetible: clinicas.intencion_profesional_ciclo e intencion_profesional_mostrada_en; MER/esquema/drawDB alineados; no cambia pagos ni tarifas.
+- Escribe Codex; revisa Claude; pruebas solo PHP de la intención y redirección, más apertura de pantallas; misma2.3.0.
+
+### Anexo — Resultado de Profesional desde el registro
+
+- Escribió Codex; entregada, pendiente de revisión de Claude (arquitecto) y del dueño.
+- RE-0.1.1/0.2.2/0.5.1: ciclo validado y persistido con la clínica pendiente; activación Gratis, redirección inicial única y descarte aislado por clínica con CSRF y auditoría.
+- Portada conserva el ciclo; Registro muestra un único texto; Suscripción permite pagar con el flujo Wompi existente o seguir gratis; Inicio recuerda el cierre de la oferta por clínica en el navegador.
+- `IntencionProfesionalTest`:8 pruebas/51 aserciones correctas, solo SQLite; mensual/anual, rechazo de entradas, varios contextos, pago previo, descarte idempotente y CSRF.
+- Chrome1366×768/390×844: portada, registro Gratis/mensual/anual, Ajustes/Suscripción e Inicio con/sin pago aprobado; ciclo y cierre conservados, sin excepciones JS ni desborde horizontal; sin cobros ni correos.
+- Migración20 repetible por comprobación de columnas; esquema, MER y drawDB alineados; lista esperada de migraciones de BaseV2MysqlTest actualizada, sin ejecutar MySQL en esta entrega.
+- HU/RE, Modelos§12.1 e Historial2.3.0 actualizados; solo descargas de HU/RE/MER/Historial regeneradas; Modelos conserva publicación en el portal sin descarga.
+- Pendiente revisión de Claude/dueño y comprobación de migración20 en el CI; misma2.3.0, sin commit ni push.
+
 ## Decisión del dueño — precios y lanzamiento (2026-11-02, 2.3.0)
 
 - Sustituye los precios históricos de este plan: Profesional40.000 COP/mes y400.000 COP/año, equivalente a pagar10 meses y usar12 («2 meses gratis»).

@@ -861,7 +861,8 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT o cedula: sin guion calcula DV;<br/>con guion comprueba el DV escrito"]
+  A([Registro publico de clinica]) --> ELECCION["Gratis o intencion Profesional mensual/anual desde la portada<br/>Validar plan/ciclo con lista cerrada; sin cobro"]
+  ELECCION --> P1["Paso 1, datos de la clinica:<br/>NIT o cedula: sin guion calcula DV;<br/>con guion comprueba el DV escrito"]
   P1 --> P1V{"Campos del paso validos?"}
   P1V -- No --> P1
   P1V -- Si --> P2["Paso 2, administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña"]
@@ -882,7 +883,7 @@ flowchart TD
   N -- No --> R{"Menos de 3 altas hoy por IP real?"}
   R -- No --> LIM[Intentalo mañana]
   R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]
-  T --> CL[Crear clinica pendiente]
+  T --> CL["Crear clinica pendiente y conservar el ciclo Profesional elegido"]
   CL --> ID{"Existe correo o, si es nuevo, documento?"}
   ID -- No --> NUE[Crear administrador inactivo con hash y consentimiento]
   ID -- Si --> EX["Conservar cuenta y roles; ignorar contraseña del formulario<br/>Prevalece correo; si es nuevo, titular del documento"]
@@ -899,6 +900,12 @@ flowchart TD
   ACT --> OK{"Todo correcto?"}
   OK -- No --> RB[Rollback completo; enlace conserva su uso]
   OK -- Si --> LOGIN["Iniciar sesion: elegir contexto si hay varios, §9"]
+  LOGIN --> INTENCION{"Primer acceso administrador con intencion Profesional<br/>y sin pagos aprobados?"}
+  INTENCION -- No --> INICIO["Inicio del contexto; clinica permanece Gratis hasta pagar"]
+  INTENCION -- Si --> SUB["Marcar acceso inicial y abrir Suscripcion con el ciclo elegido<br/>Elegiste el plan Profesional: activalo ahora"]
+  SUB -- Pagar con Wompi --> PAGO["Flujo de pago existente, §12.7<br/>Solo la aprobacion concede Profesional"]
+  SUB -- Seguir gratis por ahora --> DESC["POST con CSRF: descartar intencion de esa clinica; auditar"]
+  DESC --> INICIO
   TK -. Vence sin confirmar .-> LIMPIEZA["Limpieza del sistema: borrar clinica pendiente<br/>Cuenta nueva solo sin otros vinculos; preservar preexistente"]
 ```
 
