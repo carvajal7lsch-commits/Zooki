@@ -100,7 +100,7 @@ $lp_anual   = (int) $planProfesional['precio_anual'];
                         <p class="lp-planes__nota">Equivale a <?php echo $lp_pesos(intdiv($lp_anual, 12)); ?> al mes</p>
                     </div>
                 </div>
-                <a href="index.php?action=registro_clinica" class="lp-btn lp-btn--primary lp-btn--block">Empezar con Profesional</a>
+                <a href="index.php?action=registro_clinica&amp;plan=profesional&amp;ciclo=mensual" data-registro-profesional class="lp-btn lp-btn--primary lp-btn--block">Empezar con Profesional</a>
                 <ul class="lp-roles__list">
                     <?php foreach ($lp_limites($planProfesional) as $lp_texto): ?>
                     <li><i class="ri-check-line" aria-hidden="true"></i> <?php echo $lp_texto; ?></li>

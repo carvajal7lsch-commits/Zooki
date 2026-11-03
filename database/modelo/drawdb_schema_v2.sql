@@ -50,6 +50,8 @@ CREATE TABLE `clinicas` (
   `email_contacto` varchar(255) DEFAULT NULL,
   `url_logo` varchar(255) DEFAULT NULL,
   `id_plan` int(11) DEFAULT NULL,
+  `intencion_profesional_ciclo` ENUM('mensual','anual') DEFAULT NULL,
+  `intencion_profesional_mostrada_en` DATETIME DEFAULT NULL,
   `estado` enum('pendiente_verificacion','activa','suspendida','baja') NOT NULL DEFAULT 'pendiente_verificacion',
   `fecha_registro` datetime DEFAULT current_timestamp()
 );

@@ -904,3 +904,38 @@ escritorio/tableta conservados. */
         font-size: 22px;
     }
 }
+
+/* Oferta informativa de HU-0.5; no cambia el plan ni inicia pagos. */
+.inicio-oferta {
+    display: flex;
+    align-items: start;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--z-primary-soft);
+    font-size: 12px;
+    line-height: 17px;
+}
+.inicio-oferta[hidden] {
+    display: none;
+}
+.inicio-oferta a {
+    flex: 1;
+    color: var(--z-primary);
+    text-decoration: none;
+}
+.inicio-oferta a:hover {
+    text-decoration: underline;
+}
+.inicio-oferta button {
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+}
+.inicio-oferta button:hover {
+    color: var(--z-primary);
+}

@@ -3,7 +3,8 @@ require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../../helpers/Turnstile.php';
 $e = static fn ($valor) => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
-$tituloPagina = 'Registra tu clínica';
+$cicloProfesional = $cicloProfesional ?? null;
+$tituloPagina = $cicloProfesional === null ? 'Registra tu clínica' : 'Registra tu clínica · Plan Profesional';
 // M0.1: resultado de un envío sin JavaScript (RegistroClinicaController::responder).
 $resultadoRegistro = $resultadoRegistro ?? null;
 $registroAceptado = ($resultadoRegistro['success'] ?? false) === true;
@@ -30,12 +31,9 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
             <div class="form-header">
                 <?php // M0.2: la misma flecha del registro del propietario; en los pasos 2 y 3 vuelve al anterior (registro-pasos.js). ?>
                 <a class="btn-back-top" id="registroAtras" href="index.php?action=login" data-acceso-giro-ir title="Volver al inicio de sesión" aria-label="Volver al inicio de sesión"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
-                <h2>Registra tu clínica</h2>
+                <h2><?= $e($tituloPagina) ?></h2>
             </div>
-            <p class="form-subtitle">Empieza con el plan gratuito. Confirma el registro desde tu correo para activar la clínica.</p>
-            <?php if (isset($tarifasPublicas)): ?>
-            <p class="form-subtitle">Profesional: <?= $e($tarifasPublicas['mensual']) ?><br><?= $e($tarifasPublicas['anual']) ?></p>
-            <?php endif; ?>
+            <p class="form-subtitle"><?= $e($cicloProfesional === null ? 'Empieza gratis. Puedes pasar a Profesional cuando quieras.' : ($tarifasPublicas[$cicloProfesional] ?? '')) ?></p>
             <?php // M0.1: el indicador solo aparece con JavaScript; sin él se ven los tres pasos a la vez. ?>
             <ol class="registro-pasos" id="registroPasos" aria-label="Pasos del registro" hidden>
                 <li data-paso-indicador="1"><span class="registro-pasos-numero">1</span><span class="registro-pasos-nombre">Clínica</span></li>
@@ -44,6 +42,10 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
             </ol>
             <form id="registroClinicaForm" method="POST" action="index.php?action=registrar_clinica_ajax" data-validacion-cuenta data-cuenta-datos="formulario" data-registro data-registro-espera="registroClinicaEspera" data-registro-pasos="registroPasos" data-registro-atras="registroAtras" <?= $registroAceptado ? 'hidden' : '' ?>>
                 <?php Csrf::field(); ?>
+                <?php if ($cicloProfesional !== null): ?>
+                <input type="hidden" name="plan" value="profesional">
+                <input type="hidden" name="ciclo" value="<?= $e($cicloProfesional) ?>">
+                <?php endif; ?>
                 <div class="registro-resumen" data-registro-resumen role="alert" <?= $errorRegistro === null ? 'hidden' : '' ?>>
                     <?php if ($errorRegistro !== null): ?><p><?= $e($errorRegistro) ?></p><?php endif; ?>
                 </div>

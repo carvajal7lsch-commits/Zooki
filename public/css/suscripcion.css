@@ -1086,3 +1086,40 @@
         justify-content: center;
     }
 }
+
+/* HU-0.1/0.5: activar la elección del registro conserva el checkout existente. */
+.suscripcion__intencion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--z-border);
+    border-radius: 14px;
+    background: var(--z-primary-soft);
+    color: var(--z-text);
+}
+.suscripcion__intencion > div {
+    flex: 1 1 260px;
+}
+.suscripcion__intencion p {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+.suscripcion__intencion form {
+    margin: 0;
+}
+.suscripcion__seguir-gratis {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--z-primary);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+.suscripcion__seguir-gratis:hover,
+.suscripcion__seguir-gratis:focus-visible {
+    text-decoration: underline;
+}

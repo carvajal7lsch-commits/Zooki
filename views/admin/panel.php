@@ -140,6 +140,12 @@ $ultimoMes = count($panel['tendencia']) - 1;
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+            <?php if (!empty($panel['oferta_lanzamiento'])): ?>
+            <aside class="inicio-oferta" data-inicio-oferta data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
+                <a href="index.php?action=admin_suscripcion&amp;desde=inicio&amp;ciclo=mensual">Oferta de lanzamiento: paga un mes y lleva dos</a>
+                <button type="button" data-cerrar-oferta aria-label="Cerrar oferta de lanzamiento">×</button>
+            </aside>
+            <?php endif; ?>
             <div class="inicio-plan__accesos">
                 <a class="inicio-rapido" href="index.php?action=admin_usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a>
                 <a class="inicio-rapido" href="index.php?action=admin_configuracion&amp;seccion=suscripcion&amp;desde=inicio#suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>

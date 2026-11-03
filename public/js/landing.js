@@ -209,6 +209,11 @@
         options.forEach(function (option) {
             option.addEventListener('click', function () {
                 section.dataset.ciclo = option.dataset.cicloOpcion;
+                document.querySelectorAll('[data-registro-profesional]').forEach(function (enlace) {
+                    var destino = new URL(enlace.href, location.href);
+                    destino.searchParams.set('ciclo', section.dataset.ciclo);
+                    enlace.href = destino.href;
+                });
                 options.forEach(function (other) {
                     var isActive = other === option;
                     other.classList.toggle('is-active', isActive);

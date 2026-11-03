@@ -1,5 +1,7 @@
 <?php
 $h = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$intencionProfesional = $intencionProfesional ?? null;
+$cicloPreseleccionado = $cicloPreseleccionado ?? 'mensual';
 $s = $estadoSuscripcion;
 $contrato = $s['plan_contratado'];
 $profesional = $profesionalSuscripcion;
@@ -22,6 +24,14 @@ $textosTarifa = TarifaSuscripcion::textos($profesional, !empty($ofertaLanzamient
 ?>
 <?php // Rediseño v2 (aprobado 2026-10-26): «Mi plan» e «Historial de pagos» en pestañas; pagar y el medio de pago en ventanas. ?>
 <section class="suscripcion" aria-label="Suscripción" data-suscripcion-pantalla data-suscripcion-origen="<?= $h($origenSuscripcion) ?>" data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
+
+    <?php if ($intencionProfesional !== null): ?>
+    <aside class="suscripcion__intencion" role="status">
+        <div><strong>Elegiste el plan Profesional: actívalo ahora</strong><p><?= $h($textosTarifa[$cicloPreseleccionado]) ?></p></div>
+        <button type="button" class="suscripcion__abrir-renovar" data-pagar-intencion <?= empty($pagoDisponible) ? 'disabled' : '' ?>>Pagar con Wompi</button>
+        <form action="index.php?action=suscripcion_descartar_intencion" method="post"><?php Csrf::field(); ?><button type="submit" class="suscripcion__seguir-gratis">Seguir con el plan gratis por ahora</button></form>
+    </aside>
+    <?php endif; ?>
 
     <div class="suscripcion-pestanas" role="tablist" aria-label="Secciones de la suscripción" data-suscripcion-pestanas>
         <button type="button" role="tab" class="suscripcion-pestanas__pestana" id="suscripcionPestanaPlan" aria-controls="suscripcionPlan" aria-selected="true" data-suscripcion-pestana="plan">
@@ -206,12 +216,12 @@ $textosTarifa = TarifaSuscripcion::textos($profesional, !empty($ofertaLanzamient
                 <fieldset class="suscripcion__ciclos">
                     <legend class="visualmente-oculto">Elige el periodo que vas a pagar</legend>
                     <label class="suscripcion__ciclo">
-                        <input type="radio" name="suscripcion_ciclo" value="mensual" checked data-total="<?= $h($monto($profesional['precio_mensual'])) ?>" data-unidad="COP / mes">
+                        <input type="radio" name="suscripcion_ciclo" value="mensual" <?= $cicloPreseleccionado === 'mensual' ? 'checked' : '' ?> data-total="<?= $h($monto($profesional['precio_mensual'])) ?>" data-unidad="COP / mes">
                         <span class="suscripcion__ciclo-nombre">Mensual</span>
                         <span class="suscripcion__ciclo-precio"><?= $h($monto($profesional['precio_mensual'])) ?></span>
                     </label>
                     <label class="suscripcion__ciclo">
-                        <input type="radio" name="suscripcion_ciclo" value="anual" data-total="<?= $h($monto($profesional['precio_anual'])) ?>" data-unidad="COP / año">
+                        <input type="radio" name="suscripcion_ciclo" value="anual" <?= $cicloPreseleccionado === 'anual' ? 'checked' : '' ?> data-total="<?= $h($monto($profesional['precio_anual'])) ?>" data-unidad="COP / año">
                         <span class="suscripcion__ciclo-nombre">Anual<?php if ($anualConAhorro): ?> <span class="suscripcion__ahorro">2 meses gratis</span><?php endif; ?></span>
                         <span class="suscripcion__ciclo-precio"><?= $h($monto($profesional['precio_anual'])) ?></span>
                     </label>

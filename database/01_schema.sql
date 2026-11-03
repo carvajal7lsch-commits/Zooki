@@ -61,6 +61,8 @@ CREATE TABLE `clinicas` (
   `email_contacto` VARCHAR(255) DEFAULT NULL,
   `url_logo` VARCHAR(255) DEFAULT NULL,
   `id_plan` INT DEFAULT NULL,
+  `intencion_profesional_ciclo` ENUM('mensual','anual') DEFAULT NULL,
+  `intencion_profesional_mostrada_en` DATETIME DEFAULT NULL,
   `estado` ENUM('pendiente_verificacion','activa','suspendida','baja') NOT NULL DEFAULT 'pendiente_verificacion',
   `fecha_registro` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_clinica`),

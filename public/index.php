@@ -41,6 +41,7 @@ switch ($action) {
         require_once '../controllers/WompiEventosController.php';
         (new WompiEventosController())->recibir($action === 'wompi_eventos_test' ? 'test' : 'prod');
         break;
+    case "suscripcion_descartar_intencion":
     case "suscripcion_pagar_ajax":
     case "suscripcion_estado_ajax":
     case "suscripcion_historial_ajax":
@@ -52,6 +53,7 @@ switch ($action) {
         require_once '../controllers/SuscripcionController.php';
         $suscripcionController = new SuscripcionController((new Database())->getConnection());
         match ($action) {
+            'suscripcion_descartar_intencion' => $suscripcionController->descartarIntencion(),
             'suscripcion_pagar_ajax' => $suscripcionController->pagar(),
             'suscripcion_estado_ajax' => $suscripcionController->estado(),
             'suscripcion_historial_ajax' => $suscripcionController->historial(),

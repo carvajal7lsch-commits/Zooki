@@ -102,6 +102,7 @@
             }
         }
         boton?.addEventListener('click', pagar);
+        raiz.querySelector('[data-pagar-intencion]')?.addEventListener('click', () => boton?.click());
         consultar?.addEventListener('click', estado);
         // RE-0.5.17: Atrás puede restaurar el botón bloqueado al salir hacia Wompi; solo consultar.
         const eventos = servicios.eventos || globalThis;

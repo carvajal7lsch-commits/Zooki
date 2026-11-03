@@ -124,6 +124,6 @@ $lp_desc  = 'Zooki es el software para clínicas veterinarias con copiloto clín
 
     <?php include __DIR__ . '/partials/footer.php'; ?>
 
-    <script src="js/landing.js?v=<?php echo $lp_version; ?>"></script>
+    <script src="js/landing.js?v=<?php echo $lp_version; ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/landing.js'), 0, 12) ?>"></script>
 </body>
 </html>

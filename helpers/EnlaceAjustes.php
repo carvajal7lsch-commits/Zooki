@@ -5,6 +5,7 @@ final class EnlaceAjustes
     public static function suscripcion(array $entrada = []): string
     {
         $parametros = ['action' => 'admin_configuracion', 'seccion' => 'suscripcion'];
+        if (in_array($entrada['ciclo'] ?? null, ['mensual', 'anual'], true)) $parametros['ciclo'] = $entrada['ciclo'];
         if (($entrada['desde'] ?? null) === 'inicio') {
             $parametros['desde'] = 'inicio';
         }

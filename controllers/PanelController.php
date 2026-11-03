@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Panel.php';
+require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/DisponibilidadAgenda.php';
 require_once __DIR__ . '/../models/SolicitudAgenda.php';
 require_once __DIR__ . '/../models/CascadaAgenda.php';
@@ -307,6 +308,7 @@ class PanelController
             'mes' => $this->mes(null, $ahora->format('Y-m'), $ahora, $hoy),
             'agenda' => $agenda,
             'plan' => $this->usoDelPlan($hoy),
+            'oferta_lanzamiento' => TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && !(new Suscripcion($this->db, (int) Contexto::clinicaActiva()))->tienePagosAprobados(),
             'mes_actual' => $this->nombreMes($ahora),
             'propietarios_nuevos' => $this->panel->contarPropietariosNuevos($inicioMes->format('Y-m-d H:i:s'), $inicioManana),
             'no_asistencia' => $asistencia + ['porcentaje' => ResumenPanel::porcentaje($asistencia['no_asistio'], $asistencia['agendadas'])],

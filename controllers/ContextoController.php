@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../helpers/Sesion.php';
+require_once __DIR__ . '/../helpers/DestinoInicial.php';
 
 /**
  * HU-T.17 — Elegir y cambiar el contexto activo sin cerrar sesión.
@@ -56,7 +57,7 @@ class ContextoController
 
         if (count($disponibles) === 1 && Contexto::actual() === null && empty($_SESSION['debe_cambiar_password'])) {
             self::entrar($disponibles[0], $disponibles, $this->auditoria);
-            header('Location: index.php?action=' . Contexto::destino($disponibles[0]));
+            header('Location: index.php?action=' . DestinoInicial::resolver($this->db, $disponibles[0]));
             exit;
         }
 
@@ -92,6 +93,6 @@ class ContextoController
         // T-02 y RE-T.16.3: identificador de sesión nuevo al cambiar de permisos.
         Sesion::regenerar();
         self::entrar($elegido, $disponibles, $this->auditoria);
-        return Contexto::destino($elegido);
+        return DestinoInicial::resolver($this->db, $elegido);
     }
 }
