@@ -199,6 +199,7 @@
         }
         function tratamientos() {
             if (!listaTratamientos) return;
+            const pasoVisible = listaTratamientos.getClientRects().length > 0;
             const filas = [...listaTratamientos.querySelectorAll('[data-tratamiento]')];
             for (const fila of filas) {
                 if (!ordenTratamientos.has(fila)) ordenTratamientos.set(fila, siguienteTratamiento++);
@@ -222,7 +223,8 @@
                 if (editor.campos.parentElement !== editor.dialogo) editor.dialogo.append(editor.campos, editor.prescripcion);
                 const editando = fila.dataset.editando === '1';
                 if (editando) ocultar(fila, false);
-                if (editando && !editor.dialogo.open) {
+                // RE-2.1.7: un borrador incompleto no debe abrir un modal invisible en otro paso.
+                if (editando && pasoVisible && !editor.dialogo.open) {
                     // Un diálogo dentro de un popover cerrado tiene open pero carece de caja visible.
                     if (fila.closest('.atencion-tratamientos-mas') && !masTratamientos.matches(':popover-open')) {
                         masTratamientos.showPopover();
@@ -232,7 +234,7 @@
                     const primero = editor.dialogo.querySelector('[aria-invalid="true"]:not([type="hidden"])') || editor.campos.querySelector('[data-tratamiento-campo="medicamento"]');
                     primero?.focus();
                 }
-                if (!editando && editor.dialogo.open) editor.dialogo.close();
+                if ((!editando || !pasoVisible) && editor.dialogo.open) editor.dialogo.close();
                 for (const etiqueta of fila.querySelectorAll('.tratamiento-tarjeta strong, .tratamiento-tarjeta__metadatos')) etiqueta.title = etiqueta.textContent;
                 let aviso = fila.querySelector('.atencion-tratamiento-aviso');
                 if (!aviso) {

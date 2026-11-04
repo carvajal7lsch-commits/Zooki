@@ -2397,3 +2397,12 @@ Estado: **entregada, pendiente de revisión**; decisión posterior del dueño qu
 - RE-2.1.7/RE-2.8.6: Alternativas y Deshacer quedan juntos al inicio del pie de escritorio, sin el espacio reservado por un mensaje vacío; sin cambios de etiquetas, tipografía ni comportamiento.
 - Deshacer retira solo la última sugerencia incorporada que no se haya editado, conservando entradas propias; Descartar elimina el borrador local y reinicia los campos de la consulta sin guardar, sin eliminar historia clínica.
 - Revisión del CSS y diff correctos; sin suites; pendiente comprobación visual del dueño; misma2.3.0, caché CSS por contenido ya existente y descargas al cierre del bloque.
+
+
+### Anexo — Resultado: desbloqueo al recuperar Atención (2026-11-03)
+
+- Pidió el dueño; escribió Codex; entregada, pendiente de revisión de Claude y del dueño; misma2.3.0.
+- RE-2.1.7: reproducido un borrador con medicamento sin dosis, abierto en Evaluación; el editor nativo de Diagnóstico tenía open con caja0×0 y retenía todos los clics.
+- El editor solo abre si la zona de tratamientos es visible; al ocultarla se cierra; no se borran campos ni borrador ni cambia el modal de Pacientes. Referencia del JS renovada por hash.
+- `AtencionBorradorBloqueo.test.cjs`: recuperación, ausencia de diálogo invisible, clic físico en Motivo, conservación del medicamento y editor/foco visible al pasar a Diagnóstico; escritorio1366 y adaptación390, sin excepciones.
+- Pendiente: revisión visual del dueño; sin suites completas, base manual, commit ni push; descargas al cierre del bloque.
