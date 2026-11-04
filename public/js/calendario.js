@@ -682,7 +682,7 @@ function itemPanel(ev) {
             ${pill}
         </button>`;
     const llegadas = window.ZookiLlegadasCita?.botones(ev) || '';
-    return llegadas ? `<div>${fila}${llegadas}</div>` : fila;
+    return llegadas ? `<div class="agenda-cita-con-acciones" role="group" aria-label="Cita de ${esc(p.mascota_nombre || ev.title)}">${fila}${llegadas}</div>` : fila;
 }
 
 function llegadaCitaTardia(ev, ahora = new Date()) {

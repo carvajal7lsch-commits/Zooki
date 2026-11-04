@@ -101,7 +101,9 @@
             fila.append(hora, contenido, chip);
             const acciones = global.ZookiLlegadasCita?.botones(ev) || '';
             if (acciones) {
-                const envoltura = nodo('div', '', '');
+                const envoltura = nodo('div', '', 'agenda-cita-con-acciones');
+                envoltura.setAttribute('role', 'group');
+                envoltura.setAttribute('aria-label', 'Cita de ' + (p.mascota_nombre || ev.title));
                 envoltura.append(fila);
                 envoltura.insertAdjacentHTML('beforeend', acciones);
                 lista.append(envoltura);

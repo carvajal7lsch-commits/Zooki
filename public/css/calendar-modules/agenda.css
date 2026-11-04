@@ -379,6 +379,21 @@
 .agenda-item:hover { background: var(--cal-muted-bg); }
 .agenda-item:focus-visible { outline: 2px solid var(--cal-primary); outline-offset: -2px; }
 
+/* HU-4.19: las acciones de llegada pertenecen a la cita, dentro de su mismo recuadro. */
+.agenda-cita-con-acciones {
+    min-width: 0;
+    margin: 6px 0;
+    border: 1px solid var(--cal-border);
+    border-radius: 12px;
+    background: var(--cal-muted-bg);
+}
+
+.agenda-cita-con-acciones .agenda-cita-llegada {
+    margin: 0;
+    padding: 8px;
+    border-top: 1px solid var(--cal-border);
+}
+
 .agenda-item__time {
     font-size: 0.78rem;
     font-weight: 600;
