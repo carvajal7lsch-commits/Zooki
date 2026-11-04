@@ -7,108 +7,77 @@
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
 ### Versión 2.3.0 (Actual)
+Atención clínica en tres pasos que se llena sola, triage que no frena la reserva, llegadas y urgencias resueltas desde la agenda, reajustes visibles para el veterinario y el propietario, precios de lanzamiento y datos de demostración.
 
-* **Quitar Sala (2026-11-03, Codex):** llegadas en la propia cita de hoy del veterinario, con Resolver llegada en modal y actualización inmediata; Pendientes conserva Rojos, Triage y Reasignar. Atención sin cita abre Nueva cita «llegó ahora», con origen/presencia atómicos, auditados e idempotentes; espera sin cita fuera de la interfaz, backend y datos conservados (RE-2.2.1/4, RE-4.19.1/3/4, RE-6.2.7; RE-2.2.5 retirado).
+**Atención y Grafo I**
 
-* **Atención desbloqueada al recuperar borrador (2026-11-03, Codex; RE-2.1.7):** el editor de un tratamiento incompleto solo abre si su paso está visible, evitando un diálogo invisible que impedía cualquier clic al entrar. Conserva campos y borrador.
+* **Atención en tres pasos:** el paciente va en la cabecera, con un panel de sugerencias que se actualiza mientras se escribe y un cierre con resumen. En escritorio no tiene scroll desde 1024×650 px; en el celular y la tableta cada paso se recorre con una barra inferior fija (RE-2.1.6, RE-2.1.7, RE-2.8.1, RE-2.8.6).
+* **Borrador por cita:** lo escrito se guarda por cita y veterinario y se recupera al volver, con un solo aviso. Si la ficha de la mascota está incompleta, se completa ahí mismo sin salir de la consulta.
+* **La consulta se llena sola:** al elegir un diagnóstico se agregan su plan, tratamientos y pautas como sugerencias editables, con «Deshacer», «Alternativas» y dosis recalculadas según el peso. Los medicamentos bloqueados por seguridad no se sugieren y se muestran aparte con su motivo y su fuente (HU-2.8, HU-2.9, RE-2.9.4).
+* **Próximo control:** se agenda al cerrar la consulta, con la disponibilidad real de la clínica y un horizonte de 30 días (RN-431).
+* **Alertas médicas por nombre:** «Alérgico/a a», «Medicamento que toma» o «Condición» se buscan por nombre o sinónimo, con los detalles libres aparte (RE-2.1.5).
+* **Conocimiento clínico reforzado:** búsqueda por palabras y nombres coloquiales; todos los síntomas tienen nivel base con fuente, así que los casos que piden revisión del veterinario bajan de 27 a 3 de cada 50. Se agregan la permetrina en gatos, los raticidas y las garrapatas, las razas sensibles a la ivermectina (MDR1) y las interacciones de la prednisolona. El conocimiento sigue pendiente de validación veterinaria (RN-416, RN-418, RN-424).
+* Al finalizar la atención se vuelve directamente a la agenda con un aviso breve.
 
-* **Respuesta inmediata de agenda y cierre (2026-11-03, Codex):** estado y botones actualizados tras No asistió, Confirmar, Cancelar, resolver desde Sala y Reprogramar, sin esperar la sincronización; lecturas sin caché y bloqueo durante la petición. Finalizar Atención vuelve directamente a Agenda con el toast «Atención registrada», sin recibo modal; aviso de control pendiente conservado y guion de Rocco adaptado (RE-2.1.6/4.19.4).
+**Triage y agenda (Grafo II)**
 
-* **Reajuste visible del Grafo II (2026-11-03, Codex):** chips de retraso en Día/Semana/listas y detalle, con toast por lote sobre el umbral clínico y acceso a Día. Portal con recuadro de nueva hora y campana de ESTIMACION_CITA, publicada al validar el mismo evento de correo, sin duplicar reintentos ni alterar la ventana; correo legible con causa. Solo citas del propietario vigente, sin cambiar la cascada ni crear migraciones (RE-4.5.3/4.14.7/5.7.1–4).
+* **Triage que no frena:** el nivel provisional ya permite elegir horario y reservar, desde el portal y desde Nueva cita. El veterinario revisa después y su ajuste se aplica a la cita en la misma operación. El estado de vacunación se deduce de los registros cuando no se declara, y «Otro síntoma» pide describir lo observado (RN-416, RN-418, RN-419).
+* **Horarios según el nivel:** verde y amarillo eligen entre todos los huecos del día; naranja ve los tres más cercanos; rojo pasa a Urgencias conservando los síntomas ya registrados (HU-4.13, HU-4.15).
+* **Llegadas en la propia cita:** cada cita de hoy ofrece «Registrar llegada», «Resolver llegada», «No asistió» y «Ajustar nivel» según corresponda; la pestaña Sala se retira y Pendientes queda con Rojos, Triage y Reasignar. «Atención sin cita» abre Nueva cita para hoy y la cita se crea con la llegada ya registrada (RE-2.2.1, RE-2.2.4, RE-4.19.1 a RE-4.19.4; RE-2.2.5 retirado).
+* **Llegada tarde:** pasada la tolerancia, la cita no se inicia directamente: se decide entre siguiente hueco, reprogramar o «No asistió». Sin llegada, la inasistencia se marca sola al llegar el siguiente turno del veterinario o el cierre de la jornada (RN-408, RN-426).
+* **Reajustes visibles:** las citas muestran su retraso desde 5 minutos (azul hasta 30, rojo después) y horas legibles; el veterinario recibe un aviso cuando el retraso supera el umbral de su clínica, y el propietario lo ve en su cita, en la campana y por correo con la causa (RE-4.5.3, RE-4.14.7, RE-5.7.1 a RE-5.7.4).
+* **Pendientes:** sigue el día elegido en el calendario y se actualiza cada 10 segundos sin borrar lo que se está escribiendo. El aviso de revisión de triage nombra la mascota y su nivel y abre la solicitud resaltada.
+* **Cirugía y ocupación real:** la cirugía programada dura por defecto 120 minutos con 15 de margen y solo la agenda el personal; una cita completada libera la agenda desde su fin real (RN-412, RN-427).
+* **Cambios tardíos:** cancelar o reprogramar exige un mínimo de minutos antes de la cita, configurable por clínica (por defecto 30) (RN-430).
+* **Horarios y mascotas:** un veterinario sin horario aprobado no aparece para agendar y los días cerrados bloquean reservas y arrastres. Una mascota nueva queda vinculada a todas las clínicas activas de su propietario, y quien es veterinario y propietario puede agendar para su propia mascota (RN-110, RN-115, RN-G18).
 
-* **Agenda del veterinario y aviso de triage (2026-11-03, Claude Code):** elegir otro día en el calendario deja abierta la vista en la que estás. En Pendientes, hoy muestra todo lo pendiente y otro día solo el triage y las reasignaciones de sus citas, con Sala y Rojos indicados como «solo hoy» y un botón «Volver a hoy»; abrir una cita sigue mostrando su detalle en Citas. El aviso «Revisión de triage» nombra la mascota y su nivel en lugar del número interno de la solicitud y abre Pendientes › Triage con ella resaltada; si ya fue revisada, muestra Revisadas con el aviso. Misma2.3.0, sin migración.
+**Urgencias**
 
-* **Botón de demo en Plataforma (2026-11-03, Claude Code):** con `ZOOKI_DEMO_HABILITADA=1`, el super-administrador crea o rehace la demo, prepara la escena o la borra desde la pestaña Demo, con la misma clase `SemillaDemo` del script; apagado, la pestaña y sus rutas no existen (404). Solo plataforma con CSRF, candado contra doble ejecución, auditoría de cada acción y sin mostrar claves; misma2.3.0, sin migración.
+* **Urgencia presencial directa:** Nueva urgencia → Atender ahora → Atención, con un solo buscador por mascota, propietario o cédula. La mascota se identifica después («Ya tiene ficha» o «Es una mascota nueva», con confirmación de propiedad) y la agenda llena se reacomoda en cascada (RN-427, HU-4.15).
+* La campana avisa con títulos legibles y las fichas de urgencia sin propietario aparecen en el Inicio.
 
-* **Estimaciones legibles en la cita (2026-11-03, Codex; RE-4.5.3):** horas sin fecha ni segundos cuando coinciden con el día pactado y chip de retraso desde5 minutos; azul hasta30 inclusive y rojo al superar30. Mismo detalle en administrador/veterinario y celular; sin cambiar la cascada.
+**Suscripción**
 
-* **Profesional desde el registro (2026-11-03, Codex):** la portada conserva el ciclo elegido; el registro guarda la intención validada y activa siempre en Gratis. El primer acceso administrador abre Suscripción una vez, con pago Wompi o continuación gratis; Inicio ofrece la campaña vigente a clínicas sin pagos aprobados. Migración20 repetible, aislamiento y CSRF; HU-0.1/0.2/0.5 y diagrama de registro alineados, misma2.3.0.
+* **Precios de lanzamiento:** plan Profesional a 40.000 COP/mes o 400.000 COP/año (dos meses gratis). El primer pago mensual de una clínica cubre dos meses.
+* **Profesional desde el registro:** el ciclo elegido en la portada se conserva al registrarse; la clínica empieza en el plan Gratuito y su primer acceso abre Suscripción para pagar o seguir gratis.
 
-* **Calendario al entrar (2026-11-03, Codex):** el panel del día seleccionado se actualiza cuando FullCalendar incorpora las citas, sin exigir un clic para mostrar la actividad de hoy.
+**Datos de demostración**
 
-* **Guion continuo y descarte visible (2026-11-03, Codex):** Mishi en sala como primera reserva después de Rocco; el guion finaliza solo Rocco, muestra el recálculo e inicia la Atención de Mishi, donde deja el bloqueo felino sin guardar. Descartes completos debajo de los tratamientos con escudo, motivo del motor y Ver fuente (RE-2.9.4); escena repetible sin cambiar motores ni conocimiento.
+* Cinco clínicas ficticias de Florencia con personal, propietarios, mascotas, seis meses de historia y carnet QR, calculados con los mismos motores del sistema. La escena se ajusta a la hora real y se crea o se borra desde la plataforma; el borrado solo toca los datos de demostración (RNF-11).
 
-* **Aviso único de borrador en Atención (2026-11-03, Codex; RE-2.1.7/RE-2.8.6):** la recuperación de sugerencias no repite el aviso del borrador; mantiene Deshacer, Alternativas y las advertencias de seguridad, sin cambiar el modal de Pacientes.
+**Despliegue:** migraciones 15 a 20 automáticas y repetibles, sin borrar datos. Los estáticos incorporan el identificador de construcción de la imagen (commit corto o fecha UTC); sin marca, usan la última modificación de JS/CSS. Un despliegue actualiza la caché aunque conserve la versión comercial. La variable `ZOOKI_DEMO_HABILITADA` va en `1` solo mientras se use la demostración.
 
-* **Sala, triage y regresiones del CI (2026-11-03, Codex; revisa Claude):** inasistencia automática sin llegada/inicio, pasada la tolerancia y al siguiente turno del veterinario o al cierre de jornada, conservando la espera en huecos (RN-408/426); decisiones de llegada en modal y ajuste de nivel solo con presencia. Otro síntoma exige descripción, sin cambiar el cálculo; motivos rápidos y síntomas completos accesibles. Corregidas regresiones de pruebas de cascada, montos de pagos y migración/semilla; misma2.3.0, sin migración nueva.
-
-* **Identificación tras una urgencia (2026-11-02, Codex; HU-4.15):** opciones Ya tiene ficha / Es una mascota nueva, buscadores de propietario y mascota e icono de cabecera; confirmación de propiedad mediante casilla obligatoria, con declaración, autor y fecha en el registro existente; conservación del contacto del acompañante explicada y plegada. Sin cambios de conciliación ni permisos.
-
-* **Notificaciones y acceso a urgencias (2026-11-02, Codex; revisa Claude):** campana con movimiento breve ante avisos sin leer y títulos legibles de urgencia; fichas sin propietario visibles en el Inicio y atenciones abiertas en Pendientes, con acceso directo y aviso breve de disponibilidad (HU-6.1, HU-4.15). Nueva urgencia abre los pacientes al tocar el buscador, con icono y hover; misma versión, sin migraciones.
-
-* **Precios y lanzamiento (2026-11-02, Codex; revisa Claude):** Profesional40.000 COP/mes o400.000 COP/año (2 meses gratis). Primer pago mensual aprobado sin aprobados previos:2 meses por1, con interruptor único y auditoría; siguientes1 mes, anual12. Catálogo único, cron sin tarifa histórica y órdenes anteriores respetadas; migración19 repetible y semilla actualizadas. Suscripción, portada y registro anuncian condiciones; presupuesto/ROI y documentación alineados, misma2.3.0.
-
-* **Inicio tardío por Sala (2026-11-02, Codex; revisa Claude):** Calendario, Atención y el servidor impiden iniciar directamente una reserva que superó la tolerancia de llegada; ofrecen resolverla desde Sala, con siguiente hueco, reprogramar o No asistió. Usa la llegada real y la tolerancia de la clínica, sin penalizar la demora del veterinario; las atenciones anteriores sin cerrar conservan su inicio y permiten registrar la consulta. RN-426 y RE-4.19.3; misma versión, sin migración.
-
-* **Retoques de Pendientes (2026-11-02, Codex; revisa Claude):** Nueva urgencia con un solo buscador por mascota, propietario o cédula y coincidencias seleccionables; revisión de nivel compacta y actualización automática cada10 segundos, sin sustituir formularios en edición. Conserva las reglas de llegada tardía y cierre de atenciones anteriores; misma versión, sin migración.
-
-* **Urgencia presencial directa (2026-11-02, Codex; revisa Claude):** Nueva urgencia → Atender ahora → Atención, con identificación posterior, motivo inicial automático y tipo elegido por el servidor. La agenda llena se reacomoda por cascada; las excepciones de pausa y orden se resuelven con motivo dentro del mismo modal, conservando el ingreso y el reintento. Tarjetas de Rojos con una sola acción; RN-427 y RE-4.15.2/4/5 actualizados. Misma versión, sin migración.
-
-* **Corrección S.1 de la demo (2026-11-01, Codex; revisa Claude):** jornada continua de7:00 a20:00, escena adaptable de8:00 a18:00 y agenda de los tres veterinarios con tipos reales. Conserva las reservas de los otros dos veterinarios, completa sus citas anteriores a la hora actual con sellos coherentes y exige toda la jornada dentro del cierre, sin reajustes pendientes ni propuestas abiertas. Correos de agenda omitidos salvo los de Rocco y máximo3 vacunas en ventana; los recordatorios diarios de citas conservan su envío normal. Prescripción separa pautas descartadas por seguridad, con motivo/fuente y una línea informativa en Atención (RE-2.9.1/4); sinónimos de mal aliento y advertencias clínicas de milbemicina para cuatro razas MDR1. Misma versión, sin migraciones ni cambios del cron.
-
-* **Semilla de demostración (2026-11-01, Codex; revisa Claude):** consola repetible para local y Docker, con entorno obligatorio, confirmación escrita fuera de local y simulación por defecto. Cinco clínicas ficticias de Florencia, personal, propietarios, mascotas, historia de seis meses y carnet QR; triage y tratamientos calculados con los motores existentes. Escena relativa a la hora real, llegada de Rocco y cascada recalculada; se rechaza fuera de jornada compatible. Borrado limitado al espacio de demo con llaves foráneas activas y protección de Zooki, superadministradores y vínculos ajenos (RNF-11). Sin cambios de pantallas, motores, conocimiento ni versión.
-
-* **Refuerzo del conocimiento tras pruebas (2026-11-01, Codex; revisa Claude):** buscador por palabras de contenido y alias colombianos (RN-424); sin vacunas registradas→desconocida, poscelo desde6 meses, exposición tóxica sin hora reciente solo para cálculo y tamaño canino por último peso visible (RN-416/418). Permetrina felina roja, raticida y garrapatas con fuentes; ranking de gastritis. Precarga preferente por clase y grupo de elección aprobado, Alternativas explícitas y duplicados; interacciones de prednisolona. Migración18 repetible y semilla con razas MDR1; ivermectina bloqueada/advertida según raza y nuevos fármacos con fuentes localizadas (HU-2.8/2.9/2.11). Conocimiento pendiente de validación veterinaria; omeprazol y dipirona sin pauta genérica por falta de indicación aplicable sin condiciones adicionales. No cambia la versión ni la agenda operativa.
-
-* **Alertas con nombre seleccionado (2026-10-31, Codex; RE-2.1.5):** buscador principal Alérgico/a a, Medicamento que toma o Condición, con selección por nombre/sinónimo y detalles libres aparte. «No encuentro el nombre» conserva nombre y detalles como aviso sin asociación; Otra alerta solo pide descripción. El servidor revalida la selección, tipo, actividad y nombre actual, conserva el límite total de255 caracteres y audita la procedencia. Editar los detalles conserva el concepto; cambiar nombre, tipo o paciente invalida la selección y las respuestas atrasadas. Modal de Atención de520px y guía inicial de Zooki en dos pasos. Sin interpretación de frases, migraciones ni cambios del conocimiento o de los motores; dentro de la2.3.0 aún sin publicar, pendiente de revisión de Claude.
-
-* **Atención — cero scroll en escritorio (2026-10-31, Codex; RE-2.1.6/7, RE-2.8.1/6):** estructura V3 desde 1024×650 px, con el paciente como cabecera, dos filas superiores, pasos con dos columnas y pie delgado. Recomendaciones editables de una línea, tratamientos compactos con edición en recuadro y acceso al resto; con seis, cuatro visibles y «Ver 2 más» (decisión del dueño). Ficha flotante, tres diagnósticos visibles y resumen en Cierre; procedimientos e historial compactos. Fuentes legibles conservadas, sin encogerlas para forzar el ajuste. Celular/tableta conservan V2 y las ventanas de menos de 650 px de alto permiten respaldo de página. Misma lógica, campos y validación, versión 2.3.0 sin publicar.
-
-* **Atención — estructura corregida (2026-10-31, Codex; RE-2.1.6/7, RE-2.8.1/6):** página con scroll, cabecera y paciente sin duplicados, pestañas y pasos en una fila de escritorio, panel y pie sticky. Borrador/Descartar en el pie, pasos con check/halo, ficha faltante con controles segmentados, errores con icono y Reintentar, procedimientos con lista lateral y tarjetas móviles sin perro. Referencia aprobada de la sección 10, contenido de pasos de la sección 9; modal conserva su diseño. Solo interfaz en la 2.3.0 aún sin publicar, sin cambios de motores, endpoints ni esquema.
-
-* **Atención, retoques de revisión y prueba del dueño (Codex, 2026-10-31, RE-2.1.6, RE-1.4.1/5, RE-2.8.1/6):** un fallo del contexto mantiene usable la consulta y desactiva solo el control, con Reintentar. Mini formulario para completar la ficha con permisos y auditoría existentes, y nuevo cálculo; plan único compuesto desde exámenes, recomendaciones editables y Otras indicaciones. Ficha en grilla, alertas con +N, pestañas visibles, stepper, vitales 2×2 móvil, errores rojos y referencias azules; collage y resumen con un solo perro en escritorio, interruptor de control con explicación y selector del sistema, pie dentro de la hoja. El fallo local reportado correspondía a la migración17 pendiente; sin migración nueva.
-
-* **Atención en3 pasos (Codex, 2026-10-30, RE-2.1.6/7, RE-2.8.6, RN-431):** formulario compartido con el modal, paciente en franja, panel vivo, tarjetas y cierre según mockups aprobados; sugerencias ligadas al diagnóstico y borrador por cita/veterinario. Referencias vitales informativas y azules, con fuente y validación veterinaria pendiente. Próximo control después del commit clínico, disponibilidad real, reserva/eventos/aviso existentes y fallback sin perder consulta; horizonte por clínica de30 días. Migración17 repetible; 96 HU,472 RE,128 RN,65 tablas.
-
-* **Consulta que se llena sola (Codex, 2026-10-30, HU-2.8/2.9):** Usar agrega diagnóstico, plan y pautas como sugerencias editables, con Deshacer y recálculo según peso solo en dosis sin editar. Motor de seguridad existente excluye bloqueos y conserva advertencias sin evidencia protegida; endpoint exclusivo de veterinario con vínculo activo. Migración 16 repetible: pauta JSON, carga idempotente y versión sensible a pauta/plan. Datos clínicos reales a cargo de Claude.
-
-Preparada el 29 de octubre de 2026 en `release/v2.3.0`; entregada, pendiente de revisión de Claude e integración/despliegue del dueño.
-
-* **Triage que no frena (RN-418, HU-4.13):** el nivel provisional permite elegir horario y reservar en el portal y en Nueva cita del veterinario, incluso con revisión inmediata. El veterinario recibe REVISION_TRIAGE, marcado inmediato cuando corresponde. Rojo conserva aviso y derivación de inmediato, sin horario reservable.
-* **Revisión después de reservar (RN-419):** confirmar o ajustar aplica el nivel a la cita con motivo y auditoría; rojo entra a Urgencias, naranja respeta el tope y al bajar se conserva el espacio. La solicitud y la cita cambian en una sola transacción.
-* **Vacunación desde registros (RN-416, RN-113):** si no se declara en el formulario, cualquier próxima dosis vencida de esa mascota determina vacunación incompleta; con vacunas y ninguna vencida, completa; sin registros, desconocida (decisión del dueño,2026-10-31). Lo declarado manda, incluidas las vacunas de otras clínicas.
-* **Conocimiento de Claude, commit `e4e5ec7`:** nivel base con fuente para los 27 síntomas que no lo tenían; los síntomas que piden revisión bajan de 27/50 a 3/50. El conocimiento mantiene su validación veterinaria pendiente. Esta subetapa de Codex no modifica `database/conocimiento`.
-
-* **Correcciones de la prueba del dueño, Codex (2026-10-29):** propuestas idénticas a la apertura se aceptan; el formulario bloquea días/horas cerrados y el administrador recibe el aviso pendiente. Sin horario aprobado no inicia Nueva cita ni aparece el veterinario en el portal. Días cerrados del calendario conservan consulta de eventos y bloquean reservas/arrastres.
-* **Mascotas y contextos (RN-110/115/G18):** alta del propietario vincula la mascota a todas sus clínicas activas, con límites y auditoría atómicos; la persona propietario/veterinario reserva para su mascota desde ambos contextos con rol registrado. Nueva/Editar mascota del veterinario muestra obligatorios y opcionales como el portal, con las mismas reglas.
-* **Cirugía y ocupación real (HU-7.4, RN-412/427):** Cirugía programada por defecto dura 120 minutos, margen 15, no pausable y solo para personal. Marca editable por clínica; portal filtra y rechaza tipos restringidos. Una completada libera desde su fin real sin margen posterior y la cascada recupera el sobrante sin adelantar pactadas.
-* **Horarios y rojo (HU-4.13/4.15):** verde/amarillo eligen entre todos los huecos del día, el primero recomendado; naranja ve los tres más cercanos y se asigna al primero libre. Desde Nueva cita, Ir a Urgencias conserva mascota, síntomas/exposiciones y evaluación reutilizando la solicitud.
-* **Cambios tardíos (RN-430):** propietario/veterinario necesitan al menos N minutos antes de la hora pactada original; parámetro por clínica de 0–1440, default 30, 0 desactiva. Portal muestra el aviso y veterinario oculta acciones; administrador cancela con motivo auditado. Urgencias, cascada y decisiones clínicas de Llegadas quedan exentas.
-* **Migración 15 repetible:** agrega anticipacion_cambios_min y solo_personal y cirugía donde falte, sin sobreescribir personalizaciones. Pendientes de correo reciben los siete tipos al activar. Especificación: 96 HU, 467 RE, 127 RN, 65 tablas; sin conocimiento nuevo, tratamientos sugeridos ni demo.
+**Documentación:** 96 HU, 472 RE (471 vigentes y 1 retirado), 128 RN y 65 tablas.
 
 ### Versión 2.2.0
 
-* **Portal, retoques antes de publicar (2026-10-29, HU-5.1/5.3/5.5/5.6):** foto de mascota por elección o arrastre, triage con campos completos y Agendar móvil a todo el ancho. Inicio conserva su identidad con tarjetas compactas y botón de patita; ficha con raza junto al nombre, acceso al PDF y HC de la clínica elegida. La respuesta existente aporta el número por clínica solo al propietario de la mascota (RN-G02). Historial clínico A4 con paciente, HC, alertas, vacunas, desparasitación y consultas identificadas por clínica/veterinario (RN-114), numeración y regreso a la ficha o a Vacunas. Sin esquema ni endpoints nuevos; versión aún sin publicar.
-
-Pulido final P1, preparado el 26 de octubre de 2026; pendiente de revisión e integración. El dueño renombra la rama y realiza el despliegue.
+* **Portal, retoques antes de publicar (2026-10-29, HU-5.1/5.3/5.5/5.6):** foto de mascota por elección o arrastre, triage con campos completos y Agendar móvil a todo el ancho. Inicio conserva su identidad con tarjetas compactas y botón de patita; ficha con raza junto al nombre, acceso al PDF y HC de la clínica elegida. La respuesta existente aporta el número por clínica solo al propietario de la mascota (RN-G02). Historial clínico A4 con paciente, HC, alertas, vacunas, desparasitación y consultas identificadas por clínica/veterinario (RN-114), numeración y regreso a la ficha o a Vacunas. Sin esquema ni endpoints nuevos.
 
 * **Registro de clínica:** 40 comprobaciones por IP en 15 minutos; el freno temporal se avisa de forma general, sin invalidar el campo, y se vuelve a comprobar al enviar (RE-T.13.2, RN-G15).
 * **Soporte de plataforma:** correo individual a super-administradores activos y verificados después del commit y de responder, sin identidad del titular; un fallo se registra y conserva el caso abierto. Detalle privado con solicitante y cuenta actual del documento cuando los datos existentes permiten identificarla; resolución o descarte con nota y toast (RE-0.3.4, RE-T.18.3, RN-G24). Sin esquema nuevo.
 * **Interfaz:** minigráfica en cero con línea base y meses, fechas del historial dd/mm/aaaa, tratamiento en singular, identidad compartida y confirmaciones graves con el modal de Zooki. Las acciones reversibles y sus actualizaciones no esperan al aviso.
-* **Etapa C, primera pantalla — Suscripción (HU-0.5):** rediseño aprobado por el dueño en mockups (26/10/2026). Pestañas «Mi plan» e «Historial de pagos» en todos los anchos, una tarjeta por vista y sin scroll en 1366×768; «Pagar o renovar» y el medio de pago (aceptaciones de Wompi en tres pasos) en ventanas, que en el celular son hojas inferiores. Suscripción vive como sección dentro de la misma hoja de Ajustes; el atajo del Inicio abre esa sección conservando el regreso, también al volver de Wompi o paginar el historial. El pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados; guardar un medio sigue con el widget. Los enlaces anteriores redirigen a Ajustes; sin cambios de reglas de cobro, permisos ni esquema.
+* **Suscripción (HU-0.5):** Pestañas «Mi plan» e «Historial de pagos» en todos los anchos, una tarjeta por vista y sin scroll en 1366×768; «Pagar o renovar» y el medio de pago (aceptaciones de Wompi en tres pasos) en ventanas, que en el celular son hojas inferiores. Suscripción vive como sección dentro de la misma hoja de Ajustes; el atajo del Inicio abre esa sección conservando el regreso, también al volver de Wompi o paginar el historial. El pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados; guardar un medio sigue con el widget. Los enlaces anteriores redirigen a Ajustes; sin cambios de reglas de cobro, permisos ni esquema.
 * **Recuperación al abandonar Wompi (HU-0.5):** consulta la última orden/intento de clínica y entorno aunque se haya perdido la referencia; distingue plan al día de pago sin confirmar y restaura controles al volver con Atrás sin repetir el POST. Al reintentar y en el Schedule existente, una búsqueda privada completa y vacía permite cerrar un checkout manual vencido con candado y auditoría; si existe transacción recupera su estado. Errores no liberan reservas, y aprobados tardíos de órdenes cerradas generan incidencia sin conceder otro periodo. Sin esquema nuevo (RE-0.5.15/17/24).
 * **Barra de navegación en el celular:** destinos principales con su nombre y el activo resaltado; lo que no cabe va en «Más». El administrador tiene cinco destinos sin «Más» (Inicio, Usuarios, Citas, Auditoría y Ajustes); el escritorio no cambia (RNF-16).
 * **Ajustes del administrador:** Configuración y Mi perfil en una sola pantalla, con menú lateral blanco agrupado en «La clínica» y «Mi cuenta» y cada sección sin scroll en 1366×768; en el celular, lista agrupada y sección con «← Ajustes», y Cerrar sesión al final. El encabezado muestra solo «Ajustes», sin el párrafo «La clínica y tu cuenta». Mi perfil del administrador lleva a Ajustes › Mi cuenta; el del veterinario no cambia. Sin cambios de reglas, rutas, permisos ni esquema.
 * **Datos de la clínica (HU-7.4):** Marca y contacto con identidad y filas claras; logo por elección o arrastre, vista previa y validación de contenido JPG/PNG/WebP hasta 5 MB. El guardado conserva el logo anterior y retira solo el archivo nuevo si falla. Duración de tipos de cita entre 1 y 720 minutos, margen entre 0 y 120, con regla compartida en formulario/AJAX/servidor. Placeholders, teléfonos con +57, correo de contacto validado por formato y un único aviso por campo; el error sustituye a la ayuda y no se repite en el pie. Sin esquema ni migración.
-* **Alcance:** C (responsive completo) queda fuera de P1 por decisión del dueño del 26/10/2026. No se agregan media queries ni cambios de distribución por ancho; solo se comprueba desborde horizontal de A/B a 1366 y 390 px (RNF-16). D queda pendiente.
 
 ### Versión 2.1.0
 
-Entrega preparada el 25 de octubre de 2026; el dueño revisa, integra y despliega.
-No cierra las otras historias pendientes de v2.1.
+Suscripción paga con Wompi e Inicio del administrador.
 
 * **Inicio del administrador (HU-6.2):** resumen operativo y Uso del plan enlazado a Suscripción, conservando el diseño integrado.
 * **Suscripción y pagos (HU-0.5):** profesional por 89.990 COP/mes o 899.900 COP/año, total sin IVA; calendario con ancla, tres días de gracia y congelación sin pérdida de datos ni bloqueo de urgencias rojas.
 * **Wompi:** botón con firma del servidor; inbox de eventos verificados y consulta privada antes de acreditar una sola vez; recuperación por ID del retorno o consulta manual auditada sin evento, obligación compartida entre pestañas y automático. Fuentes hospedadas, autorización mensual separada, tres intentos terminales dentro de gracia y avisos sin duplicación; resultado incierto nunca repite un cargo.
 * **Correo confirmado (RN-017):** «Recibimos tu pago» por cada periodo acreditado, con valor, ciclo, medio mínimo, referencia y último día incluido; outbox única por pago/destinatario y SMTP después del commit.
 * **Plataforma:** pagos, periodos e incidencias por clínica; revisión con nota auditada, referencias desconocidas sin asignar y motivo del apagado automático. Concesiones manuales y legado separados de pagos, sin cobros ni devoluciones desde plataforma.
-* **Despliegue:** migraciones 12, 13 y 14 aditivas/repetibles, configuración WOMPI_*, un Schedule de suscripciones cada cinco minutos y URL de eventos separada por entorno. Activar cobros solo después de D8/D10 y de las comprobaciones de sandbox; apagar nuevos cargos conserva recepción y conciliación.
+* **Despliegue:** migraciones 12, 13 y 14 aditivas/repetibles, configuración WOMPI_*, un Schedule de suscripciones cada cinco minutos y URL de eventos separada por entorno. Activar cobros solo después de las comprobaciones de sandbox; apagar nuevos cargos conserva recepción y conciliación.
 
 Las suites usan cliente Wompi falso, también para sandbox; la validación comercial y de aceptación con el proveedor real es una comprobación operativa pendiente.
 
 ### Versión 2.0.0
 
-Primera entrega estable de la plataforma SaaS v2, preparada el 23 de octubre de 2026. Producción se actualiza cuando el dueño integre y despliegue esta entrega.
+Primera entrega estable de la plataforma SaaS v2.
 
 * **Base SaaS y acceso (alpha.1–alpha.2):** clínicas y planes, identidad única con varios contextos, aislamiento por clínica, activación de cuentas y aceptación de la política de datos.
 * **Portal multi-clínica (alpha.3):** una cuenta para todas las mascotas y clínicas; vínculos y autorización de historia compartida, con registro y agendamiento desde el portal.
@@ -119,7 +88,7 @@ Primera entrega estable de la plataforma SaaS v2, preparada el 23 de octubre de 
 
 **Despliegue:** migración 11 automática y repetible, sin borrar datos; configurar `CARNET_IP_SECRETO` en el entorno de PHP para el HMAC. Si falta, el carnet público responde temporalmente no disponible. El conocimiento clínico conserva su validación veterinaria pendiente; los grafos apoyan la decisión profesional.
 
-**Salvedad acordada con el dueño (23/10/2026):** el correo de alta conserva el enlace de acceso; el QR del portal en ese correo (RE-5.8.4) sigue pendiente de una entrega aparte. Este cierre entrega el QR de emergencia de la mascota.
+**Pendiente:** el correo de alta conserva el enlace de acceso; el QR del portal en ese correo (RE-5.8.4) sigue pendiente de una entrega aparte. Este cierre entrega el QR de emergencia de la mascota.
 
 ### Versión 2.0.0-alpha.5
 
@@ -261,7 +230,6 @@ Primera versión de **Zooki como plataforma**: varias clínicas usan el mismo Zo
 **Instalación**
 
 *   El servidor web solo publica la carpeta `public/`; la imagen ya no incluye credenciales, pruebas ni material de trabajo.
-*   La guía del cambio a producción está en `specs/M0-F-corte-produccion.md`.
 
 ### Versión 1.12.0
 Portal de documentación: un buscador que encuentra lo que está en los documentos desplegados y empieza por el documento abierto, descargas con vista previa del PDF y documentos en formato APA 7.
@@ -273,7 +241,6 @@ Portal de documentación: un buscador que encuentra lo que está en los document
 *   **Ninguna sección queda cortada.** Las que pasan de 6000 bytes se parten en varios registros; antes se recortaban y el final de, por ejemplo, «3.2 Requisitos funcionales» del ERS no aparecía en la búsqueda.
 *   **Primero el documento abierto**, marcado «Esta página», y después los demás por relevancia.
 *   **Respaldo local mejorado:** si Algolia no devuelve nada, se busca en los `.md` actuales, sin importar tildes y enlazando a la sección donde está la coincidencia.
-*   Plan en `specs/buscador-documentacion.md`.
 
 **Enlaces entre documentos**
 *   Un enlace a otro documento (`ERS.md#…`) abre ese documento en el portal y baja a la sección, en lugar de descargar el `.md`.
@@ -288,14 +255,13 @@ Portal de documentación: un buscador que encuentra lo que está en los document
 **Descargas**
 *   La barra de botones rojo y azul del inicio de cada documento se reemplazó por un botón «Descargar» en la barra superior, junto al de tema, que no se pierde al hacer scroll. En móvil es un ícono en el header.
 *   **«Ver PDF»** abre una vista previa en un modal, con el visor del navegador (páginas, zoom, imprimir), antes de descargar. En móvil abre el PDF en una pestaña nueva.
-*   Plan en `specs/descargas-documentacion.md`.
 
 **PDF y Word con formato APA 7**
 *   Los PDF y Word del portal se regeneraron con un generador propio: `node scripts/docs/exportar.mjs`. Antes se hacían fuera del repositorio y quedaban desactualizados.
 *   **Formato APA 7:** portada de estudiante (con revisión y estándar del documento), índice con número de página, Calibri 11 a doble espacio, márgenes de 2,54 cm, número de página arriba a la derecha y títulos con los niveles de APA. Cada sección principal empieza hoja.
 *   **Tablas legibles:** a todo el ancho, con columnas proporcionales a su contenido, líneas APA, «Tabla N» con su título, encabezado repetido en cada hoja y sin filas partidas. Las tablas que caben en una hoja no se parten, y un título o un rótulo nunca queda solo al pie.
 *   **Los diagramas se dibujan** como figuras numeradas, también en el Word.
-*   `--revisar` dice qué descargas quedaron desactualizadas después de editar un `.md`. Plan en `specs/exportar-documentos.md`.
+*   `--revisar` dice qué descargas quedaron desactualizadas después de editar un `.md`.
 
 **Pruebas**
 *   Pruebas nuevas: `DocsIndexTest`; la suite pasa a 218 pruebas (898 aserciones).
@@ -323,7 +289,6 @@ Cierre de la versión estable antes del cambio de arquitectura: respaldos que fu
 *   Historias de agenda, consultas y catálogos pasan a estado «diferida»: se completan con la nueva arquitectura. HU-44 (catálogos) y HU-20 (panel de vacunas) estaban marcadas como implementadas sin cumplir todos sus criterios.
 *   El MER y el ERS reflejan las migraciones 04 a 13 y las 27 tablas; se corrigió la entidad `notificaciones`, que no correspondía con la tabla real.
 *   HU-52 (notificaciones del propietario) y HU-55 (exportar a Excel/CSV) pasan a Futuro: se construyen con la arquitectura nueva.
-*   Plan del cierre en `specs/cierre-version-estable.md`.
 
 **Despliegue de la v1.11.0 (Dokploy)**
 1.  Agregar al Environment `DB_ROOT_PASS` con la **misma** clave de root que tiene hoy la base (la que estaba escrita en `docker-compose.yml`, si nunca se cambió), y `BACKUP_DIR=/var/backups/zooki`. MySQL solo usa esa variable al crear una base nueva: no cambia la clave de la actual.

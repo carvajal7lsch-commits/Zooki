@@ -1442,3 +1442,18 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Seguridad: etiqueta de fin del bloqueo junto a la IP, fuera de la columna del icono de44px; correos/clínicas largos con salto de línea, espacio entre filas y acciones debajo en celular.
 - Verificación: lectura del código y diff; sin suites, pruebas ni recorrido de navegador por instrucción del dueño. Pendiente revisión visual de Clínicas/Soporte/Seguridad/Demo y tarjeta con IP bloqueada.
 - Sin cambios de servidor, datos, permisos, interruptor de demo ni versión; sin commit ni push.
+
+
+### Caché de estáticos por despliegue — decisión del dueño (2026-11-03)
+
+- Dentro de Docker, `App::assetVersion()` incorpora la marca de la imagen para actualizar JS/CSS aun sin cambiar la versión comercial; fuera de Docker conserva el comportamiento anterior.
+- `Dockerfile` escribe `VERSION_BUILD` tras copiar la aplicación: hash de hasta12 caracteres si recibe `--build-arg SOURCE_COMMIT=<hash>`, o fecha UTC de construcción automáticamente. El archivo queda fuera de public/.
+- Sin marca legible/válida, se usa la modificación más reciente de todos los archivos de public/js y public/css, incluidos subdirectorios; resultado reutilizado en memoria, sin recorrer carpetas por cada enlace.
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión; misma2.3.0, sin commit ni push.
+- `AppAssetVersionTest`:4 pruebas/8 aserciones correctas; marca de commit/fecha, caché en memoria, fallback recursivo, marca inválida y contrato del entorno actual. Temporales fuera del repositorio, sin base de datos.
+- Plataforma abierta una vez en Chrome1366×768,17 recursos locales versionados y sin excepciones JavaScript; fuera de Docker conserva la versión estable de pruebas.
+- Sin suites completas ni lectura/escritura de .env; el identificador de construcción no es una variable de ejecución. Sin cambios de pantallas ni negocio.
+- Pendiente: reconstruir/desplegar la imagen y comprobar el sufijo del recurso en Docker; no se ejecutó una construcción Docker en este equipo. Descargas al cierre del bloque según metodo§11.

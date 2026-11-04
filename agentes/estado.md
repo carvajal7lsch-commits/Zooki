@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Caché de estáticos por despliegue — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; Docker combina2.3.0 con VERSION_BUILD (commit corto mediante SOURCE_COMMIT o fecha UTC automática); sin marca válida, usa la última modificación recursiva de JS/CSS y reutiliza el resultado en memoria; comportamiento fuera de Docker conservado.
+- Prueba unitaria nueva4/8 correcta; Plataforma abierta en Chrome1366×768,17 recursos locales versionados y sin excepciones; sintaxis/diff revisados. Sin suites completas, base de datos ni .env; no se construyó una imagen Docker local.
+- Anexo en specs/pulido-interfaz.md; pendiente revisión y comprobación tras reconstruir/desplegar; misma2.3.0, sin commit/push; descargas al cierre del bloque.
+
 ### Plataforma — pestañas, Demo y Seguridad — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; hover redondeado azul y línea activa conservada; Demo explícita en navegación/enlace, con caché de JS/CSS renovada y disponibilidad del servidor respetada.
