@@ -17,6 +17,12 @@ class NotificacionInterna {
     /** Condición común: de la clínica y dirigidas a la persona o a su rol en ella. */
     private const DESTINATARIO = "id_clinica = :id_clinica AND (id_usuario = :id_usuario OR id_rol_destino = :id_rol)";
 
+    // RN-409: cubre avisos anteriores y el que pudiera publicar el vigilante después del cierre.
+    private const ATENCION_VIGENTE = "(tipo NOT IN ('ATENCION_ABIERTA','ATENCION_SIN_CERRAR')
+        OR NOT EXISTS (SELECT 1 FROM citas c
+            WHERE c.id_cita=notificaciones_internas.id_cita
+              AND c.id_clinica=notificaciones_internas.id_clinica AND c.estado='completada'))";
+
     /**
      * La conexion es opcional: el controlador lo instancia sin argumentos y se
      * crea la conexion real de siempre. En pruebas se inyecta un PDO propio
@@ -88,6 +94,15 @@ class NotificacionInterna {
         return $stmt->execute();
     }
 
+    /** RN-409/RE-4.5.1: solo los avisos operativos; el llamador mantiene la unidad del cierre. */
+    public function expirarAvisosDeAtencion(int $idClinica, int $idCita, string $ahora): bool {
+        $stmt = $this->conn->prepare("UPDATE notificaciones_internas SET vigente_hasta=:ahora
+            WHERE id_clinica=:id_clinica AND id_cita=:id_cita
+              AND tipo IN ('ATENCION_ABIERTA','ATENCION_SIN_CERRAR')
+              AND (vigente_hasta IS NULL OR vigente_hasta>:limite)");
+        return $stmt->execute([':ahora' => $ahora, ':limite' => $ahora, ':id_clinica' => $idClinica, ':id_cita' => $idCita]);
+    }
+
     /** RE-5.7.4: el portal global solo recibe estimaciones de sus mascotas actuales. */
     private function condicionDestinatario(?int $idClinica): string {
         if ($idClinica !== null) return self::DESTINATARIO;
@@ -109,6 +124,7 @@ class NotificacionInterna {
         $stmt = $this->conn->prepare(
             "SELECT * FROM " . $this->table_name . "
              WHERE " . $this->condicionDestinatario($idClinica) . "
+               AND " . self::ATENCION_VIGENTE . "
                AND (vigente_hasta IS NULL OR vigente_hasta > :ahora)
              ORDER BY fecha_creacion DESC, id DESC
              LIMIT :limit"
@@ -126,6 +142,7 @@ class NotificacionInterna {
         $stmt = $this->conn->prepare(
             "SELECT COUNT(*) FROM " . $this->table_name . "
              WHERE leida = 0 AND " . $this->condicionDestinatario($idClinica) . "
+               AND " . self::ATENCION_VIGENTE . "
                AND (vigente_hasta IS NULL OR vigente_hasta > :ahora)"
         );
         $this->enlazarDestinatario($stmt, $idClinica, $idUsuario, $idRol);

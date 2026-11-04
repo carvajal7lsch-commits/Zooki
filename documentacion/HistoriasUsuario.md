@@ -1067,7 +1067,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 - La atención se inicia desde el calendario, solo por el veterinario asignado y solo el día de la cita, desde 15 minutos antes de su hora.
 - Solo una cita "en curso" o "sin cerrar" puede completarse.
-- La cita se completa al guardar su consulta, en la misma operación: no hay citas completadas sin consulta.
+- La cita se completa al guardar su consulta, en la misma operación: no hay citas completadas sin consulta. Sus avisos de atención abierta y sin cerrar se retiran de la campana y del contador en esa operación, sin borrar las filas ni afectar otros avisos o clínicas; si el cierre falla, el retiro también se revierte. Se excluyen además los avisos antiguos que quedaron asociados a una cita ya completada.
 - Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
 - Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
 - Al terminar el día, una atención abierta pasa a "sin cerrar"; la completo registrando su consulta.

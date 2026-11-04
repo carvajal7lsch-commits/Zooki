@@ -626,7 +626,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada o no asistida, no. | Media |
+| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada o no asistida, no. El cierre retira solo ATENCION_ABIERTA/ATENCION_SIN_CERRAR de esa cita y clínica en la misma transacción, conservando sus filas y los otros avisos; un fallo revierte también el retiro. Los avisos anteriores de una cita completada no aparecen ni cuentan como no leídos. | Media |
 | RE-4.3.2 | El sistema debe completar la cita al registrar su consulta, en la misma transacción. | Funcional | Guardar la consulta deja la cita completada; si algo falla no queda ninguna de las dos. | Alta |
 | RE-4.3.3 | El sistema debe excluir las completadas de la agenda futura. | Funcional | Una completada no aparece en la agenda futura. | Media |
 | RE-4.3.4 | El sistema debe permitir iniciar la atención solo al veterinario asignado, el día de la cita y desde 15 minutos antes de su hora. | Restricción | Otro rol, otro veterinario, otra fecha o una hora anterior son rechazados. | Alta |

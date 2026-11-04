@@ -24,6 +24,8 @@ class NotificacionAccesoTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DosClinicas::sqlite();
+        DosClinicas::crearMascotasSqlite($this->db);
+        DosClinicas::crearHistoriaSqlite($this->db);
         $this->modelo = new NotificacionInterna($this->db);
     }
 

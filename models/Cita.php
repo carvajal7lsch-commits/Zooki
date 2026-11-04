@@ -4,6 +4,7 @@ require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/CoordinacionHorarios.php';
 require_once __DIR__ . '/DisponibilidadAgenda.php';
 require_once __DIR__ . '/EventoAgenda.php';
+require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
@@ -542,6 +543,9 @@ class Cita extends ModeloClinica
                 $ok = $this->transicion($actual, $estados, $cambio . ",estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1", [$ahora]);
                 if ($ok) {
                     if (str_starts_with($cambio, "estado='completada'")) {
+                        if (!(new NotificacionInterna($this->conn))->expirarAvisosDeAtencion($this->clinica(), $id, $ahora)) {
+                            throw new RuntimeException('No se pudieron retirar los avisos de la atención finalizada.');
+                        }
                         $urgencias->despuesDeCompletar($id);
                     }
                     if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['sello' => $ahora], 'Disparo de cascada por atención (RE-4.5.1)', $this->clinica())) {

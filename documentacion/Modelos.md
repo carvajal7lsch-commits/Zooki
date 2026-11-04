@@ -266,7 +266,7 @@ flowchart TD
   RS -- "Si: 422 junto al campo, nada escrito" --> I1
   RS -- No --> RB{Bloqueo o advertencia no resuelta?}
   RB -- Si --> P
-  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar su cita asociada y marcar version para cascada tras commit (RN-406); sin crear consultas nuevas huerfanas"]]
+  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar su cita asociada y retirar avisos de atencion abierta/sin cerrar de esa cita y clinica (RN-409), sin borrar filas; marcar version para cascada tras commit (RN-406); sin crear consultas nuevas huerfanas"]]
   Y --> Y1{Guardado correcto?}
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
