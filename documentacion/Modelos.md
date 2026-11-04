@@ -1054,7 +1054,7 @@ flowchart TD
 
 El QR lleva un **token aleatorio**, nunca el id de la mascota; el propietario puede regenerarlo ([RN-502 a RN-505](ReglasNegocio.md#módulo-5--portal-del-propietario-multi-clínica)).
 
-**Subetapa A — portal del propietario (HU-5.10):** lectura de emergencia compartida con el flujo público siguiente, que corresponde a la subetapa B. Impresión en tarjeta A6 (148 × 105 mm), ampliable verticalmente para conservar todos los registros. El SVG es privado y se genera en el servidor; el enlace absoluto usa la misma base de los correos.
+**Portal del propietario (HU-5.10):** lectura de emergencia compartida con el flujo público siguiente, descrito a continuación. Impresión en tarjeta A6 (148 × 105 mm), ampliable verticalmente para conservar todos los registros. El SVG es privado y se genera en el servidor; el enlace absoluto usa la misma base de los correos.
 
 ```mermaid
 flowchart TD
@@ -1079,7 +1079,7 @@ flowchart TD
   U --> T
 ```
 
-**Subetapa B — acceso público y escaneos (HU-5.11, 2.0.0).** Las respuestas válidas, genéricas y 429 llevan `noindex, nofollow`, `no-store` y `no-referrer`. No se abre sesión en las rutas públicas. La IP común con auditoría respeta `TRUSTED_PROXIES` y se guarda solo como HMAC-SHA256 con `CARNET_IP_SECRETO`; si falta, se responde 503 sin datos. Los tokens no disponibles hacen la misma consulta de índice antes del mismo 404. La foto se sirve por token y el SVG se entrega sin identificadores internos.
+**Acceso público y escaneos (HU-5.11, 2.0.0).** Las respuestas válidas, genéricas y 429 llevan `noindex, nofollow`, `no-store` y `no-referrer`. No se abre sesión en las rutas públicas. La IP común con auditoría respeta `TRUSTED_PROXIES` y se guarda solo como HMAC-SHA256 con `CARNET_IP_SECRETO`; si falta, se responde 503 sin datos. Los tokens no disponibles hacen la misma consulta de índice antes del mismo 404. La foto se sirve por token y el SVG se entrega sin identificadores internos.
 
 ```mermaid
 flowchart TD

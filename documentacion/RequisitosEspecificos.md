@@ -4,7 +4,7 @@
 
 > **Revisión 3.6** · 472 requisitos identificados (471 vigentes y 1 retirado) para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
-> **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
+> **Preparación de la agenda — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN.
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -14,13 +14,13 @@ La **Revisión 3.5 (23/10/2026)** prepara 2.0.0: verifica RE-5.10.1–5 y RE-5.1
 
 **Criterio de aceptación:** describe una prueba concreta, con su entrada y el resultado esperado, que permite decir si el requisito se cumple.
 
-_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo (`specs/M0-T-base-saas-identidad.md`, §2). Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
+_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo. Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
 
-_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo (`specs/M5-portal-multiclinica.md`, §2). Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
+_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo. Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
 
 _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia final de M2 en su plan, §2; peso desconocido explícito, alergias y alertas compartidas, diagnósticos sugeridos, alertas de prescripción y mapa de conocimiento. RE-2.11.1–7 quedan verificados en cálculo, buscador y batería; la captura de agenda, las urgencias, revisión previa a asignar horario, el aviso de aislamiento y ajuste veterinario se completan en M4. El conocimiento sigue pendiente de validación veterinaria._
 
-> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 

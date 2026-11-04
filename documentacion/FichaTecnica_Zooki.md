@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
 
 
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
@@ -22,7 +22,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.3.0 preparada, pendiente de revisión de Claude e integración/despliegue**: triage provisional y vacunación desde registros; correcciones de horario, mascotas, cirugía, selección por nivel y plazo de cambios; Atención en3 pasos con borrador y control posterior al commit clínico. 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN, 65 tablas. Conserva D8/D10 pendientes antes de dinero real y validación veterinaria del conocimiento. |
+| Estado actual | **2.3.0 lista para desplegar**: triage provisional y vacunación desde registros; correcciones de horario, mascotas, cirugía, selección por nivel y plazo de cambios; Atención en3 pasos con borrador y control posterior al commit clínico. 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN, 65 tablas. Conserva D8/D10 pendientes antes de dinero real y validación veterinaria del conocimiento. |
 | Versión del documento | 3.6 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto

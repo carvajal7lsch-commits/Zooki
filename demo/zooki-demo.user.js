@@ -10,7 +10,7 @@
 // @grant        none
 // @sandbox      raw
 // @noframes
-// @author       Codex
+// @author       Juan Sebastián Carvajal
 // ==/UserScript==
 
 (() => {

@@ -102,6 +102,7 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 **Código y repositorio**
 - Una sentencia por línea y nombres claros: el código se sustenta en el SENA y tiene que poder explicarse.
 - Él hace commits, push, ramas y tags. Mensajes sin tildes, Conventional Commits, citando HU/RE.
+- La documentación publicada (README y portal) no menciona IA, agentes ni el método de trabajo, y el historial de versiones sigue el formato de las 1.x; ver «Mantener la documentación coherente» en AGENTS.md (decisión del usuario, 2026-11-03).
 - Los documentos no suben de revisión durante el módulo: una sola revisión nueva por documento al cerrarlo.
 
 ## 9. Entorno local

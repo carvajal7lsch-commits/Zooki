@@ -43,7 +43,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 > **Preparación M4/B1 — 2026-10-17:** criterios confirmados de destino pendientes de implementación funcional; no se cambia revisión. El ejecutable sigue en alpha.4 y los estados históricos no acreditan los nuevos flujos.
 
-> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
@@ -1759,7 +1759,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 > _Nota: hasta v1.9.0 el panel mezclaba gráficas con datos inventados cuando no había información, la agenda de hoy mostraba las citas de todos los veterinarios y el "hoy" se calculaba en UTC. Desde v1.9.1 el panel se pinta en el servidor con la hora de la clínica (`PanelController`) y responde a "¿qué tengo que hacer ahora?"._
 
-> _Nota (decisión del dueño, 2026-10-22): el Inicio del veterinario se rehízo con el diseño aprobado en `specs/referencias/inicio-veterinario.dc.html` y se retiró el módulo «Consultas médicas». El historial de cada mascota sigue en Pacientes y en Atención, y la atención sin cita se registra como llegada en la agenda._
+> _Nota (decisión del dueño, 2026-10-22): el Inicio del veterinario se rehízo con el diseño aprobado por el dueño y se retiró el módulo «Consultas médicas». El historial de cada mascota sigue en Pacientes y en Atención, y la atención sin cita se registra como llegada en la agenda._
 
 ### HU-6.2 — Panel de operación del administrador
 
@@ -1787,7 +1787,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Reglas de negocio:** RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415 · **Dependencias:** HU-6.1, HU-4.3, HU-0.4, HU-4.11, HU-4.12
 
-> _Nota (decisión del dueño, 2026-10-24): el Inicio del administrador se rehízo con el diseño aprobado en `specs/referencias/inicio-administrador.dc.html`. La lista filtrable de citas de hoy pasó a Gestión de citas. Por RN-401 el administrador no crea citas, así que «Hoy en la clínica» no tiene el botón «Agendar» del mockup. «En espera» son las citas de hoy con la llegada registrada que aún no empiezan, más las llegadas sin reserva en espera presencial; «urgencias», los casos rojos de hoy, atendidos o en cola. La minigráfica de «Este mes» muestra atendidas y no asistidas por mes (RE-6.2.4)._
+> _Nota (decisión del dueño, 2026-10-24): el Inicio del administrador se rehízo con el diseño aprobado por el dueño. La lista filtrable de citas de hoy pasó a Gestión de citas. Por RN-401 el administrador no crea citas, así que «Hoy en la clínica» no tiene el botón «Agendar» del mockup. «En espera» son las citas de hoy con la llegada registrada que aún no empiezan, más las llegadas sin reserva en espera presencial; «urgencias», los casos rojos de hoy, atendidos o en cola. La minigráfica de «Este mes» muestra atendidas y no asistidas por mes (RE-6.2.4)._
 
 ### HU-6.3 — Generar reportes en PDF
 

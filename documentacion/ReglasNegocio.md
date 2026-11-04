@@ -205,7 +205,7 @@ Decisión del dueño,2026-11-01: la pauta puede declarar clase farmacológica y 
 | RN-807 | Los tiempos de envío de los recordatorios y alertas (días de anticipación y hora) son configurables por la clínica. | Estructura | Planificada (v2) |
 | RN-808 | La clínica dispone de una bitácora de los correos y notificaciones enviados, con su estado (enviado/fallido). | Proceso | Planificada (v2) |
 
-> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
 
 ## Resumen
 

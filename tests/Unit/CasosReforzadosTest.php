@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../helpers/MotorTriage.php';
 require_once __DIR__ . '/../../helpers/MotorDiagnosticos.php';
 require_once __DIR__ . '/../../helpers/MotorPrescripcion.php';
 
-/** RN-209/211/416/424: banco de Claude convertido a regresiones herméticas. */
+/** RN-209/211/416/424: banco de casos clínicos convertido a regresiones herméticas. */
 final class CasosReforzadosTest extends TestCase
 {
     private static function grafo(): ConocimientoClinico

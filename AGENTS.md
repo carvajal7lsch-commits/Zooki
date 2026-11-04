@@ -147,6 +147,8 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 - Los requisitos de una historia van numerados sin saltos (`RE-4.11.1`, `RE-4.11.2`…).
 - Los enlaces entre documentos solo apuntan a los publicados en el portal (los de `DOC_POR_ARCHIVO` en `public/docs/docs.js`). `VisionAlcance.md`, `CasosTriage.md` y `ROADMAP_v2.md` no se enlazan.
 - Los diagramas de `Modelos.md` y del MER están en Mermaid y deben renderizar; el archivo draw.io (`public/docs/diagramas/`) lo resincroniza el usuario.
+- **La documentación publicada no menciona herramientas de IA** (decisión del usuario, 2026-11-03): el README y los documentos del portal no nombran a Claude, Codex ni otros agentes, ni roles de arquitecto/ejecutor/revisor, subetapas o rutas de `specs/` y `agentes/`. Eso vive solo en los planes y en `agentes/`.
+- **Historial de versiones con el formato de las versiones 1.x:** una línea de resumen, grupos en negrita (por ejemplo **Agenda**, **Atención**, **Despliegue**) y viñetas con la funcionalidad y sus HU/RE/RN; sin fecha ni autor por entrega, sin «misma versión», «pendiente de revisión» ni notas del proceso. Cada entrega actualiza la viñeta del grupo que corresponde en lugar de agregar una nueva.
 - Después de cambiar documentos se regeneran los PDF y Word del portal (`node scripts/docs/exportar.mjs`).
 
 ## Definición de terminado
