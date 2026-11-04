@@ -1421,3 +1421,9 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Carrera de recarga comprobada: una respuesta automática retenida hasta después de abrir/editar conserva el mismo formulario y la mascota, tanto admin como vet; sin espera fija de10 segundos.
 - Verificación: solo node --test tests/Frontend/CorreccionesDueno230.test.cjs tests/Frontend/RCitasAdmin.test.cjs,29/29 correctas, cero omitidas; evidencia scratch/ci-41721615365-dirigido.log y registro remoto scratch/ci-41721615365.log.
 - Sin suites completas, PHP/MySQL locales, datos reales, cambios de versión, commit ni push; pendiente revisión y repetición del CI remoto tras el push del dueño.
+
+## Pendientes sigue el día del calendario (decisión del dueño, 2026-11-03)
+
+- Elegir otro día en el calendario no cambia de vista: quien está en Pendientes se queda en Pendientes; quien está en Citas ve las citas de ese día. Abrir una cita sigue llevando a Citas, donde vive su detalle.
+- Hoy, Pendientes muestra todo lo pendiente, como antes. Otro día: «Pendientes del 5 de noviembre», solo Triage y Reasignar de las citas de ese día (por `entrada.fecha` e `inicio_propuesto`), Sala y Rojos con «solo existe hoy», conteos de ese día y botón «Volver a hoy». Sin cambios de servidor; en el celular Pendientes no cambia.
+- Escribió Claude Code; `agenda-panel.js`, `calendario.js`, `agenda-solicitudes.js`, `reasignaciones-agenda.js`, `agenda_herramientas.php` y `agenda-herramientas.css`. Comprobado en Chrome a 1366 (hoy, otro día con y sin pendientes, Sala, Volver a hoy) sin excepciones; 48 pruebas JS de la agenda en verde. Entregada, pendiente de revisión.

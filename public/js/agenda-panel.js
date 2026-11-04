@@ -21,8 +21,40 @@
         let vista = pestanaPedida ? 'pendientes' : 'citas';
         let esMovil = false;
         let eleccionManual = Boolean(pestanaPedida);
+        const hoy = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota' }).format(new Date());
+        let dia = global.ZookiAgendaDia || hoy();
+        const titulo = herramientas.querySelector('[data-agenda-pendientes-titulo]');
+        const volverHoy = herramientas.querySelector('[data-agenda-volver-hoy]');
+        // Sala y Rojos solo existen hoy: en otro día se dice en vez de mostrar lo de hoy.
+        const avisosSoloHoy = [['llegadas', 'Sala'], ['urgencias', 'Rojos']].map(([clave, nombre]) => {
+            const panel = herramientas.querySelector('#agenda-panel-' + clave);
+            const nota = document.createElement('p');
+            nota.className = 'ah-estado ah-solo-hoy';
+            nota.textContent = nombre + ' solo existe hoy. Vuelve a hoy para verla.';
+            nota.hidden = true;
+            panel?.prepend(nota);
+            return nota;
+        });
 
-        const cantidad = selector => herramientas.querySelectorAll(selector).length;
+        const cantidad = selector => Array.from(herramientas.querySelectorAll(selector)).filter(nodo => !nodo.hidden).length;
+        /** Decisión del dueño (2026-11-03): hoy, todo lo pendiente; otro día, solo lo de sus citas. */
+        function otroDia() {
+            return !esMovil && dia !== hoy();
+        }
+        function aplicarDia() {
+            const filtrar = otroDia();
+            herramientas.querySelectorAll('[data-solicitudes-lista] > article, [data-reasignaciones-lista] > article').forEach(tarjeta => {
+                tarjeta.hidden = filtrar && tarjeta.dataset.fecha !== dia;
+            });
+            herramientas.dataset.otroDia = String(filtrar);
+            avisosSoloHoy.forEach(nota => { nota.hidden = !filtrar; });
+            if (volverHoy) volverHoy.hidden = !filtrar;
+            const fecha = new Date(dia + 'T12:00:00');
+            if (titulo) titulo.textContent = filtrar ? 'Pendientes del ' + fecha.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) : 'Pendientes de hoy';
+            const texto = fecha.toLocaleDateString('es-CO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+            const salidaFecha = herramientas.querySelector('[data-agenda-pendientes-fecha]');
+            if (salidaFecha) salidaFecha.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
         function elegirPrioridad() {
             const clave = orden.find(nombre => conteos[nombre] > 0) || orden[0];
             if (herramientas.querySelector(`[data-agenda-tab="${clave}"]`)?.getAttribute('aria-selected') !== 'true') {
@@ -44,13 +76,14 @@
             }
         }
         function actualizarConteos() {
+            aplicarDia();
             // Revisadas es una vista de historia: no reemplaza el número de triages pendientes.
             if (herramientas.querySelector('[data-solicitudes-filtro]').value === '0') {
                 conteos.triage = cantidad('[data-solicitudes-lista] > article');
             }
-            conteos.llegadas = cantidad('[data-llegadas-citas] > article, [data-llegadas-solicitudes] > article, [data-llegadas-espera] > article');
+            conteos.llegadas = otroDia() ? 0 : cantidad('[data-llegadas-citas] > article, [data-llegadas-solicitudes] > article, [data-llegadas-espera] > article');
             conteos.reasignaciones = cantidad('[data-reasignaciones-lista] > article');
-            conteos.urgencias = cantidad('[data-rojos-lista] > article, [data-ingresos-lista] [data-conciliar-identidad]');
+            conteos.urgencias = otroDia() ? 0 : cantidad('[data-rojos-lista] > article, [data-ingresos-lista] [data-conciliar-identidad]');
             for (const clave of orden) {
                 const contador = herramientas.querySelector(`[data-agenda-conteo="${clave}"]`);
                 contador.textContent = conteos[clave];
@@ -87,14 +120,17 @@
         herramientas.addEventListener('focusin', evento => {
             if (evento.target.matches('input, select, textarea')) eleccionManual = true;
         });
-        const fecha = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-        herramientas.querySelector('[data-agenda-pendientes-fecha]').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+        volverHoy?.addEventListener('click', () => global.dispatchEvent(new CustomEvent('agenda:volver-hoy')));
         const observador = new MutationObserver(actualizarConteos);
         herramientas.querySelectorAll('.ah-lista').forEach(lista => observador.observe(lista, { childList: true, subtree: true }));
         global.ZookiPanelAgenda = {
             // Pendientes es siempre de hoy: elegir otro día o una cita en el calendario muestra Citas con ese día.
             mostrarCitas() {
                 if (!esMovil && vista !== 'citas') mostrarVista('citas');
+            },
+            cambiarDia(fecha) {
+                dia = fecha;
+                actualizarConteos();
             },
             // Se suelta antes de reubicar la agenda: evita insertar un ancestro dentro de sí mismo.
             soltarHerramientas() {
@@ -108,6 +144,7 @@
                 else destinoRojo.append(rojo);
                 // Un enlace directo a Sala expresa una elección; el conteo de otra bandeja no la sustituye.
                 mostrarVista(vista, !pestanaPedida);
+                actualizarConteos();
             }
         };
         // La bandeja de triage es diferida; se consulta también para contarla antes de abrir sus tarjetas.

@@ -40,6 +40,7 @@
                 for (const propuesta of r.propuestas) {
                     const tarjeta = document.createElement('article');
                     tarjeta.className = 'ah-item ah-item--fila';
+                    tarjeta.dataset.fecha = String(propuesta.inicio_propuesto).slice(0, 10);
                     const texto = document.createElement('p');
                     texto.className = 'ah-item__texto';
                     const partes = [

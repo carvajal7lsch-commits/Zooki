@@ -25,8 +25,9 @@ if ($esVetHerramientas) {
     <?php if ($esVetHerramientas): ?>
     <header class="agenda-pendientes__head">
         <div>
-            <h3>Pendientes de hoy</h3>
+            <h3 data-agenda-pendientes-titulo>Pendientes de hoy</h3>
             <p><span data-agenda-pendientes-fecha></span> · lo que requiere acción</p>
+            <button type="button" class="ah-volver-hoy" data-agenda-volver-hoy hidden>Volver a hoy</button>
         </div>
         <span class="agenda-pendientes__total" data-agenda-pendientes-total aria-label="Total de pendientes">0</span>
     </header>

@@ -98,6 +98,9 @@
 .ah-opcional { font-weight: 400; color: #94A3B8; }
 
 .ah-lista { display: flex; flex-direction: column; gap: 8px; }
+.ah-item[hidden], .ah-solo-hoy[hidden], .ah-volver-hoy[hidden] { display: none; }
+/* Otro día sin nada de ese día: el mismo aviso de lista vacía. */
+.ah-lista:not(:empty):not(:has(> :not([hidden])))::before,
 .ah-lista:empty::before {
     content: attr(data-vacio);
     padding: 14px;
@@ -107,6 +110,7 @@
     font-size: 0.82rem;
     color: #94A3B8;
 }
+.ah-lista:not(:empty):not(:has(> :not([hidden])))::before { content: 'Nada pendiente para este día.'; }
 .ah-item {
     display: flex;
     flex-direction: column;
@@ -119,6 +123,10 @@
     overflow-wrap: anywhere;
 }
 .ah-item--fila { flex-direction: row; align-items: center; flex-wrap: wrap; }
+/* Pendientes de otro día (decisión del dueño, 2026-11-03): Sala y Rojos solo existen hoy. */
+[data-otro-dia="true"] :is(#agenda-panel-llegadas, #agenda-panel-urgencias) > :not(.ah-solo-hoy) { display: none; }
+.ah-volver-hoy { margin-top: 6px; padding: 4px 10px; border: 1px solid var(--z-primary, #2563EB); border-radius: 8px; background: transparent; color: var(--z-primary, #2563EB); font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+.ah-volver-hoy:hover { background: var(--z-primary-soft, #DBEAFE); }
 /* La solicitud que abrió el aviso de la campana se distingue de las demás. */
 .ah-item--pedida { border-color: var(--z-primary, #2563EB); box-shadow: 0 0 0 3px var(--z-primary-soft, #DBEAFE); }
 .ah-item--fila > .ah-item__head, .ah-item--fila > .ah-item__texto { flex: 1 1 260px; }

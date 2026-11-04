@@ -90,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let contexto = {};
                 try { contexto = JSON.parse(caso.contexto_triage) || {}; } catch (_) { contexto = {}; }
                 const entrada = contexto.entrada || {};
+                // Día de la cita pedida: Pendientes filtra por él al elegir otro día en el calendario.
+                if (entrada.fecha) tarjeta.dataset.fecha = entrada.fecha;
                 const datosPaciente = contexto.paciente || {};
                 const declarados = contexto.declarados || {};
                 const episodios = [...(entrada.sintomas || []), ...(entrada.exposiciones || [])].filter(e => e && typeof e.codigo === 'string');

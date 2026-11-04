@@ -22,7 +22,7 @@
 
 ### Agenda vet — día elegido y aviso de triage — entregada, pendiente de revisión (2026-11-03)
 
-- Escribió Claude Code; `calendario.js` + `agenda-panel.js`: clic en día/cita/«+» con Pendientes abierto vuelve a Citas con ese día (Pendientes sigue siendo de hoy).
+- Escribió Claude Code; corrección pedida por el dueño: elegir otro día deja la vista abierta; Pendientes filtra Triage/Reasignar por el día elegido, Sala y Rojos «solo hoy», «Volver a hoy» (decisión en `specs/pulido-interfaz.md`).
 - `EventoAgenda::interno` (REVISION_TRIAGE): mensaje con mascota y nivel, enlace `vet_agenda&solicitud=N#triage`; `agenda-solicitudes.js` resalta la tarjeta y, si ya no está pendiente, pasa a Revisadas. Los avisos ya creados conservan el texto viejo.
 - Verificación: AgendaC4Test 16/103 (aserción nueva del aviso), AgendaHerramientas y AgendaClinica JS en verde. `LlegadaTardia.test.cjs` falla desde antes (su simulación no define `horaEstimadaAgenda` de RE-4.5.3); no se tocó. Sin commit ni push.
 
