@@ -119,6 +119,8 @@
     overflow-wrap: anywhere;
 }
 .ah-item--fila { flex-direction: row; align-items: center; flex-wrap: wrap; }
+/* La solicitud que abrió el aviso de la campana se distingue de las demás. */
+.ah-item--pedida { border-color: var(--z-primary, #2563EB); box-shadow: 0 0 0 3px var(--z-primary-soft, #DBEAFE); }
 .ah-item--fila > .ah-item__head, .ah-item--fila > .ah-item__texto { flex: 1 1 260px; }
 .ah-item--fila > .ah-item__form { flex: 0 0 auto; }
 .ah-item--rojo { border-left: 3px solid #DC2626; }

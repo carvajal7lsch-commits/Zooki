@@ -71,6 +71,12 @@ final class AgendaC4Test extends TestCase
         $this->assertGreaterThan(1, count($this->agenda->horas($r['id_solicitud'], $this->entrada)));
         $this->assertSame('Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.', $r['message']);
         $this->assertSame(1, $this->cuenta("SELECT COUNT(*) FROM eventos_agenda WHERE tipo='REVISION_TRIAGE' AND estado='enviado'"));
+        // El aviso nombra la mascota (no el número interno) y abre esa solicitud en Pendientes › Triage.
+        $aviso = $this->db->query("SELECT mensaje,enlace FROM notificaciones_internas WHERE tipo='REVISION_TRIAGE'")->fetch(PDO::FETCH_ASSOC);
+        $mascota = $this->db->query('SELECT m.nombre FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_solicitud=' . (int) $r['id_solicitud'])->fetchColumn();
+        $this->assertStringStartsWith($mascota . ' · nivel ', $aviso['mensaje']);
+        $this->assertStringNotContainsString('#' . $r['id_solicitud'], $aviso['mensaje']);
+        $this->assertStringEndsWith('&solicitud=' . $r['id_solicitud'] . '#triage', $aviso['enlace']);
         $revisada = $this->agenda->revisar($r['id_solicitud'], 'amarillo', 'Evaluación veterinaria', $r['huella'], str_repeat('d', 64));
         $this->assertFalse($revisada['revision']);
         $this->assertGreaterThan(1, count($this->agenda->horas($r['id_solicitud'], $this->entrada)));

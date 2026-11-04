@@ -13,6 +13,12 @@
 - Una prueba PHP nueva/25 aserciones SQLite correcta; Chrome1366/390 en ambos roles y Portal sin errores de consola; dos recálculos/dos toasts y sincronizaciones sin duplicados; sintaxis/diff y diagrama correctos.
 - Anexo en specs/M4-agenda-grafo-ii.md y alcance parcial de HU-5.7 en specs/M5-portal-multiclinica.md; RN/HU/RE/Modelos/Historial actualizados; descargas al cierre del bloque según metodo§11; misma2.3.0, pendiente revisión del dueño/Claude, sin suites completas, base manual, commit ni push.
 
+### Agenda vet — día elegido y aviso de triage — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Claude Code; `calendario.js` + `agenda-panel.js`: clic en día/cita/«+» con Pendientes abierto vuelve a Citas con ese día (Pendientes sigue siendo de hoy).
+- `EventoAgenda::interno` (REVISION_TRIAGE): mensaje con mascota y nivel, enlace `vet_agenda&solicitud=N#triage`; `agenda-solicitudes.js` resalta la tarjeta y, si ya no está pendiente, pasa a Revisadas. Los avisos ya creados conservan el texto viejo.
+- Verificación: AgendaC4Test 16/103 (aserción nueva del aviso), AgendaHerramientas y AgendaClinica JS en verde. `LlegadaTardia.test.cjs` falla desde antes (su simulación no define `horaEstimadaAgenda` de RE-4.5.3); no se tocó. Sin commit ni push.
+
 ### Calendario — estimaciones legibles en Detalle — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; Inicio/Fin clínico estimados en hora de12 horas sin segundos, fecha solo si cambia el día; chip bajo inicio desde5 minutos, azul hasta30 inclusive y rojo al superar30, calculado respecto a la hora pactada y redondeado.

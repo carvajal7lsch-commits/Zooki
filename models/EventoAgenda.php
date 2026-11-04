@@ -38,10 +38,15 @@ final class EventoAgenda
         $mensaje = $solicitud ? 'Solicitud de agenda #' . $solicitud . '. Consulta la revisión en la agenda.' : 'Hay un cambio en la cita #' . $cita . '.';
         $inmediata = false;
         if ($tipo === 'REVISION_TRIAGE' && $solicitud !== null) {
-            $consulta = $this->db->prepare('SELECT contexto_triage FROM solicitudes_agenda WHERE id_solicitud=? AND id_clinica=?');
+            $consulta = $this->db->prepare('SELECT s.contexto_triage,s.nivel_calculado,m.nombre FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_solicitud=? AND s.id_clinica=?');
             $consulta->execute([$solicitud, $this->clinica]);
-            $contexto = json_decode((string) $consulta->fetchColumn(), true, 512, JSON_THROW_ON_ERROR);
+            $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+            $contexto = json_decode((string) $fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR);
             $inmediata = !empty($contexto['resultado']['revision_inmediata']);
+            // El número interno de la solicitud no le dice nada al veterinario: se nombra la mascota
+            // y el enlace abre Pendientes › Triage con esa solicitud (agenda-solicitudes.js).
+            $mensaje = $fila['nombre'] . ($fila['nivel_calculado'] ? ' · nivel ' . $fila['nivel_calculado'] : '') . '. Toca para revisarla en Pendientes › Triage.';
+            $enlace .= '&solicitud=' . $solicitud . '#triage';
             if ($inmediata) {
                 $mensaje = 'Revisión inmediata. ' . $mensaje;
             }

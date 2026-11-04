@@ -380,6 +380,7 @@ function mountDayAddButton(arg) {
     btn.innerHTML = '<i class="fas fa-plus"></i>';
     btn.addEventListener('click', e => {
         e.stopPropagation();
+        verPanelCitas();
         seleccionarDia(arg.date);
         abrirCitaModal(arg.date);
     });
@@ -430,6 +431,11 @@ function marcarCitaCalendario() {
     });
 }
 
+/** Un día o una cita elegidos en el calendario se ven en Citas, no detrás de Pendientes. */
+function verPanelCitas() {
+    window.ZookiPanelAgenda?.mostrarCitas();
+}
+
 /** Marca la celda del día y, salvo que se pida lo contrario, pinta su lista en el panel. */
 function seleccionarDia(date, pintarLista = true) {
     _selectedDate = inicioDelDia(date);
@@ -473,6 +479,7 @@ function iniciarCalendario() {
         moreLinkClick: info => {
             // FullCalendar entrega aquí un marcador UTC; convertirlo a hora local restaba un día.
             const fecha = info.jsEvent.target.closest('.fc-daygrid-day')?.dataset.date || info.date.toISOString().slice(0, 10);
+            verPanelCitas();
             seleccionarDia(new Date(fecha + 'T12:00:00'));
             return 'popover';
         },
@@ -497,10 +504,12 @@ function iniciarCalendario() {
             // y el clic no hace nada (antes salía un aviso y la celda temblaba
             // en rojo, castigando un clic que la vista debía prevenir).
             if (diaNoReservable(info.date) && !tieneEventos(info.date)) return;
+            verPanelCitas();
             seleccionarDia(info.date);
         },
         eventClick: info => {
             info.jsEvent.preventDefault();
+            verPanelCitas();
             seleccionarDia(info.event.start, false);
             mostrarDetalleCita(info.event.id);
         },

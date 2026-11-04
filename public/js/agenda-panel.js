@@ -92,6 +92,10 @@
         const observador = new MutationObserver(actualizarConteos);
         herramientas.querySelectorAll('.ah-lista').forEach(lista => observador.observe(lista, { childList: true, subtree: true }));
         global.ZookiPanelAgenda = {
+            // Pendientes es siempre de hoy: elegir otro día o una cita en el calendario muestra Citas con ese día.
+            mostrarCitas() {
+                if (!esMovil && vista !== 'citas') mostrarVista('citas');
+            },
             // Se suelta antes de reubicar la agenda: evita insertar un ancestro dentro de sí mismo.
             soltarHerramientas() {
                 marca.after(herramientas);

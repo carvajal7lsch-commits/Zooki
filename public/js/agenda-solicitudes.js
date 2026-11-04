@@ -34,6 +34,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const anios = Math.floor(n / 12);
         return anios + (anios === 1 ? ' año' : ' años') + (n % 12 ? ' ' + (n % 12) + ' m' : '');
     }
+    // El aviso «Revisión de triage» de la campana llega con ?solicitud=N#triage.
+    let solicitudPedida = new URLSearchParams(window.location.search).get('solicitud');
+    function enfocarSolicitudPedida() {
+        if (!/^[1-9]\d*$/.test(String(solicitudPedida))) return;
+        const tarjeta = lista.querySelector(`[data-solicitud="${solicitudPedida}"]`);
+        if (!tarjeta && filtro.value === '0') {
+            // Ya la revisó alguien: se busca entre las revisadas en vez de dejar la bandeja vacía.
+            filtro.value = '1';
+            filtro.dispatchEvent(new Event('change'));
+            return;
+        }
+        if (tarjeta) {
+            tarjeta.classList.add('ah-item--pedida');
+            tarjeta.scrollIntoView({ block: 'nearest' });
+            if (filtro.value === '1') aviso.textContent = 'Esta solicitud ya fue revisada.';
+        } else {
+            aviso.textContent = 'Esta solicitud ya no está en la bandeja.';
+        }
+        solicitudPedida = null;
+    }
     async function cargar(automatica = false) {
         const actual = ++turno;
         aviso.textContent = '';
@@ -51,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Pulido de interfaz: tarjeta compacta (nombre + nivel, síntomas legibles, datos del paciente).
                 const tarjeta = elemento('article');
                 tarjeta.className = 'ah-item';
+                tarjeta.dataset.solicitud = caso.id_solicitud;
                 const cabeza = elemento('div');
                 cabeza.className = 'ah-item__head';
                 cabeza.append(elemento('strong', caso.nombre));
@@ -167,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 lista.append(tarjeta);
             }
+            enfocarSolicitudPedida();
         } catch (error) {
             if (turno === actual) aviso.textContent = 'No se pudieron consultar las solicitudes.';
         }
