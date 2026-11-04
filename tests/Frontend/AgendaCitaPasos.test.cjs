@@ -28,6 +28,7 @@ test('Nueva cita de escritorio: dos pasos, guía, resumen, Enter, rojo y horario
             window.__estado = { resultado: null, reservable: false };
             let triageModalC4 = { consulta: () => __estado.reservable ? '123' : '', resultado: () => __estado.resultado };
             let _turnoSlotsCita = 0;
+            let _modoLlegadaCita = false;
             let _mascotaNombre = 'Doki';
             const enviosC3 = { reserva: false };
             window.__peticiones = 0;

@@ -68,6 +68,8 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/16_pautas_tratamiento.sql');
         $this->cargar('database/17_control_consulta.sql');
         $this->cargar('database/18_razas_mdr1.sql');
+        $this->cargar('database/19_precios_lanzamiento.sql');
+        $this->cargar('database/20_intencion_profesional.sql');
     }
 
     private function instalar(bool $anterior = false): void
@@ -176,6 +178,8 @@ final class AgendaB2MysqlTest extends TestCase
                 // 2.3.0 (RN-430): la 15 agrega el plazo de cambios tardíos detrás de tope_sobrecupos.
                 $previas[$t] = array_map(static fn (array $c): array => self::despues($c, 'tope_sobrecupos', ['anticipacion_cambios_min' => 30]), $previas[$t]);
                 $previas[$t] = array_map(static fn (array $c): array => self::despues($c, 'anticipacion_cambios_min', ['control_busqueda_dias' => 30, 'control_dias_sin_duracion' => 7]), $previas[$t]);
+                // 2.3.0 (HU-0.1/0.5): la 20 agrega la intención Profesional al final, vacía.
+                $previas[$t] = array_map(static fn (array $c): array => $c + ['intencion_profesional_ciclo' => null, 'intencion_profesional_mostrada_en' => null], $previas[$t]);
             }
             if ($t === 'tipos_cita') {
                 // 2.3.0 (HU-7.4): solo_personal detrás de pausable y una cirugía programada por clínica no pendiente.

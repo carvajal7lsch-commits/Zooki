@@ -362,5 +362,7 @@ function prepararContextoC4(contexto) {
     contexto.avanzarPasoCita = () => {};
     contexto.triageModalC4 = { consulta: () => '123' };
     contexto.triageC4 = { consulta: () => '123' };
+    // RE-2.2.1: estado del modo «llegó ahora», declarado fuera de la función extraída.
+    contexto._modoLlegadaCita = false;
     vm.createContext(contexto);
 }
