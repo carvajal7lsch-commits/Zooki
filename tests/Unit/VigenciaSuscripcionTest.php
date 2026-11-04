@@ -9,7 +9,7 @@ final class VigenciaSuscripcionTest extends TestCase
     {
         $s = array_replace(['estado' => 'activa', 'al_dia' => 1, 'gestion_cobro' => 'gestionada', 'periodo_inicio' => '2026-09-25 00:00:00', 'periodo_fin' => '2026-10-25 00:00:00', 'fecha_inicio' => '2026-09-25', 'ciclo' => 'mensual'], $cambios);
         return VigenciaSuscripcion::calcular(['estado' => 'activa', 'suscripcion_gracia_dias' => 3], $s,
-            ['id_plan' => 2, 'precio_mensual' => 89990], ['id_plan' => 1, 'precio_mensual' => 0], VigenciaSuscripcion::fecha($ahora));
+            ['id_plan' => 2, 'precio_mensual' => 40000], ['id_plan' => 1, 'precio_mensual' => 0], VigenciaSuscripcion::fecha($ahora));
     }
 
     public function testBordesExclusivosYSinCronConBanderasAntiguas(): void
@@ -36,6 +36,7 @@ final class VigenciaSuscripcionTest extends TestCase
         $enero = VigenciaSuscripcion::fecha('2028-01-31 13:45:00');
         $febrero = VigenciaSuscripcion::extender($enero, 'mensual', 31);
         $this->assertSame('2028-02-29 13:45:00', $febrero->format('Y-m-d H:i:s'));
+        $this->assertSame('2028-03-31 13:45:00', VigenciaSuscripcion::extender($enero, 'mensual', 31, null, 2)->format('Y-m-d H:i:s'));
         $this->assertSame('2028-03-31', VigenciaSuscripcion::extender($febrero, 'mensual', 31)->format('Y-m-d'));
         $this->assertSame('2029-02-28', VigenciaSuscripcion::extender($febrero, 'anual', 29, 2)->format('Y-m-d'));
         $this->assertSame('2027-01-31', VigenciaSuscripcion::extender(VigenciaSuscripcion::fecha('2026-12-31 00:00:00'), 'mensual')->format('Y-m-d'));
@@ -48,9 +49,9 @@ final class VigenciaSuscripcionTest extends TestCase
 
     public function testTarifasEnCentavosSinIvaYCatalogoPersonalizado(): void
     {
-        $plan = ['precio_mensual' => 89990, 'precio_anual' => 899900];
-        $this->assertSame(8999000, TarifaSuscripcion::calcular($plan, 'mensual')['total_centavos']);
-        $this->assertSame(89990000, TarifaSuscripcion::calcular($plan, 'anual')['total_centavos']);
+        $plan = ['precio_mensual' => 40000, 'precio_anual' => 400000];
+        $this->assertSame(4000000, TarifaSuscripcion::calcular($plan, 'mensual')['total_centavos']);
+        $this->assertSame(40000000, TarifaSuscripcion::calcular($plan, 'anual')['total_centavos']);
         $this->assertSame(0, TarifaSuscripcion::calcular($plan, 'anual')['impuesto_centavos']);
         $this->assertSame(12345000, TarifaSuscripcion::calcular(['precio_mensual' => 123450], 'mensual')['total_centavos']);
         $this->expectException(InvalidArgumentException::class);
@@ -61,7 +62,7 @@ final class VigenciaSuscripcionTest extends TestCase
     {
         $c = ['estado' => 'activa', 'suscripcion_gracia_dias' => 0];
         $s = ['estado' => 'activa', 'al_dia' => 1, 'ciclo' => 'mensual', 'gestion_cobro' => 'gestionada', 'periodo_inicio' => '2026-12-01 00:00:00', 'periodo_fin' => '2027-01-01 00:00:00'];
-        $pro = ['id_plan' => 2, 'precio_mensual' => 89990];
+        $pro = ['id_plan' => 2, 'precio_mensual' => 40000];
         $gratis = ['id_plan' => 1, 'precio_mensual' => 0];
         $ahora = VigenciaSuscripcion::fecha('2027-01-01 00:00:00');
         $this->assertSame('congelada', VigenciaSuscripcion::calcular($c, $s, $pro, $gratis, $ahora)['situacion']);

@@ -26,7 +26,7 @@
     <?php // M2 C8 (H5): variables de identidad (azul de marca y neutros del portal) para la consulta y el vínculo. ?>
     <link rel="stylesheet" href="css/identidad.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/styles.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-    <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/dashboard.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/medical-module.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (($_GET['action'] ?? '') === 'vet_pacientes'): ?>
-    <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/pacientes.css'), 0, 12) ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -44,8 +44,9 @@
     <link rel="stylesheet" href="css/encabezado-pagina.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
-    <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-    <link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/calendario.css'), 0, 12) ?>">
+    <link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/agenda-herramientas.css'), 0, 12) ?>">
+    <link rel="stylesheet" href="css/agenda-panel.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/agenda-panel.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/triage-captura.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
@@ -53,11 +54,17 @@
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <?php // HU-6.1: el Inicio del veterinario tiene su propia hoja (diseño aprobado 2026-10-22), encima de la común con el del administrador. ?>
-    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/inicio-comun.css'), 0, 12) ?>">
     <link rel="stylesheet" href="css/inicio-vet.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/consulta-pasos.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
+    <link rel="stylesheet" href="css/atencion-estructura.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/atencion-escritorio.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/atencion-escritorio.css'), 0, 12) ?>">
+    <?php endif; ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
 
@@ -92,6 +99,7 @@
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
         <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
 
+            <?php if ($__action !== 'vet_atencion'): ?>
             <!-- Header superior -->
             <header class="top-header<?= $__action === 'vet_pacientes' ? ' top-header--pacientes' : '' ?>">
                 <div class="header-left">
@@ -124,6 +132,7 @@
                 </div>
                 <?php require __DIR__ . '/../partials/cabecera_cuenta.php'; ?>
             </header>
+            <?php endif; ?>
 
             <!-- Cuerpo del contenido -->
             <div class="content-body">
@@ -147,15 +156,22 @@
     <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/cabecera-cuenta.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/dashboard.js'), 0, 12) ?>"></script>
+    <?php if ($__action !== 'vet_pacientes'): ?>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <?php endif; ?>
     <script src="js/selector-fechas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/medical-module.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C8 (H6): flechas, Enter y Esc en los buscadores con lista (síntomas, fármacos y nodos de alergias). ?>
     <script src="js/combobox.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C5a: la consulta que comparten el modal y Atención: síntomas, diagnósticos sugeridos y avisos junto al campo. ?>
-    <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/consulta-sintomas.js'), 0, 12) ?>"></script>
+    <script src="js/consulta-ficha.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-plan.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/consulta-diagnosticos.js'), 0, 12) ?>"></script>
     <script src="js/consulta-tratamientos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-pasos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-formulario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C1: sección «Alergias y alertas» de la historia y su formulario. ?>
     <script src="js/paciente-compacto.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
@@ -172,7 +188,8 @@
     <script src="js/inicio-vet.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
-    <script src="js/atencion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/atencion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/atencion.js'), 0, 12) ?>"></script>
+    <script src="js/atencion-escritorio.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/atencion-escritorio.js'), 0, 12) ?>"></script>
     <?php endif; ?>
 <script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>

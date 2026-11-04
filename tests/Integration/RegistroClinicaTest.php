@@ -187,7 +187,7 @@ final class RegistroClinicaTest extends TestCase
         $this->assertTrue($usuarios->verificarPassword($id, self::datos()['password']));
         $this->assertSame(0, $this->total('tipos_cita'));
         $clinica = $this->activar($alta);
-        foreach (['tipos_cita' => 6, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $cantidad) {
+        foreach (['tipos_cita' => 7, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $cantidad) {
             $this->assertSame($cantidad, $this->total($tabla), $tabla);
             $this->assertSame($cantidad, (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla . ' WHERE id_clinica = ' . $clinica)->fetchColumn());
         }

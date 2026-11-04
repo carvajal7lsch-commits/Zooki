@@ -49,15 +49,15 @@ final class CascadaAgenda extends ModeloClinica
     {
         $modelo = new self($db, $reloj);
         $hoy = ($modelo->reloj)()->format('Y-m-d');
-        $q = $db->prepare("SELECT DISTINCT c.id_clinica,c.fecha FROM citas c JOIN clinicas cl ON cl.id_clinica=c.id_clinica AND cl.estado='activa' WHERE c.estado_reajuste='pendiente_calculo' OR c.estado IN ('en_curso','pausada','sin_cerrar') OR (c.fecha=? AND c.estado IN ('pendiente','confirmada')) OR EXISTS (SELECT 1 FROM reasignaciones r WHERE r.id_cita=c.id_cita AND r.id_clinica=c.id_clinica AND r.estado='pendiente')");
-        // C5.1: el reloj solo mueve las citas de hoy; otras fechas llegan por sus marcas pendiente_calculo.
+        $q = $db->prepare("SELECT DISTINCT c.id_clinica,c.fecha FROM citas c JOIN clinicas cl ON cl.id_clinica=c.id_clinica AND cl.estado='activa' WHERE c.estado_reajuste='pendiente_calculo' OR c.estado IN ('en_curso','pausada','sin_cerrar') OR (c.fecha<=? AND c.estado IN ('pendiente','confirmada')) OR EXISTS (SELECT 1 FROM reasignaciones r WHERE r.id_cita=c.id_cita AND r.id_clinica=c.id_clinica AND r.estado='pendiente')");
+        // RN-408: revisar hoy y reservas vencidas; las fechas futuras requieren marcas o propuestas propias.
         // Recorrer todas las fechas futuras en cada pasada del vigilante tomaba candados de toda la clínica sin necesidad.
         $q->execute([$hoy]);
         $fechas = $q->fetchAll(PDO::FETCH_ASSOC);
         $procesadas = 0;
         foreach ($fechas as $fecha) {
             $modelo->clinicaSistema = (int) $fecha['id_clinica'];
-            $modelo->procesar($fecha['fecha']);
+            if ($modelo->marcarInasistencias($fecha['fecha']) === 0) $modelo->procesar($fecha['fecha']);
             $procesadas++;
         }
         return $procesadas;
@@ -101,6 +101,45 @@ final class CascadaAgenda extends ModeloClinica
             // El acto ya está confirmado; no simular su fracaso ni perder el disparo durable.
             error_log('Cascada pendiente tras atención #' . $cita . ': ' . $error->getMessage());
         }
+    }
+
+    /** RN-408/426: ausencia de llegada, nunca demora del veterinario; relectura bajo los mismos candados de agenda. */
+    public function marcarInasistencias(string $fecha): int
+    {
+        IntervalosAgenda::fecha($fecha . ' 00:00:00');
+        $this->autorizar();
+        return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), fn () => $this->recursos($fecha), function () use ($fecha): int {
+            $this->autorizar();
+            $ahora = ($this->reloj)();
+            $minutos = (int) $this->filas('SELECT tolerancia_llegada_min FROM clinicas WHERE id_clinica=?', [$this->clinica()])[0]['tolerancia_llegada_min'];
+            $citas = $this->filas("SELECT id_cita,id_veterinario,fecha,hora,estado FROM citas WHERE id_clinica=? AND fecha=? AND estado IN ('pendiente','confirmada') AND hora_llegada IS NULL AND hora_inicio_real IS NULL ORDER BY hora,id_cita", [$this->clinica(), $fecha]);
+            $dia = (int) IntervalosAgenda::fecha($fecha . ' 00:00:00')->format('N');
+            $cierre = null;
+            foreach ($this->filas('SELECT * FROM horarios_clinica WHERE id_clinica=? AND dia_semana=? AND activo=1', [$this->clinica(), $dia]) as $horario) {
+                foreach (['morning', 'afternoon'] as $bloque) {
+                    if ((int) $horario['bloque_' . $bloque . '_activo'] === 1) {
+                        $fin = $horario['bloque_' . $bloque . '_fin'];
+                        if ($cierre === null || $fin > $cierre) $cierre = $fin;
+                    }
+                }
+            }
+            $total = 0;
+            foreach ($citas as $cita) {
+                if ($ahora <= ReglaAtencion::inicio($cita['fecha'], $cita['hora'])->modify('+' . $minutos . ' minutes')) continue;
+                $siguiente = $this->filas("SELECT MIN(hora) AS hora FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=? AND hora>? AND estado NOT IN ('cancelada','no_asistio')", [$this->clinica(), $cita['id_veterinario'], $fecha, $cita['hora']])[0]['hora'];
+                // Decisión del dueño: el hueco permite esperar; el cierre termina la espera de la última reserva.
+                $limite = $siguiente ?? $cierre;
+                if ($limite === null || $ahora < ReglaAtencion::inicio($fecha, $limite)) continue;
+                (new EventoAgenda($this->conn, $this->clinica()))->exigirSinDespacho((int) $cita['id_cita']);
+                $q = $this->conn->prepare("UPDATE citas SET estado='no_asistio',estado_reajuste='ninguno',motivo_reajuste=NULL,inicio_estimado=NULL,fin_estimado=NULL,version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=? AND estado IN ('pendiente','confirmada') AND hora_llegada IS NULL AND hora_inicio_real IS NULL");
+                $q->execute([$cita['id_cita'], $this->clinica()]);
+                if ($q->rowCount() === 0) continue;
+                $this->auditar('citas', (int) $cita['id_cita'], ['estado' => $cita['estado']], ['estado' => 'no_asistio', 'automatico' => true, 'tolerancia_min' => $minutos, 'limite_espera' => $fecha . ' ' . $limite], 'Inasistencia automática sin llegada al siguiente turno o cierre (RN-408)', true);
+                $total++;
+            }
+            if ($total > 0) $this->procesar($fecha);
+            return $total;
+        });
     }
 
     public function procesar(string $fecha): array
@@ -453,9 +492,9 @@ final class CascadaAgenda extends ModeloClinica
         }
     }
 
-    private function auditar(string $tabla, int $id, ?array $antes, array $despues, string $motivo): void
+    private function auditar(string $tabla, int $id, ?array $antes, array $despues, string $motivo, bool $automatico = false): void
     {
-        $actor = $this->clinicaSistema === null ? Contexto::idUsuario() : null;
+        $actor = !$automatico && $this->clinicaSistema === null ? Contexto::idUsuario() : null;
         if (!(new Auditoria($this->conn))->log($actor, 'UPDATE', $tabla, $id, $antes, $despues, $motivo, $this->clinica())) {
             throw new RuntimeException('No se pudo auditar la cascada.');
         }

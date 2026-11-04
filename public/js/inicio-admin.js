@@ -12,6 +12,23 @@
     'use strict';
 
     function iniciar(raiz) {
+        const oferta = raiz.querySelector?.('[data-inicio-oferta]');
+        if (oferta) {
+            const clave = 'zooki_oferta_lanzamiento_' + oferta.dataset.clinica;
+            try {
+                oferta.hidden = global.localStorage.getItem(clave) === 'cerrada';
+            } catch (error) {
+                // La indisponibilidad del almacenamiento no impide cerrar el aviso visible.
+            }
+            oferta.querySelector('[data-cerrar-oferta]').addEventListener('click', () => {
+                oferta.hidden = true;
+                try {
+                    global.localStorage.setItem(clave, 'cerrada');
+                } catch (error) {
+                    // El cierre de esta página no depende del almacenamiento local.
+                }
+            });
+        }
         const calendario = global.ZookiInicio.iniciarCalendario(raiz);
         global.ZookiInicio.iniciarMovil(raiz, calendario);
         global.ZookiInicio.iniciarDialogos(raiz);

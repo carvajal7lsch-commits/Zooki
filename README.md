@@ -129,7 +129,6 @@ Los dominios anteriores son marcadores; el dueño configura sus URLs reales, lla
 Las pruebas automáticas nunca contactan Wompi, ni siquiera sandbox.
 Antes de dinero real deben resolverse D8 (comercio, métodos, aceptación/COF/3RI y revocación) y D10 (conservación financiera), y comprobar en sandbox los campos `contract_id`/`file_hash` de los JWT de aceptación.
 Regularizar desde plataforma las clínicas profesionales legadas con motivo y fecha, sin inventar pagos ni congelarlas por una fecha supuesta.
-La guía ordenada de activación está en `specs/M0-S-suscripcion-pagos.md`, §10.
 
 Ante una incidencia, poner ambos interruptores de cobro en `0` y reiniciar el servicio con ese entorno.
 Conservar llaves/secretos, receptor y Schedule: los eventos de pagos ya iniciados siguen verificándose y conciliándose.

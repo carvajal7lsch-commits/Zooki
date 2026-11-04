@@ -52,6 +52,22 @@ final class CitaEstadoTest extends TestCase
         $this->assertSame(self::FECHA . ' 08:50:00', $this->campo('hora_inicio_real'));
     }
 
+    public function testInicioDirectoReleeLaLlegadaVigenteBajoElCoordinador(): void
+    {
+        $this->db->exec("UPDATE citas SET hora_llegada='2030-01-07 09:00:00' WHERE id_cita=" . $this->id);
+        $anterior = $this->cita();
+        $this->db->exec("UPDATE citas SET hora_llegada='2030-01-07 09:11:00' WHERE id_cita=" . $this->id);
+        try {
+            $this->citas->iniciarAtencion($anterior, self::FECHA . ' 09:15:00');
+            $this->fail('Una instantánea puntual no permite iniciar con llegada vigente tardía.');
+        } catch (CampoInvalido $error) {
+            $this->assertSame('llegada', $error->campo);
+            $this->assertStringContainsString('Sala', $error->getMessage());
+            $this->assertSame('confirmada', $this->campo('estado'));
+            $this->assertNull($this->campo('hora_inicio_real'));
+        }
+    }
+
     public function testUnaCitaCerradaNoSeIniciaNiSeCancela(): void
     {
         foreach (['cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'en_curso'] as $estado) {

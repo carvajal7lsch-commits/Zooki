@@ -5,9 +5,8 @@ require_once __DIR__ . '/../helpers/Security.php';
 
 /**
  * HU-T.6 — Notificaciones internas del contexto activo. La persona, la
- * clínica y el rol salen de la sesión, nunca de la petición. En el portal
- * del propietario todavía no hay avisos internos (HU-5.7, v2.1): la lista va
- * vacía.
+ * clínica y el rol salen de la sesión, nunca de la petición. El portal global
+ * recibe únicamente las estimaciones de sus citas propias (HU-5.7).
  */
 class NotificacionController {
 
@@ -23,6 +22,7 @@ class NotificacionController {
         $clinica = Contexto::clinicaActiva();
         $usuario = Contexto::idUsuario();
         $rol = Contexto::rolActivo();
+        if ((Contexto::actual()['tipo'] ?? '') === Contexto::PROPIETARIO && $usuario !== null) return [null, $usuario, Roles::PROPIETARIO];
         return ($clinica === null || $usuario === null || $rol === null) ? null : [$clinica, $usuario, $rol];
     }
 

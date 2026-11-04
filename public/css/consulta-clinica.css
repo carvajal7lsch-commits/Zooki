@@ -417,6 +417,7 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
 }
 
 .consulta-sugerencia__usar {
+    white-space: nowrap;
     flex-shrink: 0;
     padding: 0.3rem 0.85rem;
     border: 1px solid var(--z-primary);
@@ -427,6 +428,38 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
+}
+
+/* RE-2.8.4: alternativas junto al aviso, sin aumentar la altura de la hoja. */
+.consulta-alternativas {
+    position: fixed;
+    inset: auto 16px 80px auto;
+    width: min(380px, calc(100vw - 32px));
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--z-border);
+    border-radius: 16px;
+    background: var(--z-surface);
+    color: var(--z-text);
+    box-shadow: var(--z-shadow-lista);
+}
+
+.consulta-alternativas__fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+}
+
+.consulta-alternativas__fila > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.consulta-alternativas__fila strong,
+.consulta-alternativas__fila small {
+    display: block;
 }
 
 .consulta-sugerencia__usar:hover,
@@ -613,6 +646,11 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
     border-left: 4px solid var(--z-primary-borde);
     border-radius: var(--z-radius-sm);
     background: var(--z-surface);
+}
+
+[data-marca-sugerida] {
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
 .consulta-tratamiento__campos {

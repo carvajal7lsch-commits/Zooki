@@ -1,6 +1,6 @@
 <?php
 // HU-T.5/T.17, RNF-16: mismo contexto y permisos; menú de cuenta compartido por admin/vet.
-// Mockup aprobado (2026-10-27, specs/referencias/cabecera-notificaciones): clínica, campana y avatar de 40 px.
+// Mockup aprobado (2026-10-27): clínica, campana y avatar de 40 px.
 $esAdminCabecera = Contexto::rolActivo() === Roles::ADMIN;
 $enlaceCuentaCabecera = $esAdminCabecera ? 'admin_configuracion#cuenta' : 'mi_perfil';
 $eCabecera = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');

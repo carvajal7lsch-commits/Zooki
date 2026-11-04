@@ -1,0 +1,169 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "especie.prueba",
+    "tipo": "especie",
+    "etiqueta": "Canino de prueba",
+    "taxonomia": {
+      "especie": "Canino"
+    },
+    "metadatos": {
+      "cobertura": {
+        "triage": "parcial"
+      }
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "raza.prueba",
+    "tipo": "raza",
+    "etiqueta": "Raza de prueba",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Gran danés"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sintoma.prueba",
+    "tipo": "sintoma",
+    "etiqueta": "Signo sintético",
+    "nivel_triage": "amarillo",
+    "moderado": true
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "diagnostico.prueba",
+    "tipo": "diagnostico",
+    "etiqueta": "Diagnóstico sintético",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Examen sintético"
+        ],
+        "recomendaciones": [
+          "Recomendación sintética"
+        ]
+      }
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.prueba",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sustancia.prueba",
+    "tipo": "sustancia",
+    "etiqueta": "Sustancia sintética"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.rango",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético rango"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.texto",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético texto"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.bloqueado",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético bloqueado"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.alergeno",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético alergeno"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.vigente",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético vigente"
+  }
+]

@@ -48,7 +48,7 @@ final class ConocimientoPrueba
     {
         $comunes = "codigo TEXT UNIQUE NOT NULL, activo INTEGER, version_conocimiento TEXT, fuentes TEXT, estado_validacion TEXT";
         $db->exec("CREATE TABLE grafo_nodos (id_nodo INTEGER PRIMARY KEY AUTOINCREMENT, $comunes, tipo TEXT, etiqueta TEXT, nivel_triage TEXT, alarma_universal INTEGER, moderado INTEGER, metadatos TEXT, id_especie INTEGER UNIQUE REFERENCES especies, id_raza INTEGER UNIQUE REFERENCES razas)");
-        $db->exec("CREATE TABLE grafo_aristas (id_arista INTEGER PRIMARY KEY AUTOINCREMENT, $comunes, id_origen INTEGER REFERENCES grafo_nodos, id_destino INTEGER REFERENCES grafo_nodos, tipo_relacion TEXT, signo TEXT, peso NUMERIC, efecto TEXT, condiciones TEXT)");
+        $db->exec("CREATE TABLE grafo_aristas (id_arista INTEGER PRIMARY KEY AUTOINCREMENT, $comunes, id_origen INTEGER REFERENCES grafo_nodos, id_destino INTEGER REFERENCES grafo_nodos, tipo_relacion TEXT, signo TEXT, peso NUMERIC, efecto TEXT, condiciones TEXT, pauta TEXT)");
         $db->exec("CREATE TABLE grafo_sinonimos (id_sinonimo INTEGER PRIMARY KEY AUTOINCREMENT, $comunes, id_nodo INTEGER REFERENCES grafo_nodos, texto TEXT, normalizado TEXT)");
         $db->exec("CREATE TABLE grafo_reglas (id_regla INTEGER PRIMARY KEY AUTOINCREMENT, $comunes, motor TEXT, condiciones TEXT, resultado TEXT)");
     }

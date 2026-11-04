@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/ModeloPropietario.php';
+require_once __DIR__ . '/Mascota.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 
 /**
@@ -62,8 +63,7 @@ final class MascotaPropietario extends ModeloPropietario
     }
 
     /**
-     * Alta desde el portal: la ficha queda global y sin clínica; se vincula a
-     * una clínica al agendar allí o cuando la clínica la atiende (RE-5.13.2).
+     * RN-110 (2026-10-29): ficha global con vínculos a las clínicas activas del propietario desde el alta.
      * Los datos llegan validados (ValidadorMascota y catálogo).
      */
     public function registrar(array $datos): int
@@ -71,6 +71,15 @@ final class MascotaPropietario extends ModeloPropietario
         $idPropietario = $this->propietario();
 
         return Transaccion::ejecutar($this->conn, function () use ($datos, $idPropietario): int {
+            $consulta = $this->conn->prepare("SELECT c.id_clinica FROM propietario_clinica pc JOIN clinicas c ON c.id_clinica=pc.id_clinica WHERE pc.id_propietario=? AND pc.estado='activo' AND c.estado='activa' ORDER BY c.id_clinica");
+            $consulta->execute([$idPropietario]);
+            $clinicas = array_map('intval', $consulta->fetchAll(PDO::FETCH_COLUMN));
+            // Mismo orden de recursos que la agenda: primero clínicas, después la mascota nueva.
+            foreach ($clinicas as $clinica) {
+                $consulta = $this->conn->prepare('SELECT id_clinica FROM clinicas WHERE id_clinica=?' . ($this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''));
+                $consulta->execute([$clinica]);
+                $consulta->closeCursor();
+            }
             // RN-502: 256 bits independientes del id; base64url de 43 caracteres.
             $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
             $campos = array_intersect_key($datos, array_flip(self::EDITABLES));
@@ -81,6 +90,10 @@ final class MascotaPropietario extends ModeloPropietario
             $marcas = implode(', ', array_fill(0, count($campos), '?'));
             $this->conn->prepare("INSERT INTO mascotas ($columnas) VALUES ($marcas)")->execute(array_values($campos));
             $idMascota = (int) $this->conn->lastInsertId();
+
+            foreach ($clinicas as $clinica) {
+                (new Mascota($this->conn))->enClinicaDelPropietario($clinica)->vincular($idMascota, $idPropietario);
+            }
 
             $this->auditar('INSERT', 'mascotas', $idMascota, null, ['nombre' => $datos['nombre']], 'Mascota registrada desde el portal');
             return $idMascota;

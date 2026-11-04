@@ -1,0 +1,1521 @@
+/* RE-2.1.6 / RNF-16: mockups aprobados de Atención, sin cambiar otros formularios. */
+#atencionApp {
+    margin-top: 12px;
+    min-height: 0;
+    overflow-anchor: none;
+}
+.consulta-tres .consulta-sintomas__ayuda {
+    display: none;
+}
+.consulta-tres .consulta-sintomas:focus-within .consulta-sintomas__ayuda {
+    display: block;
+}
+.consulta-tres {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 16px;
+    min-height: 0;
+    width: 100%;
+}
+.consulta-tres__contenido {
+    min-width: 0;
+    min-height: 0;
+}
+.consulta-tres [data-consulta-paso][hidden],
+.consulta-tres [hidden] {
+    display: none !important;
+}
+.consulta-hoja {
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+    padding: 20px 22px;
+    background: white;
+    border-radius: 22px;
+    min-width: 0;
+}
+.consulta-hoja h3 {
+    margin: 0;
+    font-size: 15px;
+}
+.consulta-tres input:not([type="checkbox"]):not([type="file"]),
+.consulta-tres textarea,
+.consulta-tres select {
+    max-width: 100%;
+    border-color: #e2e8f0;
+    border-radius: 12px;
+}
+.consulta-tres .consulta-campo__etiqueta {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+}
+.consulta-tres .consulta-obligatorio,
+.consulta-tres .cuenta-validacion--error {
+    color: #0052ff;
+}
+.consulta-tres [aria-invalid="true"] {
+    border-color: #0052ff !important;
+}
+.consulta-vitales {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+.consulta-vital {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fafcff;
+}
+.consulta-vital > label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+.consulta-vital__valor {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin: 5px 0;
+}
+.consulta-vital__valor input {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.3;
+    width: 100%;
+    min-width: 0;
+}
+.consulta-vital__valor span {
+    font-size: 11px;
+    color: #64748b;
+}
+.consulta-vital small {
+    display: block;
+    font-size: 10px;
+    line-height: 1.35;
+    color: #64748b;
+}
+.consulta-vital .consulta-sin-peso {
+    display: flex;
+    gap: 4px;
+    margin-top: 7px;
+    font-size: 10px;
+}
+.consulta-vital--fuera {
+    border-color: #0052ff;
+    background: #f3f7ff;
+}
+.consulta-vital--fuera .consulta-vital__valor input,
+.consulta-vital--fuera [data-vital-referencia] {
+    color: #0052ff;
+}
+.consulta-panel {
+    min-width: 0;
+    border-radius: 22px;
+    background: white;
+    align-self: start;
+}
+.consulta-panel .consulta-sugerencias {
+    border: 0;
+    padding: 0 14px 16px;
+    border-radius: 22px;
+    background: white;
+}
+.consulta-panel .consulta-sugerencias__cabecera {
+    display: block;
+    margin: 0 -14px 14px;
+}
+.consulta-panel__sintomas,
+.consulta-examenes,
+.tratamiento-tarjeta__metadatos,
+.atencion-franja__datos,
+.atencion-franja__alertas {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.consulta-panel__sintomas {
+    margin-bottom: 12px;
+}
+.consulta-chip,
+.atencion-franja__datos > * {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border: 0;
+    border-radius: 14px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 11px;
+    line-height: 1.3;
+    text-decoration: none;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+.consulta-chip--alerta {
+    color: #b91c1c;
+    background: #fef2f2;
+}
+.consulta-panel .consulta-sugerencia {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 10px;
+    margin-top: 10px;
+}
+.consulta-panel .consulta-sugerencia__fila {
+    gap: 8px;
+}
+.consulta-panel .consulta-sugerencia__abrir {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    min-width: 0;
+    gap: 5px;
+    background: transparent;
+}
+.consulta-panel .consulta-sugerencia__flecha {
+    display: none;
+}
+.consulta-panel .consulta-sugerencia__nombre {
+    font-size: 13px;
+    white-space: normal;
+}
+.consulta-sugerencia__barra {
+    display: block;
+    width: 100%;
+    height: 5px;
+    border: 0;
+    border-radius: 4px;
+    accent-color: #0052ff;
+}
+.consulta-sugerencia__barra::-webkit-progress-bar {
+    border-radius: 4px;
+    background: #e2e8f0;
+}
+.consulta-sugerencia__barra::-webkit-progress-value {
+    border-radius: 4px;
+    background: #0052ff;
+}
+.consulta-panel .is-en-uso {
+    border-color: #0052ff;
+    background: #f5f8ff;
+}
+.consulta-panel .consulta-sugerencia__usar {
+    white-space: normal;
+    font-size: 11px;
+    max-width: 100px;
+}
+.consulta-tres .consulta-sugerencias__apoyo {
+    display: block;
+    margin-top: 12px;
+    font-size: 10px;
+    line-height: 1.4;
+}
+.consulta-examen {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 12px;
+}
+.consulta-examen input,
+.consulta-control input[type="checkbox"] {
+    accent-color: #0052ff;
+}
+.consulta-recomendaciones {
+    padding-left: 20px;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.consulta-tres .consulta-tratamiento {
+    padding: 14px;
+    border: 1px solid #bfd3ff;
+    background: #fafcff;
+    border-radius: 14px;
+}
+.tratamiento-tarjeta__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.tratamiento-tarjeta__cabecera > strong {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+}
+.tratamiento-tarjeta__dosis {
+    color: #0052ff;
+    margin-right: auto;
+}
+.tratamiento-tarjeta__metadatos {
+    margin-top: 10px;
+}
+.tratamiento-tarjeta__indicacion {
+    font-size: 12px;
+    color: #475569;
+    margin: 10px 0;
+}
+.consulta-tres .consulta-tratamiento--bloqueo,
+.consulta-tres .consulta-tratamiento--advertencia {
+    border-color: #bfd3ff;
+    border-left-color: #0052ff;
+    background: #f8fbff;
+}
+.consulta-tres .consulta-tratamiento__estado,
+.consulta-tres .consulta-tratamiento__confirmar {
+    color: #0052ff;
+}
+.consulta-tres input[type="checkbox"] {
+    accent-color: #0052ff;
+}
+.consulta-tres .consulta-tratamiento__campos {
+    margin-top: 12px;
+}
+.consulta-tres [data-marca-sugerida] {
+    color: #0052ff;
+    font-size: 11px;
+    font-weight: 600;
+}
+.consulta-tres small.consulta-ayuda:not([data-marca-sugerida]) {
+    display: none;
+}
+[data-sugerencia-aviso]:not(:has(> :not([hidden]))) {
+    display: none;
+}
+.consulta-tres .consulta-campo:focus-within .consulta-ayuda {
+    display: block;
+}
+.consulta-tres [data-soltar-adjuntos]:focus-within small.consulta-ayuda {
+    display: block;
+}
+#atencionApp .estado--sin_cerrar,
+#atencionApp .estado--cancelada,
+#atencionApp .atencion__aviso--error {
+    background: #edf3ff;
+    color: #1e3a8a;
+}
+.consulta-tres [data-sugerencia-aviso] > div,
+.consulta-borrador-aviso {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #edf3ff;
+    border-radius: 12px;
+    color: #1e3a8a;
+    font-size: 12px;
+}
+.consulta-borrador-aviso {
+    grid-column: 1 / -1;
+}
+.consulta-control {
+    padding: 16px;
+    border: 1px solid #bfd3ff;
+    border-radius: 16px;
+    background: #f8fbff;
+}
+.consulta-control__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+}
+.consulta-control__fecha {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+.consulta-control__fecha small {
+    color: #0052ff;
+}
+.consulta-resumen-cierre {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+.consulta-resumen-cierre dl {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 10px;
+    padding: 16px;
+    margin: 0;
+    font-size: 12px;
+}
+.consulta-resumen-cierre dt {
+    color: #64748b;
+}
+.consulta-resumen-cierre dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+.consulta-cierre-dialogo {
+    width: min(500px, calc(100vw - 30px));
+    padding: 0;
+    border: 0;
+    border-radius: 22px;
+    color: #0f172a;
+    box-shadow: 0 15px 50px #0f172a30;
+}
+.consulta-cierre-dialogo::backdrop {
+    background: #0f172a66;
+    backdrop-filter: blur(4px);
+}
+.consulta-cierre-dialogo h2 {
+    margin: 0;
+    font-size: 20px;
+}
+.consulta-cierre-dialogo > p,
+.consulta-cierre-dialogo__acciones {
+    margin: 18px;
+    line-height: 1.5;
+}
+.consulta-cierre-dialogo__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+#atencionApp .atencion__barra h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+}
+#atencionApp .atencion__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.atencion-franja {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 22px;
+    background: white;
+    flex-shrink: 0;
+}
+.atencion-franja__anillo {
+    width: 54px;
+    height: 54px;
+    border: 3px solid #92b6ff;
+    border-radius: 50%;
+    padding: 3px;
+    flex-shrink: 0;
+}
+.atencion-franja__anillo > * {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    color: #0052ff;
+    background: #dbeafe;
+    font-size: 18px;
+    font-weight: 700;
+    object-fit: cover;
+}
+.atencion-franja__identidad {
+    min-width: 0;
+}
+.atencion-franja__identidad strong {
+    display: block;
+    font-size: 16px;
+}
+.atencion-franja__identidad small {
+    color: #64748b;
+    font-size: 11px;
+}
+.atencion-franja__pasos {
+    margin-left: auto;
+}
+#atencionApp .atencion__panel {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    min-height: 0;
+}
+#atencionApp .atencion__contenido {
+    padding: 0;
+
+    min-height: 0;
+}
+#atencionApp #formConsultaAtencion,
+#atencionApp #formConsultaAtencion > fieldset {
+    min-height: 0;
+    width: 100%;
+}
+#atencionApp .consulta-tres__contenido,
+#atencionApp .atencion__acciones {
+    margin-top: 12px;
+    border-radius: 18px;
+    background: white;
+}
+#atencionApp #btnPasoSiguiente {
+    color: white;
+    background: #0052ff;
+    border-color: #0052ff;
+}
+.consulta-modal:has([data-consulta-tres]) .consulta-modal__panel {
+    width: min(1250px, calc(100vw - 48px));
+    max-width: 1250px;
+}
+.consulta-modal:has([data-consulta-tres]) .consulta-modal__cuerpo {
+    padding: 12px 16px;
+    background: #e9ecf5;
+}
+.consulta-modal:has([data-consulta-tres]) .consulta-modal__ficha {
+    padding: 0 24px 8px;
+}
+.consulta-modal .consulta-tres {
+    grid-template-columns: minmax(0, 1fr) 310px;
+}
+@media (max-width: 1250px) and (min-width: 1024px) {
+    .atencion-franja {
+        flex-wrap: wrap;
+    }
+    .atencion-franja__pasos {
+        margin-left: 0;
+    }
+    .consulta-tres {
+        grid-template-columns: minmax(0, 1fr) 290px;
+    }
+}
+@media (max-width: 1023px) {
+    .consulta-tres,
+    .consulta-modal .consulta-tres {
+        display: block;
+    }
+    .consulta-panel {
+        display: none;
+    }
+    .consulta-collage img {
+        display: none;
+    }
+    .consulta-collage {
+        min-height: auto;
+        padding: 10px 14px;
+        border-radius: 14px 14px 0 0;
+    }
+    .consulta-collage::after {
+        display: none;
+    }
+    [data-panel-movil] > [data-diagnosticos] {
+        background: linear-gradient(115deg, #0052ff, #3b82f6);
+        border: 0;
+        border-radius: 18px;
+        color: white;
+        padding: 10px 14px;
+        margin-top: 10px;
+    }
+    [data-panel-movil] .consulta-collage {
+        padding: 0;
+        background: transparent;
+    }
+    [data-panel-movil] .consulta-sugerencias__estado,
+    [data-panel-movil] .consulta-sugerencias__apoyo {
+        color: #eef4ff;
+    }
+    [data-panel-movil] .consulta-sugerencia {
+        background: #ffffffef;
+        border-radius: 12px;
+    }
+    .consulta-hoja [data-panel-movil]:first-child {
+        order: -1;
+    }
+    .atencion-franja {
+        flex-wrap: wrap;
+    }
+    .atencion-franja__pasos {
+        width: 100%;
+    }
+    #atencionApp .consulta-panel,
+}
+@media (max-width: 767px) {
+    body:has(#atencionApp) .pill-sidebar {
+        display: none;
+    }
+    body:has(#atencionApp) .content-header,
+    body:has(#atencionApp) .main-header {
+        display: none;
+    }
+    #atencionApp {
+        min-height: 0;
+        padding-bottom: 100px;
+        gap: 10px;
+    }
+    #atencionApp .atencion__barra {
+        padding: 0;
+        margin-bottom: 0;
+    }
+    #atencionApp .atencion__titulo h1 {
+        font-size: 15px;
+    }
+    #atencionApp .atencion__titulo p {
+        font-size: 10px;
+    }
+    #atencionApp .atencion__barra .atencion__estado {
+        font-size: 10px;
+        padding: 3px 7px;
+    }
+    #atencionApp .atencion__cuerpo,
+    #atencionApp .atencion__panel,
+    #atencionApp .atencion__contenido,
+    #atencionApp .atencion__vista[data-vista="consulta"],
+    #atencionApp #formConsultaAtencion,
+    #atencionApp #formConsultaAtencion > fieldset,
+    #atencionApp .consulta-tres__contenido {
+        display: block;
+
+        min-height: 0;
+    }
+    .atencion-franja {
+        gap: 8px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border-radius: 18px;
+    }
+    .atencion-franja__anillo {
+        width: 42px;
+        height: 42px;
+    }
+    .atencion-franja__identidad {
+        flex: 1;
+    }
+    .atencion-franja__identidad strong {
+        font-size: 15px;
+    }
+    .atencion-franja__identidad small {
+        font-size: 10px;
+    }
+    .atencion-franja__datos {
+        display: none;
+    }
+    .atencion-franja__alertas {
+        max-width: 130px;
+    }
+    .atencion-franja__alertas .consulta-chip {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+    .atencion-franja__pasos {
+        margin-top: 4px;
+    }
+    .consulta-hoja {
+        padding: 14px;
+        gap: 13px;
+        border-radius: 18px;
+    }
+    .consulta-vitales {
+        gap: 5px;
+    }
+    .consulta-vital {
+        padding: 8px 6px;
+        border-radius: 11px;
+    }
+    .consulta-vital > label {
+        font-size: 9px;
+    }
+    .consulta-vital__valor {
+        gap: 1px;
+        flex-wrap: wrap;
+    }
+    .consulta-vital__valor input {
+        font-size: 20px;
+        width: 100%;
+    }
+    .consulta-vital__valor span,
+    .consulta-vital small,
+    .consulta-vital .consulta-sin-peso {
+        font-size: 8px;
+    }
+    .consulta-vital .consulta-sin-peso {
+        flex-wrap: wrap;
+    }
+    #atencionApp .atencion__acciones {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 80;
+        margin: 0;
+        padding: 10px 14px max(14px, env(safe-area-inset-bottom));
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 16px #0f172a12;
+    }
+    #atencionApp .atencion__borrador {
+        display: block;
+        width: 100%;
+        font-size: 10px;
+        text-align: center;
+        margin-bottom: 4px;
+    }
+    #atencionApp .atencion__acciones {
+        flex-wrap: wrap;
+    }
+    #atencionApp .atencion__acciones-botones {
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+    #atencionApp .atencion__nav-pasos {
+        flex: 1;
+        display: flex;
+    }
+    #atencionApp #btnPasoSiguiente,
+    #atencionApp #btnFinalizarAtencion {
+        flex: 1;
+        font-size: 12px;
+        min-height: 46px;
+        white-space: normal;
+        line-height: 1.25;
+        min-width: 0;
+    }
+    #atencionApp #btnPasoAnterior {
+        font-size: 12px;
+        flex: 0 0 auto;
+        max-width: 80px;
+        padding: 10px;
+        min-width: 42px;
+    }
+    #atencionApp #btnPasoAnterior i {
+        font-size: 12px;
+    }
+    .consulta-modal:has([data-consulta-tres]) .consulta-modal__panel {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+    .consulta-modal:has([data-consulta-tres]) .consulta-modal__cuerpo {
+        padding: 10px;
+    }
+    .consulta-modal .consulta-modal__pie {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .consulta-modal .consulta-modal__pie button {
+        font-size: 11px;
+        flex: 1;
+        padding: 10px 8px;
+    }
+    .tratamiento-tarjeta__cabecera > strong {
+        font-size: 15px;
+    }
+    .tratamiento-tarjeta__cabecera .consulta-boton {
+        font-size: 10px;
+    }
+    .consulta-resumen-cierre .consulta-collage {
+        background: #edf3ff;
+        color: #0052ff;
+    }
+    .consulta-resumen-cierre dl {
+        grid-template-columns: 85px minmax(0, 1fr);
+        font-size: 11px;
+    }
+}
+/* RE-2.1.6: retoques aprobados por el dueño; rojo para errores y estados que requieren atención. */
+.atencion-cabecera-movil {
+    display: none;
+}
+#atencionApp .atencion__titulo h1 {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+#atencionApp .atencion__estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid transparent;
+}
+#atencionApp .estado--en_curso {
+    color: #fff;
+    background: #0052ff;
+}
+#atencionApp .estado--en_curso i {
+    font-size: 6px;
+}
+#atencionApp .estado--sin_cerrar {
+    color: #b91c1c;
+    border-color: #dc2626;
+    background: #fff;
+}
+.atencion-franja {
+    display: grid;
+    grid-template-columns: 48px minmax(100px, .7fr) minmax(280px, 1.5fr) minmax(190px, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+}
+.atencion-franja__etiqueta {
+    display: block;
+    background: transparent;
+    padding: 0;
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.atencion-franja__datos {
+    display: block;
+    background: transparent;
+    padding: 0 10px;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+}
+.atencion-franja__datos dl {
+    display: grid;
+    grid-template-columns: .7fr 1fr 1.4fr;
+    gap: 10px;
+    margin: 5px 0 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.atencion-franja__datos dt {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.atencion-franja__datos dd {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+.atencion-franja__datos dd a,
+.atencion-franja__datos dd small {
+    display: block;
+    font-size: 11px;
+    margin-top: 4px;
+}
+.atencion-franja .sin-registrar {
+    color: #94a3b8;
+    font-weight: 400;
+}
+.atencion-franja__alertas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+.consulta-chip--alerta {
+    background: #fef2f2;
+    color: #b91c1c;
+    max-width: 100%;
+    white-space: normal;
+    height: auto;
+    min-height: 22px;
+    overflow-wrap: anywhere;
+}
+[data-alertas-chips] [hidden] {
+    display: none;
+}
+.consulta-agregar-alerta {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    color: #334155;
+    background: #fff;
+    font-size: 11px;
+    cursor: pointer;
+}
+.consulta-agregar-alerta:hover {
+    color: #0052ff;
+    border-color: #0052ff;
+    background: #edf3ff;
+}
+.consulta-agregar-alerta:focus-visible,
+.consulta-alertas-mas:focus-visible {
+    outline: 3px solid #93b4ff;
+    outline-offset: 2px;
+}
+.consulta-alertas-mas {
+    border: 0;
+    color: #0052ff;
+    background: transparent;
+    padding: 4px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.atencion-franja__pasos {
+    grid-column: 1 / -1;
+    width: min(600px, 100%);
+    margin: 0 auto;
+}
+#atencionApp .atencion__tabs {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    background: transparent;
+    border-bottom: 1px solid #d9e0ed;
+    margin: 0 0 10px;
+
+}
+#atencionApp .atencion__tab {
+    flex: 0 0 auto;
+    padding: 8px 13px;
+    border-radius: 10px 10px 0 0;
+    font-size: 12px;
+}
+#atencionApp .atencion__tab.is-active {
+    background: #fff;
+    border-bottom: 2px solid #0052ff;
+}
+.consulta-tres {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 16px;
+    row-gap: 0;
+}
+.consulta-contexto-aviso,
+.consulta-borrador-aviso {
+    grid-column: 1 / -1;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #1e3a8a;
+    background: #edf3ff;
+    border-radius: 10px;
+}
+.consulta-contexto-aviso button {
+    margin-left: 8px;
+}
+.consulta-tres__contenido {
+    grid-column: 1;
+    grid-row: 2;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+}
+.consulta-tres .consulta-panel {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    min-width: 0;
+}
+.consulta-hoja-pie {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    grid-column: 1;
+    grid-row: 3;
+    background: #fff;
+    border-radius: 0 0 20px 20px;
+    min-width: 0;
+}
+#atencionApp .consulta-hoja-pie .atencion__acciones,
+.consulta-hoja-pie .consulta-modal__pie {
+    position: static;
+    border-radius: 0 0 20px 20px;
+    margin: 0;
+    padding: 12px 16px;
+    border-top: 1px solid #edf0f5;
+    box-shadow: none;
+}
+#atencionApp .atencion__borrador {
+    flex: 1;
+    min-width: 80px;
+    text-align: left;
+    font-size: 10px;
+}
+.consulta-vital label i {
+    color: #0052ff;
+    margin-right: 5px;
+}
+.consulta-tres .cuenta-validacion--error,
+.consulta-tres .consulta-tratamiento__error,
+.consulta-tres [data-ficha-error] {
+    color: #b91c1c;
+}
+.consulta-tres [aria-invalid="true"] {
+    border-color: #dc2626 !important;
+    color: #b91c1c;
+}
+.consulta-vital [data-vital-rango] {
+    display: none;
+}
+.consulta-vital:focus-within [data-vital-rango],
+.consulta-vital--fuera [data-vital-rango] {
+    display: block;
+    color: #0052ff;
+}
+.consulta-collage {
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+    border-radius: 0;
+    height: 100px;
+    margin: 0 0 14px;
+    padding: 16px 135px 16px 16px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid #0052ff;
+}
+.consulta-collage::before {
+    content: '';
+    position: absolute;
+    inset: 0 48px 0 0;
+    border-radius: 18px 50% 0 18px;
+    background: #e2edff;
+    z-index: -2;
+}
+.consulta-collage::after {
+    content: '';
+    position: absolute;
+    inset: 7px 0 0 52%;
+    width: auto;
+    height: auto;
+    border-radius: 18px 50% 0 0;
+    background: #0052ff;
+    z-index: -1;
+}
+.consulta-collage img {
+    position: absolute;
+    width: 125px;
+    height: 112px;
+    object-fit: contain;
+    right: 0;
+    bottom: -26px;
+    z-index: 1;
+}
+.consulta-collage strong {
+    font-size: 17px;
+    color: #123475;
+}
+.consulta-collage small {
+    display: block;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #475569;
+    max-width: 145px;
+}
+.consulta-vacio-icono {
+    display: block;
+    margin: 26px auto;
+    width: fit-content;
+    font-size: 40px;
+    color: #93b4ff;
+}
+[data-diagnosticos]:has([data-diagnosticos-lista]:not([hidden])) .consulta-vacio-icono {
+    display: none;
+}
+.consulta-ficha-mini {
+    color: #0f172a;
+    padding: 12px;
+    border: 1px solid #d7e4ff;
+    background: #f6f9ff;
+    border-radius: 12px;
+    margin: 12px 0;
+    font-size: 12px;
+}
+.consulta-ficha-mini p {
+    margin: 5px 0 10px;
+    color: #64748b;
+}
+.consulta-ficha-mini__campos {
+    display: grid;
+    gap: 10px;
+}
+.consulta-ficha-mini label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.consulta-ficha-mini input,
+.consulta-ficha-mini select {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    padding: 7px;
+}
+.consulta-ficha-mini button {
+    margin-top: 10px;
+}
+.consulta-tres textarea.consulta-diagnostico-linea {
+    field-sizing: content;
+    min-height: 42px;
+    max-height: 160px;
+    resize: vertical;
+}
+.consulta-marca-sugerido {
+    align-self: flex-start;
+    width: fit-content;
+    display: inline-block;
+    color: #0052ff;
+    background: #edf3ff;
+    border-radius: 12px;
+    font-size: 10px;
+    padding: 4px 8px;
+    margin-top: 5px;
+}
+.consulta-recomendaciones {
+    padding-left: 18px;
+    margin: 7px 0 0;
+}
+.consulta-recomendaciones li {
+    padding-left: 2px;
+    margin-bottom: 6px;
+}
+.consulta-recomendaciones input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d9e0ed;
+    border-radius: 8px;
+    font-size: 13px;
+}
+.consulta-tres .consulta-adjuntos {
+    min-height: 86px;
+    padding: 12px;
+    gap: 4px;
+}
+.consulta-adjuntos > i {
+    font-size: 22px;
+}
+.consulta-control__cabecera input[role="switch"] {
+    appearance: none;
+    width: 40px;
+    height: 24px;
+    background: #cbd5e1;
+    border: 0;
+    border-radius: 15px;
+    padding: 3px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.consulta-control__cabecera input[role="switch"]::before {
+    content: '';
+    display: block;
+    height: 18px;
+    width: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .15s;
+}
+.consulta-control__cabecera input[role="switch"]:checked {
+    background: #0052ff;
+}
+.consulta-control__cabecera input[role="switch"]:checked::before {
+    transform: translateX(16px);
+}
+.consulta-control__cabecera input[role="switch"]:disabled {
+    opacity: .45;
+    cursor: default;
+}
+.consulta-control__cabecera input[role="switch"]:focus-visible {
+    outline: 3px solid #93b4ff;
+    outline-offset: 2px;
+}
+.consulta-control [data-control-descripcion] {
+    color: #64748b;
+    font-size: 12px;
+    margin: 8px 0;
+}
+.consulta-tres .consulta-panel .consulta-resumen-cierre {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+#atencionApp .procedimiento__form,
+#atencionApp .procedimiento__registros,
+#atencionApp #atencionHistorial {
+    background: #fff;
+    padding: 20px;
+    border-radius: 18px;
+}
+#atencionApp .procedimiento__form .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+}
+#atencionApp .procedimiento__form .campo__etiqueta {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 700;
+}
+#atencionApp .procedimiento__form input,
+#atencionApp .procedimiento__form select,
+#atencionApp .procedimiento__form textarea {
+    background: #fff;
+    border: 1px solid #d9e0ed;
+    border-radius: 10px;
+    min-height: 42px;
+    padding: 10px 12px;
+}
+@media (min-width: 1024px) {
+    #atencionApp .consulta-tres > .consulta-progreso {
+        grid-row: 1;
+    }
+    #atencionApp .consulta-tres__contenido {
+        padding-bottom: 0;
+    }
+}
+@media (max-width: 1023px) {
+    .consulta-tres {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto;
+    }
+    .consulta-tres__contenido {
+        grid-row: 3;
+    }
+    .consulta-hoja-pie {
+        grid-row: 4;
+    }
+    .consulta-tres .consulta-panel {
+        display: none;
+    }
+    .consulta-collage img {
+        display: none;
+    }
+    .atencion-franja {
+        grid-template-columns: 44px 1fr 1fr;
+    }
+    .atencion-franja__datos {
+        grid-column: 2 / 4;
+    }
+    .atencion-franja__alertas {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 767px) {
+    #atencionApp .atencion__barra {
+        min-height: 54px;
+        padding: 0;
+        gap: 8px;
+    }
+    #atencionApp .atencion__titulo {
+        flex: 1;
+        min-width: 0;
+    }
+    #atencionApp .atencion__titulo > h1,
+    #atencionApp .atencion__titulo > p,
+    #atencionApp .atencion__barra > .cabecera-cuenta {
+        display: none;
+    }
+    .atencion-cabecera-movil {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+    }
+    .atencion-cabecera-movil > div {
+        flex: 1;
+        min-width: 0;
+    }
+    .atencion-cabecera-movil strong {
+        display: block;
+        font-size: 16px;
+    }
+    .atencion-cabecera-movil small {
+        display: block;
+        color: #64748b;
+        font-size: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .atencion-cabecera-movil__foto {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        flex: none;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #0052ff;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .atencion-cabecera-movil__foto img {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        object-fit: cover;
+    }
+    .atencion-alerta-movil {
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        background: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex: none;
+    }
+    .atencion-franja {
+        display: block;
+        padding: 6px 10px;
+        position: relative;
+    }
+    .atencion-franja__anillo,
+    .atencion-franja__identidad,
+    .atencion-franja__datos {
+        display: none;
+    }
+    .atencion-franja__alertas {
+        display: none;
+    }
+    .atencion-franja__alertas.is-abierta {
+        display: flex;
+        padding: 8px 0 12px;
+    }
+    .atencion-franja__pasos {
+        display: block;
+        width: 100%;
+    }
+    #atencionApp .atencion__tabs {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 8px;
+    }
+    #atencionApp .atencion__tab {
+        padding: 9px 10px;
+        font-size: 11px;
+    }
+    .consulta-vitales {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .consulta-vital > label {
+        font-size: 11px;
+    }
+    .consulta-vital__valor {
+        flex-wrap: nowrap;
+    }
+    .consulta-vital small,
+    .consulta-vital .consulta-sin-peso {
+        font-size: 10px;
+    }
+    #atencionApp .consulta-tres,
+    #atencionApp #formConsultaAtencion,
+    #atencionApp .consulta-tres__contenido,
+    #atencionApp .consulta-hoja-pie {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+    }
+    #atencionApp .consulta-hoja-pie .atencion__acciones {
+        position: static;
+        flex-direction: row;
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        padding: 9px;
+    }
+    #atencionApp .atencion__borrador {
+        width: auto;
+        flex: 1 1 80px;
+    }
+    #atencionApp .atencion__acciones-botones {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    #atencionApp .procedimiento {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #atencionApp .procedimiento__form,
+    #atencionApp .procedimiento__registros {
+        padding: 14px;
+    }
+}
+
+.atencion-franja__datos > .atencion-franja__etiqueta {
+    display: block;
+    padding: 0;
+    height: auto;
+    background: transparent;
+    border-radius: 0;
+}
+.consulta-tres [hidden] {
+    display: none !important;
+}
+
+.atencion-franja__datos dl > div {
+    padding: 8px;
+    border-radius: 10px;
+    background: #f4f7fb;
+}
+@media (max-width: 1023px) {
+    [data-panel-movil] .consulta-collage {
+        height: auto;
+        min-height: 0;
+        margin-bottom: 12px;
+        border: 0;
+        overflow: visible;
+    }
+    [data-panel-movil] .consulta-collage::before,
+    [data-panel-movil] .consulta-collage::after {
+        display: none;
+    }
+    [data-panel-movil] .consulta-collage strong,
+    [data-panel-movil] .consulta-collage small {
+        color: #fff;
+        max-width: none;
+    }
+    .consulta-resumen-cierre .consulta-collage {
+        height: 70px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 767px) {
+    .consulta-hoja-pie .consulta-modal__pie {
+        display: flex;
+        gap: 6px;
+        padding: 10px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .consulta-hoja-pie .consulta-modal__pie > button {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        padding: 10px 5px;
+        font-size: 11px;
+        white-space: normal;
+    }
+}
+
+#atencionApp .procedimiento__form .cuenta-validacion--error {
+    color: #b91c1c;
+}
+#atencionApp .procedimiento__form [aria-invalid="true"] {
+    color: #b91c1c;
+    border-color: #dc2626;
+}
+
+#atencionApp .atencion__vista:not(.is-active) {
+    display: none;
+}
+
+/* RE-2.1.6: componente compartido de pasos de la referencia AtencionV2Piezas. */
+.consulta-progreso {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 4px 6px;
+    border-radius: 14px;
+    background: var(--z-surface);
+}
+.consulta-progreso .atencion__paso-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 7px;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--z-text-tenue);
+    font-size: 12px;
+    line-height: 24px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.consulta-progreso .atencion__paso-btn + .atencion__paso-btn::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    width: 8px;
+    height: 2px;
+    background: var(--z-border);
+}
+.consulta-progreso b {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    box-sizing: border-box;
+    border: 1px solid var(--z-border);
+    border-radius: 50%;
+    background: var(--z-surface);
+    color: var(--z-text-tenue);
+    font-size: 12px;
+}
+.consulta-progreso .atencion__paso-btn span {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    white-space: nowrap;
+}
+.consulta-progreso .atencion__paso-btn.is-active {
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+}
+.consulta-progreso .is-active b,
+.consulta-progreso .is-hecho b {
+    background: var(--z-primary);
+    border-color: var(--z-primary);
+    color: var(--z-surface);
+}
+.consulta-progreso .is-active b {
+    box-shadow: 0 0 0 3px var(--z-primary-borde);
+}
+.consulta-progreso .is-hecho {
+    color: var(--z-text);
+}
+.consulta-progreso .is-hecho + .atencion__paso-btn::before {
+    background: var(--z-primary);
+}
+.consulta-progreso .atencion__paso-btn:hover {
+    background: var(--z-bg-light);
+}
+.consulta-progreso .atencion__paso-btn:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+.consulta-progreso .atencion__paso-btn .consulta-progreso__corto {
+    display: none;
+}
+@media (max-width: 767px) {
+    .consulta-progreso {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+    .consulta-progreso .atencion__paso-btn {
+        padding: 4px 5px;
+        gap: 5px;
+        font-size: 10px;
+    }
+    .consulta-progreso b {
+        width: 21px;
+        height: 21px;
+        font-size: 11px;
+    }
+    .consulta-progreso .atencion__paso-btn:has(.consulta-progreso__corto) .consulta-progreso__nombre {
+        display: none;
+    }
+    .consulta-progreso .atencion__paso-btn .consulta-progreso__corto {
+        display: inline;
+    }
+}

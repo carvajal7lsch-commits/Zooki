@@ -210,15 +210,25 @@ final class ConocimientoRealTest extends TestCase
         }
     }
 
-    public function testSinDosisNiPautasDeTratamiento(): void
+    /** Decisión del dueño (2026-10-29, RN-212): las dosis viven solo en la pauta de «trata», con fuente clínica; nada más las menciona. */
+    public function testDosisSoloEnPautasDeTratamientoConFuenteClinica(): void
     {
-        // El manifiesto declara la limitación «sin dosis»; se revisan los elementos.
-        foreach (['fuentes', 'nodos', 'aristas', 'sinonimos', 'reglas'] as $grupo) {
+        foreach (['nodos', 'sinonimos', 'reglas'] as $grupo) {
             $texto = json_encode(self::$datos[$grupo], JSON_UNESCAPED_UNICODE);
             $this->assertSame(0, preg_match('/\d\s*(mg|ml|UI|U)\s*(\/|por\b)/iu', $texto), $grupo . ': unidad de dosis');
-            $this->assertSame(0, preg_match('/\b(dosis|dose|dosage|posología)\b/iu', $texto), $grupo . ': menciona dosis');
         }
-        $this->assertNotContains('trata', array_column(self::$datos['aristas'], 'tipo_relacion'));
+        $pautas = 0;
+        foreach (self::$datos['aristas'] as $arista) {
+            if ($arista['tipo_relacion'] !== 'trata') {
+                $this->assertArrayNotHasKey('pauta', $arista, $arista['codigo']);
+                continue;
+            }
+            $pautas++;
+            $this->assertIsArray($arista['pauta'] ?? null, $arista['codigo']);
+            $this->assertContains('clinico', array_column($arista['fuentes'], 'fundamento'), $arista['codigo']);
+            $this->assertSame('pendiente', $arista['estado_validacion'], $arista['codigo']);
+        }
+        $this->assertGreaterThan(0, $pautas);
     }
 
     public function testCoberturaPorEspecie(): void
@@ -267,6 +277,22 @@ final class ConocimientoRealTest extends TestCase
             foreach ($busquedas as $busqueda) {
                 $this->assertContains($codigo, $indice[ArchivosConocimiento::normalizarTexto($busqueda)] ?? [], '«' . $busqueda . '» no encuentra ' . $codigo);
             }
+        }
+    }
+
+    public function testS1AdvertenciaClinicaMilbemicinaEnCuatroRazasYSinonimosDeMalAliento(): void
+    {
+        $aristas = array_column(self::$datos['aristas'], null, 'codigo');
+        foreach (['collie', 'pastor_australiano', 'pastor_shetland', 'border_collie'] as $raza) {
+            $arista = $aristas['arista.toxico.' . $raza . '.milbemicina'];
+            $this->assertSame('advertencia', $arista['efecto']);
+            $this->assertSame('farmaco.milbemicina', $arista['destino']);
+            $this->assertContains('clinico', array_column($arista['fuentes'], 'fundamento'));
+            $this->assertStringContainsString('dosis rotuladas', $arista['fuentes'][0]['localizador']);
+        }
+        $sinonimos = array_filter(self::$datos['sinonimos'], static fn (array $s): bool => $s['nodo'] === 'sintoma.mal_aliento');
+        foreach (['le huele feo la boca', 'aliento feo'] as $texto) {
+            $this->assertContains($texto, array_column($sinonimos, 'texto'));
         }
     }
 

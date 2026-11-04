@@ -47,6 +47,12 @@
     outline: 2px solid var(--z-primary, #0052FF);
     outline-offset: 2px;
 }
+.slot-recomendado {
+    display: block;
+    font-size: .65rem;
+    line-height: 1.2;
+}
+
 @media (max-width: 767px) {
     .portal-body .triage-captura .zk-input {
         font-size: 16px;

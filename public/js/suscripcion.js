@@ -45,6 +45,11 @@
                 const datos = await respuesta.json();
                 if (!respuesta.ok || !datos.ok) throw new Error('No se pudo consultar el pago.');
                 const pago = datos.estado.pago;
+                if (datos.estado.oferta_lanzamiento_disponible === false) {
+                    const tarifa = raiz.querySelector('[data-tarifa-mensual]');
+                    if (tarifa) tarifa.textContent = tarifa.dataset.sinOferta;
+                    raiz.querySelectorAll('[data-oferta-lanzamiento]').forEach(nodo => { nodo.hidden = true; });
+                }
                 const etiquetas = {al_dia:'Al día',gracia:'En gracia',congelada:'Beneficios congelados',sin_vigencia:'Sin vigencia de pago'};
                 for (const [selector,texto] of [['[data-suscripcion-plan]',datos.estado.plan],['[data-suscripcion-fin]',datos.estado.fin_incluido || 'Sin fecha'],['[data-suscripcion-estado]',etiquetas[datos.estado.situacion]]]) {
                     const nodo = raiz.querySelector(selector);
@@ -97,6 +102,7 @@
             }
         }
         boton?.addEventListener('click', pagar);
+        raiz.querySelector('[data-pagar-intencion]')?.addEventListener('click', () => boton?.click());
         consultar?.addEventListener('click', estado);
         // RE-0.5.17: Atrás puede restaurar el botón bloqueado al salir hacia Wompi; solo consultar.
         const eventos = servicios.eventos || globalThis;

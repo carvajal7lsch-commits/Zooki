@@ -70,6 +70,54 @@
     color: var(--lp-text-on-dark-muted);
 }
 
+/* Franja compacta: ícono y título en una fila, sin párrafo, para que la
+   sección no repita en tarjetas grandes lo que ya dicen las preguntas. */
+.lp-security__grid--compacta .lp-security__card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+}
+
+.lp-security__grid--compacta .lp-security__icon {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.lp-security__grid--compacta .lp-security__title {
+    margin-bottom: 0;
+    font-family: var(--lp-font-display);
+    font-size: 0.97rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #FFFFFF;
+}
+
+/* En el celular quedan dos por fila en vez de seis filas sueltas. */
+@media (max-width: 640px) {
+    .lp-security .lp-security__grid--compacta {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+
+    .lp-security .lp-security__grid--compacta .lp-security__card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.8rem;
+    }
+
+    .lp-security__grid--compacta .lp-security__icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1.05rem;
+    }
+
+    .lp-security__grid--compacta .lp-security__title {
+        font-size: 0.88rem;
+    }
+}
+
 /* ------------------------------------------------------------
    2. PREGUNTAS FRECUENTES
    ------------------------------------------------------------ */
@@ -138,4 +186,10 @@
     font-size: 0.93rem;
     line-height: 1.6;
     color: var(--lp-text-soft);
+}
+
+/* Los enlaces del cuerpo heredan el color del texto; aqui deben verse. */
+.lp-faq__answer a {
+    color: var(--lp-primary);
+    font-weight: 600;
 }

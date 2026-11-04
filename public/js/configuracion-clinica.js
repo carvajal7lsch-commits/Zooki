@@ -26,7 +26,9 @@
             const maximo = nombre === 'duracion_minutos' ? reglas.duracionMax : reglas.margenMax;
             if (!/^\d{1,3}$/.test(valor) || Number(valor) < (nombre === 'duracion_minutos' ? 1 : 0) || Number(valor) > maximo) return nombre === 'duracion_minutos' ? `La duración debe ser de 1 a ${maximo} minutos.` : `El margen debe ser de 0 a ${maximo} minutos.`;
         }
-        if ((nombre === 'pausable' || nombre === 'activo') && !['0', '1'].includes(valor)) return 'Elige Sí o No.';
+        if (nombre === 'anticipacion_cambios_min' && (!/^\d{1,4}$/.test(valor) || Number(valor) > reglas.cambiosMax)) return `Indica de 0 a ${reglas.cambiosMax} minutos; 0 desactiva el plazo.`;
+        if (['control_busqueda_dias', 'control_dias_sin_duracion'].includes(nombre) && (!/^\d{1,3}$/.test(valor) || Number(valor) < 1 || Number(valor) > reglas.controlMax)) return `Indica de 1 a ${reglas.controlMax} días.`;
+        if (['pausable', 'activo', 'solo_personal'].includes(nombre) && !['0', '1'].includes(valor)) return 'Elige Sí o No.';
         return '';
     }
 
@@ -82,7 +84,7 @@
 
         function completar(form, datos) {
             for (const entrada of form.querySelectorAll('[data-config-campo], [name="id_tipo_cita"]')) {
-                entrada.value = datos[entrada.name] ?? '';
+                entrada.value = datos[entrada.name] ?? (entrada.name === 'solo_personal' ? '0' : '');
                 // El selector con prefijo separado debe recibir también el número canónico del guardado.
                 if (entrada.zookiTelefono) entrada.zookiTelefono.setNumber(entrada.value);
                 versiones.set(entrada, (versiones.get(entrada) || 0) + 1);
@@ -116,7 +118,7 @@
                 nombre.textContent = tipo.nombre_tipo;
                 const chips = document.createElement('div');
                 chips.className = 'configuracion-tipo__chips';
-                for (const texto of [`${tipo.duracion_minutos} min`, `+${tipo.margen_minutos} min margen`, Number(tipo.pausable) ? 'Pausable' : 'No pausable', Number(tipo.activo) ? 'Activo' : 'Inactivo']) {
+                for (const texto of [`${tipo.duracion_minutos} min`, `+${tipo.margen_minutos} min margen`, Number(tipo.pausable) ? 'Pausable' : 'No pausable', Number(tipo.solo_personal) ? 'Solo personal' : 'Portal y personal', Number(tipo.activo) ? 'Activo' : 'Inactivo']) {
                     const chip = document.createElement('span');
                     chip.className = 'configuracion-chip';
                     if (texto === 'Inactivo') chip.classList.add('configuracion-chip--apagado');

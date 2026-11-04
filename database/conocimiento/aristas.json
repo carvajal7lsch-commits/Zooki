@@ -5,7 +5,7 @@
     "destino": "diagnostico.gastritis_aguda",
     "tipo_relacion": "sugiere",
     "signo": "positivo",
-    "peso": 0.6,
+    "peso": 0.85,
     "efecto": "evidencia",
     "fuentes": [
       {
@@ -16,6 +16,11 @@
       {
         "codigo": "zooki.reglas_negocio",
         "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
         "fundamento": "heuristico"
       }
     ],
@@ -2487,6 +2492,4568 @@
       {
         "codigo": "msd.psicotropicos",
         "localizador": "Selective Serotonin Reuptake Inhibitors: fluoxetina es un ISRS",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.ehrlichiosis_canina",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: fiebre en la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sangrado_nariz.ehrlichiosis_canina",
+    "origen": "sintoma.sangrado_nariz",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: epistaxis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.moretones_piel.ehrlichiosis_canina",
+    "origen": "sintoma.moretones_piel",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: petequias y equimosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ganglios_inflamados.ehrlichiosis_canina",
+    "origen": "sintoma.ganglios_inflamados",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: linfadenomegalia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.ehrlichiosis_canina",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: signos sistémicos de la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ojos_rojos.ehrlichiosis_canina",
+    "origen": "sintoma.ojos_rojos",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: uveítis anterior en la fase crónica",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ictericia.leptospirosis_canina",
+    "origen": "sintoma.ictericia",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: ictericia por compromiso hepático",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.leptospirosis_canina",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: vómito en el compromiso renal y hepático",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.leptospirosis_canina",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.leptospirosis_canina",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_muscular.leptospirosis_canina",
+    "origen": "sintoma.dolor_muscular",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor muscular, rigidez o resistencia a moverse",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sed_aumentada.leptospirosis_canina",
+    "origen": "sintoma.sed_aumentada",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: poliuria y polidipsia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.orina_mucho.leptospirosis_canina",
+    "origen": "sintoma.orina_mucho",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: poliuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.leptospirosis_canina",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: fiebre entre los signos adicionales",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.leptospirosis_canina",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.leptospirosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor abdominal en la lesión renal aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.moquillo_canino",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: secreción ocular mucopurulenta",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_nasal.moquillo_canino",
+    "origen": "sintoma.secrecion_nasal",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: secreción nasal serosa",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.moquillo_canino",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: fiebre bifásica",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.moquillo_canino",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: diarrea e inapetencia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.moquillo_canino",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.tics_musculares.moquillo_canino",
+    "origen": "sintoma.tics_musculares",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: mioclonías",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.primera_convulsion_resuelta.moquillo_canino",
+    "origen": "sintoma.primera_convulsion_resuelta",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: convulsiones focales o generalizadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.almohadillas_duras.moquillo_canino",
+    "origen": "sintoma.almohadillas_duras",
+    "destino": "diagnostico.moquillo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: hiperqueratosis de almohadillas y plano nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.giardiasis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.giardiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Clinical Findings: diarrea crónica o intermitente, pálida, grasosa y maloliente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_peso.giardiasis",
+    "origen": "sintoma.perdida_peso",
+    "destino": "diagnostico.giardiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Clinical Findings: pérdida de peso",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.pulgas.dermatitis_alergica_pulgas",
+    "origen": "sintoma.pulgas",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Diagnosis: pulgas o sus heces con signos compatibles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatitis_alergica_pulgas",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: prurito en dorso caudal, base de la cola y muslos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.dermatitis_alergica_pulgas",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: alopecia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.dermatitis_alergica_pulgas",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Clinical Findings: lesiones papulocostrosas; dermatitis miliar en gatos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatitis_atopica_canina",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: el prurito es el signo característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.lame_patas.dermatitis_atopica_canina",
+    "origen": "sintoma.lame_patas",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: patas entre las zonas más afectadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.mal_olor_oidos.dermatitis_atopica_canina",
+    "origen": "sintoma.mal_olor_oidos",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: otitis crónica o recurrente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sacude_cabeza.dermatitis_atopica_canina",
+    "origen": "sintoma.sacude_cabeza",
+    "destino": "diagnostico.dermatitis_atopica_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: otitis recurrente",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.sarna_sarcoptica",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: prurito intenso característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.sarna_sarcoptica",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: costras gruesas amarillas y excoriaciones",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.sarna_sarcoptica",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.sarna_sarcoptica",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: alopecia en orejas, codos, tarsos y abdomen",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.demodicosis_canina",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.demodicosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: áreas de alopecia bien delimitadas, eritema y descamación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.demodicosis_canina",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.demodicosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: costras y seborrea en la forma generalizada",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_orinar.cistitis_bacteriana",
+    "origen": "sintoma.dolor_orinar",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: disuria y estranguria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sangre_orina.cistitis_bacteriana",
+    "origen": "sintoma.sangre_orina",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: hematuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.intentos_orinar_minimo.cistitis_bacteriana",
+    "origen": "sintoma.intentos_orinar_minimo",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: polaquiuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.orina_fuera_caja.cistitis_bacteriana",
+    "origen": "sintoma.orina_fuera_caja",
+    "destino": "diagnostico.cistitis_bacteriana",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Clinical Characteristics: periuria e incontinencia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.pancreatitis",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: vómito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.pancreatitis",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: dolor abdominal (posición de rezo)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.pancreatitis",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.pancreatitis",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: debilidad y letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.pancreatitis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.pancreatitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Clinical Findings: diarrea",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.estornudos.complejo_respiratorio_felino",
+    "origen": "sintoma.estornudos",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: estornudos frecuentes",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_nasal.complejo_respiratorio_felino",
+    "origen": "sintoma.secrecion_nasal",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: secreción nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.complejo_respiratorio_felino",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: conjuntivitis y epífora",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.fiebre.complejo_respiratorio_felino",
+    "origen": "sintoma.fiebre",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: fiebre fluctuante",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.llagas_boca.complejo_respiratorio_felino",
+    "origen": "sintoma.llagas_boca",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: úlceras orales del calicivirus",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.babeo.complejo_respiratorio_felino",
+    "origen": "sintoma.babeo",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: hipersalivación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.complejo_respiratorio_felino",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.complejo_respiratorio_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_peso.hipertiroidismo_felino",
+    "origen": "sintoma.perdida_peso",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: pérdida de peso pese a buen apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.hambre_aumentada.hipertiroidismo_felino",
+    "origen": "sintoma.hambre_aumentada",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: apetito voraz",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.hiperactividad.hipertiroidismo_felino",
+    "origen": "sintoma.hiperactividad",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: hiperactividad y vocalización",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.sed_aumentada.hipertiroidismo_felino",
+    "origen": "sintoma.sed_aumentada",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: poliuria-polidipsia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito.hipertiroidismo_felino",
+    "origen": "sintoma.vomito",
+    "destino": "diagnostico.hipertiroidismo_felino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: vómito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.gusanos_heces.ascaridiasis",
+    "origen": "sintoma.gusanos_heces",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: gusanos vomitados o en las heces",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.diarrea.ascaridiasis",
+    "origen": "sintoma.diarrea",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: diarrea con moco",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.abdomen_distendido.ascaridiasis",
+    "origen": "sintoma.abdomen_distendido",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: abdomen abultado en cachorros y gatitos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.tos.ascaridiasis",
+    "origen": "sintoma.tos",
+    "destino": "diagnostico.ascaridiasis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.2,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: tos por migración larvaria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.dermatofitosis",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: pérdida de pelo",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.costras_piel.dermatofitosis",
+    "origen": "sintoma.costras_piel",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: descamación y costras",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.picazon.dermatofitosis",
+    "origen": "sintoma.picazon",
+    "destino": "diagnostico.dermatofitosis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.2,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: prurito variable",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.mal_aliento.enfermedad_periodontal",
+    "origen": "sintoma.mal_aliento",
+    "destino": "diagnostico.enfermedad_periodontal",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: halitosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.encias_inflamadas.enfermedad_periodontal",
+    "origen": "sintoma.encias_inflamadas",
+    "destino": "diagnostico.enfermedad_periodontal",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: encías rojas, inflamadas y sangrantes; placa y sarro",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.ojos_rojos.conjuntivitis",
+    "origen": "sintoma.ojos_rojos",
+    "destino": "diagnostico.conjuntivitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: hiperemia y quemosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.secrecion_ocular.conjuntivitis",
+    "origen": "sintoma.secrecion_ocular",
+    "destino": "diagnostico.conjuntivitis",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: secreción ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.vomito_repetido.cuerpo_extrano_gi",
+    "origen": "sintoma.vomito_repetido",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: vómito, a menudo intratable",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_come.cuerpo_extrano_gi",
+    "origen": "sintoma.no_come",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: anorexia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.dolor_abdominal.cuerpo_extrano_gi",
+    "origen": "sintoma.dolor_abdominal",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: dolor abdominal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.cuerpo_extrano_gi",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.no_defeca.cuerpo_extrano_gi",
+    "origen": "sintoma.no_defeca",
+    "destino": "diagnostico.cuerpo_extrano_gi",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "alguno": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        }
+      ]
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Clinical Findings: obstrucción gastrointestinal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.aumento_peso.hipotiroidismo_canino",
+    "origen": "sintoma.aumento_peso",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: aumento de peso sin más apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.decaimiento.hipotiroidismo_canino",
+    "origen": "sintoma.decaimiento",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: letargia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.cansancio_ejercicio.hipotiroidismo_canino",
+    "origen": "sintoma.cansancio_ejercicio",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: intolerancia al ejercicio",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.perdida_pelo.hipotiroidismo_canino",
+    "origen": "sintoma.perdida_pelo",
+    "destino": "diagnostico.hipotiroidismo_canino",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: alopecia simétrica no pruriginosa del tronco",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ehrlichiosis_canina.doxiciclina.canino",
+    "origen": "diagnostico.ehrlichiosis_canina",
+    "destino": "farmaco.doxiciclina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 28,
+      "indicacion": "Fármaco de elección; también 10 mg/kg cada 24 h. Completar 28 días.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Treatment: doxiciclina 5 mg/kg cada 12 h o 10 mg/kg cada 24 h, VO o IV, 28 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.leptospirosis_canina.doxiciclina.canino",
+    "origen": "diagnostico.leptospirosis_canina",
+    "destino": "farmaco.doxiciclina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Primera línea; elimina también el estado de portador.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Treatment: doxiciclina 5 mg/kg VO cada 12 h, 2 semanas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.fenbendazol.canino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Primera línea; 3 a 5 días.",
+      "grupo": "antiparasitario",
+      "grupo_eleccion": "antiprotozoario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3–5 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.fenbendazol.felino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Primera línea; 3 a 5 días.",
+      "grupo": "antiparasitario",
+      "grupo_eleccion": "antiprotozoario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3–5 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.giardiasis.metronidazol.canino",
+    "origen": "diagnostico.giardiasis",
+    "destino": "farmaco.metronidazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 10,
+        "maximo": 25
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 5,
+      "indicacion": "Alternativa; dosis altas o uso prolongado pueden dar signos neurológicos.",
+      "grupo": "antibiotico",
+      "grupo_eleccion": "antiprotozoario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment: metronidazol 10–25 mg/kg cada 12 h, 5–8 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_alergica_pulgas.oclacitinib.canino",
+    "origen": "diagnostico.dermatitis_alergica_pulgas",
+    "destino": "farmaco.oclacitinib",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.4,
+        "maximo": 0.6
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Control del prurito; no reemplaza el control de pulgas.",
+      "grupo": "antipruriginoso",
+      "grupo_eleccion": "control_prurito"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment: oclacitinib 0,4–0,6 mg/kg VO cada 12 h, 14 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_alergica_pulgas.prednisolona.felino",
+    "origen": "diagnostico.dermatitis_alergica_pulgas",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 14,
+      "indicacion": "Dosis inicial y luego reducir; suspender al controlar las pulgas.",
+      "grupo": "corticoide",
+      "grupo_eleccion": "control_prurito"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment: prednisolona en gatos 0,5–1 mg/kg VO cada 24 h, 7–14 días, luego reducir",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_atopica_canina.oclacitinib.canino",
+    "origen": "diagnostico.dermatitis_atopica_canina",
+    "destino": "farmaco.oclacitinib",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.4,
+        "maximo": 0.6
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Cada 12 h por 2 semanas y luego cada 24 h. Perros de 12 meses o más.",
+      "grupo": "antipruriginoso",
+      "grupo_eleccion": "control_prurito"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment: oclacitinib 0,4–0,6 mg/kg VO cada 12 h por 2 semanas, luego cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatitis_atopica_canina.prednisolona.canino",
+    "origen": "diagnostico.dermatitis_atopica_canina",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1.1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Para brotes agudos; reducir a 0,25–0,5 mg/kg cada 48 h.",
+      "grupo": "corticoide",
+      "grupo_eleccion": "control_prurito"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment: prednisona/prednisolona 0,5–1,1 mg/kg VO cada 24 h, luego reducir",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.sarna_sarcoptica.selamectina.canino",
+    "origen": "diagnostico.sarna_sarcoptica",
+    "destino": "farmaco.selamectina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 6,
+        "maximo": 12
+      },
+      "dosis_texto": null,
+      "via": "topica",
+      "frecuencia_horas": null,
+      "duracion_dias": null,
+      "indicacion": "Spot-on; algunos perros necesitan una segunda dosis al mes. Tratar a los perros en contacto.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: selamectina 6–12 mg/kg tópica, una vez",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.sarna_sarcoptica.milbemicina.canino",
+    "origen": "diagnostico.sarna_sarcoptica",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 168,
+      "duracion_dias": 28,
+      "indicacion": "Una vez por semana durante 3 a 4 semanas.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: milbemicina oxima 2 mg/kg VO semanal, 3–4 semanas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.demodicosis_canina.milbemicina.canino",
+    "origen": "diagnostico.demodicosis_canina",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Hasta resolver y tener dos raspados negativos con un mes de diferencia.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis: milbemicina oxima 0,5–1 mg/kg/día VO",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.cistitis_bacteriana.trimetoprim_sulfa.canino",
+    "origen": "diagnostico.cistitis_bacteriana",
+    "destino": "farmaco.trimetoprim_sulfa",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 15,
+        "maximo": 15
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 3,
+      "indicacion": "Cistitis esporádica: curso corto de 3 a 5 días; idealmente con urocultivo.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: trimetoprim-sulfametoxazol 15 mg/kg VO cada 12 h, 3 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.maropitant.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 1,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Antiemético; también IV.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.maropitant.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 1,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Antiemético; también IV.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.buprenorfina.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.buprenorfina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.005,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 6,
+      "duracion_dias": null,
+      "indicacion": "Analgesia según dolor (5–30 mcg/kg), también IV o IM.",
+      "grupo": "analgesico_opioide"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: buprenorfina 5–30 mcg/kg IV, IM o SC cada 4–6 h según necesidad",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.buprenorfina.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.buprenorfina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.005,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "subcutanea",
+      "frecuencia_horas": 6,
+      "duracion_dias": null,
+      "indicacion": "Analgesia según dolor (5–30 mcg/kg), también IV o IM.",
+      "grupo": "analgesico_opioide"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: buprenorfina 5–30 mcg/kg IV, IM o SC cada 4–6 h según necesidad",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.ondansetron.canino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.ondansetron",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Antiemético alternativo; cada 8 a 12 h.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: ondansetrón 0,5–1 mg/kg IV o VO cada 8–12 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.pancreatitis.ondansetron.felino",
+    "origen": "diagnostico.pancreatitis",
+    "destino": "farmaco.ondansetron",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Antiemético alternativo; cada 8 a 12 h.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: ondansetrón 0,5–1 mg/kg IV o VO cada 8–12 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.complejo_respiratorio_felino.lisina.felino",
+    "origen": "diagnostico.complejo_respiratorio_felino",
+    "destino": "farmaco.lisina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "250 mg por gato",
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Puede reducir la gravedad de la rinotraqueítis; 2 a 3 veces al día.",
+      "grupo": "suplemento"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Treatment: lisina 250 mg VO 2 a 3 veces al día",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.hipertiroidismo_felino.metimazol.felino",
+    "origen": "diagnostico.hipertiroidismo_felino",
+    "destino": "farmaco.metimazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "1,25–2,5 mg por gato",
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Ajustar cada 2 semanas según T4; de por vida si es el único tratamiento.",
+      "grupo": "antitiroideo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Treatment: metimazol 1,25–2,5 mg/gato VO o transdérmico cada 12 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ascaridiasis.pirantel.canino",
+    "origen": "diagnostico.ascaridiasis",
+    "destino": "farmaco.pirantel",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": null,
+      "duracion_dias": null,
+      "indicacion": "Dosis única (10 mg/kg si pesa 2,3 kg o menos); repetir según el esquema del plan.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment: pamoato de pirantel 5 mg/kg VO una vez",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.ascaridiasis.fenbendazol.canino",
+    "origen": "diagnostico.ascaridiasis",
+    "destino": "farmaco.fenbendazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 50,
+        "maximo": 50
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 3,
+      "indicacion": "Alternativa de 3 días.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment: fenbendazol 50 mg/kg VO cada 24 h, 3 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.itraconazol.felino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.itraconazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Semana sí, semana no; la mayoría resuelve en 3 o 4 ciclos.",
+      "grupo": "antifungico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: gatos, itraconazol 5 mg/kg VO cada 24 h semana sí/semana no",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.itraconazol.canino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.itraconazol",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 5,
+        "maximo": 5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Perros pequeños; acompañar con baños antifúngicos.",
+      "grupo": "antifungico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: perros pequeños, itraconazol 5 mg/kg VO cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.dermatofitosis.terbinafina.canino",
+    "origen": "diagnostico.dermatofitosis",
+    "destino": "farmaco.terbinafina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 30,
+        "maximo": 40
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Perros grandes.",
+      "grupo": "antifungico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: perros grandes, terbinafina 30–40 mg/kg cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.hipotiroidismo_canino.levotiroxina.canino",
+    "origen": "diagnostico.hipotiroidismo_canino",
+    "destino": "farmaco.levotiroxina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.022,
+        "maximo": 0.022
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "En ayunas, de por vida; puede dividirse en dos tomas (22 mcg/kg).",
+      "grupo": "hormona_tiroidea"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Treatment: levotiroxina 22 mcg/kg VO en ayunas cada 24 h, de por vida",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.gastritis_aguda.maropitant.canino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Hasta 5 días; inyectable 1 mg/kg SC o IV cada 24 h.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h, o 2 mg/kg VO cada 24 h hasta 5 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.gastritis_aguda.maropitant.felino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.maropitant",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Hasta 5 días; inyectable 1 mg/kg SC o IV cada 24 h.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Treatment: maropitant 1 mg/kg SC o IV cada 24 h, o 2 mg/kg VO cada 24 h hasta 5 días",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.meloxicam.canino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.meloxicam",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.1,
+        "maximo": 0.1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "AINE de uso prolongado; vigilar función renal y digestiva.",
+      "grupo": "aine"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: meloxicam perros 0,1 mg/kg IV, SC o VO cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.carprofeno.canino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.carprofeno",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 4.4,
+        "maximo": 4.4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Alternativa: 2,2 mg/kg cada 12 h. No se recomienda en gatos.",
+      "grupo": "aine"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: carprofeno perros 2,2 mg/kg cada 12 h o 4,4 mg/kg cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.osteoartritis.meloxicam.felino",
+    "origen": "diagnostico.osteoartritis",
+    "destino": "farmaco.meloxicam",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.01,
+        "maximo": 0.03
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": null,
+      "indicacion": "Dosis felina mucho menor que la canina.",
+      "grupo": "aine"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.aine_tabla",
+        "localizador": "Tabla: meloxicam gatos 0,01–0,03 mg/kg VO cada 24 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.epilepsia_idiopatica.fenobarbital.canino",
+    "origen": "diagnostico.epilepsia_idiopatica",
+    "destino": "farmaco.fenobarbital",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Dosis inicial; ajustar según niveles séricos.",
+      "grupo": "anticonvulsivo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital 2–4 mg/kg VO cada 12 h (inicial)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.epilepsia_idiopatica.fenobarbital.felino",
+    "origen": "diagnostico.epilepsia_idiopatica",
+    "destino": "farmaco.fenobarbital",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 2,
+        "maximo": 4
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Dosis inicial; ajustar según niveles séricos.",
+      "grupo": "anticonvulsivo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital 2–4 mg/kg VO cada 12 h (inicial)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.diabetes_mellitus.insulina_nph.canino",
+    "origen": "diagnostico.diabetes_mellitus",
+    "destino": "farmaco.insulina_nph",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "0,25–0,5 U/kg",
+      "via": "subcutanea",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Insulina NPH o lenta; ajustar según curva de glucosa.",
+      "grupo": "insulina"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: perros, NPH o lenta 0,25–0,5 U/kg SC cada 12 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.diabetes_mellitus.insulina_glargina.felino",
+    "origen": "diagnostico.diabetes_mellitus",
+    "destino": "farmaco.insulina_glargina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "0,25–0,5 U/kg (1–2 U por gato, máx. 2 U)",
+      "via": "subcutanea",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Calcular con el peso ideal, no el actual; inicio conservador.",
+      "grupo": "insulina"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: gatos, glargina 0,25–0,5 U/kg (1–2 U/gato) SC cada 12 h",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.sugiere.garrapatas.ehrlichiosis_canina",
+    "origen": "sintoma.garrapatas",
+    "destino": "diagnostico.ehrlichiosis_canina",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.3,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Etiology and Pathogenesis: E. canis y transmisión por Rhipicephalus sanguineus.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.interaccion.meloxicam.prednisolona",
+    "origen": "farmaco.meloxicam",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "interactua_con",
+    "signo": "negativo",
+    "peso": 1.0,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.ulceras_gi",
+        "localizador": "«Combining NSAID and corticosteroid therapies will increase risk of GI ulceration and is contraindicated»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_uso",
+        "localizador": "«Corticosteroids and NSAIDs should not be administered concurrently»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«an NSAID with a steroid such as prednisone … should be avoided»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.corticoides",
+        "localizador": "«Glucocorticoids potentiate the ulcerogenic effects of NSAIDs»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.interaccion.carprofeno.prednisolona",
+    "origen": "farmaco.carprofeno",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "interactua_con",
+    "signo": "negativo",
+    "peso": 1.0,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.ulceras_gi",
+        "localizador": "«Combining NSAID and corticosteroid therapies will increase risk of GI ulceration and is contraindicated»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_uso",
+        "localizador": "«Corticosteroids and NSAIDs should not be administered concurrently»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«an NSAID with a steroid such as prednisone … should be avoided»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.corticoides",
+        "localizador": "«Glucocorticoids potentiate the ulcerogenic effects of NSAIDs»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.interaccion.aspirina.prednisolona",
+    "origen": "farmaco.aspirina",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "interactua_con",
+    "signo": "negativo",
+    "peso": 1.0,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.ulceras_gi",
+        "localizador": "«Combining NSAID and corticosteroid therapies will increase risk of GI ulceration and is contraindicated»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_uso",
+        "localizador": "«Corticosteroids and NSAIDs should not be administered concurrently»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«an NSAID with a steroid such as prednisone … should be avoided»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.corticoides",
+        "localizador": "«Glucocorticoids potentiate the ulcerogenic effects of NSAIDs»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.interaccion.ibuprofeno.prednisolona",
+    "origen": "farmaco.ibuprofeno",
+    "destino": "farmaco.prednisolona",
+    "tipo_relacion": "interactua_con",
+    "signo": "negativo",
+    "peso": 1.0,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.ulceras_gi",
+        "localizador": "«Combining NSAID and corticosteroid therapies will increase risk of GI ulceration and is contraindicated»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_uso",
+        "localizador": "«Corticosteroids and NSAIDs should not be administered concurrently»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«an NSAID with a steroid such as prednisone … should be avoided»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.corticoides",
+        "localizador": "«Glucocorticoids potentiate the ulcerogenic effects of NSAIDs»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.collie.ivermectina",
+    "origen": "raza.collie",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "bloqueo",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.collie.loperamida",
+    "origen": "raza.collie",
+    "destino": "farmaco.loperamida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_australiano.ivermectina",
+    "origen": "raza.pastor_australiano",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "bloqueo",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_australiano.loperamida",
+    "origen": "raza.pastor_australiano",
+    "destino": "farmaco.loperamida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_shetland.ivermectina",
+    "origen": "raza.pastor_shetland",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "bloqueo",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_shetland.loperamida",
+    "origen": "raza.pastor_shetland",
+    "destino": "farmaco.loperamida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.border_collie.ivermectina",
+    "origen": "raza.border_collie",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.border_collie.loperamida",
+    "origen": "raza.border_collie",
+    "destino": "farmaco.loperamida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_aleman.ivermectina",
+    "origen": "raza.pastor_aleman",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Phenotype y Breeds appropriate for testing: susceptibilidad farmacogenética; la pertenencia a raza no confirma genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1_farmacos",
+        "localizador": "Ivermectin (dosis para sarna) y Loperamide: neurotoxicidad con MDR1.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.felino.enrofloxacina",
+    "origen": "especie.felino",
+    "destino": "farmaco.enrofloxacina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.quinolonas",
+        "localizador": "Adverse effects: degeneración retiniana felina; especial precaución con dosis de5mg/kg/día o más.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.felino.metamizol",
+    "origen": "especie.felino",
+    "destino": "farmaco.metamizol",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "uzh.metamizol",
+        "localizador": "Katze: no usar preparados con alcohol bencílico; verificar formulación y dosis.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.sarna_sarcoptica.ivermectina.canino",
+    "origen": "diagnostico.sarna_sarcoptica",
+    "destino": "farmaco.ivermectina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.2,
+        "maximo": 0.2
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 336,
+      "duracion_dias": null,
+      "indicacion": "Uso extrarrótulo. 2–4 aplicaciones cada 2 semanas. Revisar MDR1; no confundir mg con microgramos.",
+      "grupo": "antiparasitario"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange:200mcg/kg oral o SC,2–4 tratamientos cada2 semanas.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.cistitis_bacteriana.amoxicilina_clavulanato.canino",
+    "origen": "diagnostico.cistitis_bacteriana",
+    "destino": "farmaco.amoxicilina_clavulanato",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 13.75,
+        "maximo": 25
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 14,
+      "indicacion": "Alternativa según urocultivo y sensibilidad; revisar necesidad y duración, no tratar bacteriuria subclínica.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: ensayo canino,13,75–25mg/kg cada12h14 días; selección según cultivo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.cistitis_bacteriana.cefalexina.canino",
+    "origen": "diagnostico.cistitis_bacteriana",
+    "destino": "farmaco.cefalexina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 20,
+        "maximo": 20
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 10,
+      "indicacion": "Alternativa según cultivo y sensibilidad. Preferir la pauta eficaz más corta según evaluación veterinaria.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: ensayo canino20mg/kg oral cada12h10 días.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.cistitis_bacteriana.enrofloxacina.canino",
+    "origen": "diagnostico.cistitis_bacteriana",
+    "destino": "farmaco.enrofloxacina",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.4,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 18,
+        "maximo": 20
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 3,
+      "indicacion": "Reservar para cultivo y sensibilidad que justifiquen fluoroquinolona; pauta exclusivamente canina.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: ensayo canino18–20mg/kg cada24h3 días.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.enfermedad_periodontal.amoxicilina_clavulanato.canino",
+    "origen": "diagnostico.enfermedad_periodontal",
+    "destino": "farmaco.amoxicilina_clavulanato",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 12.5,
+        "maximo": 12.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": 7,
+      "indicacion": "Solo infección bacteriana que lo justifique; no sustituye limpieza dental ni tratamiento periodontal.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "vmd.clav_periodontal",
+        "localizador": "Prospecto§4 infecciones periodontales;§8 dosis combinada12,5mg/kg cada12h7 días (páginas4,6–7).",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.complejo_respiratorio_felino.amoxicilina_clavulanato.felino",
+    "origen": "diagnostico.complejo_respiratorio_felino",
+    "destino": "farmaco.amoxicilina_clavulanato",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 12.5,
+        "maximo": 12.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 12,
+      "duracion_dias": null,
+      "indicacion": "Solo sospecha de infección bacteriana secundaria; no trata el virus. Reevaluar respuesta y duración.",
+      "grupo": "antibiotico"
+    },
+    "fuentes": [
+      {
+        "codigo": "iscaid.respiratorio",
+        "localizador": "Table2: dosis combinada12,5mg/kg cada12h; infección bacteriana secundaria de vía respiratoria superior.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.gastritis_aguda.metoclopramida.canino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.metoclopramida",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.canino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.2,
+        "maximo": 0.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 8,
+      "duracion_dias": null,
+      "indicacion": "Alternativa antiemética solo tras descartar obstrucción gastrointestinal y otras contraindicaciones.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis:0,2–0,5mg/kg oral cada6–8h, si no se sospecha obstrucción ni otras contraindicaciones.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.trata.refuerzo.gastritis_aguda.metoclopramida.felino",
+    "origen": "diagnostico.gastritis_aguda",
+    "destino": "farmaco.metoclopramida",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.5,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.felino"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.2,
+        "maximo": 0.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 8,
+      "duracion_dias": null,
+      "indicacion": "Alternativa antiemética solo tras descartar obstrucción gastrointestinal y otras contraindicaciones.",
+      "grupo": "antiemetico"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis:0,2–0,5mg/kg oral cada6–8h, si no se sospecha obstrucción ni otras contraindicaciones.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210/RN-212: orden de preferencia heurístico del refuerzo; no es probabilidad ni validación veterinaria.",
+        "fundamento": "heuristico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-212; refuerzo aprobado2026-11-01: clase y grupo de elección por diagnóstico limitan la precarga a la pauta preferida; no es comparación de eficacia clínica.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.canino.raticida",
+    "origen": "especie.canino",
+    "destino": "sustancia.raticida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs, Decontamination; exposición potencialmente grave con inicio diferido, revisión para identificar raticida.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.felino.raticida",
+    "origen": "especie.felino",
+    "destino": "sustancia.raticida",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs, Decontamination; exposición potencialmente grave con inicio diferido, revisión para identificar raticida.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.collie.milbemicina",
+    "origen": "raza.collie",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_australiano.milbemicina",
+    "origen": "raza.pastor_australiano",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.pastor_shetland.milbemicina",
+    "origen": "raza.pastor_shetland",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "arista.toxico.border_collie.milbemicina",
+    "origen": "raza.border_collie",
+    "destino": "farmaco.milbemicina",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 1,
+    "efecto": "advertencia",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Problem medications for dogs — Milbemycin: Interceptor es seguro a dosis rotuladas; para otras formulaciones WSU recomienda consultar dosis según MDR1. Precaución con pautas extrarrótulo para sarna; la raza no confirma el genotipo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie, Australian Shepherd, Shetland Sheepdog y Border Collie.",
         "fundamento": "clinico"
       }
     ],

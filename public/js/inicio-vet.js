@@ -83,7 +83,7 @@
             }
             const opciones = r.resultado && r.resultado.opciones;
             if (opciones && !opciones.dentro_tolerancia) {
-                global.location.href = 'index.php?action=vet_agenda#llegadas';
+                global.location.href = 'index.php?action=vet_agenda&llegada_cita=' + encodeURIComponent(boton.dataset.inicioLlegada);
                 return;
             }
             global.zookiToast?.('Llegada registrada.');

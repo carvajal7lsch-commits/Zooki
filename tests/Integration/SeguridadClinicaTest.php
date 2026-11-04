@@ -98,6 +98,18 @@ class SeguridadClinicaTest extends TestCase
         $this->assertSame(0, $this->resultado('login'), 'Lo público sigue abierto');
     }
 
+    public function testContextoYCalendarioControlSoloVeterinarioDelContextoActivo(): void
+    {
+        foreach (['consulta_contexto_ajax', 'fechas_control_ajax'] as $accion) {
+            $this->entrarComo(2, 'clinica:1:2');
+            $this->assertSame(0, $this->resultado($accion));
+            foreach ([[1, 'clinica:1:1'], [5, 'propietario'], [7, 'plataforma']] as [$usuario, $contexto]) {
+                $this->entrarComo($usuario, $contexto);
+                $this->assertSame(403, $this->resultado($accion));
+            }
+        }
+    }
+
     /** RE-T.17.2: con identidad pero sin contexto, solo se puede elegir uno. */
     public function testSinContextoSeLlevaAlSelector(): void
     {

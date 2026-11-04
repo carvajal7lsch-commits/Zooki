@@ -41,6 +41,7 @@ switch ($action) {
         require_once '../controllers/WompiEventosController.php';
         (new WompiEventosController())->recibir($action === 'wompi_eventos_test' ? 'test' : 'prod');
         break;
+    case "suscripcion_descartar_intencion":
     case "suscripcion_pagar_ajax":
     case "suscripcion_estado_ajax":
     case "suscripcion_historial_ajax":
@@ -52,6 +53,7 @@ switch ($action) {
         require_once '../controllers/SuscripcionController.php';
         $suscripcionController = new SuscripcionController((new Database())->getConnection());
         match ($action) {
+            'suscripcion_descartar_intencion' => $suscripcionController->descartarIntencion(),
             'suscripcion_pagar_ajax' => $suscripcionController->pagar(),
             'suscripcion_estado_ajax' => $suscripcionController->estado(),
             'suscripcion_historial_ajax' => $suscripcionController->historial(),
@@ -411,6 +413,14 @@ switch ($action) {
         (new PlataformaController())->modificar($action);
         break;
 
+    // Botón de demo del super-administrador; Security responde 404 si está apagado.
+    case "plataforma_demo_crear_ajax":
+    case "plataforma_demo_escena_ajax":
+    case "plataforma_demo_borrar_ajax":
+        require_once '../controllers/DemoPlataformaController.php';
+        (new DemoPlataformaController())->ejecutar($action);
+        break;
+
     // ═══════════════════════════════════════════════════════════════
     // RUTAS ADMIN (id_rol = 1) - Panel de Pacientes
     // ═══════════════════════════════════════════════════════════════
@@ -482,6 +492,8 @@ switch ($action) {
         break;
 
     case "vet_agenda":
+        require_once '../controllers/CitaController.php';
+        $contextoAgenda = (new CitaController())->contextoAgenda();
         $content_view = "../views/vet/calendario.php";
         require_once "../views/vet/layout.php";
         break;
@@ -704,6 +716,22 @@ switch ($action) {
     case "calcular_triage_ajax":
         require_once '../controllers/TriageController.php';
         (new TriageController())->calcularAjax();
+        break;
+    case "consulta_contexto_ajax":
+        require_once "../controllers/ControlConsultaController.php";
+        (new ControlConsultaController())->contextoAjax();
+        break;
+    case "completar_ficha_consulta_ajax":
+        require_once "../controllers/ControlConsultaController.php";
+        (new ControlConsultaController())->completarFichaAjax();
+        break;
+    case "fechas_control_ajax":
+        require_once "../controllers/ControlConsultaController.php";
+        (new ControlConsultaController())->fechasAjax();
+        break;
+    case "sugerir_tratamientos_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->sugerirAjax();
         break;
     case "validar_prescripcion_ajax":
         require_once "../controllers/PrescripcionController.php";

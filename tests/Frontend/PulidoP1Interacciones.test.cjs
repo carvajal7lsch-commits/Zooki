@@ -38,7 +38,7 @@ test('P1: reprogramar usa su indicador local y la reserva conserva el indicador 
     const fuente = leer('public/js/calendario.js');
     const codigo = fuente.slice(fuente.indexOf('async function postCita('), fuente.indexOf('async function iniciarAtencionCita'));
     const peticiones = [];
-    const c = { URLSearchParams, comandosC3: {}, fetch: async (url, opciones) => { peticiones.push(opciones); return { json: async () => ({ success: true }) }; } };
+    const c = { URLSearchParams, comandosC3: {}, document: { querySelectorAll: () => [] }, fetch: async (url, opciones) => { peticiones.push(opciones); return { json: async () => ({ success: true }) }; } };
     vm.createContext(c);
     vm.runInContext(codigo, c);
     await c.postCita('reprogramar_cita_ajax', { id_cita: 1 });

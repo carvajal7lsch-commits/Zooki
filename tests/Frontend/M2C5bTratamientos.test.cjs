@@ -348,11 +348,10 @@ test('las alergias y alertas de la mascota se cargan en el modal antes de prescr
     assert.deepEqual(plano(p.llamadas.alertas.at(-1)), { id: '1', nombre: 'Luna' });
 
     const modal = leer('views/vet/modal_consulta.php');
-    const plan = modal.slice(modal.indexOf('id="tabResolucion"'));
-    assert.ok(plan.indexOf('data-alertas-consulta') < plan.indexOf('data-tratamientos'), 'Arriba de los tratamientos');
+    assert.ok(modal.indexOf('data-alertas-consulta') < modal.indexOf('partials/consulta_pasos.php'), 'Alertas en la franja, antes del formulario');
     const atencion = leer('views/vet/atencion.php');
-    const paso = atencion.slice(atencion.indexOf('data-tratamientos data-avisos'));
-    assert.ok(paso.indexOf('data-alertas-medicas data-cargar') < paso.indexOf('data-agregar-tratamiento'), 'Atención también, en el paso de tratamientos');
+    assert.ok(atencion.indexOf('data-alertas-medicas data-cargar') < atencion.indexOf('partials/consulta_pasos.php'));
+    assert.doesNotMatch(leer('views/partials/consulta_pasos.php'), /data-alertas-medicas/, 'No repite alertas en tratamientos');
     assert.match(leer('views/vet/calendario.php'), /partials\/modal_alerta_medica\.php/, 'Calendario puede registrar una alergia desde el modal');
 });
 
@@ -412,8 +411,10 @@ test('el historial dice «Sin peso registrado» (C7) y nunca muestra el peso NUL
 test('las dos entradas usan la misma fila y el mismo componente, sin código en línea', () => {
     const modal = leer('views/vet/modal_consulta.php');
     const atencion = leer('views/vet/atencion.php');
-    for (const vista of [modal, atencion]) {
-        assert.match(vista, /partials\/consulta_tratamiento_fila\.php/);
+    for (const entrada of [modal, atencion]) {
+        assert.match(entrada, /partials\/consulta_pasos\.php/);
+        const vista = leer('views/partials/consulta_pasos.php');
+        assert.match(vista, /consulta_tratamiento_fila\.php/);
         assert.match(vista, /data-tratamientos data-avisos=/);
         assert.match(vista, /data-tratamientos-lista/);
         assert.match(vista, /data-agregar-tratamiento/);

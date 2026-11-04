@@ -1,0 +1,152 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const { buscarChrome, abrirChrome } = require('./apoyo/chrome-cdp.cjs');
+const { servidorAgendaVet } = require('./apoyo/agenda-vet-servidor.cjs');
+const fuente = fs.readFileSync('public/js/calendario.js', 'utf8');
+const reglas = fuente.slice(fuente.indexOf('function llegadaCitaTardia('), fuente.indexOf('function mostrarDetalleCita('));
+const detalle = fuente.slice(fuente.indexOf('function mostrarDetalleCita('), fuente.indexOf('function manejarClicPanel('));
+const inicio = new Date('2030-01-07T09:00:00');
+
+test('Ajustar nivel: motivo rápido sin detalle valida y envía la elección', { skip: !buscarChrome() }, async () => {
+    const servidor = await servidorAgendaVet();
+    servidor.citas[2].estado = 'confirmada';
+    servidor.citas[2].hora_llegada = servidor.citas[2].fecha + ' 10:00:00';
+    const nav = await abrirChrome(buscarChrome());
+    try {
+        await nav.enviar('Page.navigate', { url: servidor.url });
+        await nav.esperar('document.readyState === "complete" && typeof calendarInstance !== "undefined" && calendarInstance?.getEvents().length > 0');
+        await nav.evaluar('seleccionarDia(new Date()); document.querySelector(\'[data-llegada-accion="ajustar"]\').click();');
+        const seleccion = await nav.evaluar(`(() => {
+            const form = document.querySelector('.llegada-dialogo[open] form');
+            const motivo = form.elements.motivo;
+            const guardar = form.querySelector('[type="submit"]');
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            const sinMotivo = guardar.disabled;
+            const niveles = [...form.querySelectorAll('[data-llegada-nivel]')].map(boton => {
+                boton.click();
+                return { valor: form.elements.nivel.value, elegidos: form.querySelectorAll('[data-llegada-nivel][aria-pressed="true"]').length };
+            });
+            const rapido = form.querySelector('.motivos-revision button');
+            rapido.click();
+            const conRapido = !guardar.disabled && motivo.value === '' && !motivo.required && motivo.validationMessage === '' && form.querySelector('[data-error-campo="motivo"]').textContent === '';
+            rapido.click();
+            const sinEleccion = guardar.disabled;
+            motivo.value = 'Evaluación veterinaria';
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            const soloDetalle = !guardar.disabled;
+            motivo.value = '';
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            rapido.click();
+            form.querySelector('[data-llegada-nivel="naranja"]').click();
+            guardar.click();
+            return { sinMotivo, niveles, conRapido, sinEleccion, soloDetalle };
+        })()`);
+        assert.deepEqual(seleccion, {
+            sinMotivo: true,
+            niveles: ['verde', 'amarillo', 'naranja', 'rojo'].map(valor => ({ valor, elegidos: 1 })),
+            conRapido: true,
+            sinEleccion: true,
+            soloDetalle: true,
+        });
+        await nav.esperar('!document.querySelector(".llegada-dialogo[open]")');
+        const envio = servidor.llamadas.filter(llamada => llamada.accion === 'ajustar_llegada_ajax');
+        assert.equal(envio.length, 1);
+        assert.match(envio[0].cuerpo, /name="nivel"\r\n\r\nnaranja/);
+        assert.match(envio[0].cuerpo, /name="motivo"\r\n\r\nValoración clínica realizada/);
+        assert.deepEqual(nav.errores, []);
+    } finally {
+        await nav.cerrar();
+        await servidor.cerrar();
+    }
+});
+
+test('Calendario usa la tolerancia de clínica y la llegada real, con límite inclusivo', () => {
+    const contexto = vm.createContext({ Date });
+    vm.runInContext(reglas, contexto);
+    const ev = { start: inicio, extendedProps: { tolerancia_llegada_min: 10 } };
+    assert.equal(contexto.llegadaCitaTardia(ev, new Date('2030-01-07T09:10:00')), false);
+    assert.equal(contexto.llegadaCitaTardia(ev, new Date('2030-01-07T09:10:01')), true);
+    ev.extendedProps.tolerancia_llegada_min = 20;
+    assert.equal(contexto.llegadaCitaTardia(ev, new Date('2030-01-07T09:15:00')), false);
+    ev.extendedProps.hora_llegada = '2030-01-07 09:08:00';
+    assert.equal(contexto.llegadaCitaTardia(ev, new Date('2030-01-07T19:00:00')), false);
+});
+
+function presentar(estado, llegada = '', hoy = true) {
+    const elementos = { agendaPanelHead: {}, agendaPanelBody: {} };
+    const ev = { id: '31', start: inicio, extendedProps: { tipo: 'cita', estado, id_veterinario: '2', tolerancia_llegada_min: 10, hora_llegada: llegada } };
+    class Reloj extends Date {
+        constructor(...args) {
+            super(...(args.length ? args : ['2030-01-07T19:00:00']));
+        }
+    }
+    const contexto = vm.createContext({
+        Date: Reloj,
+        window: {},
+        horaEstimadaAgenda: () => '',
+        chipRetrasoAgenda: () => '',
+        document: { getElementById: id => elementos[id] },
+        calendarInstance: { getEventById: () => ev },
+        MINUTOS_ANTES_DE_INICIAR: 15,
+        ESTADOS_CITA: {},
+        esDiaPasado: () => !hoy,
+        esHoy: () => hoy,
+        isUsuarioVeterinario: () => true,
+        getUsuarioId: () => '2',
+        cambioPermitidoCalendario: () => false,
+        marcarCitaCalendario: () => {},
+        esc: valor => String(valor),
+        capitalizar: valor => valor,
+        formatFecha: () => '7 de enero',
+        formatHora: () => '09:00',
+    });
+    vm.runInContext(reglas + detalle, contexto);
+    contexto.mostrarDetalleCita('31');
+    return elementos.agendaPanelBody.innerHTML;
+}
+
+test('la reserva tardía ofrece Resolver llegada y una atención antigua conserva Registrar consulta', () => {
+    assert.match(presentar('confirmada'), /data-accion="resolver_llegada"/);
+    assert.doesNotMatch(presentar('confirmada'), /data-accion="iniciar"/);
+    assert.match(presentar('confirmada', '2030-01-07 09:08:00'), /data-accion="iniciar"/);
+    assert.match(presentar('sin_cerrar', '', false), /Registrar consulta/);
+    assert.doesNotMatch(presentar('sin_cerrar', '', false), /data-accion="resolver_llegada"|data-accion="iniciar"/);
+});
+
+test('Resolver llegada cierra la hoja móvil y enfoca el caso sin registrar presencia automáticamente', () => {
+    const pasos = [];
+    const contexto = vm.createContext({
+        document: {
+            getElementById: () => ({ open: true, close: () => pasos.push('cerrar detalle') }),
+            querySelector: selector => ({ click: () => pasos.push(selector), focus: () => pasos.push('enfocar pestaña') }),
+            dispatchEvent: evento => pasos.push(evento.detail.idCita),
+        },
+        CustomEvent: class {
+            constructor(_, datos) {
+                this.detail = datos.detail;
+            }
+        },
+    });
+    vm.runInContext(reglas, contexto);
+    contexto.resolverLlegadaCita('31');
+    assert.deepEqual(pasos, ['cerrar detalle', '[data-agenda-vista="citas"]', '31']);
+});
+
+test('el enlace directo abre Resolver llegada en Citas sin acreditar presencia', { skip: !buscarChrome() }, async () => {
+    const servidor = await servidorAgendaVet();
+    const nav = await abrirChrome(buscarChrome());
+    try {
+        for (const [width, height] of [[1366, 768], [390, 844]]) {
+            await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+            await nav.enviar('Page.navigate', { url: servidor.url + '?llegada_cita=3' });
+            await nav.esperar("document.querySelector('.llegada-dialogo[open]')?.textContent.includes('Registrar llegada')");
+            assert.equal(servidor.llamadas.filter(l => l.accion === 'registrar_llegada_ajax').length, 0, 'Abrir no marca presencia');
+            assert.deepEqual(nav.errores, []);
+        }
+    } finally {
+        await nav.cerrar();
+        await servidor.cerrar();
+    }
+});

@@ -11,6 +11,8 @@ require_once __DIR__ . '/../helpers/ValidadorContextoClinico.php';
 /** C4: evaluación/revisión con huella vigente, sin confundir solicitud con presencia. */
 final class SolicitudAgenda extends ModeloClinica
 {
+    /** HU-4.13: tres alternativas visibles; naranja se asigna siempre al primer hueco. */
+    public const SUGERENCIAS_NARANJA = 3;
     private Closure $reloj;
 
     public function __construct(PDO $db, ?callable $reloj = null)
@@ -106,7 +108,7 @@ final class SolicitudAgenda extends ModeloClinica
         $sintomas = ValidadorTriage::episodios($entrada['sintomas'] ?? [], false, $grafo);
         $exposiciones = ValidadorTriage::episodios($entrada['exposiciones'] ?? [], true, $grafo);
         if (!$sintomas && !$exposiciones) {
-            throw new InvalidArgumentException('Confirma una marca del catálogo u Otro / no sé. La nota no calcula.');
+            throw new InvalidArgumentException('Selecciona un síntoma del catálogo u Otro síntoma y explica qué observaste.');
         }
         $ahora = ($this->reloj)();
         if ($fechaEvaluacion !== null) {
@@ -141,6 +143,11 @@ final class SolicitudAgenda extends ModeloClinica
         foreach (['sintomas', 'exposiciones', 'vacunacion', 'dias_desde_celo'] as $campo) {
             if (array_key_exists($campo, $datos)) {
                 $entrada[$campo] = $datos[$campo];
+            }
+        }
+        foreach ((array) ($entrada['sintomas'] ?? []) as $episodio) {
+            if (is_array($episodio) && ($episodio['codigo'] ?? '') === 'sintoma.otro_no_se') {
+                $entrada['otro_sintoma'] = ValidadorTriage::detalleOtro($datos['otro_sintoma'] ?? '');
             }
         }
         $this->autorizar($entrada);
@@ -202,9 +209,6 @@ final class SolicitudAgenda extends ModeloClinica
         if (!hash_equals($fila['huella_entrada'], $huella) || ($fila['estado_revision'] === 'resuelta' && !hash_equals($huella, $fila['huella_revision']))) {
             throw new InvalidArgumentException('La ficha o el conocimiento cambiaron. Se necesita una nueva evaluación y revisión.');
         }
-        if ($fila['estado_revision'] === 'pendiente') {
-            throw new InvalidArgumentException('Se requiere revisión veterinaria antes de ofrecer horarios.');
-        }
         return $fila;
     }
 
@@ -214,12 +218,12 @@ final class SolicitudAgenda extends ModeloClinica
             $this->denegarAcceso('solicitudes_agenda', $id, 'Revisión solo veterinaria');
         }
         $motivo = trim($motivo);
-        if (!in_array($nivel, ['verde', 'amarillo', 'naranja', 'rojo'], true) || $motivo === '' || mb_strlen($motivo) > 255) {
+        if (!in_array($nivel, ['verde', 'amarillo', 'naranja', 'rojo'], true) || $motivo === '' || mb_strlen($motivo) > 255 || preg_match('/\p{C}/u', $motivo)) {
             throw new InvalidArgumentException('Indica nivel y motivo de revisión de 1 a 255 caracteres.');
         }
         $fila = $this->obtener($id);
         $e = json_decode($fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR)['entrada'];
-        return $this->unidad($e, function () use ($id, $nivel, $motivo, $huella, $clave): array {
+        $revisar = function () use ($id, $nivel, $motivo, $huella, $clave): array {
             $fila = $this->obtener($id);
             $op = $this->conMismoAlcance(new OperacionAgenda($this->conn));
             $op->ejecutar('revisar_agenda', $clave, [$id, $nivel, $motivo, $huella], function () use ($fila, $id, $nivel, $motivo, $huella): array {
@@ -234,17 +238,24 @@ final class SolicitudAgenda extends ModeloClinica
                         throw new InvalidArgumentException('La evaluación cambió. Vuelve a calcular antes de revisar.');
                     }
                 }
-                $estado = $nivel === 'rojo' ? 'derivada' : 'abierta';
+                if ($fila['id_cita'] !== null) {
+                    require_once __DIR__ . '/LlegadaAgenda.php';
+                    (new LlegadaAgenda($this->conn, $this->reloj))->ajustar((int) $fila['id_cita'], $nivel, $motivo, null);
+                }
+                // La reclasificación roja ya creó su caso de Urgencias; cerrar el origen evita dos entradas.
+                $estado = $fila['id_cita'] !== null ? ($nivel === 'rojo' ? 'retirada' : 'asignada') : ($nivel === 'rojo' ? 'derivada' : 'abierta');
                 $this->conn->prepare("UPDATE solicitudes_agenda SET nivel_aprobado=?,estado_revision='resuelta',huella_revision=?,id_revisor=?,fecha_revision=?,motivo_revision=?,estado=?,version_solicitud=version_solicitud+1 WHERE id_solicitud=? AND id_clinica=?")
                     ->execute([$nivel, $actual, Contexto::idUsuario(), ($this->reloj)()->format('Y-m-d H:i:s'), $motivo, $estado, $id, $this->clinica()]);
-                if ($nivel === 'rojo') {
+                if ($nivel === 'rojo' && $fila['id_cita'] === null) {
                     (new EventoAgenda($this->conn, $this->clinica()))->interno('DERIVACION_ROJA', null, $id, (int) $fila['version_solicitud'] + 1, null, Roles::VETERINARIO);
                 }
                 $this->auditar($id, ['nivel_calculado' => $fila['nivel_calculado']], ['nivel_aprobado' => $nivel, 'motivo' => $motivo], 'Revisión veterinaria (RE-4.18.1/2)');
                 return ['id_solicitud' => $id];
             });
             return $this->respuesta($this->obtener($id));
-        });
+        };
+        require_once __DIR__ . '/LlegadaAgenda.php';
+        return (new LlegadaAgenda($this->conn, $this->reloj))->conRevisionDeSolicitud($e, $revisar);
     }
 
     public function respuesta(array $fila): array
@@ -258,9 +269,10 @@ final class SolicitudAgenda extends ModeloClinica
         return ['id_solicitud' => (int) $fila['id_solicitud'], 'nivel' => $nivel, 'nivel_calculado' => $fila['nivel_calculado'],
             'revision' => $fila['estado_revision'] === 'pendiente', 'estado_revision' => $fila['estado_revision'], 'huella' => $fila['huella_entrada'],
             'contagio' => (bool) $fila['contagio'], 'clinica_cerrada' => $cerrada, 'telefono_urgencias' => $q->fetchColumn() ?: '',
-            'reservable' => !$cerrada && !empty($contexto['entrada']['id_veterinario']) && !empty($contexto['entrada']['id_tipo_cita']) && $nivel !== 'rojo' && $fila['estado_revision'] !== 'pendiente', 'resultado' => $contexto['resultado'],
+            'reservable' => $fila['estado'] === 'abierta' && !$cerrada && !empty($contexto['entrada']['id_veterinario']) && !empty($contexto['entrada']['id_tipo_cita']) && $nivel !== 'rojo', 'resultado' => $contexto['resultado'],
             'message' => ($cerrada ? 'Clínica cerrada. Contacta al teléfono de urgencias o a un servicio 24 horas. ' : '')
-                . ($nivel === 'rojo' ? 'Emergencia: contacta de inmediato a la clínica o a un servicio de urgencias 24 horas. Este aviso no es una reserva ni acredita llegada.' : ($fila['estado_revision'] === 'pendiente' ? 'Se requiere revisión veterinaria antes de ver horarios.' : 'Evaluación lista para consultar disponibilidad.'))];
+                . ($nivel === 'rojo' ? 'Emergencia: contacta de inmediato a la clínica o a un servicio de urgencias 24 horas. Este aviso no es una reserva ni acredita llegada.' : ($fila['estado_revision'] === 'pendiente' ? 'Nivel provisional: un veterinario lo confirmará. Ya puedes elegir horario.' : 'Evaluación lista para consultar disponibilidad.'))
+                . ($nivel === 'naranja' ? ' Nivel naranja: se le asigna el primer horario libre para atenderlo cuanto antes' : '')];
     }
 
     public function horas(int $id, array $seleccion): array
@@ -282,17 +294,18 @@ final class SolicitudAgenda extends ModeloClinica
             }
             $horas = $this->disponibilidad()->sugerir((int) $seleccion['id_veterinario'], (int) $seleccion['id_mascota'], $seleccion['fecha'], (int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos'], null, true);
         }
-        return ($fila['nivel_aprobado'] ?? $fila['nivel_calculado']) === 'verde' ? $horas : array_slice($horas, 0, 1);
+        return ($fila['nivel_aprobado'] ?? $fila['nivel_calculado']) === 'naranja' ? array_slice($horas, 0, self::SUGERENCIAS_NARANJA) : $horas;
     }
 
     public function reservar(array $datos): array
     {
+        $this->conMismoAlcance(new Cita($this->conn, $this->reloj))->validarModoLlegada($datos);
         $fila = $this->obtener((int) ($datos['id_solicitud'] ?? 0));
         $entrada = json_decode($fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR)['entrada'];
         $this->autorizar($entrada, true);
         return $this->unidad($entrada, function () use ($fila, $entrada, $datos): array {
             $this->autorizar($entrada, true);
-            $comando = array_intersect_key($datos, array_flip(['id_solicitud','id_mascota','id_veterinario','id_tipo_cita','fecha','hora','motivo']));
+            $comando = array_intersect_key($datos, array_flip(['id_solicitud','id_mascota','id_veterinario','id_tipo_cita','fecha','hora','motivo','modo_llegada']));
             $operacion = $this->conMismoAlcance(new OperacionAgenda($this->conn));
             if (!$operacion->tieneResultado('confirmar_agenda', $datos['clave_operacion'] ?? null) && ($datos['ignore_warning'] ?? '') !== '1') {
                 $actual = $this->vigente((int) $fila['id_solicitud'], $datos);
@@ -313,7 +326,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if ($nivel === 'rojo') {
                     return $this->respuesta($actual);
                 }
-                if ($entrada['fecha'] < ($this->reloj)()->format('Y-m-d') || ($nivel === 'verde' && IntervalosAgenda::fecha($entrada['fecha'] . ' ' . Cita::normalizarHora((string) ($datos['hora'] ?? ''))) <= ($this->reloj)())) {
+                if ($entrada['fecha'] < ($this->reloj)()->format('Y-m-d') || ($nivel !== 'naranja' && IntervalosAgenda::fecha($entrada['fecha'] . ' ' . Cita::normalizarHora((string) ($datos['hora'] ?? ''))) <= ($this->reloj)())) {
                     throw new InvalidArgumentException('La fecha y hora seleccionadas ya pasaron.');
                 }
                 $citas = $this->conMismoAlcance(new Cita($this->conn, $this->reloj));
@@ -338,7 +351,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if (!$horas) {
                     throw new HorarioOcupado('No hay horarios compatibles. Elige otra fecha o veterinario.');
                 }
-                $hora = $nivel === 'verde' ? Cita::normalizarHora((string) ($datos['hora'] ?? '')) : Cita::normalizarHora($horas[0]);
+                $hora = $nivel !== 'naranja' ? Cita::normalizarHora((string) ($datos['hora'] ?? '')) : Cita::normalizarHora($horas[0]);
                 $motivo = trim((string) ($datos['motivo'] ?? ''));
                 if (mb_strlen($motivo) > 255) {
                     throw new InvalidArgumentException('El motivo admite hasta 255 caracteres.');
@@ -346,7 +359,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if (Contexto::rolActivo() === Roles::PROPIETARIO) {
                     $this->conMismoAlcance(new Mascota($this->conn))->vincular((int) $entrada['id_mascota'], (int) Contexto::idUsuario());
                 }
-                $id = $citas->registrarClasificada($entrada + ['hora' => $hora, 'motivo' => $motivo, 'estado' => 'confirmada'], $nivel, $sobrecupo);
+                $id = $citas->registrarClasificada($entrada + ['hora' => $hora, 'motivo' => $motivo, 'estado' => 'confirmada', 'modo_llegada' => $datos['modo_llegada'] ?? ''], $nivel, $sobrecupo);
                 $this->conn->prepare('UPDATE citas SET contexto_triage=?,prioridad_calculada=?,motivo_ajuste_prioridad=?,id_bloque=? WHERE id_cita=? AND id_clinica=?')
                     ->execute([$actual['contexto_triage'], $actual['nivel_calculado'], $actual['motivo_revision'], $bloque, $id, $this->clinica()]);
                 if ($nivel === 'naranja') {
@@ -435,7 +448,7 @@ final class SolicitudAgenda extends ModeloClinica
         if (!in_array(Contexto::rolActivo(), [Roles::VETERINARIO, Roles::ADMIN], true)) {
             $this->denegarAcceso('solicitudes_agenda', null, 'Bandeja clínica no disponible en el portal');
         }
-        $condicion = $historial ? "s.estado_revision='resuelta'" : "s.estado_revision='pendiente' AND s.estado='abierta'";
+        $condicion = $historial ? "s.estado_revision='resuelta'" : "s.estado_revision='pendiente' AND s.estado IN ('abierta','asignada')";
         $q = $this->conn->prepare("SELECT s.id_solicitud,m.nombre,s.nivel_calculado,s.nivel_aprobado,s.huella_entrada,s.contexto_triage FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_clinica=? AND $condicion ORDER BY s.fecha_registro,s.id_solicitud");
         $q->execute([$this->clinica()]);
         $solicitudes = $q->fetchAll(PDO::FETCH_ASSOC);

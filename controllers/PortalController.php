@@ -7,11 +7,13 @@ require_once __DIR__ . '/../models/VinculosPropietario.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/HorarioAtencion.php';
 require_once __DIR__ . '/../helpers/ReglaAtencion.php';
+require_once __DIR__ . '/../helpers/ReglaCambioCita.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
+require_once __DIR__ . '/../helpers/PresentacionEstimacionAgenda.php';
 require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/ProximaDosis.php';
 require_once __DIR__ . '/../helpers/PresentacionPortal.php';
@@ -112,8 +114,12 @@ class PortalController
     private function conCancelacion(array $citas, array $vinculadas): array
     {
         foreach ($citas as &$cita) {
+            $cita['aviso_estimacion'] = PresentacionEstimacionAgenda::aviso($cita);
             $abierta = in_array($cita['estado'], self::CITAS_ABIERTAS, true);
-            $cita['cancelable'] = $abierta && in_array((int) $cita['id_clinica'], $vinculadas, true);
+            $legitima = $abierta && in_array((int) $cita['id_clinica'], $vinculadas, true);
+            $plazo = ReglaCambioCita::permite($cita, new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA)), (int) ($cita['anticipacion_cambios_min'] ?? ReglaCambioCita::DEFECTO));
+            $cita['cancelable'] = $legitima && $plazo;
+            $cita['cambio_vencido'] = $legitima && !$plazo;
         }
         unset($cita);
         return $citas;
@@ -213,6 +219,7 @@ class PortalController
                     'id_cita' => (int) $cita['id_cita'],
                     'fecha' => $cita['fecha'],
                     'hora' => $cita['hora'],
+                    'aviso_estimacion' => PresentacionEstimacionAgenda::aviso($cita),
                     'estado' => $cita['estado'],
                     'nombre_mascota' => $cita['nombre_mascota'],
                     'foto_mascota' => $cita['url_foto'] ? 'uploads/mascotas/' . $cita['url_foto'] : null,

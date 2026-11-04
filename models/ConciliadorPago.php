@@ -9,7 +9,7 @@ require_once __DIR__ . '/../helpers/ConfiguracionWompi.php';
 /** RE-0.5.13–16/23/24: GET fuera del candado; acreditación y auditoría atómicas. */
 final class ConciliadorPago
 {
-    public function __construct(private PDO $db, private ClienteWompi $cliente, private ConfiguracionWompi $configuracion, private mixed $reloj = null)
+    public function __construct(private PDO $db, private ClienteWompi $cliente, private ConfiguracionWompi $configuracion, private mixed $reloj = null, private ?bool $ofertaLanzamiento = null)
     {
     }
 
@@ -208,7 +208,10 @@ final class ConciliadorPago
             // D3: el año comprado empieza en el siguiente vencimiento, no en el mes del alta original.
             $mes = (int) $inicio->format('m');
         }
-        $fin = VigenciaSuscripcion::extender($inicio, $pago['ciclo'], $dia, $mes);
+        // RN-008: el candado de clínica y el periodo único impiden reutilizar la oferta en un replay.
+        $meses = TarifaSuscripcion::mesesConcedidos($pago['ciclo'], $s->tienePagosAprobados((int)$pago['id_pago']), $this->ofertaLanzamiento);
+        $oferta = $pago['ciclo'] === 'mensual' && $meses === 2;
+        $fin = VigenciaSuscripcion::extender($inicio, $pago['ciclo'], $dia, $mes, $pago['ciclo'] === 'mensual' ? $meses : 1);
         if ($fin->format('Y') > '9999') {
             throw new RuntimeException('Periodo fuera del calendario permitido.');
         }
@@ -229,7 +232,7 @@ final class ConciliadorPago
         $this->db->prepare("UPDATE pagos_suscripcion SET estado='confirmado',confirmado_en=? WHERE id_pago=? AND id_clinica=?")
             ->execute([$ahora->format('Y-m-d H:i:s'), $pago['id_pago'], $pago['id_clinica']]);
         $s->auditar('suscripciones', (int) $pago['id_suscripcion'], ['version' => $pago['version_periodo_base'], 'automatico' => (int) $estado['suscripcion']['cobro_automatico']], ['fin' => $fin->format('Y-m-d H:i:s'), 'id_pago' => $pago['id_pago'], 'automatico' => $automatico], 'Acreditación Wompi sin cambiar suspensión administrativa');
-        $s->auditar('pagos_suscripcion', (int) $pago['id_pago'], ['estado' => $pago['estado']], ['estado' => 'confirmado'], 'Pago confirmado por GET autenticado Wompi');
+        $s->auditar('pagos_suscripcion', (int) $pago['id_pago'], ['estado' => $pago['estado']], ['estado' => 'confirmado', 'meses_concedidos' => $meses, 'oferta_lanzamiento' => $oferta ? 'paga_1_lleva_2' : null], 'Pago confirmado por GET autenticado Wompi');
         if ($estado['clinica']['estado'] !== 'activa') {
             $s->auditar('clinicas', (int) $pago['id_clinica'], [], ['incidencia' => 'PAGO_CON_CLINICA_NO_ACTIVA'], 'Pago conservado; suspensión/baja administrativa intacta');
         }

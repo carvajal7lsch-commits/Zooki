@@ -252,13 +252,13 @@ test('H8: temperatura y frecuencias tienen la misma restricción con sus límite
 
 test('H8: las dos entradas usan el helper en los cuatro signos y el aviso valida su rango junto al campo', () => {
     for (const vista of ['views/vet/modal_consulta.php', 'views/vet/atencion.php']) {
-        const html = leer(vista);
-        for (const signo of Object.keys(SIGNOS)) {
-            assert.match(html, new RegExp(`ValidadorClinico::atributosSigno\\('${signo}'\\)`), `${vista}: ${signo}`);
-            assert.match(html, new RegExp(`ayudaSigno\\('${signo}'\\)`), `${vista}: la ayuda de ${signo}`);
-        }
-        assert.doesNotMatch(html, /type="number"/, `${vista}: sin el campo numérico del navegador`);
+        assert.match(leer(vista), /partials\/consulta_pasos\.php/);
     }
+    const html = leer('views/partials/consulta_pasos.php');
+    for (const signo of Object.keys(SIGNOS)) assert.ok(html.includes("'" + signo + "'"), signo);
+    assert.match(html, /ValidadorClinico::atributosSigno\(\$campoVital\)/);
+    assert.match(html, /ValidadorClinico::AVISOS_CONSULTA\[\$campoVital\]/);
+    assert.doesNotMatch(html, /type="number"/);
 
     const documento = crearDocumento();
     const contexto = { document: documento, console, window: {} };
@@ -422,6 +422,13 @@ test('H6: el buscador de nodos de «Registrar alergia» se maneja con el teclado
     const zona = colgar(form, 'div', { alertaZonaNodo: '' }, { hidden: true });
     const envoltura = colgar(zona, 'div', { alertaBuscar: '' });
     const buscador = colgar(envoltura, 'input', { alertaCampo: 'busqueda' }, { type: 'search' });
+    // RE-2.1.5 vigente: el enlace opcional fue sustituido por nombre seleccionado y detalles libres.
+    colgar(form, 'label', { alertaDescripcionTitulo: '' });
+    colgar(form, 'button', { alertaEnviar: '' }, { type: 'submit' });
+    colgar(zona, 'label', { alertaNombreTitulo: '' });
+    colgar(zona, 'input', { alertaNoEncuentro: '' }, { name: 'no_encuentro_nombre', type: 'checkbox', value: '1' });
+    colgar(zona, 'small', { alertaAviso: 'busqueda' });
+    colgar(zona, 'small', { alertaNombreAviso: '' });
     colgar(zona, 'div', { alertaNodoElegido: '' }, { hidden: true });
     const lista = colgar(zona, 'div', { alertaSugerencias: '' }, { hidden: true });
     colgar(form, 'p', { alertaResultado: '' });
@@ -507,18 +514,19 @@ test('H7: los diagnósticos sugeridos son filas compactas que se expanden con lo
     assert.ok(campo.enfocado, 'Y deja editarlo');
 });
 
-test('H7: en Atención cada paso es el único que desplaza y las etiquetas no se montan', () => {
+test('RE-2.1.6: en Atención desplaza la página y las etiquetas no se montan', () => {
     const css = leer('public/css/atencion.css');
     const paso = css.match(/\n\.atencion__paso \{[^}]*\}/)[0];
-    assert.match(paso, /overflow-y: auto;/);
-    assert.match(paso, /overscroll-behavior: contain;/);
+    assert.doesNotMatch(paso, /overflow-y:\s*(auto|scroll)/);
+    assert.doesNotMatch(paso, /overscroll-behavior:\s*contain/);
     assert.doesNotMatch(css, /tratamientos__lista/, 'La lista de tratamientos ya no tiene su propio scroll');
     const consulta = leer('public/css/consulta-clinica.css');
     assert.doesNotMatch(consulta.match(/\n\.consulta-sugerencias__lista \{[^}]*\}/)[0], /overflow|max-height/);
     assert.match(consulta, /\.consulta-campo--crece \{\s*flex: 1 0 auto;/, 'El campo crece, pero no se encoge por debajo de su contenido');
-    const vista = leer('views/vet/atencion.php');
-    assert.match(vista, /<label for="atencionDiagnostico" class="consulta-campo__etiqueta">Diagnóstico <\?= \$obligatorio \?><\/label>/);
-    assert.match(vista, /<div class="consulta-fila-2">[\s\S]*?Plan \/ recomendaciones[\s\S]*?Observaciones/);
+    const vista = leer('views/partials/consulta_pasos.php');
+    assert.match(vista, /Diagnóstico <span class="consulta-obligatorio"/);
+    assert.match(vista, /data-consulta-paso="1"[\s\S]*Otras indicaciones/);
+    assert.match(vista, /data-consulta-paso="2"[\s\S]*Observaciones/);
     assert.doesNotMatch(vista, /class="campo campo--crece"[\s\S]*?name="diagnostico"/);
 });
 
@@ -588,11 +596,11 @@ test('H5: el botón principal va en el azul de marca y la mascota se ve con el a
     const atencion = leer('views/vet/atencion.php');
     assert.match(atencion, /class="atencion__btn atencion__btn--primario" id="btnFinalizarAtencion"/);
     assert.doesNotMatch(atencion + leer('public/css/atencion.css'), /--exito/);
-    assert.match(atencion, /avatar-iniciales paciente__avatar[^>]*><\?= \$e\(PresentacionPlataforma::iniciales/);
+    assert.match(atencion, /atencion-franja__anillo[\s\S]*PresentacionPlataforma::iniciales/);
     assert.match(atencion, /<\?php if \(\$tieneFoto\): \?>\s*<img src="<\?= \$e\(\$fotoMascota\) \?>"/, 'Con foto, la foto');
     const modal = leer('views/vet/modal_consulta.php');
     assert.match(modal, /<span class="avatar-iniciales consulta-avatar" id="consultationPetInicial" aria-hidden="true"><\/span>/);
-    assert.match(modal, /class="btn-modal-primary"><i class="fas fa-floppy-disk" aria-hidden="true"><\/i> Guardar consulta/);
+    assert.match(modal, /class="btn-modal-primary"[^>]*><i class="fas fa-floppy-disk" aria-hidden="true"><\/i> Guardar consulta/);
     assert.match(leer('public/css/consulta-clinica.css'), /\.consulta-modal \.consulta-modal__pie \.btn-modal-primary \{[^}]*background: var\(--z-primary\);/);
 
     // Al abrir el modal, la inicial de la mascota (la misma regla de las tarjetas de propietarios).
@@ -616,10 +624,13 @@ test('H5, H9: campos con el estilo del sistema, obligatorios con asterisco y ayu
     const modal = leer('views/vet/modal_consulta.php');
     const atencion = leer('views/vet/atencion.php');
     const fila = leer('views/partials/consulta_tratamiento_fila.php');
-    for (const vista of [modal, atencion]) {
-        assert.match(vista, /class="consulta-boton consulta-boton--suave"[^>]*data-agregar-tratamiento>\s*<i class="fas fa-plus" aria-hidden="true"><\/i> Agregar medicamento/);
+    for (const entrada of [modal, atencion]) {
+        assert.match(entrada, /partials\/consulta_pasos\.php/);
+        assert.match(entrada, /consulta-formulario/);
+        const vista = leer('views/partials/consulta_pasos.php');
+        assert.match(vista, /class="consulta-boton consulta-boton--suave"[^>]*data-agregar-tratamiento[^\n]*>\+ Agregar medicamento/);
         assert.match(vista, /class="consulta-ayuda"/);
-        assert.match(vista, /consulta-formulario/);
+
         assert.doesNotMatch(vista, /btn-add-treatment|>Obligatorio\.</);
     }
     assert.equal((fila.match(/<\?= \$obligatorio \?>/g) || []).length, 6, 'Medicamento, dosis, vía, duración, inicio y conciliación');

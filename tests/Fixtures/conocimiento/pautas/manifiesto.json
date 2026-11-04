@@ -1,0 +1,12 @@
+{
+  "formato": 1,
+  "version": "prueba-sintetica-1",
+  "archivos": [
+    "fuentes.json",
+    "nodos.json",
+    "aristas.json",
+    "sinonimos.json",
+    "reglas.json"
+  ],
+  "limitaciones": "Conjunto sintético exclusivo de tests; no es conocimiento clínico."
+}

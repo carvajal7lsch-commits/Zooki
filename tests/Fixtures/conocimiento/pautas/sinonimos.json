@@ -1,0 +1,15 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sinonimo.prueba",
+    "nodo": "sintoma.prueba",
+    "texto": "Síntoma de prueba"
+  }
+]

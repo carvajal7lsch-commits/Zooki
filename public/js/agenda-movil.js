@@ -44,7 +44,7 @@
             boton.dataset.agendaMesFecha = clave;
             boton.setAttribute('aria-label', dia.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }));
             boton.setAttribute('aria-pressed', String(clave === (destinoFecha === 'cita' ? val('modal_fecha') : local(_selectedDate || new Date()))));
-            boton.disabled = destinoFecha === 'cita' && esDiaPasado(dia);
+            boton.disabled = diaNoReservable(dia) && (destinoFecha === 'cita' || !puntos.has(clave));
             if (puntos.has(clave)) boton.append(nodo('span', '', 'inicio-semana__punto'));
             cont.append(boton);
         }
@@ -90,11 +90,24 @@
             }
             const contenido = nodo('span', '', 'agenda-movil__paciente');
             contenido.append(nodo('strong', p.mascota_nombre || ev.title), nodo('small', [p.tipo_cita_nombre || TIPOS_EVENTO[p.tipo] || 'Consulta', p.propietario_nombre].filter(Boolean).join(' · ')));
+            if (p.tipo === 'cita') {
+                const chipRetraso = document.createElement('template');
+                chipRetraso.innerHTML = chipRetrasoAgenda(p.inicio_estimado, ev.start, true);
+                contenido.append(chipRetraso.content);
+            }
             const chip = nodo('span', p.tipo === 'cita' ? ESTADOS_CITA[p.estado] || p.estado : TIPOS_EVENTO[p.tipo], 'estado-pill');
             if (p.tipo === 'cita') chip.dataset.estado = p.estado;
             else chip.dataset.tipo = p.tipo;
             fila.append(hora, contenido, chip);
-            lista.append(fila);
+            const acciones = global.ZookiLlegadasCita?.botones(ev) || '';
+            if (acciones) {
+                const envoltura = nodo('div', '', 'agenda-cita-con-acciones');
+                envoltura.setAttribute('role', 'group');
+                envoltura.setAttribute('aria-label', 'Cita de ' + (p.mascota_nombre || ev.title));
+                envoltura.append(fila);
+                envoltura.insertAdjacentHTML('beforeend', acciones);
+                lista.append(envoltura);
+            } else lista.append(fila);
         });
         const filtrado = ['cita', 'vacunacion', 'desparasitacion'].some(tipo => !FilterManager.isActive(tipo));
         raiz.querySelector('[data-agenda-filtros-activos]').hidden = !filtrado;
@@ -106,6 +119,7 @@
         if (salida && salida.textContent !== String(cantidad)) salida.textContent = cantidad;
     }
     function prepararRevision(tarjeta) {
+        if (tarjeta.classList.contains('ah-tarjeta')) return;
         const form = tarjeta.querySelector('form');
         if (!form || tarjeta.querySelector('[data-triage-revisar]')) return;
         form.classList.add('agenda-revision-form');
@@ -121,7 +135,7 @@
             dialogo.querySelector('[data-agenda-revision-paciente]').textContent = tarjeta.querySelector('strong').textContent;
             const contexto = dialogo.querySelector('[data-agenda-revision-contexto]');
             contexto.replaceChildren();
-            tarjeta.querySelectorAll('.ah-item__texto, .ah-item__meta').forEach(dato => contexto.append(nodo('p', dato.textContent)));
+            tarjeta.querySelectorAll('.ah-item__texto, .ah-item__meta, .triage-detalle').forEach(dato => contexto.append(nodo('p', dato.textContent)));
             const select = form.querySelector('select');
             form.querySelector('input').id = 'agendaRevisionMotivo';
             const niveles = dialogo.querySelector('[data-agenda-revision-niveles]');
@@ -153,10 +167,11 @@
     function herramientasActualizadas() {
         if (!herramientas) return;
         const lista = herramientas.querySelector('[data-solicitudes-lista]');
-        if (herramientas.querySelector('[data-solicitudes-filtro]').value === '0') conteo('triage', lista.querySelectorAll('.ah-item').length);
-        conteo('llegadas', herramientas.querySelectorAll('[data-llegadas-citas] > article, [data-llegadas-solicitudes] > article, [data-llegadas-espera] > article').length);
-        conteo('reasignaciones', herramientas.querySelectorAll('[data-reasignaciones-lista] > article').length);
-        conteo('urgencias', herramientas.querySelectorAll('[data-rojos-lista] > article, [data-ingresos-lista] > article').length);
+        if (!global.ZookiPanelAgenda) {
+            if (herramientas.querySelector('[data-solicitudes-filtro]').value === '0') conteo('triage', lista.querySelectorAll('.ah-item').length);
+            conteo('reasignaciones', herramientas.querySelectorAll('[data-reasignaciones-lista] > article').length);
+            conteo('urgencias', herramientas.querySelectorAll('[data-rojos-lista] > article, [data-ingresos-lista] > article').length);
+        }
         lista.querySelectorAll('.ah-item').forEach(prepararRevision);
         if (revisionActual && !revisionActual.tarjeta.isConnected) document.getElementById('agendaRevisionMovil').close();
     }
@@ -195,15 +210,17 @@
             activarPanelAgenda(herramientas, proximo.dataset.agendaTab, true);
         }, true);
         tabs.querySelectorAll('[data-agenda-tab]').forEach(tab => {
-            if (tab.dataset.agendaTab === 'reasignaciones') {
+            if (tab.dataset.agendaTab === 'reasignaciones' && tab.querySelector('span').textContent === 'Reasignaciones') {
                 const titulo = tab.querySelector('span');
                 titulo.classList.add('agenda-solo-escritorio');
                 const corto = nodo('span', 'Reasignar', 'agenda-solo-movil');
                 titulo.after(corto);
             }
-            const contador = nodo('span', '0', 'agenda-conteo');
-            contador.dataset.agendaConteo = tab.dataset.agendaTab;
-            tab.append(contador);
+            if (!tab.querySelector('[data-agenda-conteo]')) {
+                const contador = nodo('span', '0', 'agenda-conteo');
+                contador.dataset.agendaConteo = tab.dataset.agendaTab;
+                tab.append(contador);
+            }
         });
         const filtros = document.querySelector('.agenda-toolbar__filters');
         const marcaFiltros = document.createComment('Filtros de escritorio');
@@ -212,6 +229,7 @@
         const marcaDetalle = document.createComment('Detalle de escritorio');
         detalle.before(marcaDetalle);
         const ajustar = () => {
+            global.ZookiPanelAgenda?.soltarHerramientas();
             document.body.classList.toggle('agenda-vet-movil', activa());
             if (activa()) {
                 panel.append(raiz);
@@ -227,6 +245,7 @@
                 if (agenda.getAttribute('aria-selected') === 'true') activarPanelAgenda(herramientas, 'triage', false);
                 panel.hidden = true;
             }
+            global.ZookiPanelAgenda?.ajustar(activa());
             calendarInstance?.updateSize();
             actualizar();
         };
@@ -263,6 +282,8 @@
             revisionActual = null;
         });
         raiz.addEventListener('click', e => {
+            // RNF-16: las citas de escritorio comparten data-agenda-evento, pero no abren la hoja móvil.
+            if (!activa()) return;
             const dia = e.target.closest('[data-inicio-semana-fecha]');
             if (dia) cambiarDia(fecha(dia.dataset.inicioSemanaFecha));
             const paso = e.target.closest('[data-inicio-semana-paso]');
@@ -283,7 +304,7 @@
             if (e.target.closest('[data-accion="volver"], [data-accion="reprogramar"]')) document.getElementById('agendaDetalleMovil').close();
         });
         document.addEventListener('click', e => {
-            if (e.target.closest('[data-agenda-nueva]')) abrirCitaModal(esDiaPasado(_selectedDate) ? new Date() : _selectedDate || new Date());
+            if (e.target.closest('[data-agenda-nueva]')) abrirCitaModal(_selectedDate && diaNoReservable(_selectedDate) ? new Date() : _selectedDate || new Date());
             if (e.target.closest('[data-cita-cambiar-dia]')) abrirMes('cita');
             const paso = e.target.closest('[data-agenda-mes-paso]');
             if (paso) {

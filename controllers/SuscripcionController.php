@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/FuentePago.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
 require_once __DIR__ . '/../models/RecuperadorCheckout.php';
 require_once __DIR__ . '/../helpers/EnlaceAjustes.php';
+require_once __DIR__ . '/../models/IntencionProfesional.php';
 
 final class SuscripcionController
 {
@@ -35,7 +36,10 @@ final class SuscripcionController
         Security::autorizar('admin_suscripcion');
         $servicio = new Suscripcion($this->db, (int) Contexto::clinicaActiva(), $this->reloj);
         $estadoSuscripcion = $servicio->estado();
+        $intencionProfesional = (new IntencionProfesional($this->db))->actual();
+        $cicloPreseleccionado = $intencionProfesional ?? (in_array($_GET['ciclo'] ?? null, ['mensual', 'anual'], true) ? $_GET['ciclo'] : 'mensual');
         $profesionalSuscripcion = $servicio->profesional();
+        $ofertaLanzamientoDisponible = TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && !$servicio->tienePagosAprobados();
         $pagoDisponible = false;
         $mensajePago = '';
         try {
@@ -74,7 +78,18 @@ final class SuscripcionController
         }
         $origenSuscripcion = ($_GET['desde'] ?? '') === 'inicio' ? 'inicio' : 'configuracion';
         return compact('estadoSuscripcion', 'profesionalSuscripcion', 'pagoDisponible', 'mensajePago', 'historialPagos',
-            'fuentePago', 'automaticoDisponible', 'mensajeAutomatico', 'requiereAceptacion', 'retornoPago', 'origenSuscripcion');
+            'fuentePago', 'automaticoDisponible', 'mensajeAutomatico', 'requiereAceptacion', 'retornoPago', 'origenSuscripcion', 'ofertaLanzamientoDisponible', 'intencionProfesional', 'cicloPreseleccionado');
+    }
+
+    public function descartarIntencion(): void
+    {
+        Security::autorizar('suscripcion_descartar_intencion');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !Csrf::validate()) {
+            http_response_code(403);
+            return;
+        }
+        (new IntencionProfesional($this->db))->descartar();
+        header('Location: index.php?action=admin_panel');
     }
 
     private function pagos(): PagoSuscripcion

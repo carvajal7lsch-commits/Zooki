@@ -1,7 +1,6 @@
 // Exporta la documentación publicada a PDF y Word con el formato de la
 // plantilla de documentos del proyecto (portada, ficha del documento,
-// encabezado y pie) y los rótulos de tablas y figuras de APA 7
-// (specs/exportar-documentos.md).
+// encabezado y pie) y los rótulos de tablas y figuras de APA 7.
 //
 //     node scripts/docs/exportar.mjs              # los 9 documentos
 //     node scripts/docs/exportar.mjs --solo=ers   # uno (o varios: --solo=ers,mer)

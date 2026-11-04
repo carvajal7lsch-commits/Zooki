@@ -31,12 +31,23 @@ final class ReglaAtencion
     }
 
     /**
-     * RN-407: el día de la cita, desde 15 minutos antes de su hora. Después de
-     * la hora se sigue pudiendo iniciar ese día: el paciente puede llegar tarde.
+     * RN-407: ventana del día, desde15 minutos antes; el inicio ordinario además
+     * comprueba llegadaFueraDeTolerancia para no omitir Sala (RN-426).
      */
     public static function puedeIniciar(string $fecha, string $hora, DateTimeImmutable $ahora): bool
     {
         return $ahora->format('Y-m-d') === $fecha && $ahora >= self::iniciaDesde($fecha, $hora);
+    }
+
+    /** RN-426: la llegada real manda; el retraso del veterinario no penaliza al paciente puntual. */
+    public static function llegadaFueraDeTolerancia(array $cita, int $minutos, DateTimeImmutable $ahora): bool
+    {
+        if (!in_array($cita['estado'], ['pendiente', 'confirmada'], true) || $cita['fecha'] !== $ahora->format('Y-m-d')) {
+            return false;
+        }
+        $limite = self::inicio($cita['fecha'], $cita['hora'])->modify('+' . $minutos . ' minutes');
+        $llegada = empty($cita['hora_llegada']) ? $ahora : new DateTimeImmutable($cita['hora_llegada'], new DateTimeZone(self::ZONA));
+        return $llegada > $limite;
     }
 
     /** Hora prevista de fin: hora_fin si es válida; si no, hora + duración. */

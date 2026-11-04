@@ -39,6 +39,7 @@
     --z-radius-xs: 10px;
     --z-shadow: 0 10px 25px -5px rgba(0, 82, 255, 0.08), 0 8px 10px -6px rgba(0, 82, 255, 0.05);
     --z-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --z-shadow-segmento: 0 1px 3px rgba(15, 23, 42, 0.12);
     --z-shadow-lista: 0 12px 28px rgba(15, 23, 42, 0.14);
     --z-foco: 0 0 0 3px rgba(0, 82, 255, 0.14);
     --z-foco-error: 0 0 0 3px rgba(239, 68, 68, 0.14);

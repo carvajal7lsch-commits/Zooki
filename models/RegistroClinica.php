@@ -6,6 +6,8 @@ require_once __DIR__ . '/../helpers/InicializadorClinica.php';
 require_once __DIR__ . '/ConsentimientoDatos.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/VerificacionEmail.php';
+require_once __DIR__ . '/CatalogoPlanes.php';
+require_once __DIR__ . '/../helpers/EleccionPlanRegistro.php';
 
 /**
  * HU-0.1/0.2: excepción pública de plataforma. Ninguna lectura de negocio se
@@ -22,6 +24,11 @@ final class RegistroClinica
 
     public function __construct(private PDO $db)
     {
+    }
+
+    public function planProfesional(): array
+    {
+        return CatalogoPlanes::profesional($this->db);
     }
 
     /** RE-0.1.6: contador diario con fila única bloqueada; también serializa envíos concurrentes. */
@@ -62,15 +69,16 @@ final class RegistroClinica
 
     public function registrar(array $entrada, string $ip): array
     {
+        $cicloProfesional = EleccionPlanRegistro::ciclo($entrada);
         $datos = ValidadorClinica::formulario($entrada);
         if ($this->porNit($datos['nit']) !== null) {
             throw new NitDuplicado();
         }
         try {
-            return Transaccion::ejecutar($this->db, function () use ($datos, $ip): array {
+            return Transaccion::ejecutar($this->db, function () use ($datos, $ip, $cicloProfesional): array {
                 $this->contarRegistro($ip);
-                $this->db->prepare("INSERT INTO clinicas (nombre, nit, direccion, telefono, email_contacto, estado) VALUES (?, ?, ?, ?, ?, 'pendiente_verificacion')")
-                    ->execute([$datos['nombre_clinica'], $datos['nit'], $datos['direccion'], $datos['telefono_clinica'], $datos['email_clinica']]);
+                $this->db->prepare("INSERT INTO clinicas (nombre, nit, direccion, telefono, email_contacto, estado, intencion_profesional_ciclo) VALUES (?, ?, ?, ?, ?, 'pendiente_verificacion', ?)")
+                    ->execute([$datos['nombre_clinica'], $datos['nit'], $datos['direccion'], $datos['telefono_clinica'], $datos['email_clinica'], $cicloProfesional]);
                 $clinica = (int) $this->db->lastInsertId();
                 $usuarios = new Usuario($this->db);
                 // Decisión 2026-10-10: prevalece correo; si es nuevo, confirmar al titular del documento.

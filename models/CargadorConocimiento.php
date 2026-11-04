@@ -136,6 +136,7 @@ final class CargadorConocimiento
                         'peso' => $elemento['peso'],
                         'efecto' => $elemento['efecto'],
                         'condiciones' => isset($elemento['condiciones']) ? self::json($elemento['condiciones']) : null,
+                        'pauta' => isset($elemento['pauta']) ? self::json($elemento['pauta']) : null,
                     ];
                 } elseif ($grupo === 'sinonimos') {
                     $fila += ['id_nodo' => $elemento['nodo'], 'texto' => $elemento['texto'], 'normalizado' => ArchivosConocimiento::normalizarTexto($elemento['texto'])];
@@ -179,7 +180,7 @@ final class CargadorConocimiento
     {
         foreach ($nueva as $columna => $valor) {
             $previo = $anterior[$columna];
-            if (in_array($columna, ['fuentes', 'metadatos', 'condiciones', 'resultado'], true) && $valor !== null && $previo !== null) {
+            if (in_array($columna, ['fuentes', 'metadatos', 'condiciones', 'resultado', 'pauta'], true) && $valor !== null && $previo !== null) {
                 if (json_decode($valor, true) != json_decode($previo, true)) {
                     return false;
                 }

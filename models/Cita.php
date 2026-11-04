@@ -4,11 +4,14 @@ require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/CoordinacionHorarios.php';
 require_once __DIR__ . '/DisponibilidadAgenda.php';
 require_once __DIR__ . '/EventoAgenda.php';
+require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 require_once __DIR__ . '/../helpers/ReglaAtencion.php';
+require_once __DIR__ . '/../helpers/ReglaCambioCita.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 
 /**
  * C3: disponibilidad única y escritura coordinada sobre el modelo v2. Cada cita es de un
@@ -55,7 +58,7 @@ class Cita extends ModeloClinica
                 ' . ContactoPropietario::columna('p.email', 'pcv', 'email') . ',
                 ' . ContactoPropietario::columna('p.telefono', 'pcv', 'propietario_telefono') . ',
                 tc.nombre_tipo AS tipo_cita_nombre,
-                cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion, cl.url_logo AS clinica_logo,
+                cl.tolerancia_llegada_min, cl.umbral_aviso_min, cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion, cl.url_logo AS clinica_logo,
                 cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
@@ -85,6 +88,27 @@ class Cita extends ModeloClinica
     public function registrarConResultado(array $datos): array
     {
         return $this->registrarResultado($datos, 'verde');
+    }
+
+    /** RE-2.2.1/4: el navegador solicita el modo; solo el servidor acredita origen y presencia. */
+    public function validarModoLlegada(array $datos): bool
+    {
+        $modo = $datos['modo_llegada'] ?? '';
+        if ($modo === '') return false;
+        if ($modo !== 'ahora') throw new InvalidArgumentException('Modo de llegada no válido.');
+        if (Contexto::rolActivo() !== Roles::VETERINARIO || (int) ($datos['id_veterinario'] ?? 0) !== Contexto::idUsuario()) {
+            $this->denegarAcceso('citas', null, 'Solo el veterinario de la sesión registra la llegada sin reserva.');
+        }
+        if (isset($datos['id_clinica']) && (string) $datos['id_clinica'] !== (string) $this->clinica()) {
+            $this->denegarAcceso('citas', null, 'La llegada pertenece a otra clínica.');
+        }
+        if (($datos['fecha'] ?? '') !== $this->ahora()->format('Y-m-d')) throw new InvalidArgumentException('Llegó ahora solo admite citas de hoy.');
+        return true;
+    }
+
+    private function ahora(): DateTimeImmutable
+    {
+        return $this->reloj ? ($this->reloj)() : new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
     }
 
     public function coordinarReserva(array $datos, callable $accion): mixed
@@ -123,6 +147,7 @@ class Cita extends ModeloClinica
 
     private function registrarResultado(array $datos, string $prioridad, bool $sobrecupo = false): array
     {
+        $this->validarModoLlegada($datos);
         if (!in_array($prioridad, ['verde', 'amarillo', 'naranja', 'rojo'], true)) {
             throw new InvalidArgumentException('Prioridad clínica no válida.');
         }
@@ -159,11 +184,14 @@ class Cita extends ModeloClinica
                         $this->exigirDisponibilidad($idVeterinario, $idMascota, $fecha, $hora, $duracion, $margen, null);
                     }
 
+                    $llegoAhora = $this->validarModoLlegada($datos);
+                    $origen = $llegoAhora ? 'llegada_sin_reserva' : 'reserva';
+                    $llegada = $llegoAhora ? $this->ahora()->format('Y-m-d H:i:s') : null;
                     $sql = "INSERT INTO citas
                         (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
                          duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado,
-                         origen,duracion_activa_objetivo_segundos,politica_temporal)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reserva', ?, 'M')";
+                         origen,hora_llegada,duracion_activa_objetivo_segundos,politica_temporal)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'M')";
                     $parametros = [
                         $clinica,
                         $idMascota,
@@ -178,11 +206,17 @@ class Cita extends ModeloClinica
                         $prioridad,
                         (int) $sobrecupo,
                         $datos['estado'] ?? 'confirmada',
+                        $origen,
+                        $llegada,
                         $duracion * 60,
                     ];
                     $this->ejecutarReserva($sql, $parametros);
                     $id = (int) $this->conn->lastInsertId();
-                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'INSERT', 'citas', $id, null, ['fecha' => $fecha, 'prioridad' => $prioridad], 'Cita registrada con verificación del plan (RE-0.4.1, RN-420)', $clinica)) {
+                    $propietario = (int) $this->getById($id)['id_propietario'];
+                    $propia = $propietario === $idVeterinario;
+                    $registro = ['fecha' => $fecha, 'prioridad' => $prioridad, 'id_propietario' => $propietario, 'rol_activo' => Contexto::rolActivo()];
+                    if ($llegoAhora) $registro += ['origen' => $origen, 'hora_llegada' => $llegada];
+                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'INSERT', 'citas', $id, null, $registro, 'Cita registrada con verificación del plan (RE-0.4.1, RN-420)' . ($propia ? '; propietario y veterinario coinciden (RN-G18)' : ''), $clinica)) {
                         throw new RuntimeException('No se pudo auditar la cita.');
                     }
                     return $id;
@@ -197,10 +231,10 @@ class Cita extends ModeloClinica
      * HU-4.2: cambia fecha, hora y, si se pide, el veterinario. Conserva la
      * duración y el margen que se copiaron al reservar.
      */
-    public function reprogramar(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave = null): bool
+    public function reprogramar(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave = null, bool $decisionLlegada = false): bool
     {
         try {
-            return $this->reprogramarCoordinada($cita, $idVeterinario, $fecha, $hora, $clave);
+            return $this->reprogramarCoordinada($cita, $idVeterinario, $fecha, $hora, $clave, $decisionLlegada);
         } catch (AccesoDenegado $error) {
             if (!$this->conn->inTransaction()) {
                 $this->denegarAcceso('citas', $cita['id_cita'], 'Reprogramación denegada tras rollback (RE-T.15.2)');
@@ -214,13 +248,13 @@ class Cita extends ModeloClinica
         }
     }
 
-    private function reprogramarCoordinada(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave): bool
+    private function reprogramarCoordinada(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave, bool $decisionLlegada): bool
     {
         $idCita = (int) $cita['id_cita'];
         return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), function () use ($idCita, $idVeterinario) {
             $actual = $this->getById($idCita);
             return ['usuarios' => [$idVeterinario, (int) $actual['id_veterinario']], 'mascotas' => [(int) $actual['id_mascota']]];
-        }, function () use ($idCita, $idVeterinario, $fecha, $hora, $clave): bool {
+        }, function () use ($idCita, $idVeterinario, $fecha, $hora, $clave, $decisionLlegada): bool {
             $cita = $this->getById($idCita);
             $this->exigirActorVigente((int) $cita['id_mascota']);
             $this->disponibilidad()->autorizar($idVeterinario, (int) $cita['id_mascota']);
@@ -228,7 +262,14 @@ class Cita extends ModeloClinica
                 throw new AccesoDenegado(403, 'Solo puedes reprogramar tus citas.');
             }
             $nueva = false;
-            $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('reprogramar_cita', $clave, [$idCita, $idVeterinario, $fecha, $hora], function () use ($cita, $idCita, $idVeterinario, $fecha, $hora, &$nueva) {
+            $huella = [$idCita, $idVeterinario, $fecha, $hora];
+            if ($decisionLlegada) {
+                $huella[] = 'decision_llegada';
+            }
+            $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('reprogramar_cita', $clave, $huella, function () use ($cita, $idCita, $idVeterinario, $fecha, $hora, $decisionLlegada, &$nueva) {
+                if (Contexto::rolActivo() !== Roles::ADMIN && (!$decisionLlegada || Contexto::rolActivo() !== Roles::VETERINARIO || $cita['hora_llegada'] === null)) {
+                    $this->exigirPlazoCambio($cita);
+                }
                 $nueva = true;
                 $hora = self::normalizarHora($hora);
                 if ($idVeterinario !== (int) $cita['id_veterinario']) {
@@ -376,6 +417,7 @@ class Cita extends ModeloClinica
             FROM usuario_clinica uc
             JOIN usuarios u ON u.id_usuario = uc.id_usuario
             WHERE uc.id_clinica = ? AND uc.id_rol = 2 AND uc.estado = 'activo' AND u.estado = 1
+            " . (Contexto::rolActivo() === Roles::PROPIETARIO ? ' AND EXISTS (SELECT 1 FROM horarios_veterinario hv WHERE hv.id_clinica=uc.id_clinica AND hv.id_veterinario=uc.id_usuario AND hv.activo=1)' : '') . "
             ORDER BY u.nombre_completo";
         $consulta = $this->conn->prepare($sql);
         $consulta->execute([$this->clinica()]);
@@ -492,11 +534,18 @@ class Cita extends ModeloClinica
                 require_once __DIR__ . '/UrgenciaAgenda.php';
                 $urgencias = new UrgenciaAgenda($this->conn, static fn () => IntervalosAgenda::fecha($ahora));
                 if (str_starts_with($cambio, "estado='en_curso'") && in_array($actual['estado'], self::ESTADOS_ABIERTOS, true)) {
+                    // RE-4.19.3: ni una petición directa ni una instantánea antigua omiten la decisión de Sala.
+                    if (ReglaAtencion::llegadaFueraDeTolerancia($actual, (int)$actual['tolerancia_llegada_min'], IntervalosAgenda::fecha($ahora))) {
+                        throw new CampoInvalido('llegada', 'Resuelve la llegada desde Sala.', 'La cita superó la tolerancia de llegada. Resuélvela desde Sala: siguiente hueco, reprogramar o «No asistió».');
+                    }
                     $urgencias->exigirInicioOrdinario((int) $actual['id_veterinario']);
                 }
                 $ok = $this->transicion($actual, $estados, $cambio . ",estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1", [$ahora]);
                 if ($ok) {
                     if (str_starts_with($cambio, "estado='completada'")) {
+                        if (!(new NotificacionInterna($this->conn))->expirarAvisosDeAtencion($this->clinica(), $id, $ahora)) {
+                            throw new RuntimeException('No se pudieron retirar los avisos de la atención finalizada.');
+                        }
                         $urgencias->despuesDeCompletar($id);
                     }
                     if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['sello' => $ahora], 'Disparo de cascada por atención (RE-4.5.1)', $this->clinica())) {
@@ -526,21 +575,27 @@ class Cita extends ModeloClinica
     }
 
     /** RN-405: solo se cancela una cita pendiente o confirmada; no se borra. */
-    public function cancelar(array $cita, ?string $clave = null): bool
+    public function cancelar(array $cita, ?string $clave = null, string $motivo = ''): bool
     {
         $id = (int) $cita['id_cita'];
         try {
             return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), function () use ($id): array {
                 $actual = $this->getById($id);
                 return ['usuarios' => [(int) $actual['id_veterinario']], 'mascotas' => [(int) $actual['id_mascota']]];
-            }, function () use ($id, $clave): bool {
+            }, function () use ($id, $clave, $motivo): bool {
                 $actual = $this->getById($id);
                 $this->exigirActorVigente((int) $actual['id_mascota']);
                 if (Contexto::rolActivo() === Roles::VETERINARIO && (int) $actual['id_veterinario'] !== Contexto::idUsuario()) {
                     throw new AccesoDenegado(403, 'Solo puedes cancelar tus citas.');
                 }
                 $nueva = false;
-                $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('cancelar_cita', $clave, [$id], function () use ($actual, $id, &$nueva): array {
+                $huella = trim($motivo) === '' ? [$id] : [$id, $motivo];
+                $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('cancelar_cita', $clave, $huella, function () use ($actual, $id, $motivo, &$nueva): array {
+                    if (Contexto::rolActivo() !== Roles::ADMIN) {
+                        $this->exigirPlazoCambio($actual);
+                    } elseif (trim($motivo) === '' || mb_strlen(trim($motivo)) > 255 || preg_match('/\p{C}/u', $motivo)) {
+                        throw new InvalidArgumentException('Indica el motivo de cancelación (1 a 255 caracteres).');
+                    }
                     if (!in_array($actual['estado'], self::ESTADOS_ABIERTOS, true)) {
                         throw new InvalidArgumentException('Solo se cancelan citas pendientes o confirmadas.');
                     }
@@ -552,7 +607,7 @@ class Cita extends ModeloClinica
                     if (!$this->transicion($actual, self::ESTADOS_ABIERTOS, "estado='cancelada',version_agenda=version_agenda+1", [])) {
                         throw new InvalidArgumentException('La cita cambió. Recarga la agenda.');
                     }
-                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['estado' => 'cancelada'], 'Cancelación coordinada (RE-5.6.4)', $this->clinica())) {
+                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['estado' => 'cancelada', 'motivo' => trim($motivo)], 'Cancelación coordinada (RE-5.6.4, RN-430)', $this->clinica())) {
                         throw new RuntimeException('No se pudo auditar la cancelación.');
                     }
                     $this->avisarCambio($id, 'CITA_CANCELADA');
@@ -563,6 +618,24 @@ class Cita extends ModeloClinica
             });
         } catch (AccesoDenegado $error) {
             $this->denegarAcceso('citas', $id, 'Cancelación denegada tras rollback (RE-T.15.2)');
+        }
+    }
+
+    public function permiteCambio(array $cita): bool
+    {
+        if (Contexto::rolActivo() === Roles::ADMIN) {
+            return true;
+        }
+        $q = $this->conn->prepare('SELECT anticipacion_cambios_min FROM clinicas WHERE id_clinica=?');
+        $q->execute([$this->clinica()]);
+        $ahora = $this->reloj === null ? new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA)) : ($this->reloj)();
+        return ReglaCambioCita::permite($cita, $ahora, (int) $q->fetchColumn());
+    }
+
+    private function exigirPlazoCambio(array $cita): void
+    {
+        if (!$this->permiteCambio($cita)) {
+            throw new InvalidArgumentException(ReglaCambioCita::MENSAJE);
         }
     }
 

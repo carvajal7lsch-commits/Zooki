@@ -91,6 +91,7 @@ final class MapaConocimiento
                 'peso' => (float) $arista['peso'],
                 'efecto' => $arista['efecto'],
                 'condiciones' => $arista['condiciones'] === null ? null : self::json($arista['condiciones']),
+                'pauta' => ($arista['pauta'] ?? null) === null ? null : self::json($arista['pauta']),
                 'fuentes' => self::fuentes($arista['fuentes']),
                 'estado_validacion' => $arista['estado_validacion'],
             ];

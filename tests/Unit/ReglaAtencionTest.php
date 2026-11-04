@@ -40,6 +40,20 @@ class ReglaAtencionTest extends TestCase
         $this->assertTrue(ReglaAtencion::puedeIniciar('2026-09-10', '10:00:00', self::en('2026-09-10 17:30:00')));
     }
 
+    public function testToleranciaExactaYLlegadaRealSinPenalizarDemoraDelVeterinario(): void
+    {
+        $cita = self::cita(['estado' => 'confirmada', 'hora_llegada' => null]);
+        $this->assertFalse(ReglaAtencion::llegadaFueraDeTolerancia($cita, 10, self::en('2026-09-10 10:10:00')));
+        $this->assertTrue(ReglaAtencion::llegadaFueraDeTolerancia($cita, 10, self::en('2026-09-10 10:10:01')));
+        $this->assertFalse(ReglaAtencion::llegadaFueraDeTolerancia($cita, 20, self::en('2026-09-10 10:15:00')));
+        $cita['hora_llegada'] = '2026-09-10 10:08:00';
+        $this->assertFalse(ReglaAtencion::llegadaFueraDeTolerancia($cita, 10, self::en('2026-09-10 17:00:00')));
+        $cita['hora_llegada'] = '2026-09-10 10:15:00';
+        $this->assertTrue(ReglaAtencion::llegadaFueraDeTolerancia($cita, 10, self::en('2026-09-10 17:00:00')));
+        $cita['estado'] = 'sin_cerrar';
+        $this->assertFalse(ReglaAtencion::llegadaFueraDeTolerancia($cita, 10, self::en('2026-10-10 17:00:00')));
+    }
+
     public function testNoSeIniciaEnOtroDia(): void
     {
         $this->assertFalse(ReglaAtencion::puedeIniciar('2026-09-10', '10:00:00', self::en('2026-09-11 09:50:00')));

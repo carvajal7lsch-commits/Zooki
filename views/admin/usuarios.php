@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
  * Recibe del enrutador $personal, $invitaciones y $propietarios
  * (UsuarioController), ya acotados a la clínica del contexto. D2.2: las
  * invitaciones pendientes muestran lo que escribió el administrador. C9.1: mismo diseño que la v1.12.0
- * (specs/referencias/usuarios-*-v1.png) con los datos y las reglas de la v2.
+ * con los datos y las reglas de la v2.
  * El comportamiento está en js/usuarios.js; los datos viajan en data-*.
  */
 require_once __DIR__ . '/../../helpers/Roles.php';
@@ -120,7 +120,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <div class="status-indicator"><?php require __DIR__ . '/partials/interruptor_personal.php'; ?></div>
                     </div>
                     <div class="card-body-mini">
-                        <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?><?php if ($esYo): ?> <span class="current-user-label">(Tú)</span><?php endif; ?></h3>
+                        <h3 class="card-title-mini" title="<?= $e($p['nombre_completo']) ?>"><?= $e($p['nombre_completo']) ?><?php if ($esYo): ?> <span class="current-user-label">(Tú)</span><?php endif; ?></h3>
                         <div class="card-tags-mini">
                             <?php if ((int) $p['estado'] === 0): ?><span class="tag-mini"><i class="bi bi-person-lock" aria-hidden="true"></i> Cuenta inactiva</span><?php endif; ?>
                             <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-moon-stars" aria-hidden="true"></i> Inactivo</span><?php endif; ?>
@@ -145,7 +145,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <span class="avatar-mini avatar-iniciales avatar-iniciales--rol-<?= $rol ?>" aria-hidden="true"><?= $e($iniciales($i['nombre_completo'])) ?></span>
                     </div>
                     <div class="card-body-mini">
-                        <h3 class="card-title-mini"><?= $e($i['nombre_completo']) ?></h3>
+                        <h3 class="card-title-mini" title="<?= $e($i['nombre_completo']) ?>"><?= $e($i['nombre_completo']) ?></h3>
                         <div class="card-tags-mini">
                             <span class="tag-mini"><i class="bi bi-envelope" aria-hidden="true"></i> Pendiente de activación</span>
                             <span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span>
@@ -245,7 +245,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <div class="status-indicator"><?php require __DIR__ . '/partials/interruptor_cliente.php'; ?></div>
                     </div>
                     <div class="card-body-mini">
-                        <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?></h3>
+                        <h3 class="card-title-mini" title="<?= $e($p['nombre_completo']) ?>"><?= $e($p['nombre_completo']) ?></h3>
                         <div class="card-tags-mini">
                             <?php // RN-115: desvinculado, solo el nombre y la marca. ?>
                             <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-link-45deg" aria-hidden="true"></i> <?= $e(ContactoPropietario::MARCA_DESVINCULADO) ?></span><?php endif; ?>
@@ -312,7 +312,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 
 <?php require __DIR__ . '/partials/acciones_usuario_movil.php'; ?>
 <!-- Alta y edición de personal y edición de clientes. D2.1: diseño de v1.12.0
-     (modalUsuarioGestion, specs/referencias/usuarios-modal-editar-v1.png) con las
+     (modalUsuarioGestion) con las
      reglas v2: alta por invitación de 72 horas e identidad compartida de C1.7.
      D2.2: como en producción, el cliente usa este mismo modal con el rol oculto. -->
 <div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">

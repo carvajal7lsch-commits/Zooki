@@ -1,4 +1,6 @@
 <?php
+require __DIR__ . '/motivos_revision.php';
+require_once __DIR__ . '/../../helpers/ValidadorTriage.php';
 // C4 + pulido de interfaz (2026-10-21): captura compartida (agenda del vet y portal).
 // Todo se elige del catálogo; el nivel y la revisión los decide el servidor.
 $hAgenda = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
@@ -26,7 +28,12 @@ $grupoAgenda = static function (string $grupo, string $titulo, string $ayuda, bo
         <?php endif; ?>
     </div>
     <?php $grupoAgenda('sintomas', '¿Qué le pasa?', 'Escribe y elige un síntoma (ej. vómito)', true); ?>
-    <button type="button" class="triage-captura__enlace" data-triage-otro>¿No aparece? Marcar «Otro / no sé»</button>
+    <button type="button" class="triage-captura__enlace" data-triage-otro>¿No aparece? Añadir otro síntoma</button>
+    <label class="triage-captura__campo" data-triage-otro-campo hidden>
+        <span class="triage-captura__etiqueta">¿Qué observaste? *</span>
+        <input class="zk-input" data-triage-otro-detalle maxlength="<?= ValidadorTriage::DETALLE_MAX ?>" data-caracteres="\P{C}" data-espacios="normalizar" placeholder="Ej.: camina de lado desde esta mañana">
+        <small>Describe el cambio que notas. Un veterinario revisará el caso.</small>
+    </label>
     <div class="triage-captura__tiempos" data-triage-tiempos></div>
     <details class="triage-captura__extra">
         <summary>Exposición a sustancias y otros datos <span>(opcional)</span></summary>

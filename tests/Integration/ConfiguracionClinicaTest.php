@@ -47,7 +47,7 @@ final class ConfiguracionClinicaTest extends TestCase
     public function testCatalogosSoloSeLeenDesdeLaClinicaActiva(): void
     {
         $tipos = (new Cita($this->db))->getTiposCita();
-        $this->assertCount(6, $tipos);
+        $this->assertCount(7, $tipos);
         $this->assertSame([1], array_unique(array_map('intval', array_column($tipos,'id_clinica'))));
         $this->assertArrayHasKey('margen_minutos', $tipos[0]);
         $this->assertArrayHasKey('pausable', $tipos[0]);

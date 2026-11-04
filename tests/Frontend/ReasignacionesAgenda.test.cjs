@@ -8,6 +8,7 @@ class Elemento {
     constructor() {
         this.hijos = [];
         this.eventos = {};
+        this.dataset = {};
         this.textContent = '';
     }
     get textContent() { return this.texto + this.hijos.map(h => h.textContent).join(''); }
@@ -30,6 +31,11 @@ function preparar() {
     const contexto = {
         document: { querySelector: () => bloque, createElement: () => new Elemento(), addEventListener: (_, fn) => { iniciar = fn; } },
         FormData,
+        sincronizarPanelAgenda: (_, cargar) => {
+            actualizar.eventos.refrescar = cargar;
+            cargar();
+        },
+        panelAgendaEnEdicion: () => false,
         zookiCrearComandoAgenda: () => crearComando(() => new Uint8Array(32).fill(++secuencia)),
         fetch: (url, opciones) => {
             llamadas.push({ url, opciones });
@@ -80,7 +86,7 @@ test('C5 bloquea doble envío y conserva clave al perder la respuesta', async ()
 test('C5 descarta respuestas y errores de una lectura anterior', async () => {
     const p = preparar();
     const antigua = p.pendientes.shift();
-    const nueva = p.actualizar.eventos.click();
+    const nueva = p.actualizar.eventos.refrescar();
     p.pendientes.shift().resolver({ success: true, propuestas: [propuesta] });
     await nueva;
     antigua.rechazar(new Error('Error obsoleto'));
@@ -92,9 +98,10 @@ test('C5 descarta respuestas y errores de una lectura anterior', async () => {
 test('C5 conserva hora pactada y distingue estimación/reprogramación en los clientes', () => {
     const calendario = fs.readFileSync('public/js/calendario.js', 'utf8');
     assert.match(calendario, /inicio_estimado: e\.inicio_estimado/);
-    assert.match(calendario, /\['Inicio estimado', p\.inicio_estimado\]/);
+    // RE-4.5.3: el detalle muestra la estimación en hora legible.
+    assert.match(calendario, /\['Inicio estimado', horaEstimadaAgenda\(p\.inicio_estimado, ev\.start\)/);
     assert.match(calendario, /start: `\$\{e\.fecha\}T\$\{e\.hora/);
-    assert.match(fs.readFileSync('public/js/portal.js', 'utf8'), /escapeHtml\(c\.inicio_estimado\)/);
+    assert.match(fs.readFileSync('public/js/portal.js', 'utf8'), /escapeHtml\(c\.aviso_estimacion\)/);
     const vista = fs.readFileSync('views/partials/reasignaciones_agenda.php', 'utf8');
     assert.doesNotMatch(vista, /\s(?:style|onclick|onsubmit)=/i);
     assert.match(vista, /Roles::VETERINARIO/);

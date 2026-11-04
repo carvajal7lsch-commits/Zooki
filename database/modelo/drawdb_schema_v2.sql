@@ -44,9 +44,14 @@ CREATE TABLE `clinicas` (
   `plazo_reasignacion_min` int(11) NOT NULL DEFAULT 10,
   `umbral_aviso_min` int(11) NOT NULL DEFAULT 15,
   `tope_sobrecupos` int(11) NOT NULL DEFAULT 2,
+  `anticipacion_cambios_min` int(11) NOT NULL DEFAULT 30,
+  `control_busqueda_dias` INT NOT NULL DEFAULT 30,
+  `control_dias_sin_duracion` INT NOT NULL DEFAULT 7,
   `email_contacto` varchar(255) DEFAULT NULL,
   `url_logo` varchar(255) DEFAULT NULL,
   `id_plan` int(11) DEFAULT NULL,
+  `intencion_profesional_ciclo` ENUM('mensual','anual') DEFAULT NULL,
+  `intencion_profesional_mostrada_en` DATETIME DEFAULT NULL,
   `estado` enum('pendiente_verificacion','activa','suspendida','baja') NOT NULL DEFAULT 'pendiente_verificacion',
   `fecha_registro` datetime DEFAULT current_timestamp()
 );
@@ -131,6 +136,7 @@ CREATE TABLE `grafo_aristas` (
   `peso` DECIMAL(4,3) NOT NULL DEFAULT 1.000,
   `efecto` ENUM('evidencia','bloqueo','advertencia') NOT NULL DEFAULT 'evidencia',
   `condiciones` JSON DEFAULT NULL,
+  `pauta` JSON DEFAULT NULL,
   PRIMARY KEY (`id_arista`),
   UNIQUE KEY `uq_grafo_aristas_codigo` (`codigo`),
   KEY `idx_grafo_aristas_origen` (`id_origen`, `tipo_relacion`)
@@ -392,6 +398,7 @@ CREATE TABLE `tipos_cita` (
   `duracion_minutos` int(11) NOT NULL,
   `margen_minutos` int(11) NOT NULL DEFAULT 10,
   `pausable` tinyint(1) NOT NULL DEFAULT 1,
+  `solo_personal` tinyint(1) NOT NULL DEFAULT 0,
   `descripcion` text DEFAULT NULL,
   `color` varchar(20) DEFAULT '#0C66E4',
   `activo` tinyint(4) DEFAULT 1,

@@ -51,9 +51,7 @@ final class MantenimientoSuscripciones
                 return $resultado;
             }
         }
-        foreach ($this->db->query("SELECT id_plan FROM planes WHERE nombre='Profesional' AND (precio_mensual<>89990 OR precio_anual IS NULL OR precio_anual<>899900)")->fetchAll(PDO::FETCH_COLUMN) as $plan) {
-            $resultado['tarifas_personalizadas'][] = (int) $plan;
-        }
+        // RN-008: el catálogo es la fuente de la tarifa; el trabajador no impone ni compara precios históricos.
         $ids = $this->db->query("SELECT id_clinica FROM clinicas WHERE estado IN ('activa','suspendida') ORDER BY id_clinica")->fetchAll(PDO::FETCH_COLUMN);
         foreach ($ids as $id) {
             $s = new Suscripcion($this->db, (int) $id, $this->reloj);

@@ -9,6 +9,8 @@ final class BuscadorSintomas
     // Admite dos errores en palabras de seis letras sin ofrecer cualquier texto corto.
     public const SIMILITUD_MINIMA = 0.65;
     public const CONSULTA_MAX = 100;
+    private const RELLENO = ['esta', 'estan', 'tiene', 'tienen', 'mucho', 'mucha', 'muy', 'le', 'se', 'lo', 'la', 'las', 'los', 'el', 'mi', 'un', 'una', 'como', 'nada', 'que', 'de', 'del', 'con', 'al', 'me', 'ya', 'y', 'a', 'en', 'por', 'para', 'hace', 'todo', 'poco', 'bastante', 'harto', 'perro', 'perrito', 'gato', 'gatito', 'mascota'];
+    private const INGESTA = ['comio', 'tomo', 'di', 'dio', 'trago'];
 
     public static function buscar(string $consulta, array $catalogo, ?string $especie = null, array $tipos = ['sintoma']): array
     {
@@ -29,33 +31,29 @@ final class BuscadorSintomas
                 continue;
             }
             $mejor = null;
+            $exposicion = $nodo['tipo'] !== 'sintoma';
+            $buscadas = self::palabras($consulta, $exposicion);
             foreach ([$nodo['etiqueta'], ...($nodo['sinonimos'] ?? [])] as $texto) {
                 $texto = ArchivosConocimiento::normalizarTexto($texto);
-                $grado = 3;
-                $similitud = 0.0;
-                if ($texto === $consulta) {
-                    $grado = 0;
-                    $similitud = 1.0;
-                } elseif ($consulta === '' || str_starts_with($texto, $consulta)) {
-                    $grado = 1;
-                    $similitud = 1.0;
-                } else {
-                    $palabras = explode(' ', $texto);
-                    $buscadas = explode(' ', $consulta);
-                    if (array_diff($buscadas, $palabras) === []) {
-                        $grado = 2;
-                        $similitud = 1.0;
-                    } elseif (mb_strlen($consulta) >= 3) {
-                        foreach ([$texto, ...$palabras] as $alternativa) {
-                            $longitud = max(mb_strlen($consulta), mb_strlen($alternativa), 1);
-                            $similitud = max($similitud, 1 - self::distancia($consulta, $alternativa) / $longitud);
-                        }
+                $palabras = self::palabras($texto, $exposicion);
+                $similitudes = [];
+                foreach ($buscadas as $buscada) {
+                    $similitud = 0.0;
+                    foreach ($palabras as $palabra) {
+                        $prefijo = str_starts_with($palabra, $buscada) || (mb_strlen($palabra) >= 4 && str_starts_with($buscada, $palabra));
+                        $similitud = max($similitud, $prefijo ? 1.0 : 1 - self::distancia($buscada, $palabra) / max(mb_strlen($buscada), mb_strlen($palabra), 1));
                     }
+                    $similitudes[] = $similitud;
                 }
-                if ($grado === 3 && $similitud < self::SIMILITUD_MINIMA) {
+                if ($buscadas === [] && $consulta !== '') {
                     continue;
                 }
-                if ($mejor === null || [$grado, -$similitud] < [$mejor['grado'], -$mejor['similitud']]) {
+                if ($similitudes !== [] && min($similitudes) < self::SIMILITUD_MINIMA) {
+                    continue;
+                }
+                $similitud = $similitudes === [] ? 1.0 : array_sum($similitudes) / count($similitudes);
+                $grado = $texto === $consulta ? 0 : (str_starts_with($texto, $consulta) ? 1 : ($similitud === 1.0 ? 2 : 3));
+                if ($mejor === null || [-$similitud, $grado] < [-$mejor['similitud'], $mejor['grado']]) {
                     $mejor = ['grado' => $grado, 'similitud' => $similitud];
                 }
             }
@@ -63,7 +61,7 @@ final class BuscadorSintomas
                 $resultados[] = $opcion + $mejor + ['coincidencia' => ['exacta', 'prefijo', 'palabras', 'aproximada'][$mejor['grado']]];
             }
         }
-        usort($resultados, static fn (array $a, array $b): int => [$a['grado'], -$a['similitud'], $a['codigo']] <=> [$b['grado'], -$b['similitud'], $b['codigo']]);
+        usort($resultados, static fn (array $a, array $b): int => [-$a['similitud'], $a['grado'], $a['codigo']] <=> [-$b['similitud'], $b['grado'], $b['codigo']]);
         $resultados = array_slice($resultados, 0, self::MAX_RESULTADOS - ($otro === null ? 0 : 1));
         foreach ($resultados as &$resultado) {
             unset($resultado['grado']);
@@ -73,6 +71,11 @@ final class BuscadorSintomas
             $resultados[] = $otro;
         }
         return $resultados;
+    }
+
+    private static function palabras(string $texto, bool $exposicion): array
+    {
+        return array_values(array_diff(explode(' ', $texto), self::RELLENO, $exposicion ? self::INGESTA : [], ['']));
     }
 
     /** Damerau-Levenshtein completo sobre puntos Unicode, incluidas transposiciones. */

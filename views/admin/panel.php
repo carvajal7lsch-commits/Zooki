@@ -1,8 +1,8 @@
 <?php
 /**
  * Inicio del administrador: la operación de la clínica activa (HU-6.2,
- * RE-6.2.1 a RE-6.2.13, RE-6.4.1). Diseño aprobado por el dueño:
- * specs/referencias/inicio-administrador.dc.html. Los datos llegan de
+ * RE-6.2.1 a RE-6.2.13, RE-6.4.1). Diseño aprobado por el dueño.
+ * Los datos llegan de
  * PanelController::datosAdministrador() en $panel; el día de hoy y el mes en
  * curso vienen pintados del servidor, sin esperar al AJAX.
  */
@@ -139,6 +139,12 @@ $ultimoMes = count($panel['tendencia']) - 1;
                         </li>
                     <?php endforeach; ?>
                 </ul>
+            <?php endif; ?>
+            <?php if (!empty($panel['oferta_lanzamiento'])): ?>
+            <aside class="inicio-oferta" data-inicio-oferta data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
+                <a href="index.php?action=admin_suscripcion&amp;desde=inicio&amp;ciclo=mensual">Oferta de lanzamiento: paga un mes y lleva dos</a>
+                <button type="button" data-cerrar-oferta aria-label="Cerrar oferta de lanzamiento">×</button>
+            </aside>
             <?php endif; ?>
             <div class="inicio-plan__accesos">
                 <a class="inicio-rapido" href="index.php?action=admin_usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a>

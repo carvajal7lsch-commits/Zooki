@@ -285,10 +285,18 @@ function marcarNavegacion(tabId) {
     });
 }
 
+/** RE-5.7: un único componente, en la cabecera activa y fuera del flujo de la página. */
+function ubicarCampanaPortal(pantalla = document.querySelector('.app-screen.active')) {
+    const barra = document.querySelector('.portal-avisos-barra');
+    const cabecera = pantalla?.querySelector('.portal-cabecera, .pet-detail__cabecera');
+    if (barra && cabecera && barra.parentElement !== cabecera) cabecera.append(barra);
+}
+
 function mostrarPantalla(id) {
     document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
     const pantalla = document.getElementById(id);
     if (pantalla) pantalla.classList.add('active');
+    ubicarCampanaPortal(pantalla);
     window.scrollTo({ top: 0 });
 }
 
@@ -335,6 +343,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    ubicarCampanaPortal();
     const retornoCarnet = document.getElementById('portalRetornoCarnet');
     if (retornoCarnet) {
         const id = Number(retornoCarnet.dataset.mascota);
@@ -651,13 +660,14 @@ async function verDetalle(id, opciones = {}) {
                 }
 
                 if (c.cancelable) cancelBtn += `<button type="button" class="portal-btn-cancel" data-ui-detener data-reprogramar-cita="${Number(c.id_cita)}">Reprogramar</button>`;
+                if (c.cambio_vencido) cancelBtn = '<p class="portal-texto-muted">Ya no se puede cambiar: comunícate con la clínica</p>';
                 html += `
                 <div class="portal-list-item" data-id-clinica="${Number(c.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--cita"><i class="ri-calendar-check-line"></i></div>
                     <div class="portal-list-body">
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
-                        ${c.inicio_estimado ? `<p>Inicio estimado: ${escapeHtml(c.inicio_estimado)}</p>` : ''}
+                        ${c.aviso_estimacion ? `<p class="portal-cita__reajuste">${escapeHtml(c.aviso_estimacion)}</p>` : ''}
                         ${c.estado_reajuste === 'pendiente_reprogramacion' ? '<p>Contacta a la clínica o elige Reprogramar para consultar alternativas.</p>' : ''}
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
                         <div class="card-tags-mini">${etiquetaClinica(c.clinica_nombre)}${badgeEstado(c.estado)}</div>
@@ -1395,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         slots.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
             `<div class="slot-grid" data-franja="${clave}"${i ? ' hidden' : ''}>${hs.map(h =>
-                `<button type="button" class="slot-chip" data-hora="${escapeHtml(h)}" aria-pressed="false">${escapeHtml(hora12(h))}</button>`
+                `<button type="button" class="slot-chip" data-hora="${escapeHtml(h)}" aria-pressed="false">${escapeHtml(hora12(h))}${h === horas[0] ? '<span class="slot-recomendado">Recomendado</span>' : ''}</button>`
             ).join('')}</div>`
         ).join('');
     }
@@ -1437,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const solicitud = triageC4.consulta();
         if (!solicitud) {
-            estadoSlots('guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+            estadoSlots('guia', 'Calcula el triage para consultar horarios. Si el nivel es rojo, contacta a urgencias.');
             return;
         }
         const fecha = dateInput.value;
@@ -1461,6 +1471,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             renderSlots(horas);
+            if (triageC4.resultado?.()?.nivel === 'naranja') {
+                slots.querySelectorAll('.slot-chip').forEach((chip, i) => { chip.disabled = i > 0; });
+                slots.querySelector('.slot-chip')?.click();
+            }
         } catch (e) {
             console.error(e);
             if (miTurno === turno) estadoSlots('vacio', 'No se pudieron cargar los horarios. Revisa tu conexión e intenta de nuevo.');
@@ -1730,8 +1744,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editForm = document.getElementById('portalEditPetForm');
     if (!addForm || !editForm) return;
 
-    const MAX_FOTO = 5 * 1024 * 1024; // FotoMascota::MAX_BYTES
-    const TIPOS_FOTO = ['image/jpeg', 'image/png'];
 
     const campo = (form, nombre) => form.querySelector(`[name="${nombre}"]`);
 
@@ -1809,7 +1821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         campo(form, 'foto').value = '';
         form.querySelector('.foto-campo__quitar').hidden = true;
         const ayuda = form.querySelector('.foto-campo__ayuda');
-        ayuda.textContent = urlActual ? 'Esta es la foto actual. JPG o PNG, hasta 5 MB.' : 'JPG o PNG, hasta 5 MB.';
+        ayuda.textContent = campo(form, 'foto').dataset.fotoAyuda;
         ayuda.classList.remove('is-error');
         pintarFoto(form, urlActual);
     };
@@ -1862,11 +1874,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ayuda = form.querySelector('.foto-campo__ayuda');
                 if (!archivo) return;
                 // Se revisa aquí para avisar de una vez; el servidor lo vuelve a comprobar.
-                const problema = !TIPOS_FOTO.includes(archivo.type) ? 'Esa foto no es JPG ni PNG. Elige otra.'
-                    : !archivo.size || archivo.size > MAX_FOTO ? 'Esa foto pesa más de 5 MB o está vacía. Elige una más liviana.'
-                    : null;
+                const problema = window.ZookiValidacionMascota.problemaFoto(input);
                 if (problema) {
-                    prepararFoto(form, form.dataset.fotoActual);
+                    pintarFoto(form, form.dataset.fotoActual);
+                    form.querySelector('.foto-campo__quitar').hidden = false;
                     ayuda.textContent = problema;
                     ayuda.classList.add('is-error');
                     return;
@@ -2009,6 +2020,9 @@ async function mostrarDetalleCita(idCita) {
         document.getElementById('detCitaMascota').textContent = cita.nombre_mascota;
         document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario} · ${cita.clinica}`;
         document.getElementById('detCitaFechaHora').textContent = `${formatFecha(cita.fecha)} · ${cita.hora.substring(0, 5)}`;
+        const avisoEstimacion = document.getElementById('detCitaEstimacion');
+        avisoEstimacion.textContent = cita.aviso_estimacion || '';
+        avisoEstimacion.hidden = !cita.aviso_estimacion;
 
         // Rellenar Badge de Estado
         const badge = document.getElementById('detCitaEstado');

@@ -53,18 +53,18 @@ final class VigenciaSuscripcion
     }
 
     /** Conservar ancla 31 en febrero y recuperarla en marzo; no sumar meses a día 31. */
-    public static function extender(DateTimeImmutable $inicio, string $ciclo, ?int $diaAncla = null, ?int $mesAncla = null): DateTimeImmutable
+    public static function extender(DateTimeImmutable $inicio, string $ciclo, ?int $diaAncla = null, ?int $mesAncla = null, int $periodos = 1): DateTimeImmutable
     {
         if (!in_array($ciclo, ['mensual', 'anual'], true)) {
             throw new InvalidArgumentException('El ciclo no es válido.');
         }
         $dia = $diaAncla ?? (int) $inicio->format('d');
         $mes = $mesAncla ?? (int) $inicio->format('m');
-        if ($dia < 1 || $dia > 31 || $mes < 1 || $mes > 12) {
+        if ($dia < 1 || $dia > 31 || $mes < 1 || $mes > 12 || $periodos < 1) {
             throw new InvalidArgumentException('El ancla no es válida.');
         }
         $base = $inicio->setDate((int) $inicio->format('Y'), (int) $inicio->format('m'), 1);
-        $base = $ciclo === 'mensual' ? $base->modify('+1 month') : $base->setDate((int) $base->format('Y') + 1, $mes, 1);
+        $base = $ciclo === 'mensual' ? $base->modify('+' . $periodos . ' months') : $base->setDate((int) $base->format('Y') + $periodos, $mes, 1);
         return $base->setDate((int) $base->format('Y'), (int) $base->format('m'), min($dia, (int) $base->format('t')));
     }
 

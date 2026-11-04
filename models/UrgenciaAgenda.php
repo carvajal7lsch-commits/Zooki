@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ServicioAgendaClinica.php';
 require_once __DIR__ . '/CascadaAgenda.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 
 /** C7a: presencia física, decisión clínica y segmentos reales; nunca cuotas de urgencia. */
 final class UrgenciaAgenda extends ServicioAgendaClinica
@@ -9,7 +10,8 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
     {
         $this->autorizar([Roles::ADMIN,Roles::VETERINARIO]);
         return [
-            'mascotas'=>$this->filas("SELECT m.id_mascota,m.id_propietario,m.nombre FROM mascotas m JOIN usuarios u ON u.id_usuario=m.id_propietario AND u.estado=1 JOIN propietario_clinica pc ON pc.id_propietario=m.id_propietario AND pc.id_clinica=? AND pc.estado='activo' LEFT JOIN mascota_clinica mc ON mc.id_mascota=m.id_mascota AND mc.id_clinica=pc.id_clinica WHERE m.estado=1 AND m.ficha_por_completar=0 AND (mc.estado='activo' OR mc.id_mascota IS NULL) ORDER BY m.nombre,m.id_mascota",[$this->clinica()]),
+            // RN-115: documento y propietario solo con su vínculo activo en la clínica del contexto.
+            'mascotas'=>$this->filas("SELECT m.id_mascota,m.id_propietario,m.nombre,u.nombre_completo AS propietario,u.documento AS documento_propietario FROM mascotas m JOIN usuarios u ON u.id_usuario=m.id_propietario AND u.estado=1 JOIN propietario_clinica pc ON pc.id_propietario=m.id_propietario AND pc.id_clinica=? AND pc.estado='activo' LEFT JOIN mascota_clinica mc ON mc.id_mascota=m.id_mascota AND mc.id_clinica=pc.id_clinica WHERE m.estado=1 AND m.ficha_por_completar=0 AND (mc.estado='activo' OR mc.id_mascota IS NULL) ORDER BY m.nombre,m.id_mascota",[$this->clinica()]),
             'propietarios'=>$this->filas("SELECT u.id_usuario,u.nombre_completo FROM usuarios u JOIN propietario_clinica pc ON pc.id_propietario=u.id_usuario WHERE pc.id_clinica=? AND pc.estado='activo' AND u.estado=1 ORDER BY u.nombre_completo,u.id_usuario",[$this->clinica()]),
             'tipos'=>$this->filas('SELECT id_tipo_cita,nombre_tipo FROM tipos_cita WHERE id_clinica=? AND activo=1 ORDER BY id_tipo_cita',[$this->clinica()]),
             'especies'=>$this->filas('SELECT id_especie,nombre_especie FROM especies ORDER BY id_especie'),
@@ -70,7 +72,7 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
     {
         $this->autorizar([Roles::VETERINARIO]);
         $mascota = (int)($entrada['id_mascota'] ?? 0);
-        $motivo = ValidadorAgendaClinica::motivo($entrada['motivo'] ?? '');
+        $motivo = ValidadorAgendaClinica::motivo($entrada['motivo'] ?? 'Ingreso de urgencia presencial');
         [$nombre,$telefono] = ValidadorAgendaClinica::contacto($entrada);
         $nombreMascota = trim((string)($entrada['nombre_mascota'] ?? ''));
         require_once __DIR__ . '/../helpers/ValidadorMascota.php';
@@ -183,7 +185,7 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
         }
     }
 
-    public function atender(int $id, int $tipo, string $decision, ?string $clave): array
+    public function atender(int $id, ?int $tipo = null, string $decision = '', ?string $clave = null): array
     {
         $this->autorizar([Roles::VETERINARIO]);
         $s = $this->solicitud($id);
@@ -192,7 +194,7 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
             $this->exigirPresente($s);
             $primera = $this->filas("SELECT id_solicitud FROM solicitudes_agenda WHERE id_clinica=? AND estado='espera_presencial' AND fecha_llegada IS NOT NULL AND COALESCE(nivel_aprobado,nivel_calculado)='rojo' ORDER BY orden_espera,fecha_llegada,id_solicitud LIMIT 1",[$this->clinica()])[0];
             if ((int)$primera['id_solicitud'] !== $id) {
-                throw new InvalidArgumentException('Hay otro rojo presente antes. Reordena con motivo clínico si corresponde.');
+                throw new CampoInvalido('prioridad', 'Selecciona el motivo clínico para priorizar este paciente.', 'Hay otro rojo presente antes. Reordena con motivo clínico si corresponde.');
             }
             require_once __DIR__ . '/ConciliacionAgenda.php';
             if (!ConciliacionAgenda::revisionVigente($this->conn,$this->clinica(),$s)) {
@@ -200,28 +202,34 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
             }
             $vet = Contexto::idUsuario();
             $this->veterinario($vet);
-            $t = $this->filas('SELECT * FROM tipos_cita WHERE id_tipo_cita=? AND id_clinica=? AND activo=1',[$tipo,$this->clinica()])[0] ?? null;
+            $t = $tipo === null
+                ? ($this->filas("SELECT * FROM tipos_cita WHERE id_clinica=? AND activo=1 AND (LOWER(nombre_tipo) LIKE '%urgencia%' OR LOWER(nombre_tipo) LIKE '%consulta general%' OR solo_personal=0) ORDER BY CASE WHEN LOWER(nombre_tipo) LIKE '%urgencia%' THEN 0 WHEN LOWER(nombre_tipo) LIKE '%consulta general%' THEN 1 ELSE 2 END,id_tipo_cita LIMIT 1", [$this->clinica()])[0] ?? null)
+                : ($this->filas('SELECT * FROM tipos_cita WHERE id_tipo_cita=? AND id_clinica=? AND activo=1',[$tipo,$this->clinica()])[0] ?? null);
             if (!$t) {
-                throw new InvalidArgumentException('Elige un tipo activo de tu clínica.');
+                throw new InvalidArgumentException('La clínica no tiene un tipo activo disponible para iniciar la urgencia.');
             }
+            $tipo = (int) $t['id_tipo_cita'];
             $ahora = ($this->reloj)()->format('Y-m-d H:i:s');
-            $abiertas = $this->filas("SELECT c.*,t.pausable FROM citas c LEFT JOIN tipos_cita t ON t.id_tipo_cita=c.id_tipo_cita AND t.id_clinica=c.id_clinica WHERE c.id_clinica=? AND c.id_veterinario=? AND c.estado IN ('en_curso','sin_cerrar','pausada') ORDER BY c.id_cita",[$this->clinica(),$vet]);
+            $abiertas = $this->filas("SELECT c.*,t.pausable,m.nombre AS paciente_actual FROM citas c LEFT JOIN tipos_cita t ON t.id_tipo_cita=c.id_tipo_cita AND t.id_clinica=c.id_clinica JOIN mascotas m ON m.id_mascota=c.id_mascota WHERE c.id_clinica=? AND c.id_veterinario=? AND c.estado IN ('en_curso','sin_cerrar','pausada') ORDER BY c.id_cita",[$this->clinica(),$vet]);
             $pausadas = array_filter($abiertas,static fn ($c) => $c['estado']==='pausada');
             $activas = array_values(array_filter($abiertas,static fn ($c) => $c['estado']!=='pausada'));
             if ($pausadas && $decision === '') {
-                throw new InvalidArgumentException('Ya existe una atención pausada. Registra una decisión clínica explícita.');
+                $actual = $activas ? 'Estás atendiendo a ' . $activas[0]['paciente_actual'] : 'La atención de ' . reset($pausadas)['paciente_actual'] . ' sigue pausada';
+                throw new CampoInvalido('decision', 'Selecciona el motivo de la decisión clínica.', 'Ya existe una atención pausada. ' . $actual . '; la urgencia quedó primera en la fila. Registra una decisión clínica explícita.');
             }
             if ($pausadas && $decision !== '') {
                 ValidadorAgendaClinica::motivo($decision);
-                $this->auditar('solicitudes_agenda',$id,null,['decision'=>$decision],'Decisión clínica ante otro rojo, sin pausa anidada');
+                $this->auditar('solicitudes_agenda',$id,null,['decision'=>$decision],'Decisión clínica explícita ante otro rojo (RN-427)');
             }
-            if ($activas && ($pausadas || count($activas)>1 || !(bool)$activas[0]['pausable'])) {
-                return ['id_solicitud'=>$id,'espera'=>true,'message'=>'Rojo en espera. La atención actual no se puede interrumpir.'];
+            if ($activas && (count($activas)>1 || !(bool)$activas[0]['pausable'])) {
+                return ['id_solicitud'=>$id,'espera'=>true,'message'=>'Estás atendiendo a ' . $activas[0]['paciente_actual'] . '. La atención actual no se puede interrumpir; la urgencia quedó primera en la fila.'];
             }
             try {
                 (new DisponibilidadAgenda($this->conn,$this->reloj))->exigirCapacidadUrgente($vet,(int)$s['id_mascota'],((int)$t['duracion_minutos']+(int)$t['margen_minutos'])*60);
             } catch (HorarioOcupado $error) {
-                return ['id_solicitud'=>$id,'espera'=>true,'message'=>$error->getMessage()];
+                // RN-427 / RE-4.15.5: el rojo presente inicia y la cascada reacomoda la agenda llena.
+                (new DisponibilidadAgenda($this->conn,$this->reloj))->exigirCapacidadUrgente($vet,(int)$s['id_mascota'],((int)$t['duracion_minutos']+(int)$t['margen_minutos'])*60,true);
+                $this->auditar('solicitudes_agenda',$id,null,['capacidad_reacomodada'=>true],'Inicio urgente ante ocupación de agenda; cascada posterior');
             }
             if ($activas) {
                 $cita = $activas[0];

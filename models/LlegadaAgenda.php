@@ -19,6 +19,9 @@ final class LlegadaAgenda extends ServicioAgendaClinica
 
     private function abierta(array $cita): void
     {
+        if ($cita['estado'] === 'no_asistio') {
+            throw new InvalidArgumentException('La reserva quedó como «No asistió». Si el paciente llegó ahora, agenda un nuevo horario.');
+        }
         if (!in_array($cita['estado'], Cita::ESTADOS_ABIERTOS, true)) {
             throw new InvalidArgumentException('La cita ya no admite esta decisión. Recarga la agenda.');
         }
@@ -73,6 +76,8 @@ final class LlegadaAgenda extends ServicioAgendaClinica
 
     public function llegada(int $id, ?string $clave): array
     {
+        $cita = $this->cita($id);
+        (new CascadaAgenda($this->conn, $this->reloj))->marcarInasistencias($cita['fecha']);
         $resultado = $this->comando($id, 'llegada_c8', [], $clave, function (array $cita) use ($id): array {
             if ($cita['fecha'] !== ($this->reloj)()->format('Y-m-d')) {
                 throw new InvalidArgumentException('La llegada se registra en la fecha de la cita.');
@@ -168,7 +173,8 @@ final class LlegadaAgenda extends ServicioAgendaClinica
                     $fecha = $cita['fecha'];
                     $hora = $opciones['siguiente_hueco'][0] ?? '';
                 }
-                (new Cita($this->conn, $this->reloj))->reprogramar($cita, $vet, $fecha, $hora);
+                // RN-430: decisión clínica de una llegada acreditada, nunca un parámetro HTTP de excepción.
+                (new Cita($this->conn, $this->reloj))->reprogramar($cita, $vet, $fecha, $hora, null, true);
                 $this->recalcular($cita, 'Decisión por llegada tarde');
             } else {
                 throw new InvalidArgumentException('Selecciona una decisión válida.');
@@ -176,6 +182,19 @@ final class LlegadaAgenda extends ServicioAgendaClinica
             $this->auditar('citas', $id, ['hora' => $cita['hora'], 'duracion_minutos' => $cita['duracion_minutos']], ['decision' => $decision, 'segundos' => $segundos], 'Decisión veterinaria por llegada (RE-4.19.4)');
             return ['id_cita' => $id, 'message' => 'Decisión registrada y agenda recalculada.'];
         });
+    }
+
+    /** RN-419: revisión y reclasificación comparten los recursos de la cascada y una sola transacción. */
+    public function conRevisionDeSolicitud(array $entrada, callable $revisar): array
+    {
+        $this->autorizar([Roles::VETERINARIO]);
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(),
+                fn () => $this->recursos([(int) $entrada['id_mascota']], [], [$entrada['fecha'], $entrada['fecha']]),
+                $revisar);
+        } catch (AccesoDenegado $error) {
+            $this->denegarAcceso('solicitudes_agenda', null, 'Revisión denegada tras rollback');
+        }
     }
 
     public function ajustar(int $id, string $nivel, string $motivo, ?string $clave): array
@@ -190,9 +209,12 @@ final class LlegadaAgenda extends ServicioAgendaClinica
             }
             [$duracion, $margen] = $this->tiempos($cita);
             $hora = $cita['hora'];
-            $bloque = null;
-            $sobrecupo = false;
-            if (in_array($nivel, ['amarillo', 'naranja'], true)) {
+            $orden = ['verde' => 0, 'amarillo' => 1, 'naranja' => 2, 'rojo' => 3];
+            // RN-423: confirmar o bajar conserva exactamente el espacio, incluso si era un sobrecupo.
+            $conservar = $orden[$nivel] <= $orden[$cita['prioridad']];
+            $bloque = $conservar ? $cita['id_bloque'] : null;
+            $sobrecupo = $conservar && (bool) $cita['es_sobrecupo'];
+            if (!$conservar && in_array($nivel, ['amarillo', 'naranja'], true)) {
                 $disponibilidad = new DisponibilidadAgenda($this->conn, $this->reloj);
                 $horas = $disponibilidad->sugerir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $duracion, $margen, $id);
                 if ($nivel === 'naranja') {
@@ -213,18 +235,6 @@ final class LlegadaAgenda extends ServicioAgendaClinica
                 } else {
                     if (!$horas) {
                         throw new HorarioOcupado('Sin primer espacio compatible; reprograma con el propietario.');
-                    }
-                    $hora = Cita::normalizarHora($horas[0]);
-                }
-            } elseif ($nivel === 'verde') {
-                // O-07/O-08: bajar el nivel no conserva un sobrecupo naranja sin capacidad ordinaria.
-                $d = new DisponibilidadAgenda($this->conn, $this->reloj);
-                $horas = $d->sugerir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $duracion, $margen, $id);
-                try {
-                    $d->exigir((int) $cita['id_veterinario'], (int) $cita['id_mascota'], $cita['fecha'], $hora, $duracion, $margen, $id);
-                } catch (HorarioOcupado $error) {
-                    if (!$horas) {
-                        throw $error;
                     }
                     $hora = Cita::normalizarHora($horas[0]);
                 }
@@ -375,7 +385,13 @@ final class LlegadaAgenda extends ServicioAgendaClinica
     public function leer(): array
     {
         $this->autorizar([Roles::VETERINARIO]);
+        (new CascadaAgenda($this->conn, $this->reloj))->marcarInasistencias(($this->reloj)()->format('Y-m-d'));
         $citas = $this->filas("SELECT id_cita,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=citas.id_mascota) AS mascota,fecha,hora,estado,origen,prioridad,prioridad_calculada,hora_llegada FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=? AND estado IN ('pendiente','confirmada') ORDER BY hora,id_cita", [$this->clinica(), Contexto::idUsuario(), ($this->reloj)()->format('Y-m-d')]);
+        $minutos = (int)$this->filas('SELECT tolerancia_llegada_min FROM clinicas WHERE id_clinica=?', [$this->clinica()])[0]['tolerancia_llegada_min'];
+        foreach ($citas as &$cita) {
+            $cita['llegada_tardia'] = ReglaAtencion::llegadaFueraDeTolerancia($cita, $minutos, ($this->reloj)());
+        }
+        unset($cita);
         $historial = $this->filas("SELECT a.registro_id,a.id_usuario,a.fecha_hora,a.datos_anteriores,a.datos_nuevos FROM auditoria_sistema a WHERE a.id_clinica=? AND a.tabla_afectada='citas' AND a.descripcion='Reclasificación veterinaria (RE-4.18.1/4)' ORDER BY a.id_auditoria DESC", [$this->clinica()]);
         $solicitudes = $this->filas("SELECT id_solicitud,id_mascota,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=solicitudes_agenda.id_mascota) AS mascota,nivel_calculado,nivel_aprobado,estado_revision FROM solicitudes_agenda WHERE id_clinica=? AND id_actor=? AND estado='abierta' AND id_cita IS NULL ORDER BY id_solicitud DESC", [$this->clinica(), Contexto::idUsuario()]);
         return ['citas' => $citas, 'solicitudes' => $solicitudes, 'espera' => $this->espera(), 'historial' => $historial];

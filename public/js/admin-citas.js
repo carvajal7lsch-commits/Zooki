@@ -11,6 +11,45 @@ let lecturaCitas = 0;
 let rangoPeriodoCitas = 'Todas las fechas';
 
 document.addEventListener('DOMContentLoaded', () => {
+    const cancelar = document.querySelector('[data-cancelar-cita-admin]');
+    if (cancelar) {
+        let enviando = false;
+        const comando = zookiCrearComandoAgenda();
+        const motivo = cancelar.elements.namedItem('motivo');
+        const boton = cancelar.querySelector('[type="submit"]');
+        const aviso = cancelar.querySelector('[data-cancelacion-error]');
+        const validar = () => {
+            const texto = motivo.value.trim();
+            const valido = texto.length > 0 && Array.from(texto).length <= 255 && !/\p{C}/u.test(texto);
+            aviso.textContent = valido ? '' : 'Indica el motivo (1 a 255 caracteres).';
+            boton.disabled = enviando || !valido;
+            return valido;
+        };
+        motivo.addEventListener('input', validar);
+        cancelar.addEventListener('submit', async evento => {
+            evento.preventDefault();
+            if (enviando || !validar()) return;
+            if (!(await zookiConfirmarCorto('¿Cancelar esta cita? Se conservará el motivo en auditoría.', 'Cancelar cita', [], 'Mantener cita'))) return;
+            enviando = true;
+            validar();
+            try {
+                const datos = new URLSearchParams(new FormData(cancelar));
+                datos.set('id_cita', cancelar.dataset.idCita);
+                datos.set('clave_operacion', comando.clave(datos));
+                const respuesta = await (await fetch('index.php?action=cancelar_cita_ajax', { method: 'POST', body: datos })).json();
+                if (!respuesta.success) throw new Error(respuesta.message || 'No se pudo cancelar.');
+                comando.reiniciar();
+                zookiCerrarDialogo(cancelar);
+                await cargarDatosIniciales();
+                zookiToast(respuesta.message || 'Cita cancelada.', 'success');
+            } catch (error) {
+                aviso.textContent = error.message;
+            } finally {
+                enviando = false;
+                boton.disabled = false;
+            }
+        });
+    }
     const selectores = document.querySelector('[data-citas-selectores]');
     const fecha = document.querySelector('[data-citas-fecha]');
     const exportar = document.querySelector('[data-citas-exportar]');
@@ -245,6 +284,14 @@ function verDetalle(id) {
     const cita = todasLasCitas.find(c => String(c.id_cita) === String(id));
     if (!cita) return;
     const dialogo = campoCitas('citasDetalle');
+    const cancelacion = dialogo.querySelector('[data-cancelar-cita-admin]');
+    if (cancelacion) {
+        cancelacion.reset();
+        cancelacion.dataset.idCita = cita.id_cita;
+        cancelacion.hidden = !['pendiente', 'confirmada'].includes(cita.estado);
+        cancelacion.querySelector('[type="submit"]').disabled = true;
+        cancelacion.querySelector('[data-cancelacion-error]').textContent = '';
+    }
     dialogo.querySelectorAll('[data-cita-detalle]').forEach(n => {
         const clave = n.dataset.citaDetalle;
         n.textContent = cita[clave] || (clave === 'veterinario_nombre' ? veterinariosMap[cita.id_veterinario] : clave === 'motivo' ? 'Sin observaciones' : '—');

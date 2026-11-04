@@ -163,12 +163,50 @@
         const activas = (datos && datos.activas) || [];
         const historial = (datos && datos.historial) || [];
         const escritura = !ajustes.lectura && !(datos && datos.solo_lectura);
+        const resumenMovil = contenedor.closest('#atencionApp')?.querySelector('[data-alerta-resumen]');
+        if (resumenMovil) {
+            resumenMovil.textContent = activas.length === 1 ? activas[0].descripcion : activas.length ? activas.length + ' alertas' : '';
+            resumenMovil.parentElement.title = activas.length === 1 ? activas[0].descripcion : 'Ver alergias y alertas';
+        }
         const iconos = ICONOS[ajustes.iconos] || ICONOS.fa;
         contenedor.dataset.idMascota = String(ajustes.idMascota ?? contenedor.dataset.idMascota ?? '');
         contenedor._alertas = { opciones: ajustes };
         if (global.ZookiPacienteCompacto) global.ZookiPacienteCompacto.actualizarAlertas(contenedor, activas);
         contenedor.replaceChildren();
         contenedor.hidden = false;
+        if (Object.prototype.hasOwnProperty.call(contenedor.dataset, 'alertasChips')) {
+            contenedor.append(el('strong', 'atencion-franja__etiqueta', 'Alertas'));
+            let indice = 0;
+            for (const alerta of activas) {
+                const chip = el('span', 'consulta-chip consulta-chip--alerta', (alerta.tipo_nombre || alerta.tipo) + ': ' + alerta.descripcion);
+                chip.title = alerta.descripcion;
+                chip.hidden = indice++ >= 2;
+                contenedor.append(chip);
+            }
+            if (activas.length > 2) {
+                const mas = el('button', 'consulta-alertas-mas', '+' + (activas.length - 2) + ' más');
+                mas.type = 'button';
+                mas.dataset.alertasMas = '';
+                mas.setAttribute('aria-expanded', 'false');
+                mas.addEventListener('click', () => {
+                    const expandir = mas.getAttribute('aria-expanded') !== 'true';
+                    [...contenedor.querySelectorAll('.consulta-chip--alerta')].forEach((chip, i) => { chip.hidden = i >= 2 && !expandir; });
+                    mas.setAttribute('aria-expanded', String(expandir));
+                    mas.textContent = expandir ? 'Ver menos' : '+' + (activas.length - 2) + ' más';
+                });
+                contenedor.append(mas);
+            }
+            if (!activas.length) contenedor.append(el('span', 'consulta-chip', 'Sin alertas registradas'));
+            if (escritura) {
+                const registrar = el('button', 'consulta-agregar-alerta', ' Agregar');
+                registrar.prepend(icono('fas fa-plus'));
+                registrar.type = 'button';
+                registrar.dataset.registrarAlerta = '';
+                registrar.addEventListener('click', () => abrirFormulario(contenedor.dataset.idMascota, ajustes.nombreMascota));
+                contenedor.append(registrar);
+            }
+            return;
+        }
         contenedor.classList.toggle('alertas-medicas--con-alertas', activas.length > 0);
         const cabeza = el('div', 'alertas-medicas__barra');
         const titulo = el('h4', 'alertas-medicas__titulo');
@@ -293,39 +331,56 @@
 
     // ── Formulario de registro (modal compartido de views/partials/modal_alerta_medica.php) ──
 
-    const formulario = { modal: null, form: null, idMascota: null, temporizador: null, nodosPorTipo: {} };
+    const formulario = { modal: null, form: null, idMascota: null, temporizador: null, generacion: 0, busqueda: 0, nodosPorTipo: {} };
 
     function campo(nombre) {
         return formulario.form.querySelector('[data-alerta-campo="' + nombre + '"]');
     }
 
     function tipoElegido() {
-        const marcado = formulario.form.querySelector('[data-alerta-tipo]:checked');
-        return marcado ? marcado.value : '';
+        return formulario.form.querySelector('[data-alerta-tipo]:checked')?.value || '';
     }
 
     function mostrarAviso(nombre, mensaje) {
         const aviso = formulario.form.querySelector('[data-alerta-aviso="' + nombre + '"]');
-        if (aviso) {
-            aviso.textContent = mensaje;
-            aviso.classList.toggle('cuenta-validacion--error', mensaje !== '');
-        }
+        if (!aviso) return;
+        aviso.textContent = mensaje;
+        aviso.classList.toggle('cuenta-validacion--error', mensaje !== '');
+        const control = campo(nombre);
+        if (control) control.setAttribute('aria-invalid', mensaje ? 'true' : 'false');
     }
 
     function validarCampoDescripcion() {
         const area = campo('descripcion');
-        const maximo = Number(area.getAttribute('maxlength')) || 255;
+        const total = Number(area.dataset.descripcionMax || area.getAttribute('maxlength')) || 255;
+        const nombre = admiteNodo(formulario.nodosPorTipo, tipoElegido()) ? limpiar(campo('busqueda').value) : '';
+        const maximo = Math.max(0, total - (nombre ? [...nombre].length + 2 : 0));
+        area.maxLength = maximo;
         const mensaje = validarDescripcion(area.value, maximo);
         mostrarAviso('descripcion', area.value === '' && !area.dataset.tocado ? '' : mensaje);
         const contador = formulario.form.querySelector('[data-alerta-contador]');
-        if (contador) {
-            contador.textContent = [...area.value].length + '/' + maximo;
-        }
+        if (contador) contador.textContent = [...area.value].length + '/' + maximo;
         return mensaje;
     }
 
-    function quitarNodo() {
+    function actualizarAyuda() {
+        const ayuda = formulario.form.querySelector('[data-alerta-nombre-aviso]');
+        const sinCatalogo = formulario.form.querySelector('[data-alerta-no-encuentro]').checked;
+        ayuda.textContent = sinCatalogo ? 'Se conservará el nombre escrito como aviso, sin asociación automática.' : campo('nodo').value ? 'Nombre seleccionado. Puedes escribir los detalles abajo.' : 'Escribe para buscar y elige una sugerencia.';
+    }
+
+    function validarNombre() {
+        if (!admiteNodo(formulario.nodosPorTipo, tipoElegido())) return true;
+        const nombre = limpiar(campo('busqueda').value);
+        const sinCatalogo = formulario.form.querySelector('[data-alerta-no-encuentro]').checked;
+        const mensaje = nombre === '' ? 'Escribe el nombre.' : !campo('nodo').value && !sinCatalogo ? 'Elige una sugerencia o marca No encuentro el nombre.' : '';
+        mostrarAviso('busqueda', mensaje);
+        return mensaje === '';
+    }
+
+    function quitarNodo(limpiarBusqueda = false) {
         campo('nodo').value = '';
+        if (limpiarBusqueda) campo('busqueda').value = '';
         const elegido = formulario.form.querySelector('[data-alerta-nodo-elegido]');
         elegido.replaceChildren();
         elegido.hidden = true;
@@ -333,102 +388,132 @@
     }
 
     function elegirNodo(nodo) {
+        formulario.generacion++;
+        formulario.busqueda++;
+        global.clearTimeout(formulario.temporizador);
         campo('nodo').value = nodo.codigo;
+        campo('busqueda').value = nodo.etiqueta;
+        formulario.form.querySelector('[data-alerta-no-encuentro]').checked = false;
         const elegido = formulario.form.querySelector('[data-alerta-nodo-elegido]');
         const quitar = el('button', 'alertas-medicas__quitar-nodo', '×');
         quitar.type = 'button';
-        quitar.setAttribute('aria-label', 'Quitar el enlace');
-        quitar.addEventListener('click', quitarNodo);
-        elegido.replaceChildren(el('span', null, 'Enlazada a «' + nodo.etiqueta + '»'), quitar);
+        quitar.setAttribute('aria-label', 'Cambiar el nombre seleccionado');
+        quitar.addEventListener('click', () => {
+            formulario.generacion++;
+            formulario.busqueda++;
+            quitarNodo(true);
+            actualizarAyuda();
+            mostrarAviso('busqueda', '');
+            validarCampoDescripcion();
+            campo('busqueda').focus();
+        });
+        elegido.replaceChildren(el('strong', null, nodo.etiqueta), quitar);
         elegido.hidden = false;
         formulario.form.querySelector('[data-alerta-buscar]').hidden = true;
         cerrarSugerencias();
+        mostrarAviso('busqueda', '');
+        actualizarAyuda();
+        validarCampoDescripcion();
+        campo('descripcion').focus();
     }
 
-    /** Cierra la lista de nodos sugeridos (también con Esc, M2 C8). */
     function cerrarSugerencias() {
         const caja = formulario.form.querySelector('[data-alerta-sugerencias]');
         caja.replaceChildren();
         caja.hidden = true;
-        const buscador = campo('busqueda');
-        buscador.setAttribute('aria-expanded', 'false');
-        if (global.ZookiCombobox) {
-            global.ZookiCombobox.reiniciar(buscador);
-        }
+        campo('busqueda').setAttribute('aria-expanded', 'false');
+        global.ZookiCombobox?.reiniciar(campo('busqueda'));
     }
 
     function actualizarTipo() {
+        formulario.generacion++;
+        formulario.busqueda++;
+        global.clearTimeout(formulario.temporizador);
         const tipo = tipoElegido();
         const admite = admiteNodo(formulario.nodosPorTipo, tipo);
-        const zona = formulario.form.querySelector('[data-alerta-zona-nodo]');
-        zona.hidden = !admite;
-        // Un nodo de otro tipo no se conserva al cambiar de tipo.
-        quitarNodo();
-        const buscador = campo('busqueda');
-        buscador.value = '';
+        formulario.form.querySelector('[data-alerta-zona-nodo]').hidden = !admite;
+        campo('busqueda').disabled = !admite;
+        campo('busqueda').required = admite;
+        const sinCatalogo = formulario.form.querySelector('[data-alerta-no-encuentro]');
+        sinCatalogo.checked = false;
+        sinCatalogo.disabled = !admite;
+        quitarNodo(true);
         cerrarSugerencias();
+        const nombres = { alergia: 'Alérgico/a a', medicacion_continua: 'Medicamento que toma', condicion_cronica: 'Condición' };
+        formulario.form.querySelector('[data-alerta-nombre-titulo]').textContent = nombres[tipo] || 'Nombre';
+        campo('busqueda').placeholder = tipo === 'alergia' ? 'Busca un medicamento o sustancia' : tipo === 'condicion_cronica' ? 'Busca una condición' : 'Busca un medicamento';
+        const titulos = { alergia: 'Reacción o detalles', medicacion_continua: 'Indicaciones o detalles', condicion_cronica: 'Cuidados o detalles', otra: 'Descripción' };
+        formulario.form.querySelector('[data-alerta-descripcion-titulo]').textContent = titulos[tipo] || 'Descripción';
+        const ejemplos = { alergia: 'Qué reacción tuvo. Ej.: ronchas en la piel', medicacion_continua: 'Indicaciones o detalles de la medicación', condicion_cronica: 'Cuidados o detalles de la condición', otra: 'Describe la alerta que deben conocer al atenderla' };
+        campo('descripcion').placeholder = ejemplos[tipo] || 'Describe la alerta';
+        if (formulario.modal.dataset.alertaPresentacion === 'compacta') {
+            const botones = { alergia: 'Registrar alergia', medicacion_continua: 'Registrar medicación', condicion_cronica: 'Registrar condición', otra: 'Registrar alerta' };
+            formulario.form.querySelector('[data-alerta-enviar]').textContent = botones[tipo] || 'Registrar';
+        }
         mostrarAviso('tipo', '');
+        mostrarAviso('busqueda', '');
+        actualizarAyuda();
+        validarCampoDescripcion();
     }
 
     async function buscarNodos() {
+        const version = formulario.busqueda;
+        const idMascota = formulario.idMascota;
         const texto = campo('busqueda').value;
         const caja = formulario.form.querySelector('[data-alerta-sugerencias]');
         if (normalizar(texto).length < BUSQUEDA_MIN) {
             cerrarSugerencias();
             return;
         }
-        const { ok, cuerpo } = await pedir(RUTAS.buscar + '&tipo=' + encodeURIComponent(tipoElegido()) + '&q=' + encodeURIComponent(texto));
-        caja.replaceChildren();
-        const nodos = ok ? cuerpo.nodos : [];
-        if (nodos.length === 0) {
-            caja.appendChild(el('p', 'alertas-medicas__sin-resultados', 'No está en el conocimiento. Puedes guardar solo la descripción.'));
-        }
-        for (const nodo of nodos) {
-            const opcion = el('button', 'alertas-medicas__sugerencia');
-            opcion.type = 'button';
-            opcion.tabIndex = -1;
-            opcion.setAttribute('role', 'option');
-            opcion.dataset.nodoSugerido = nodo.codigo;
-            opcion.appendChild(el('strong', null, nodo.etiqueta));
-            if (normalizar(nodo.coincidencia) !== normalizar(nodo.etiqueta)) {
-                opcion.appendChild(el('span', null, 'por «' + nodo.coincidencia + '»'));
+        const vigente = () => version === formulario.busqueda && idMascota === formulario.idMascota && campo('busqueda').value === texto && formulario.modal.classList.contains('is-open');
+        try {
+            const { ok, cuerpo } = await pedir(RUTAS.buscar + '&tipo=' + encodeURIComponent(tipoElegido()) + '&q=' + encodeURIComponent(texto));
+            if (!vigente()) return;
+            const nodos = ok && Array.isArray(cuerpo.nodos) ? cuerpo.nodos : [];
+            caja.replaceChildren();
+            if (!ok) caja.append(el('p', 'alertas-medicas__sin-resultados', 'No pude buscar el nombre. Revisa la conexión e intenta de nuevo.'));
+            else if (!nodos.length) caja.append(el('p', 'alertas-medicas__sin-resultados', 'No encontré el nombre. Puedes marcar No encuentro el nombre.'));
+            for (const nodo of nodos) {
+                const opcion = el('button', 'alertas-medicas__sugerencia');
+                opcion.type = 'button';
+                opcion.tabIndex = -1;
+                opcion.setAttribute('role', 'option');
+                opcion.dataset.nodoSugerido = nodo.codigo;
+                opcion.append(el('strong', null, nodo.etiqueta));
+                if (normalizar(nodo.coincidencia) !== normalizar(nodo.etiqueta)) opcion.append(el('span', null, 'por «' + nodo.coincidencia + '»'));
+                opcion.addEventListener('click', () => elegirNodo(nodo));
+                caja.append(opcion);
             }
-            opcion.addEventListener('click', () => elegirNodo(nodo));
-            caja.appendChild(opcion);
+        } catch (error) {
+            if (!vigente()) return;
+            caja.replaceChildren(el('p', 'alertas-medicas__sin-resultados', 'No pude buscar el nombre. Revisa la conexión e intenta de nuevo.'));
         }
         caja.hidden = false;
         campo('busqueda').setAttribute('aria-expanded', 'true');
-        if (global.ZookiCombobox) {
-            global.ZookiCombobox.reiniciar(campo('busqueda'));
-        }
+        global.ZookiCombobox?.reiniciar(campo('busqueda'));
     }
 
     function abrirFormulario(idMascota, nombreMascota) {
-        if (!formulario.form) {
-            return;
-        }
+        if (!formulario.form) return;
         formulario.idMascota = String(idMascota);
         formulario.form.reset();
         campo('id_mascota').value = formulario.idMascota;
         campo('descripcion').dataset.tocado = '';
         mostrarAviso('descripcion', '');
-        mostrarAviso('tipo', '');
         formulario.form.querySelector('[data-alerta-resultado]').textContent = '';
         const subtitulo = formulario.modal.querySelector('[data-alerta-mascota]');
-        if (subtitulo) {
-            subtitulo.textContent = nombreMascota ? 'Mascota: ' + nombreMascota : '';
-        }
+        if (subtitulo) subtitulo.textContent = formulario.modal.dataset.alertaPresentacion === 'compacta' ? (nombreMascota ? nombreMascota + ' · ' : '') + 'La verán todas las clínicas que la atienden' : nombreMascota ? 'Mascota: ' + nombreMascota : '';
         actualizarTipo();
-        validarCampoDescripcion();
         formulario.modal.classList.add('is-open');
         formulario.modal.setAttribute('aria-hidden', 'false');
-        const primero = formulario.form.querySelector('[data-alerta-tipo]');
-        if (primero && typeof primero.focus === 'function') {
-            primero.focus();
-        }
+        const primero = campo('busqueda').disabled ? formulario.form.querySelector('[data-alerta-tipo]') : campo('busqueda');
+        primero?.focus();
     }
 
     function cerrarFormulario() {
+        formulario.generacion++;
+        formulario.busqueda++;
+        global.clearTimeout(formulario.temporizador);
         formulario.modal.classList.remove('is-open');
         formulario.modal.setAttribute('aria-hidden', 'true');
     }
@@ -438,75 +523,87 @@
         const area = campo('descripcion');
         area.dataset.tocado = '1';
         const errorDescripcion = validarCampoDescripcion();
+        const nombreValido = validarNombre();
         const errorTipo = tipoElegido() === '' ? 'Elige el tipo de alerta.' : '';
         mostrarAviso('tipo', errorTipo);
-        if (errorDescripcion || errorTipo) {
+        if (errorDescripcion || errorTipo || !nombreValido) {
+            if (!nombreValido) campo('busqueda').focus();
+            else if (errorDescripcion) area.focus();
             return;
         }
         const boton = formulario.form.querySelector('[data-alerta-enviar]');
+        if (boton.disabled) return;
         boton.disabled = true;
+        const idMascota = formulario.idMascota;
+        const generacion = formulario.generacion;
         const datos = new global.FormData(formulario.form);
         datos.set('descripcion', limpiar(area.value));
-        const { ok, cuerpo } = await pedir(RUTAS.registrar, { method: 'POST', body: datos });
-        boton.disabled = false;
-        if (!ok) {
-            const mensaje = cuerpo.message || 'No se pudo registrar la alerta.';
-            if (/descripci/i.test(mensaje)) {
-                mostrarAviso('descripcion', mensaje);
-            } else {
-                formulario.form.querySelector('[data-alerta-resultado]').textContent = mensaje;
+        try {
+            const { ok, cuerpo } = await pedir(RUTAS.registrar, { method: 'POST', body: datos });
+            const vigente = idMascota === formulario.idMascota && generacion === formulario.generacion;
+            if (!ok) {
+                if (!vigente) return;
+                const mensaje = cuerpo.message || 'No se pudo registrar la alerta.';
+                if (['descripcion', 'busqueda', 'tipo'].includes(cuerpo.campo)) mostrarAviso(cuerpo.campo, cuerpo.aviso || mensaje);
+                else if (/descripci/i.test(mensaje)) mostrarAviso('descripcion', mensaje);
+                else formulario.form.querySelector('[data-alerta-resultado]').textContent = mensaje;
+                return;
             }
-            return;
+            if (vigente) cerrarFormulario();
+            repintar(idMascota, cuerpo.alertas);
+            avisar(cuerpo.message || 'Alerta registrada.', 'success');
+        } catch (error) {
+            if (idMascota === formulario.idMascota && generacion === formulario.generacion) formulario.form.querySelector('[data-alerta-resultado]').textContent = 'No se pudo registrar. Revisa la conexión e intenta de nuevo.';
+        } finally {
+            boton.disabled = false;
         }
-        cerrarFormulario();
-        repintar(formulario.idMascota, cuerpo.alertas);
-        avisar(cuerpo.message || 'Alerta registrada.', 'success');
     }
 
     function prepararFormulario() {
         formulario.modal = doc.querySelector('[data-alerta-modal]');
-        formulario.form = formulario.modal ? formulario.modal.querySelector('[data-alerta-form]') : null;
-        if (!formulario.form) {
-            return;
-        }
+        formulario.form = formulario.modal?.querySelector('[data-alerta-form]');
+        if (!formulario.form) return;
         try {
             formulario.nodosPorTipo = JSON.parse(formulario.form.dataset.nodosPorTipo || '{}');
         } catch (error) {
             formulario.nodosPorTipo = {};
         }
         formulario.form.addEventListener('submit', enviar);
-        for (const radio of formulario.form.querySelectorAll('[data-alerta-tipo]')) {
-            radio.addEventListener('change', actualizarTipo);
-        }
-        const area = campo('descripcion');
-        area.addEventListener('input', () => {
-            area.dataset.tocado = '1';
+        for (const radio of formulario.form.querySelectorAll('[data-alerta-tipo]')) radio.addEventListener('change', actualizarTipo);
+        campo('descripcion').addEventListener('input', () => {
+            formulario.generacion++;
+            campo('descripcion').dataset.tocado = '1';
             validarCampoDescripcion();
         });
-        const buscador = campo('busqueda');
-        buscador.addEventListener('input', () => {
+        campo('busqueda').addEventListener('input', () => {
+            formulario.generacion++;
+            formulario.busqueda++;
             global.clearTimeout(formulario.temporizador);
+            quitarNodo();
+            formulario.form.querySelector('[data-alerta-no-encuentro]').checked = false;
+            cerrarSugerencias();
+            mostrarAviso('busqueda', '');
+            actualizarAyuda();
+            validarCampoDescripcion();
             formulario.temporizador = global.setTimeout(buscarNodos, ESPERA_BUSQUEDA);
         });
-        // M2 C8 (H6): flechas, Enter y Esc; Esc cierra la lista sin cerrar el formulario.
-        if (global.ZookiCombobox) {
-            global.ZookiCombobox.enlazar(buscador, formulario.form.querySelector('[data-alerta-sugerencias]'), { cerrar: cerrarSugerencias });
-        }
-        for (const cerrar of formulario.modal.querySelectorAll('[data-alerta-cerrar]')) {
-            cerrar.addEventListener('click', cerrarFormulario);
-        }
+        formulario.form.querySelector('[data-alerta-no-encuentro]').addEventListener('change', () => {
+            formulario.generacion++;
+            formulario.busqueda++;
+            global.clearTimeout(formulario.temporizador);
+            quitarNodo();
+            cerrarSugerencias();
+            actualizarAyuda();
+            validarNombre();
+            validarCampoDescripcion();
+        });
+        global.ZookiCombobox?.enlazar(campo('busqueda'), formulario.form.querySelector('[data-alerta-sugerencias]'), { cerrar: cerrarSugerencias });
+        for (const cerrar of formulario.modal.querySelectorAll('[data-alerta-cerrar]')) cerrar.addEventListener('click', cerrarFormulario);
         formulario.modal.addEventListener('click', evento => {
-            if (evento.target === formulario.modal) {
-                cerrarFormulario();
-            }
+            if (evento.target === formulario.modal) cerrarFormulario();
         });
         doc.addEventListener('keydown', evento => {
-            if (evento.defaultPrevented) {
-                return;
-            }
-            if (evento.key === 'Escape' && formulario.modal.classList.contains('is-open')) {
-                cerrarFormulario();
-            }
+            if (!evento.defaultPrevented && evento.key === 'Escape' && formulario.modal.classList.contains('is-open')) cerrarFormulario();
         });
     }
 

@@ -596,6 +596,7 @@
     "codigo": "sintoma.intentos_orinar_minimo",
     "tipo": "sintoma",
     "etiqueta": "Intenta orinar muchas veces y sale poco o nada",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "cornell.flutd",
@@ -606,6 +607,16 @@
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: dificultad para orinar en gatos machos",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Difficulty urinating», potencialmente mortal sin tratamiento",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -614,11 +625,18 @@
     "codigo": "sintoma.dolor_orinar",
     "tipo": "sintoma",
     "etiqueta": "Dolor o quejido al orinar",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «crying out while urinating», micción dolorosa",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -627,6 +645,7 @@
     "codigo": "sintoma.arcadas_improductivas",
     "tipo": "sintoma",
     "etiqueta": "Arcadas: intenta vomitar y no sale nada",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "msd.dtg",
@@ -637,6 +656,16 @@
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: «nonproductive retching»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Bloated abdomen with dry-heaving»",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"
@@ -645,10 +674,21 @@
     "codigo": "sintoma.abdomen_distendido",
     "tipo": "sintoma",
     "etiqueta": "Barriga hinchada o distendida",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "msd.dtg",
         "localizador": "Signos clínicos: distensión abdominal aguda o progresiva",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Bloated abdomen with dry-heaving»",
         "fundamento": "clinico"
       }
     ],
@@ -658,10 +698,22 @@
     "codigo": "sintoma.inquietud",
     "tipo": "sintoma",
     "etiqueta": "Inquietud, no encuentra posición",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.dtg",
         "localizador": "Signos clínicos: «restlessness»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Signs of severe pain or distress»",
         "fundamento": "clinico"
       }
     ],
@@ -671,6 +723,7 @@
     "codigo": "sintoma.sed_aumentada",
     "tipo": "sintoma",
     "etiqueta": "Toma mucha más agua de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.piometra",
@@ -686,6 +739,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: polidipsia",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -719,10 +777,21 @@
     "codigo": "sintoma.secrecion_genital",
     "tipo": "sintoma",
     "etiqueta": "Flujo o secreción por la vulva",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.piometra",
         "localizador": "Signos: exudado vaginal (cérvix abierto)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Difficult labor or unexplained vaginal bleeding»",
         "fundamento": "clinico"
       }
     ],
@@ -772,6 +841,7 @@
     "codigo": "sintoma.exposicion_calor",
     "tipo": "sintoma",
     "etiqueta": "Estuvo expuesto a calor fuerte (sol, carro cerrado, día caluroso)",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -781,6 +851,16 @@
       {
         "codigo": "msd.triage_emergencias",
         "localizador": "Introducción: «heatstroke»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Heatstroke symptoms»: jadeo excesivo, babeo, debilidad, vómito o colapso",
         "fundamento": "clinico"
       }
     ],
@@ -955,11 +1035,18 @@
     "codigo": "sintoma.se_esconde",
     "tipo": "sintoma",
     "etiqueta": "Se esconde o se aísla",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.lipidosis",
         "localizador": "Signos: el gato se vuelve retraído y evita el plato",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -968,6 +1055,8 @@
     "codigo": "sintoma.fiebre",
     "tipo": "sintoma",
     "etiqueta": "Fiebre referida (se siente caliente)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.panleucopenia",
@@ -978,6 +1067,11 @@
         "codigo": "msd.parvovirus",
         "localizador": "Signos iniciales: fiebre",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1005,6 +1099,7 @@
     "codigo": "sintoma.convulsion_habitual_resuelta",
     "tipo": "sintoma",
     "etiqueta": "Convulsión que ya pasó, corta y como las de siempre",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.epilepsia",
@@ -1015,6 +1110,11 @@
         "codigo": "zooki.reglas_negocio",
         "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
         "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1023,6 +1123,8 @@
     "codigo": "sintoma.no_defeca",
     "tipo": "sintoma",
     "etiqueta": "No hace popó (no defeca)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1033,6 +1135,11 @@
         "codigo": "msd.conejos_no_infecciosas",
         "localizador": "Gastric Stasis: estasis digestiva en conejos",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1041,11 +1148,17 @@
     "codigo": "sintoma.plumaje_erizado",
     "tipo": "sintoma",
     "etiqueta": "Plumas erizadas o esponjadas (ave)",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.aves_enfermedad",
         "localizador": "How Can I Tell If My Pet Bird Is Sick?: «fluffed-up feathers»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1068,10 +1181,16 @@
     "codigo": "sintoma.control_preventivo",
     "tipo": "sintoma",
     "etiqueta": "Control preventivo o vacunación, sin síntomas",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
         "localizador": "§2.G «No sobre-clasificar»: consulta preventiva, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
         "fundamento": "politica"
       }
     ],
@@ -1081,6 +1200,7 @@
     "codigo": "sintoma.picor_oidos_leve_estable",
     "tipo": "sintoma",
     "etiqueta": "Se rasca las orejas, leve, y come y juega normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1091,6 +1211,11 @@
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: sacudir la cabeza y prurito ótico",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1099,6 +1224,7 @@
     "codigo": "sintoma.cojera_leve_estable",
     "tipo": "sintoma",
     "etiqueta": "Cojea un poco, estable, y mantiene su actividad",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "zooki.casos_triage",
@@ -1109,6 +1235,11 @@
         "codigo": "msd.osteoartritis",
         "localizador": "Signos clínicos: cojera",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1117,6 +1248,7 @@
     "codigo": "sintoma.orina_mucho",
     "tipo": "sintoma",
     "etiqueta": "Orina mucho más de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.renal",
@@ -1127,6 +1259,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: poliuria",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1135,6 +1272,7 @@
     "codigo": "sintoma.perdida_peso",
     "tipo": "sintoma",
     "etiqueta": "Pérdida de peso",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.renal",
@@ -1145,6 +1283,11 @@
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: pérdida de peso",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1153,11 +1296,17 @@
     "codigo": "sintoma.hambre_aumentada",
     "tipo": "sintoma",
     "etiqueta": "Come mucho más de lo normal",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.diabetes",
         "localizador": "Clinical Findings: polifagia",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1166,11 +1315,18 @@
     "codigo": "sintoma.tos",
     "tipo": "sintoma",
     "etiqueta": "Tos",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.tos_perreras",
         "localizador": "Signos clínicos: tos «goose honk»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1179,11 +1335,17 @@
     "codigo": "sintoma.sacude_cabeza",
     "tipo": "sintoma",
     "etiqueta": "Sacude la cabeza",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: «head shaking»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1192,11 +1354,17 @@
     "codigo": "sintoma.mal_olor_oidos",
     "tipo": "sintoma",
     "etiqueta": "Mal olor o secreción en los oídos",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
         "localizador": "Clinical Findings: «malodor, otic discharge or exudate»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1205,11 +1373,18 @@
     "codigo": "sintoma.sangre_orina",
     "tipo": "sintoma",
     "etiqueta": "Sangre en la orina",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «blood in the urine»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1218,11 +1393,17 @@
     "codigo": "sintoma.orina_fuera_caja",
     "tipo": "sintoma",
     "etiqueta": "Orina fuera de la caja de arena",
+    "nivel_triage": "verde",
     "fuentes": [
       {
         "codigo": "cornell.flutd",
         "localizador": "Signos: «inappropriate urination (outside of the litter box)»",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base verde para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1231,10 +1412,21 @@
     "codigo": "sintoma.rigidez",
     "tipo": "sintoma",
     "etiqueta": "Rigidez o le cuesta levantarse",
+    "nivel_triage": "amarillo",
     "fuentes": [
       {
         "codigo": "msd.osteoartritis",
         "localizador": "Signos clínicos: «slowness to rise, especially after extended rest»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Sudden collapse, weakness, or trouble using limbs»",
         "fundamento": "clinico"
       }
     ],
@@ -1244,11 +1436,17 @@
     "codigo": "sintoma.ictericia",
     "tipo": "sintoma",
     "etiqueta": "Piel, encías u ojos amarillos (ictericia)",
+    "nivel_triage": "naranja",
     "fuentes": [
       {
         "codigo": "cornell.lipidosis",
         "localizador": "Signos: ictericia en orejas y encías",
         "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base naranja para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
       }
     ],
     "estado_validacion": "pendiente"
@@ -1257,6 +1455,8 @@
     "codigo": "sintoma.dolor_abdominal",
     "tipo": "sintoma",
     "etiqueta": "Dolor de barriga",
+    "nivel_triage": "amarillo",
+    "moderado": true,
     "fuentes": [
       {
         "codigo": "msd.gastritis",
@@ -1266,6 +1466,16 @@
       {
         "codigo": "cornell.panleucopenia",
         "localizador": "Signos clínicos: dolor abdominal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (decisión del dueño, 2026-10-29): nivel base amarillo para que el síntoma no quede sin nivel; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.urgencias",
+        "localizador": "Top Reasons: «Signs of severe pain or distress»",
         "fundamento": "clinico"
       }
     ],
@@ -1565,9 +1775,281 @@
     "estado_validacion": "pendiente"
   },
   {
+    "codigo": "farmaco.doxiciclina",
+    "tipo": "farmaco",
+    "etiqueta": "Doxiciclina",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Treatment of Ehrlichiosis in Dogs: la doxiciclina es el fármaco de elección",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.fenbendazol",
+    "tipo": "farmaco",
+    "etiqueta": "Fenbendazol",
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment of Giardiasis: fenbendazol de primera línea",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metronidazol",
+    "tipo": "farmaco",
+    "etiqueta": "Metronidazol",
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Treatment of Giardiasis: metronidazol en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.prednisolona",
+    "tipo": "farmaco",
+    "etiqueta": "Prednisolona",
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Treatment and Control: glucocorticoides (prednisolona)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.oclacitinib",
+    "tipo": "farmaco",
+    "etiqueta": "Oclacitinib",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Treatment of Atopic Dermatitis in Dogs: oclacitinib",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.selamectina",
+    "tipo": "farmaco",
+    "etiqueta": "Selamectina",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: selamectina spot-on",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.milbemicina",
+    "tipo": "farmaco",
+    "etiqueta": "Milbemicina oxima",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange y Canine Demodicosis: milbemicina oxima",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.itraconazol",
+    "tipo": "farmaco",
+    "etiqueta": "Itraconazol",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: itraconazol en gatos y perros pequeños",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.terbinafina",
+    "tipo": "farmaco",
+    "etiqueta": "Terbinafina",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Treatment: terbinafina en perros grandes",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.trimetoprim_sulfa",
+    "tipo": "farmaco",
+    "etiqueta": "Trimetoprim-sulfametoxazol",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: trimetoprim-sulfonamida en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.maropitant",
+    "tipo": "farmaco",
+    "etiqueta": "Maropitant",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: antiemético antagonista NK-1",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.ondansetron",
+    "tipo": "farmaco",
+    "etiqueta": "Ondansetrón",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: antiemético antagonista 5-HT3",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.buprenorfina",
+    "tipo": "farmaco",
+    "etiqueta": "Buprenorfina",
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Treatment: analgesia para dolor leve a moderado",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.lisina",
+    "tipo": "farmaco",
+    "etiqueta": "L-lisina",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Treatment: la lisina puede reducir la gravedad de la rinotraqueítis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metimazol",
+    "tipo": "farmaco",
+    "etiqueta": "Metimazol",
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Treatment of Hyperthyroidism in Animals: metimazol",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.pirantel",
+    "tipo": "farmaco",
+    "etiqueta": "Pamoato de pirantel",
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Treatment and Control: pamoato de pirantel",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.levotiroxina",
+    "tipo": "farmaco",
+    "etiqueta": "Levotiroxina",
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Treatment: levotiroxina de por vida",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.fenobarbital",
+    "tipo": "farmaco",
+    "etiqueta": "Fenobarbital",
+    "fuentes": [
+      {
+        "codigo": "msd.antiepilepticos",
+        "localizador": "Tabla: fenobarbital, dosis inicial",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.insulina_nph",
+    "tipo": "farmaco",
+    "etiqueta": "Insulina NPH o lenta",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: insulina inicial en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.insulina_glargina",
+    "tipo": "farmaco",
+    "etiqueta": "Insulina glargina",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Treatment: insulina inicial en gatos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
     "codigo": "diagnostico.gastritis_aguda",
     "tipo": "diagnostico",
     "etiqueta": "Gastritis aguda",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química si persiste",
+          "Radiografía si se sospecha cuerpo extraño"
+        ],
+        "recomendaciones": [
+          "Agua en pequeñas cantidades y con frecuencia",
+          "Comida en porciones pequeñas y volver a la dieta habitual en 3 a 5 días"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.gastritis",
@@ -1594,6 +2076,19 @@
     "codigo": "diagnostico.parvovirosis_canina",
     "tipo": "diagnostico",
     "etiqueta": "Parvovirosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Antígeno de parvovirus en heces",
+          "Hemograma"
+        ],
+        "recomendaciones": [
+          "Hospitalizar y aislar",
+          "Fluidoterapia y control del vómito",
+          "Desinfectar con productos eficaces contra parvovirus"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.parvovirus",
@@ -1620,6 +2115,18 @@
     "codigo": "diagnostico.dilatacion_torsion_gastrica",
     "tipo": "diagnostico",
     "etiqueta": "Dilatación y torsión gástrica",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografía abdominal",
+          "Lactato y electrolitos"
+        ],
+        "recomendaciones": [
+          "Emergencia quirúrgica: estabilizar y descomprimir",
+          "Gastropexia para evitar recurrencia"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.dtg",
@@ -1633,6 +2140,19 @@
     "codigo": "diagnostico.obstruccion_uretral_felina",
     "tipo": "diagnostico",
     "etiqueta": "Obstrucción uretral felina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Uroanálisis",
+          "Potasio y función renal",
+          "Radiografía o ecografía urinaria"
+        ],
+        "recomendaciones": [
+          "Emergencia: desobstruir y estabilizar",
+          "Dieta húmeda y más agua después del alta"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "cornell.flutd",
@@ -1659,6 +2179,18 @@
     "codigo": "diagnostico.piometra",
     "tipo": "diagnostico",
     "etiqueta": "Piometra",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Ecografía abdominal",
+          "Hemograma y química"
+        ],
+        "recomendaciones": [
+          "Ovariohisterectomía tras estabilizar",
+          "Fluidoterapia y antibióticos según el caso"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.piometra",
@@ -1685,6 +2217,18 @@
     "codigo": "diagnostico.epilepsia_idiopatica",
     "tipo": "diagnostico",
     "etiqueta": "Epilepsia idiopática",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química",
+          "Fenobarbital sérico a las 2 semanas"
+        ],
+        "recomendaciones": [
+          "Llevar un diario de convulsiones",
+          "No suspender el tratamiento de golpe"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.epilepsia",
@@ -1711,6 +2255,17 @@
     "codigo": "diagnostico.golpe_de_calor",
     "tipo": "diagnostico",
     "etiqueta": "Golpe de calor",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma, química y coagulación"
+        ],
+        "recomendaciones": [
+          "Enfriamiento activo moderado, sin hielo",
+          "Fluidoterapia y vigilancia de órganos"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.emergencias_propietarios",
@@ -1724,6 +2279,19 @@
     "codigo": "diagnostico.otitis_externa",
     "tipo": "diagnostico",
     "etiqueta": "Otitis externa",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Otoscopia",
+          "Citología del oído antes de limpiar"
+        ],
+        "recomendaciones": [
+          "Limpieza del oído según la secreción",
+          "Producto ótico combinado según la etiqueta, de 7 a 10 días",
+          "Citología de control cada 1 a 2 semanas"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.otitis_externa",
@@ -1737,6 +2305,19 @@
     "codigo": "diagnostico.osteoartritis",
     "tipo": "diagnostico",
     "etiqueta": "Osteoartritis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografías de las articulaciones afectadas",
+          "Química renal antes de AINE prolongado"
+        ],
+        "recomendaciones": [
+          "Control del peso",
+          "Ejercicio moderado y regular",
+          "Superficies antideslizantes en casa"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.osteoartritis",
@@ -1763,6 +2344,20 @@
     "codigo": "diagnostico.diabetes_mellitus",
     "tipo": "diagnostico",
     "etiqueta": "Diabetes mellitus",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Glucosa y fructosamina",
+          "Uroanálisis y urocultivo",
+          "Curva de glucosa"
+        ],
+        "recomendaciones": [
+          "Insulina con las comidas, a la misma hora",
+          "Perros: dieta alta en fibra; gatos: alta en proteína y baja en carbohidratos",
+          "Enseñar a reconocer la hipoglucemia"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.diabetes",
@@ -1776,10 +2371,483 @@
     "codigo": "diagnostico.tos_perreras",
     "tipo": "diagnostico",
     "etiqueta": "Traqueobronquitis infecciosa canina (tos de las perreras)",
+    "metadatos": {
+      "plan": {
+        "examenes": [],
+        "recomendaciones": [
+          "Antibiótico solo si hay signos de neumonía",
+          "Reposo y evitar collares que presionen la tráquea",
+          "Aislar de otros perros"
+        ]
+      }
+    },
     "fuentes": [
       {
         "codigo": "msd.tos_perreras",
         "localizador": "Kennel Cough",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.ehrlichiosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Ehrlichiosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma con conteo de plaquetas",
+          "Prueba serológica o PCR de Ehrlichia",
+          "Química sanguínea"
+        ],
+        "recomendaciones": [
+          "Control de garrapatas en todos los animales de la casa",
+          "Repetir hemograma al terminar el tratamiento"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Ehrlichiosis in Dogs",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.leptospirosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Leptospirosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma y química renal y hepática",
+          "Uroanálisis",
+          "PCR o serología de Leptospira"
+        ],
+        "recomendaciones": [
+          "Riesgo zoonótico: usar guantes al manipular orina",
+          "Fluidoterapia según hidratación y función renal",
+          "Vacunar a los perros en contacto"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Leptospirosis in Dogs",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.moquillo_canino",
+    "tipo": "diagnostico",
+    "etiqueta": "Moquillo canino (distemper)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Hemograma",
+          "PCR de moquillo (sangre, orina o hisopado conjuntival)"
+        ],
+        "recomendaciones": [
+          "Aislar al paciente",
+          "Tratamiento de soporte: hidratación, nutrición y control de infecciones secundarias",
+          "Revisar vacunación de los perros en contacto"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Canine Distemper",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.giardiasis",
+    "tipo": "diagnostico",
+    "etiqueta": "Giardiasis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Coprológico seriado o antígeno de Giardia en heces"
+        ],
+        "recomendaciones": [
+          "Bañar al paciente al terminar el tratamiento",
+          "Limpiar y secar bien el entorno"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.giardiasis",
+        "localizador": "Giardiasis in Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatitis_alergica_pulgas",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatitis alérgica a la pulga",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Búsqueda de pulgas o sus heces con peine fino"
+        ],
+        "recomendaciones": [
+          "Control de pulgas en todos los animales de la casa",
+          "Tratar también el ambiente",
+          "Mantener el antipulgas de forma continua"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Flea Allergy Dermatitis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatitis_atopica_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatitis atópica canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Citología de piel y oídos",
+          "Descartar pulgas y sarna"
+        ],
+        "recomendaciones": [
+          "Tratar infecciones secundarias de piel y oídos",
+          "Control de pulgas permanente",
+          "Revisión en 2 a 4 semanas"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Canine Atopic Dermatitis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.sarna_sarcoptica",
+    "tipo": "diagnostico",
+    "etiqueta": "Sarna sarcóptica",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Raspado cutáneo profundo"
+        ],
+        "recomendaciones": [
+          "Tratar a todos los perros en contacto",
+          "Riesgo zoonótico: puede causar picazón en personas",
+          "Lavar camas y mantas"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange (Canine Scabies)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.demodicosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Demodicosis canina",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Raspados cutáneos profundos",
+          "Tricograma"
+        ],
+        "recomendaciones": [
+          "No usar corticoides",
+          "Buscar enfermedad de base en adultos",
+          "Repetir raspados cada mes hasta dos negativos"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Canine Demodicosis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.cistitis_bacteriana",
+    "tipo": "diagnostico",
+    "etiqueta": "Cistitis bacteriana (infección urinaria)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Uroanálisis completo",
+          "Urocultivo con antibiograma"
+        ],
+        "recomendaciones": [
+          "Asegurar acceso permanente al agua",
+          "Control en 1 a 2 semanas si persisten los signos"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Bacterial Cystitis in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.pancreatitis",
+    "tipo": "diagnostico",
+    "etiqueta": "Pancreatitis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Lipasa pancreática específica (cPL o fPL)",
+          "Ecografía abdominal",
+          "Hemograma y química sanguínea"
+        ],
+        "recomendaciones": [
+          "Fluidoterapia según deshidratación",
+          "Reiniciar alimentación temprano, en porciones pequeñas",
+          "Dieta baja en grasa en perros"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.pancreatitis",
+        "localizador": "Pancreatitis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.complejo_respiratorio_felino",
+    "tipo": "diagnostico",
+    "etiqueta": "Complejo respiratorio felino (rinotraqueítis y calicivirus)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Examen oral y ocular",
+          "PCR respiratoria si es grave o recurrente"
+        ],
+        "recomendaciones": [
+          "Limpiar secreciones nasales y oculares",
+          "Ofrecer comida tibia y aromática",
+          "Aislar de otros gatos"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Feline Respiratory Disease Complex",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.hipertiroidismo_felino",
+    "tipo": "diagnostico",
+    "etiqueta": "Hipertiroidismo felino",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "T4 total",
+          "Química renal",
+          "Presión arterial"
+        ],
+        "recomendaciones": [
+          "Control de T4 y función renal a las 2 semanas",
+          "Valorar yodo radiactivo o dieta restringida en yodo"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Feline Hyperthyroidism",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.ascaridiasis",
+    "tipo": "diagnostico",
+    "etiqueta": "Parásitos intestinales (lombrices redondas)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Coprológico"
+        ],
+        "recomendaciones": [
+          "Desparasitar cada 2 semanas hasta los 3 meses y luego cada mes hasta los 6",
+          "Tratar también a la madre lactante",
+          "Riesgo zoonótico: recoger las heces"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Roundworms in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dermatofitosis",
+    "tipo": "diagnostico",
+    "etiqueta": "Dermatofitosis (tiña)",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Lámpara de Wood",
+          "Cultivo micológico o PCR"
+        ],
+        "recomendaciones": [
+          "Baños o enjuagues antifúngicos dos veces por semana",
+          "Limpiar el ambiente",
+          "Riesgo zoonótico"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Dermatophytosis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.enfermedad_periodontal",
+    "tipo": "diagnostico",
+    "etiqueta": "Enfermedad periodontal",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Examen oral completo bajo anestesia",
+          "Radiografías dentales"
+        ],
+        "recomendaciones": [
+          "Limpieza profesional bajo anestesia general",
+          "Cepillado diario o al menos cada dos días"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Periodontal Disease in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.conjuntivitis",
+    "tipo": "diagnostico",
+    "etiqueta": "Conjuntivitis",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Prueba de fluoresceína",
+          "Prueba de Schirmer"
+        ],
+        "recomendaciones": [
+          "Limpiar secreciones con suero fisiológico",
+          "Antibiótico tópico si la secreción es purulenta"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.cuerpo_extrano_gi",
+    "tipo": "diagnostico",
+    "etiqueta": "Cuerpo extraño u obstrucción intestinal",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "Radiografías abdominales",
+          "Ecografía abdominal"
+        ],
+        "recomendaciones": [
+          "Ayuno hasta definir el manejo",
+          "Extracción por endoscopia o cirugía",
+          "Corregir líquidos y electrolitos antes de la cirugía",
+          "En gatos, revisar debajo de la lengua; no jalar un hilo"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.obstruccion_gi",
+        "localizador": "Gastrointestinal Obstruction in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.hipotiroidismo_canino",
+    "tipo": "diagnostico",
+    "etiqueta": "Hipotiroidismo canino",
+    "metadatos": {
+      "plan": {
+        "examenes": [
+          "T4 total y T4 libre",
+          "TSH canina",
+          "Perfil de colesterol"
+        ],
+        "recomendaciones": [
+          "Control de T4 de 4 a 6 semanas después de iniciar",
+          "Ajustar la dieta para bajar de peso"
+        ]
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Canine Hypothyroidism",
         "fundamento": "clinico"
       }
     ],
@@ -1800,6 +2868,661 @@
         "codigo": "zooki.decisiones_b21",
         "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): menos de 30 minutos implica naranja con revisión; no declara un parto seguro",
         "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.estornudos",
+    "tipo": "sintoma",
+    "etiqueta": "Estornuda seguido",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: estornudos frecuentes como signo temprano",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.secrecion_nasal",
+    "tipo": "sintoma",
+    "etiqueta": "Secreción o moco por la nariz",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: secreción nasal serosa o mucopurulenta",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.secrecion_ocular",
+    "tipo": "sintoma",
+    "etiqueta": "Lagañas o secreción en los ojos",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: secreción ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.ojos_rojos",
+    "tipo": "sintoma",
+    "etiqueta": "Ojos rojos o irritados",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.conjuntivitis",
+        "localizador": "Conjunctivitis: hiperemia conjuntival y molestia ocular",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.picazon",
+    "tipo": "sintoma",
+    "etiqueta": "Se rasca o se muerde mucho la piel",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: el prurito es el signo característico",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.perdida_pelo",
+    "tipo": "sintoma",
+    "etiqueta": "Se le cae el pelo o tiene zonas peladas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.dermatofitosis",
+        "localizador": "Clinical Findings: pérdida de pelo, descamación y costras",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.costras_piel",
+    "tipo": "sintoma",
+    "etiqueta": "Costras, granitos o caspa en la piel",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: erupciones papulocostrosas con costras gruesas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.lame_patas",
+    "tipo": "sintoma",
+    "etiqueta": "Se lame o muerde las patas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.atopia",
+        "localizador": "Clinical Findings: patas entre las zonas más afectadas",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.pulgas",
+    "tipo": "sintoma",
+    "etiqueta": "Tiene pulgas o puntitos negros en el pelo",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.dapp",
+        "localizador": "Diagnosis: observación de pulgas o de sus heces (puntos negro rojizos)",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.gusanos_heces",
+    "tipo": "sintoma",
+    "etiqueta": "Gusanos en la popó o en el vómito",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.ascaridos",
+        "localizador": "Clinical Findings: los gusanos pueden vomitarse y salir en las heces",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.mal_aliento",
+    "tipo": "sintoma",
+    "etiqueta": "Mal aliento",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: halitosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.encias_inflamadas",
+    "tipo": "sintoma",
+    "etiqueta": "Encías rojas, inflamadas o que sangran; sarro",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.periodontal",
+        "localizador": "Clinical Findings and Lesions: encías rojas, inflamadas y sangrantes; placa y sarro",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.sangrado_nariz",
+    "tipo": "sintoma",
+    "etiqueta": "Le sangra la nariz",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: tendencia al sangrado (epistaxis) en la fase aguda",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.moretones_piel",
+    "tipo": "sintoma",
+    "etiqueta": "Manchas moradas o puntitos rojos en piel o encías",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: petequias y equimosis",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.aumento_peso",
+    "tipo": "sintoma",
+    "etiqueta": "Sube de peso sin comer más",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.hipotiroidismo",
+        "localizador": "Clinical Signs: aumento de peso sin más apetito",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.ganglios_inflamados",
+    "tipo": "sintoma",
+    "etiqueta": "Bolitas o ganglios inflamados (cuello, detrás de las rodillas)",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Clinical Findings: linfadenomegalia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.dolor_muscular",
+    "tipo": "sintoma",
+    "etiqueta": "Dolor al tocarlo, no quiere moverse o tiembla",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "msd.leptospirosis",
+        "localizador": "Clinical Signs: dolor muscular, rigidez, debilidad, temblor o resistencia a moverse",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.babeo",
+    "tipo": "sintoma",
+    "etiqueta": "Babea mucho más de lo normal",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: anorexia e hipersalivación",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.llagas_boca",
+    "tipo": "sintoma",
+    "etiqueta": "Llagas o úlceras en la boca o la lengua",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.respiratorio_felino",
+        "localizador": "Clinical Findings: úlceras orales características del calicivirus",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.tics_musculares",
+    "tipo": "sintoma",
+    "etiqueta": "Tics o sacudidas musculares que no para",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: mioclonías y otros signos neurológicos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base naranja del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.hiperactividad",
+    "tipo": "sintoma",
+    "etiqueta": "Muy inquieto, maúlla o ladra mucho más",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.hipertiroidismo",
+        "localizador": "Clinical Findings: hiperactividad y vocalización excesiva",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base verde del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.almohadillas_duras",
+    "tipo": "sintoma",
+    "etiqueta": "Almohadillas o nariz endurecidas y agrietadas",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "msd.moquillo",
+        "localizador": "Clinical Findings: hiperqueratosis de almohadillas y plano nasal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418 (2026-10-29): nivel base amarillo del síntoma; las reglas y P3 lo pueden subir",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.garrapatas",
+    "tipo": "sintoma",
+    "etiqueta": "Tiene garrapatas",
+    "nivel_triage": "verde",
+    "fuentes": [
+      {
+        "codigo": "msd.ehrlichiosis",
+        "localizador": "Etiology and Pathogenesis: transmisión por garrapatas; la presencia no confirma infección.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.raticida",
+    "tipo": "sustancia",
+    "etiqueta": "Veneno para ratas (raticida)",
+    "fuentes": [
+      {
+        "codigo": "msd.raticidas",
+        "localizador": "Clinical Signs y Decontamination: intoxicación por anticoagulantes; confirmar producto, no presumir el principio activo.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.criollo_canino",
+    "tipo": "raza",
+    "etiqueta": "Criollo (Mestizo)",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Criollo (Mestizo)"
+    },
+    "metadatos": {
+      "braquicefalo": false
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.criollo_felino",
+    "tipo": "raza",
+    "etiqueta": "Criollo",
+    "taxonomia": {
+      "especie": "Felino",
+      "raza": "Criollo"
+    },
+    "metadatos": {
+      "braquicefalo": false
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416/RN-424; refuerzo aprobado 2026-11-01: captura estructurada, tamaño por peso, razas criollas sin braquicefalia registrada y revisión conservadora.",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.collie",
+    "tipo": "raza",
+    "etiqueta": "Collie",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Collie"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Collie; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.border_collie",
+    "tipo": "raza",
+    "etiqueta": "Border Collie",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Border Collie"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Border Collie; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pastor_australiano",
+    "tipo": "raza",
+    "etiqueta": "Pastor Australiano",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pastor Australiano"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Pastor Australiano; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pastor_shetland",
+    "tipo": "raza",
+    "etiqueta": "Pastor de Shetland",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pastor de Shetland"
+    },
+    "fuentes": [
+      {
+        "codigo": "ucd.mdr1",
+        "localizador": "Breeds appropriate for testing: Pastor de Shetland; equivalencia taxonómica del catálogo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.ivermectina",
+    "tipo": "farmaco",
+    "etiqueta": "Ivermectina",
+    "fuentes": [
+      {
+        "codigo": "msd.sarnas",
+        "localizador": "Sarcoptic Mange: ivermectina200mcg/kg oral o SC,2–4 tratamientos separados2 semanas; uso extrarrótulo.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.amoxicilina_clavulanato",
+    "tipo": "farmaco",
+    "etiqueta": "Amoxicilina con ácido clavulánico",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: amoxicilina-clavulanato en cistitis bacteriana canina.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.cefalexina",
+    "tipo": "farmaco",
+    "etiqueta": "Cefalexina",
+    "fuentes": [
+      {
+        "codigo": "msd.cistitis_bacteriana",
+        "localizador": "Treatment: ensayo en perros con cistitis esporádica,20mg/kg oral cada12h10 días.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.enrofloxacina",
+    "tipo": "farmaco",
+    "etiqueta": "Enrofloxacina",
+    "fuentes": [
+      {
+        "codigo": "msd.quinolonas",
+        "localizador": "Adverse effects y dosificaciones: fluoroquinolona y riesgo retiniano felino.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.omeprazol",
+    "tipo": "farmaco",
+    "etiqueta": "Omeprazol",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: supresión ácida no rutinaria, solo ante ulceración confirmada o fuertemente sospechada.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metoclopramida",
+    "tipo": "farmaco",
+    "etiqueta": "Metoclopramida",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis:0,2–0,5mg/kg cada6–8h; descartar obstrucción gastrointestinal.",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.metamizol",
+    "tipo": "farmaco",
+    "etiqueta": "Dipirona (metamizol)",
+    "fuentes": [
+      {
+        "codigo": "uzh.metamizol",
+        "localizador": "Dosierungen; gato: evitar preparados con alcohol bencílico.",
+        "fundamento": "clinico"
       }
     ],
     "estado_validacion": "pendiente"

@@ -18,9 +18,11 @@ final class DiagnosticoTest extends TestCase
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
         ConocimientoPrueba::crearGrafo($this->db);
+        $this->db->exec('CREATE TABLE consultas (id_consulta INTEGER PRIMARY KEY, id_clinica INTEGER, id_mascota INTEGER, fecha_hora TEXT, peso NUMERIC)');
         ConocimientoRealPrueba::taxonomia($this->db);
         (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $this->db->exec('CREATE TABLE alertas_medicas (id_alerta INTEGER PRIMARY KEY AUTOINCREMENT, id_mascota INTEGER, id_clinica INTEGER, id_veterinario INTEGER, tipo TEXT, id_nodo INTEGER, descripcion TEXT, activa INTEGER, fecha TEXT)');
+        $this->db->exec('CREATE TABLE vacunas (id_vacuna INTEGER PRIMARY KEY, id_mascota INTEGER, id_clinica INTEGER, fecha_proxima_dosis TEXT)');
         $usuarios = new Usuario($this->db);
         Security::definirFuenteDeContextos(fn (int $id): ?array => $usuarios->contextosDe($id));
         $this->fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
@@ -59,7 +61,7 @@ final class DiagnosticoTest extends TestCase
         return json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
     }
 
-    public function testContextoSaleDeLaFichaYVacunacionNoSeInfiere(): void
+    public function testContextoSaleDeLaFichaYSinVacunasQuedaDesconocida(): void
     {
         $this->db->exec("UPDATE mascotas SET fecha_nacimiento = '2026-07-15', sexo = 'Macho', esterilizado = 0 WHERE id_mascota = 1");
         // Estos valores de identidad no son datos que la API permita sobrescribir.
@@ -70,21 +72,21 @@ final class DiagnosticoTest extends TestCase
         $this->assertSame(3, $contexto['edad_meses']);
         $this->assertSame('Macho', $contexto['sexo']);
         $this->assertFalse($contexto['esterilizado']);
-        $this->assertNull($contexto['vacunacion']);
+        $this->assertSame('desconocida', $contexto['vacunacion']);
         $cachorro = $this->llamar();
         $this->assertContains('ranking.parvovirosis_contexto', $cachorro['candidatos'][0]['reglas_aplicadas']);
-        // En el adulto la edad ya no decide el OR: entonces sí hace falta vacunación.
+        // RN-416: en adulto sin registros la vacunación desconocida ya es un estado evaluable.
         $this->db->exec("UPDATE mascotas SET fecha_nacimiento = '2020-07-15' WHERE id_mascota = 1");
         $antes = ConocimientoPrueba::instantanea($this->db);
         $sin = $this->llamar();
         $this->assertTrue($sin['success']);
-        $this->assertContains(['elemento' => 'ranking.parvovirosis_contexto', 'campos' => ['vacunacion']], $sin['datos_faltantes']);
+        $this->assertNotContains(['elemento' => 'ranking.parvovirosis_contexto', 'campos' => ['vacunacion']], $sin['datos_faltantes']);
         $_POST['vacunacion'] = 'incompleta';
         $con = $this->llamar();
         $this->assertSame('diagnostico.parvovirosis_canina', $con['candidatos'][0]['codigo']);
         $a = array_column($sin['candidatos'], null, 'codigo');
         $b = array_column($con['candidatos'], null, 'codigo');
-        $this->assertEqualsWithDelta(0.3, $b['diagnostico.parvovirosis_canina']['puntuacion'] - $a['diagnostico.parvovirosis_canina']['puntuacion'], 0.00001);
+        $this->assertEqualsWithDelta(0.0, $b['diagnostico.parvovirosis_canina']['puntuacion'] - $a['diagnostico.parvovirosis_canina']['puntuacion'], 0.00001);
         $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM alertas_medicas')->fetchColumn());
     }
@@ -104,6 +106,38 @@ final class DiagnosticoTest extends TestCase
             }
         }
         $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion = 'OTHER' AND tabla_afectada = 'mascotas' AND id_clinica = 2")->fetchColumn());
+    }
+
+    public static function vacunaciones(): array
+    {
+        return [
+            'sin registros' => [[], [], 'desconocida'],
+            'vencida en otra clínica' => [['2026-10-14', '2026-11-01'], [], 'incompleta'],
+            'vigente en otra clínica' => [['2026-11-01'], [], 'completa'],
+            'vence hoy' => [['2026-10-15'], [], 'completa'],
+            'sin próxima dosis' => [[null], [], 'completa'],
+            'declarada completa manda' => [['2026-10-14'], ['vacunacion' => 'completa'], 'completa'],
+            'declarada incompleta manda' => [['2026-11-01'], ['vacunacion' => 'incompleta'], 'incompleta'],
+            'declarada desconocida manda' => [['2026-10-14'], ['vacunacion' => 'desconocida'], 'desconocida'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('vacunaciones')]
+    public function testVacunacionRegistradaGlobalSoloDeLaMascotaAutorizada(array $fechas, array $declarados, ?string $esperado): void
+    {
+        $this->db->exec("INSERT INTO vacunas VALUES (99, 999, 1, '2020-01-01')");
+        $insertar = $this->db->prepare('INSERT INTO vacunas (id_mascota,id_clinica,fecha_proxima_dosis) VALUES (1,2,?)');
+        foreach ($fechas as $fecha) {
+            $insertar->execute([$fecha]);
+        }
+        $grafo = (new GrafoConocimiento($this->db))->instantanea();
+        $contexto = (new PacienteDiagnostico($this->db))->contexto(1, $grafo, $this->fecha, $declarados);
+        $this->assertSame($esperado, $contexto['vacunacion']);
+        $this->como(DosClinicas::PROPIETARIO, Contexto::dePropietario());
+        $portal = (new PacienteDiagnostico($this->db))->enClinicaDelPropietario(1);
+        $this->assertSame($esperado, $portal->contexto(1, $grafo, $this->fecha, $declarados)['vacunacion']);
+        $this->expectException(AccesoDenegado::class);
+        $portal->contexto(999, $grafo, $this->fecha, []);
     }
 
     public function testLosOtrosRolesNoEntranYSinCsrfSeRechaza(): void
@@ -156,7 +190,7 @@ final class DiagnosticoTest extends TestCase
         $this->assertSame(405, http_response_code());
     }
 
-    public function testAlertasGlobalesDeOtraClinicaYEdadDesconocidaSinLeerConsultas(): void
+    public function testAlertasGlobalesDeOtraClinicaYEdadDesconocida(): void
     {
         DosClinicas::vincularLunaASur($this->db);
         $this->db->exec("INSERT INTO alertas_medicas (id_mascota, id_clinica, id_veterinario, tipo, id_nodo, descripcion, activa, fecha)
@@ -169,8 +203,27 @@ final class DiagnosticoTest extends TestCase
             $this->assertNull($contexto['edad_meses']);
             $this->assertContains('condicion.epilepsia', $contexto['alertas_activas']);
         }
-        // Este fixture no crea consultas ni tratamientos: una lectura protegida fallaría.
         $this->assertTrue($this->llamar()['success']);
+    }
+
+    public function testTamanoPorPesoRespetaRazaYVisibilidadDeConsultas(): void
+    {
+        $grafo = (new GrafoConocimiento($this->db))->instantanea();
+        $modelo = new PacienteDiagnostico($this->db);
+        foreach ([[9.99, 'pequeno'], [10, 'mediano'], [25, 'mediano'], [25.01, 'grande'], [45, 'grande'], [45.01, 'gigante']] as [$peso, $esperado]) {
+            $this->db->prepare('UPDATE mascotas SET peso=? WHERE id_mascota=1')->execute([$peso]);
+            $this->assertSame($esperado, $modelo->contexto(1, $grafo, $this->fecha, [])['raza']['atributos']['tamanio']);
+        }
+        $this->db->exec("UPDATE mascotas SET id_raza=18, peso=8.5 WHERE id_mascota=1");
+        $this->db->exec("INSERT INTO consultas VALUES (1,1,1,'2026-10-14 10:00:00',40),(2,2,1,'2026-10-15 10:00:00',60),(3,1,1,'2030-01-01 10:00:00',70)");
+        $contexto = $modelo->contexto(1, $grafo, $this->fecha, []);
+        $this->assertSame('raza.criollo_canino', $contexto['raza']['codigo']);
+        $this->assertSame('grande', $contexto['raza']['atributos']['tamanio']);
+        require_once __DIR__ . '/../../helpers/MotorTriage.php';
+        $marcas = array_fill_keys(['sintoma.arcadas_improductivas', 'sintoma.abdomen_distendido'], ['tiempo' => 'no_se', 'minutos' => null]);
+        $this->assertSame('rojo', MotorTriage::calcular($marcas, [], $contexto, $grafo, $this->fecha)['nivel']);
+        $this->db->exec('UPDATE mascotas SET id_raza=1 WHERE id_mascota=1');
+        $this->assertSame('grande', $modelo->contexto(1, $grafo, $this->fecha, [])['raza']['atributos']['tamanio']);
     }
 
     public function testInstantaneaSeLeeUnaVezEsInmutableYNoIncluyeRetirados(): void

@@ -19,8 +19,9 @@ $enCurso = in_array($estadoActual, ['en_curso', 'sin_cerrar'], true);
 $abierta = in_array($estadoActual, ['pendiente', 'confirmada'], true);
 // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora
 // ($esDiaDeLaCita viene del controlador con esa regla ya aplicada).
-$porIniciar = $abierta && $esDiaDeLaCita;
+$porIniciar = $abierta && $esDiaDeLaCita && empty($inicioRequiereSala);
 $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);
+$nombrePropietario = (string) (($propietario['nombre_completo'] ?? '') ?: ($mascota['propietario_nombre'] ?? ''));
 $hoyIso = date('Y-m-d');
 // M2 C5a: límites y avisos de ValidadorClinico, los mismos del servidor (js/consulta-formulario.js).
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
@@ -41,7 +42,9 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
          data-id-cita="<?= (int) $cita['id_cita'] ?>"
          data-id-mascota="<?= (int) $mascota['id_mascota'] ?>"
          data-estado="<?= $e($estadoActual) ?>"
-         data-consulta-registrada="<?= $consultaRegistrada ? '1' : '0' ?>">
+         data-consulta-registrada="<?= $consultaRegistrada ? '1' : '0' ?>"
+         data-id-veterinario="<?= (int) ($cita['id_veterinario'] ?? Contexto::idUsuario()) ?>"
+         data-id-clinica="<?= (int) Contexto::clinicaActiva() ?>">
 
     <!-- ── Barra superior ─────────────────────────────────────────── -->
     <header class="atencion__barra">
@@ -49,97 +52,39 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
             <i class="fas fa-arrow-left"></i>
         </a>
         <div class="atencion__titulo">
-            <h1>Atención médica</h1>
+            <div class="atencion-cabecera-movil"><span class="atencion-cabecera-movil__foto"><?php if ($tieneFoto): ?><img src="<?= $e($fotoMascota) ?>" alt=""><?php else: ?><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?><?php endif; ?></span><div><strong><?= $e($mascota['nombre'] ?? '') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $edadMascota, $pesoReferencia ? $pesoReferencia . ' kg' : 'Sin peso', $mascota['numero_historia_clinica'] ?? 'HC sin registrar']))) ?></small></div><button type="button" class="atencion-alerta-movil" data-abrir-alertas aria-label="Ver alertas"><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span data-alerta-resumen></span></button></div>
+            <h1><?= $e($tipoCitaNombre ?: 'Consulta general') ?> <span class="atencion__estado estado--<?= $e($estadoActual) ?>" id="atencionEstado"><i class="fas <?= $estadoActual === 'sin_cerrar' ? 'fa-exclamation-circle' : 'fa-circle' ?>" aria-hidden="true"></i> <?= $e($estadoLabel[$estadoActual] ?? $estadoActual) ?></span></h1>
             <p>
-                Cita #<?= (int) $cita['id_cita'] ?> · <?= $fechaCorta($cita['fecha']) ?> · <?= $e(substr($cita['hora'], 0, 5)) ?>
-                <?php if ($tipoCitaNombre !== ''): ?> · <?= $e($tipoCitaNombre) ?><?php endif; ?>
+                <?= $cita['fecha'] === $hoyIso ? 'Hoy' : $fechaCorta($cita['fecha']) ?> <?= $e(substr($cita['hora'], 0, 5)) ?>
+                · Cita #<?= (int) $cita['id_cita'] ?>
             </p>
         </div>
-        <span class="atencion__estado estado--<?= $e($estadoActual) ?>" id="atencionEstado"><?= $e($estadoLabel[$estadoActual] ?? $estadoActual) ?></span>
+        <?php require __DIR__ . '/../partials/cabecera_cuenta.php'; ?>
     </header>
 
     <div class="atencion__cuerpo">
 
         <!-- ── Ficha del paciente (fija) ──────────────────────────── -->
         <?php // M2 C8 (H4): más compacta; los datos en una cuadrícula densa y el resto en filas cortas. ?>
-        <aside class="atencion__paciente" data-paciente-compacto>
-            <div class="paciente__cabecera">
-                <?php if ($tieneFoto): ?>
-                    <img src="<?= $e($fotoMascota) ?>" alt="" class="paciente__foto" id="atencionFoto">
-                <?php else: ?>
-                    <span class="avatar-iniciales paciente__avatar" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?></span>
-                <?php endif; ?>
-                <div class="paciente__identidad">
-                    <h2><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></h2>
-                    <p><?= $e($mascota['nombre_especie'] ?? '') ?><?= !empty($mascota['nombre_raza']) ? ' · ' . $e($mascota['nombre_raza']) : '' ?><?php // HU-15: raza que el propietario escribió porque no estaba en la lista ?><?= !empty($mascota['raza_indicada']) ? ' · el propietario indicó «' . $e($mascota['raza_indicada']) . '»' : '' ?></p>
-                </div>
+        <section class="atencion-franja" aria-label="Paciente">
+            <div class="atencion-franja__anillo"><?php if ($tieneFoto): ?><img src="<?= $e($fotoMascota) ?>" alt="" id="atencionFoto"><?php else: ?><span><?= $e(PresentacionPlataforma::iniciales((string) ($mascota['nombre'] ?? '?'))) ?></span><?php endif; ?></div>
+            <div class="atencion-franja__identidad"><strong><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></strong><small><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', $mascota['nombre_raza'] ?? '']))) ?></small><small class="atencion-franja__resumen"><?= $e(implode(' · ', array_filter([$mascota['nombre_especie'] ?? '', implode(' y ', array_filter([$mascota['sexo'] ?? '', $edadMascota])) ?: 'Sexo y edad sin registrar', $pesoReferencia ? $pesoReferencia . ' kg' : 'Sin peso']))) ?></small></div>
+            <div class="atencion-franja__acciones">
+                <button type="button" class="atencion-franja__aviso" data-abrir-ficha-paciente><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span data-ficha-alertas-resumen>Cargando alertas…</span></button>
+                <button type="button" class="atencion-franja__abrir" data-abrir-ficha-paciente><i class="far fa-file-alt" aria-hidden="true"></i> Ficha del paciente</button>
             </div>
-
-            <p class="paciente-compacto__datos"><?= $e($edadMascota) ?> · <?= $textoPeso($pesoReferencia) ?> · <?= $e($mascota['numero_historia_clinica'] ?: 'Historia nueva') ?></p>
-            <dl class="paciente__datos">
-                <div><dt>Edad</dt><dd><?= $e($edadMascota) ?></dd></div>
-                <div><dt>Sexo</dt><dd><?= $e($mascota['sexo'] ?? '—') ?></dd></div>
-                <div><dt>Peso</dt><dd><?= $pesoReferencia !== null && $pesoReferencia !== '' ? $e($pesoReferencia) . ' kg' : '—' ?></dd></div>
-                <div><dt>Historia</dt><dd><?= $e($mascota['numero_historia_clinica'] ?: 'Nueva') ?></dd></div>
-            </dl>
-
-            <div class="paciente-compacto__controles">
-                <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="atencionAlertas">Cargando alertas</button>
-                <button type="button" class="paciente-compacto__ficha" data-paciente-ficha aria-expanded="false" aria-controls="atencionFicha">Ver ficha <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
-            </div>
-            <div class="paciente-compacto__lista" id="atencionAlertas">
-            <?php // M2 C1 (RE-2.1.5): alergias y alertas de todas las clínicas, a la vista durante la atención. ?>
-            <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-cargar data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>"></section>
-
-            </div>
-            <dl class="paciente__resumen paciente-compacto__ficha-contenido" id="atencionFicha">
-                <div class="paciente__bloque">
-                    <dt class="paciente__etiqueta">Propietario</dt>
-                    <dd class="paciente__texto">
-                        <?= $e($propietario['nombre_completo'] ?? '—') ?>
-                        <?php if (!empty($propietario['telefono'])): ?>
-                            <a class="paciente__telefono" href="tel:<?= $e(preg_replace('/[^0-9+]/', '', $propietario['telefono'])) ?>">
-                                <i class="fas fa-phone" aria-hidden="true"></i> <?= $e($propietario['telefono']) ?>
-                            </a>
-                        <?php endif; ?>
-                    </dd>
-                </div>
-
-                <div class="paciente__bloque">
-                    <dt class="paciente__etiqueta">Motivo de la cita</dt>
-                    <dd class="paciente__texto"><?= $e($cita['motivo'] ?: 'Sin motivo indicado') ?></dd>
-                </div>
-
-                <div class="paciente__bloque">
-                    <dt class="paciente__etiqueta">Pendientes</dt>
-                    <dd>
-                        <?php if (empty($resumenClinico['alertas'])): ?>
-                            <p class="paciente__ok"><i class="fas fa-check-circle" aria-hidden="true"></i> Vacunas y desparasitación al día</p>
-                        <?php else: ?>
-                            <ul class="paciente__alertas">
-                                <?php foreach ($resumenClinico['alertas'] as $alerta): ?>
-                                    <li class="alerta alerta--<?= $e($alerta['estado']) ?>">
-                                        <i class="fas <?= $alerta['clase'] === 'vacuna' ? 'fa-syringe' : 'fa-shield-alt' ?>" aria-hidden="true"></i>
-                                        <span><?= $e($alerta['clase'] === 'vacuna' ? $alerta['nombre'] : 'Desparasitación ' . $alerta['nombre']) ?></span>
-                                        <small><?= $alerta['estado'] === 'vencida' ? 'Vencida ' : 'Vence ' ?><?= $fechaCorta($alerta['fecha']) ?></small>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </dd>
-                </div>
-
-                <?php if (!empty($resumenClinico['ultima_consulta'])): ?>
-                    <div class="paciente__bloque">
-                        <dt class="paciente__etiqueta">Última consulta · <?= $fechaCorta($resumenClinico['ultima_consulta']['fecha']) ?></dt>
-                        <dd class="paciente__texto paciente__texto--recortado"><?= $e($resumenClinico['ultima_consulta']['diagnostico']) ?></dd>
-                    </div>
-                <?php endif; ?>
-            </dl>
-        </aside>
+            <section class="atencion-franja__datos" aria-label="Datos"><dl>
+                <div><dt>Sexo y edad</dt><dd><?= $e(implode(' · ', array_filter([$mascota['sexo'] ?? '', $edadMascota])) ?: 'Sin registrar') ?></dd></div>
+                <div><dt>Peso</dt><dd class="<?= $pesoReferencia ? '' : 'sin-registrar' ?>"><?= $pesoReferencia ? $textoPeso($pesoReferencia) : 'Sin registrar' ?></dd></div>
+                <div><dt>Historia</dt><dd class="<?= empty($mascota['numero_historia_clinica']) ? 'sin-registrar' : '' ?>"><?= $e($mascota['numero_historia_clinica'] ?: 'Sin registrar') ?></dd></div>
+                <div><dt>Propietario</dt><dd class="<?= $nombrePropietario === '' ? 'sin-registrar' : '' ?>"><?= $e($nombrePropietario ?: 'Sin registrar') ?><?php if (!empty($propietario['telefono'])): ?><a class="paciente__telefono" href="tel:<?= $e(preg_replace('/[^0-9+]/', '', $propietario['telefono'])) ?>"><i class="fas fa-phone" aria-hidden="true"></i> <?= $e($propietario['telefono']) ?></a><?php else: ?><small class="sin-registrar">Sin registrar</small><?php endif; ?></dd></div>
+            </dl></section>
+            <section class="atencion-franja__alertas" data-alertas-medicas data-cargar data-alertas-chips data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>" aria-label="Alergias y alertas"></section>
+        </section>
 
         <!-- ── Panel de atención ──────────────────────────────────── -->
         <main class="atencion__panel">
+            <div class="atencion__herramientas">
             <nav class="atencion__tabs" role="tablist">
                 <button type="button" class="atencion__tab is-active" data-tab="consulta" role="tab" aria-selected="true">
                     <i class="fas fa-stethoscope"></i> Consulta
@@ -154,6 +99,8 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                     <i class="fas fa-history"></i> Historial <span class="atencion__contador"><?= count($consultas) ?></span>
                 </button>
             </nav>
+            <div class="atencion__progreso" data-pasos-paciente></div>
+            </div>
 
             <div class="atencion__contenido">
 
@@ -164,6 +111,12 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                         <button type="button" class="atencion__btn atencion__btn--primario" id="btnIniciarAtencion">
                             <i class="fas fa-play"></i> Iniciar atención
                         </button>
+                    </div>
+                <?php elseif ($abierta && !empty($inicioRequiereSala)): ?>
+                    <div class="atencion__aviso">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>La cita superó la tolerancia de llegada. Resuélvela desde su cita en Agenda: siguiente hueco, reprogramar o «No asistió».</span>
+                        <a class="atencion__btn atencion__btn--primario" href="index.php?action=vet_agenda&amp;llegada_cita=<?= (int)$cita['id_cita'] ?>">Resolver llegada</a>
                     </div>
                 <?php elseif ($abierta): ?>
                     <div class="atencion__aviso">
@@ -224,133 +177,13 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                             ][$estadoActual] ?>
                         </p>
                     <?php else: ?>
-                        <form id="formConsultaAtencion" class="consulta-form consulta-formulario" enctype="multipart/form-data" novalidate>
+                        <form id="formConsultaAtencion" class="consulta-form consulta-formulario" autocomplete="off" enctype="multipart/form-data" novalidate>
                             <input type="hidden" name="id_mascota" value="<?= (int) $mascota['id_mascota'] ?>">
                             <input type="hidden" name="id_cita" value="<?= (int) $cita['id_cita'] ?>">
 
-                            <ol class="atencion__pasos">
-                                <li><button type="button" class="atencion__paso-btn is-active" data-paso="0"><span>1</span> Motivo</button></li>
-                                <li><button type="button" class="atencion__paso-btn" data-paso="1"><span>2</span> Signos vitales</button></li>
-                                <li><button type="button" class="atencion__paso-btn" data-paso="2"><span>3</span> Diagnóstico y plan</button></li>
-                                <li><button type="button" class="atencion__paso-btn" data-paso="3"><span>4</span> Tratamientos</button></li>
-                                <li><button type="button" class="atencion__paso-btn" data-paso="4"><span>5</span> Adjuntos</button></li>
-                            </ol>
-
                             <fieldset class="atencion__fieldset" data-requiere-inicio <?= $enCurso ? '' : 'disabled' ?>>
-                                <div class="atencion__paso is-active">
-                                    <div class="consulta-campo">
-                                        <label for="atencionMotivo" class="consulta-campo__etiqueta">Motivo de la consulta <?= $obligatorio ?></label>
-                                        <input type="text" id="atencionMotivo" name="motivo" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-etiqueta="el motivo" value="<?= $e($cita['motivo'] ?? '') ?>"
-                                               data-consulta-campo="motivo" data-aviso-requerido="<?= $avisoConsulta('motivo') ?>" placeholder="Por qué viene hoy">
-                                        <small class="cuenta-validacion" data-campo-aviso="motivo"></small>
-                                    </div>
-                                    <?php include __DIR__ . '/../partials/consulta_sintomas.php'; ?>
-                                    <div class="consulta-campo consulta-campo--crece">
-                                        <label for="atencionAnamnesis" class="consulta-campo__etiqueta">Anamnesis</label>
-                                        <textarea id="atencionAnamnesis" name="anamnesis" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" placeholder="Historia relatada por el propietario, síntomas, desde cuándo…"></textarea>
-                                    </div>
-                                </div>
-
-                                <div class="atencion__paso">
-                                    <?php // M2 C8 (H8): restricción de entrada y ayuda de ValidadorClinico, igual que en el modal. ?>
-                                    <div class="consulta-signos">
-                                        <div class="consulta-signo">
-                                            <span class="consulta-signo__icono" aria-hidden="true"><i class="fas fa-weight"></i></span>
-                                            <div class="consulta-signo__cuerpo">
-                                                <label for="atencionPeso" class="consulta-campo__etiqueta">Peso <?= $obligatorio ?></label>
-                                                <div class="consulta-signo__entrada">
-                                                    <input id="atencionPeso" name="peso" <?= ValidadorClinico::atributosSigno('peso') ?> required aria-required="true" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>" data-aviso-requerido="<?= $e(ValidadorClinico::AVISO_PESO_REQUERIDO) ?>" data-etiqueta="el peso" placeholder="<?= $pesoReferencia !== null ? $e($pesoReferencia) : '0.00' ?>">
-                                                    <span class="consulta-signo__unidad">kg</span>
-                                                </div>
-                                                <small class="consulta-ayuda"><?= $ayudaSigno('peso') ?><?= $pesoReferencia !== null ? ' · último: ' . $e($pesoReferencia) . ' kg' : '' ?></small>
-                                                <?php // Decisión del usuario (2026-10-15): sin peso aproximado; la casilla deja el peso en NULL. ?>
-                                                <label class="consulta-sin-peso"><input type="checkbox" name="peso_desconocido" value="1" data-sin-peso="peso" id="atencionSinPeso"> <span>No se pudo pesar</span></label>
-                                                <small class="cuenta-validacion" data-campo-aviso="peso"></small>
-                                            </div>
-                                        </div>
-                                        <div class="consulta-signo">
-                                            <span class="consulta-signo__icono" aria-hidden="true"><i class="fas fa-thermometer-half"></i></span>
-                                            <div class="consulta-signo__cuerpo">
-                                                <label for="atencionTemperatura" class="consulta-campo__etiqueta">Temperatura</label>
-                                                <div class="consulta-signo__entrada">
-                                                    <input id="atencionTemperatura" name="temperatura" <?= ValidadorClinico::atributosSigno('temperatura') ?> data-consulta-campo="temperatura" data-aviso-rango="<?= $avisoConsulta('temperatura') ?>" data-etiqueta="la temperatura" placeholder="38.5">
-                                                    <span class="consulta-signo__unidad">°C</span>
-                                                </div>
-                                                <small class="consulta-ayuda"><?= $ayudaSigno('temperatura') ?></small>
-                                                <small class="cuenta-validacion" data-campo-aviso="temperatura"></small>
-                                            </div>
-                                        </div>
-                                        <div class="consulta-signo">
-                                            <span class="consulta-signo__icono" aria-hidden="true"><i class="fas fa-heartbeat"></i></span>
-                                            <div class="consulta-signo__cuerpo">
-                                                <label for="atencionFrecuenciaCardiaca" class="consulta-campo__etiqueta">Frecuencia cardíaca</label>
-                                                <div class="consulta-signo__entrada">
-                                                    <input id="atencionFrecuenciaCardiaca" name="frecuencia_cardiaca" <?= ValidadorClinico::atributosSigno('frecuencia_cardiaca') ?> data-consulta-campo="frecuencia_cardiaca" data-aviso-rango="<?= $avisoConsulta('frecuencia_cardiaca') ?>" data-etiqueta="la frecuencia cardíaca" placeholder="100">
-                                                    <span class="consulta-signo__unidad">lpm</span>
-                                                </div>
-                                                <small class="consulta-ayuda"><?= $ayudaSigno('frecuencia_cardiaca') ?></small>
-                                                <small class="cuenta-validacion" data-campo-aviso="frecuencia_cardiaca"></small>
-                                            </div>
-                                        </div>
-                                        <div class="consulta-signo">
-                                            <span class="consulta-signo__icono" aria-hidden="true"><i class="fas fa-lungs"></i></span>
-                                            <div class="consulta-signo__cuerpo">
-                                                <label for="atencionFrecuenciaRespiratoria" class="consulta-campo__etiqueta">Frecuencia respiratoria</label>
-                                                <div class="consulta-signo__entrada">
-                                                    <input id="atencionFrecuenciaRespiratoria" name="frecuencia_respiratoria" <?= ValidadorClinico::atributosSigno('frecuencia_respiratoria') ?> data-consulta-campo="frecuencia_respiratoria" data-aviso-rango="<?= $avisoConsulta('frecuencia_respiratoria') ?>" data-etiqueta="la frecuencia respiratoria" placeholder="24">
-                                                    <span class="consulta-signo__unidad">rpm</span>
-                                                </div>
-                                                <small class="consulta-ayuda"><?= $ayudaSigno('frecuencia_respiratoria') ?></small>
-                                                <small class="cuenta-validacion" data-campo-aviso="frecuencia_respiratoria"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="atencion__paso">
-                                    <?php // M2 C8 (H7): el paso es el único que desplaza; las etiquetas no se montan entre sí. ?>
-                                    <?php include __DIR__ . '/../partials/consulta_diagnosticos.php'; ?>
-                                    <div class="consulta-campo">
-                                        <label for="atencionDiagnostico" class="consulta-campo__etiqueta">Diagnóstico <?= $obligatorio ?></label>
-                                        <textarea id="atencionDiagnostico" name="diagnostico" rows="3" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-etiqueta="el diagnóstico"
-                                                  data-consulta-campo="diagnostico" data-aviso-requerido="<?= $avisoConsulta('diagnostico') ?>"></textarea>
-                                        <small class="cuenta-validacion" data-campo-aviso="diagnostico"></small>
-                                    </div>
-                                    <div class="consulta-fila-2">
-                                        <div class="consulta-campo">
-                                            <label for="atencionPlan" class="consulta-campo__etiqueta">Plan / recomendaciones</label>
-                                            <textarea id="atencionPlan" name="plan_tratamiento" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
-                                        </div>
-                                        <div class="consulta-campo">
-                                            <label for="atencionObservaciones" class="consulta-campo__etiqueta">Observaciones</label>
-                                            <textarea id="atencionObservaciones" name="observaciones" rows="3" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="atencion__paso" data-tratamientos data-avisos="<?= $e(json_encode(ValidadorTratamiento::AVISOS, JSON_UNESCAPED_UNICODE)) ?>">
-                                    <?php // M2 C5b: alergias y alertas de la mascota a la vista antes de prescribir (C1). ?>
-                                    <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-cargar data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>"></section>
-                                    <div class="consulta-seccion__cabecera">
-                                        <h4 class="consulta-seccion__titulo">Tratamientos</h4>
-                                        <button type="button" class="consulta-boton consulta-boton--suave" id="btnAgregarTratamiento" data-agregar-tratamiento>
-                                            <i class="fas fa-plus" aria-hidden="true"></i> Agregar medicamento
-                                        </button>
-                                    </div>
-                                    <p class="consulta-tratamientos__vacio" id="tratamientosVacio" data-tratamientos-vacio>Sin medicamentos. Agrega uno si hace falta.</p>
-                                    <div id="treatmentsList" data-tratamientos-lista></div>
-                                    <?php include __DIR__ . '/../partials/consulta_tratamiento_fila.php'; ?>
-                                </div>
-
-                                <div class="atencion__paso">
-                                    <label class="consulta-adjuntos file-upload-zone">
-                                        <input type="file" name="archivos[]" id="archivosConsulta" multiple accept=".jpg,.jpeg,.png,.pdf">
-                                        <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
-                                        <span>Arrastra o elige radiografías, exámenes o fotos</span>
-                                        <small class="consulta-ayuda">JPG, PNG o PDF · máximo 10 MB cada uno</small>
-                                        <div class="file-list"></div>
-                                    </label>
-                                </div>
+                                <?php $consultaEnAtencion = true; ?>
+                                <?php include __DIR__ . '/../partials/consulta_pasos.php'; ?>
                             </fieldset>
                         </form>
                     <?php endif; ?>
@@ -530,6 +363,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
         </main>
     </div>
 
+    <?php require __DIR__ . '/../partials/atencion_ficha_paciente.php'; ?>
     <datalist id="listaVacunas"></datalist>
     <datalist id="listaLaboratorios"></datalist>
     <datalist id="listaProductos"></datalist>

@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aviso = raiz.querySelector('[data-solicitudes-error]');
     const filtro = raiz.querySelector('[data-solicitudes-filtro]');
     let turno = 0;
+    let escribiendo = false;
     function elemento(tipo, texto) {
         const nodo = document.createElement(tipo);
         if (texto) nodo.textContent = texto;
@@ -21,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return nodo;
     }
     function episodio(e, etiquetas) {
-        const nombre = etiquetas[e.codigo] || e.codigo.split('.').at(-1).replaceAll('_', ' ');
-        if (e.tiempo === 'conocido') return nombre + ' (hace ' + e.minutos + ' min)';
+        const nombre = e.codigo === 'sintoma.otro_no_se' ? 'Otro síntoma' : etiquetas[e.codigo] || e.codigo.split('.').at(-1).replaceAll('_', ' ');
+        if (e.tiempo === 'conocido') return nombre + ' (comenzó hace ' + e.minutos + ' min)';
         if (e.tiempo === 'no_se') return nombre + ' (desde: no se sabe)';
         return nombre;
     }
@@ -33,7 +34,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const anios = Math.floor(n / 12);
         return anios + (anios === 1 ? ' año' : ' años') + (n % 12 ? ' ' + (n % 12) + ' m' : '');
     }
-    async function cargar() {
+    // El aviso «Revisión de triage» de la campana llega con ?solicitud=N#triage.
+    let solicitudPedida = new URLSearchParams(window.location.search).get('solicitud');
+    function enfocarSolicitudPedida() {
+        if (!/^[1-9]\d*$/.test(String(solicitudPedida))) return;
+        const tarjeta = lista.querySelector(`[data-solicitud="${solicitudPedida}"]`);
+        if (!tarjeta && filtro.value === '0') {
+            // Ya la revisó alguien: se busca entre las revisadas en vez de dejar la bandeja vacía.
+            filtro.value = '1';
+            filtro.dispatchEvent(new Event('change'));
+            return;
+        }
+        if (tarjeta) {
+            tarjeta.classList.add('ah-item--pedida');
+            tarjeta.scrollIntoView({ block: 'nearest' });
+            if (filtro.value === '1') aviso.textContent = 'Esta solicitud ya fue revisada.';
+        } else {
+            aviso.textContent = 'Esta solicitud ya no está en la bandeja.';
+        }
+        solicitudPedida = null;
+    }
+    async function cargar(automatica = false) {
         const actual = ++turno;
         aviso.textContent = '';
         try {
@@ -43,12 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 aviso.textContent = r.message;
                 return;
             }
+            if (automatica === true && panelAgendaEnEdicion(raiz)) return;
             lista.replaceChildren();
             const etiquetas = r.etiquetas || {};
             for (const caso of r.solicitudes) {
                 // Pulido de interfaz: tarjeta compacta (nombre + nivel, síntomas legibles, datos del paciente).
                 const tarjeta = elemento('article');
                 tarjeta.className = 'ah-item';
+                tarjeta.dataset.solicitud = caso.id_solicitud;
                 const cabeza = elemento('div');
                 cabeza.className = 'ah-item__head';
                 cabeza.append(elemento('strong', caso.nombre));
@@ -67,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let contexto = {};
                 try { contexto = JSON.parse(caso.contexto_triage) || {}; } catch (_) { contexto = {}; }
                 const entrada = contexto.entrada || {};
+                // Día de la cita pedida: Pendientes filtra por él al elegir otro día en el calendario.
+                if (entrada.fecha) tarjeta.dataset.fecha = entrada.fecha;
                 const datosPaciente = contexto.paciente || {};
                 const declarados = contexto.declarados || {};
                 const episodios = [...(entrada.sintomas || []), ...(entrada.exposiciones || [])].filter(e => e && typeof e.codigo === 'string');
@@ -75,6 +100,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const paciente = elemento('p', [edad(datosPaciente.edad_meses), datosPaciente.sexo, 'Vacunas: ' + (VACUNAS[declarados.vacunacion] || 'sin dato')].filter(Boolean).join(' · '));
                 paciente.className = 'ah-item__meta';
                 tarjeta.append(sintomas);
+                if (entrada.otro_sintoma) {
+                    const detalle = elemento('p', entrada.otro_sintoma);
+                    detalle.className = 'triage-detalle';
+                    tarjeta.append(detalle);
+                }
+                const verDetalle = elemento('details');
+                verDetalle.className = 'triage-detalle-completo';
+                verDetalle.append(elemento('summary', 'Ver detalle completo'), elemento('p', [sintomas.textContent, paciente.textContent].join(' · ')));
+                tarjeta.append(verDetalle);
                 if (contexto.entrada) tarjeta.append(paciente);
                 const mensaje = elemento('small');
                 mensaje.className = 'ah-error';
@@ -99,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     motivo.maxLength = 255;
                     motivo.dataset.caracteres = '\\p{L}\\p{M}\\p{N}\\p{P}\\p{S} ';
                     motivo.dataset.espacios = 'normalizar';
-                    motivo.placeholder = 'Motivo de la revisión';
+                    motivo.placeholder = 'Detalle adicional (opcional)';
                     motivo.setAttribute('aria-label', 'Motivo de revisión');
                     const aprobar = elemento('button', 'Confirmar');
                     aprobar.type = 'submit';
@@ -107,17 +141,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     aprobar.disabled = true;
                     const clave = zookiCrearComandoAgenda();
                     let enviando = false;
-                    motivo.addEventListener('input', () => {
-                        aprobar.disabled = enviando || !motivo.value.trim();
-                        mensaje.textContent = motivo.value.trim() ? '' : 'El motivo es obligatorio.';
-                    });
                     form.append(nivel, motivo, aprobar);
+                    const obtenerMotivo = globalThis.ZookiMotivosRevision?.crear(motivo) || (() => motivo.value.trim());
+                    const motivoFinal = () => obtenerMotivo() || (nivel.value === caso.nivel_calculado ? 'Nivel calculado confirmado por el veterinario.' : '');
+                    const actualizar = () => {
+                        aprobar.disabled = enviando || !motivoFinal() || motivoFinal().length > 255;
+                        mensaje.textContent = motivoFinal() ? '' : 'Elige un motivo para cambiar el nivel.';
+                    };
+                    motivo.addEventListener('input', () => {
+                        actualizar();
+                    });
+                    nivel.addEventListener('change', actualizar);
+                    actualizar();
                     form.addEventListener('submit', async evento => {
                         evento.preventDefault();
-                        if (enviando || !motivo.value.trim()) return;
-                        const datos = new URLSearchParams({ id_solicitud: caso.id_solicitud, huella: caso.huella_entrada, nivel: nivel.value, motivo: motivo.value.trim() });
+                        if (enviando || !motivoFinal() || motivoFinal().length > 255) return;
+                        const datos = new URLSearchParams({ id_solicitud: caso.id_solicitud, huella: caso.huella_entrada, nivel: nivel.value, motivo: motivoFinal() });
                         datos.set('clave_operacion', clave.clave(datos));
                         enviando = true;
+                        escribiendo = true;
                         aprobar.disabled = true;
                         try {
                             const respuesta = await (await fetch('index.php?action=revisar_triage_agenda_ajax', { method: 'POST', body: datos })).json();
@@ -127,7 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             mensaje.textContent = 'Respuesta no recibida. Reintenta la misma revisión.';
                         } finally {
                             enviando = false;
-                            aprobar.disabled = !motivo.value.trim();
+                            escribiendo = false;
+                            actualizar();
                         }
                     });
                     tarjeta.append(form, mensaje);
@@ -147,14 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 lista.append(tarjeta);
             }
+            enfocarSolicitudPedida();
         } catch (error) {
             if (turno === actual) aviso.textContent = 'No se pudieron consultar las solicitudes.';
         }
     }
-    raiz.querySelector('[data-solicitudes-actualizar]').addEventListener('click', cargar);
     filtro.addEventListener('change', cargar);
-    // D: el panel de pestañas avisa al mostrarse (antes era un <details>).
-    raiz.addEventListener('agenda:mostrar', cargar);
+    sincronizarPanelAgenda(raiz, cargar, () => escribiendo);
 });
 
 const comandosOrdenC4 = new Map();

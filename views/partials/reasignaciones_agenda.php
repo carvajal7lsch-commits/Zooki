@@ -5,12 +5,9 @@
             <h3>Propuestas de reasignación</h3>
             <p>Una propuesta no reserva el espacio: al aceptarla se comprueba de nuevo la disponibilidad.</p>
         </div>
-        <div class="ah-acciones">
-            <button type="button" class="zk-icono" data-reasignaciones-actualizar title="Actualizar" aria-label="Actualizar propuestas"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
-        </div>
     </header>
     <p class="ah-estado" role="status" data-reasignaciones-mensaje></p>
     <div class="ah-lista" data-reasignaciones-lista data-vacio="No tienes propuestas pendientes."></div>
 </section>
-<script src="js/reasignaciones-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/reasignaciones-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/reasignaciones-agenda.js'), 0, 12) ?>"></script>
 <?php endif; ?>

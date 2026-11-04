@@ -1,5 +1,44 @@
 'use strict';
 
+/** Un cambio confirmado actualiza calendario y paneles; la sincronización periódica es respaldo. */
+function actualizarAgendaTrasCambio(detalle = {}) {
+    window.dispatchEvent(new CustomEvent('agenda:actualizada', { detail: detalle }));
+}
+
+// HU-4.13/14/15/19: refrescar sin sustituir formularios que el personal está editando.
+function panelAgendaEnEdicion(raiz) {
+    return Boolean(raiz.querySelector('input:focus, select:focus, textarea:focus, details[open], form[data-agenda-editando]')) || Boolean(raiz.ownerDocument.querySelector('dialog[open]'));
+}
+
+function sincronizarPanelAgenda(raiz, cargar, ocupado = () => false) {
+    const documento = raiz.ownerDocument;
+    const ventana = documento.defaultView;
+    let consultando = false;
+    async function actualizar() {
+        if (documento.hidden || consultando || ocupado() || panelAgendaEnEdicion(raiz)) return;
+        consultando = true;
+        try {
+            await cargar(true);
+        } finally {
+            consultando = false;
+        }
+    }
+    for (const nombre of ['input', 'change']) {
+        raiz.addEventListener(nombre, evento => {
+            const form = evento.target.closest('form');
+            if (form) form.dataset.agendaEditando = '1';
+        });
+    }
+    raiz.addEventListener('agenda:mostrar', actualizar);
+    ventana.addEventListener('agenda:urgencia', actualizar);
+    ventana.addEventListener('agenda:actualizada', actualizar);
+    documento.addEventListener('visibilitychange', actualizar);
+    const temporizador = ventana.setInterval(actualizar, 10000);
+    ventana.addEventListener('pagehide', () => ventana.clearInterval(temporizador), { once: true });
+    actualizar();
+    return actualizar;
+}
+
 // D: pestañas accesibles de las herramientas de agenda. Al mostrar un panel se avisa con
 // «agenda:mostrar» para que cargue sus datos solo cuando se ve (antes lo hacía el <details>).
 function activarPanelAgenda(raiz, clave, enfocar) {
@@ -30,7 +69,7 @@ function iniciarHerramientasAgenda(documento) {
                 activarPanelAgenda(raiz, siguiente.dataset.agendaTab, true);
             });
         });
-        // HU-6.1: el Inicio enlaza a una pestaña por su hash (#llegadas, #triage, #reasignaciones).
+        // HU-6.1: los avisos enlazan a Pendientes por su hash (#triage, #reasignaciones).
         const pedida = tabs.find((tab) => '#' + tab.dataset.agendaTab === (documento.defaultView?.location?.hash || ''));
         const inicial = pedida || tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0];
         if (inicial) activarPanelAgenda(raiz, inicial.dataset.agendaTab, false);
@@ -42,5 +81,5 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('DOMContentLoaded', () => iniciarHerramientasAgenda(document));
 }
 if (typeof module !== 'undefined') {
-    module.exports = { activarPanelAgenda, iniciarHerramientasAgenda };
+    module.exports = { activarPanelAgenda, iniciarHerramientasAgenda, sincronizarPanelAgenda, panelAgendaEnEdicion };
 }

@@ -15,12 +15,14 @@ final class CatalogoClinica extends ModeloClinica
     public function tiposCita(bool $incluirInactivos = false): array
     {
         return $this->leer('SELECT * FROM tipos_cita WHERE id_clinica = ?'
-            . ($incluirInactivos ? '' : ' AND activo = 1') . ' ORDER BY duracion_minutos, id_tipo_cita');
+            . ($incluirInactivos ? '' : ' AND activo = 1')
+            . (Contexto::rolActivo() === Roles::PROPIETARIO ? ' AND solo_personal = 0' : '') . ' ORDER BY duracion_minutos, id_tipo_cita');
     }
 
     public function tipoCita(int $id): ?array
     {
-        return $this->leer('SELECT * FROM tipos_cita WHERE id_clinica = ? AND id_tipo_cita = ?', [$id])[0] ?? null;
+        return $this->leer('SELECT * FROM tipos_cita WHERE id_clinica = ? AND id_tipo_cita = ?'
+            . (Contexto::rolActivo() === Roles::PROPIETARIO ? ' AND solo_personal = 0' : ''), [$id])[0] ?? null;
     }
 
     public function vacunasPorEspecie(int $id): array

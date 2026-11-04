@@ -444,12 +444,25 @@
 }
 
 .inicio-aviso {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
     margin: 0;
     padding: 8px 10px;
     border-radius: 10px;
-    background: #FFFBEB;
-    color: #92400E;
+    background: var(--z-primary-soft);
+    color: var(--z-text-secondary);
     font-size: 12px;
+}
+.inicio-aviso a {
+    color: var(--z-primary);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.inicio-aviso a:hover {
+    text-decoration: underline;
 }
 
 .inicio-lineas {

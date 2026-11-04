@@ -1,3 +1,5 @@
+@import url('mascota-sexo.css?v=1');
+
 /* Presentación de pacientes extraída de la vista.
    M2 C8 (H5): solo las variables de identidad (css/identidad.css), sin colores sueltos. */
 .pacientes-estilo-0 { display: none; }
@@ -2042,4 +2044,15 @@ select.mascota-extra__control:focus,
     .top-header--pacientes .pacientes-cabecera {
         padding-top: 0;
     }
+}
+.mascota-obligatorios {
+    margin: 0 0 .7rem;
+    color: var(--z-text-muted);
+    font-size: .75rem;
+}
+.mascota-foto-ayuda {
+    display: block;
+    margin-top: 8px;
+    color: var(--z-text-muted);
+    font-size: 12px;
 }

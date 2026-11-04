@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSystemNotifications();
   initNotifItems();
   initNotifMarkAll();
+  window.addEventListener('agenda:urgencia', loadSystemNotifications);
 
   // Fix z-index overlapping with sidebar
   document.querySelectorAll('.modal, .users-modal').forEach(modal => {
@@ -57,8 +58,20 @@ const NOTIF_ICONOS = {
   ausencia: "bi-clock",
   ATENCION_ABIERTA: "bi-clipboard2-pulse",
   ATENCION_SIN_CERRAR: "bi-clipboard2-pulse",
+  ROJO_PRESENTE: "bi-exclamation-circle",
+  DERIVACION_ROJA: "bi-exclamation-circle",
 };
 const NOTIF_GRAVES = ["CITA_CANCELADA", "LIMITE_PLAN"];
+
+function tituloNotif(item) {
+  const titulos = {
+    ROJO_PRESENTE: "Urgencia con llegada registrada",
+    DERIVACION_ROJA: "Urgencia reportada por un propietario",
+    REVISION_TRIAGE: "Triage por revisar",
+  };
+  // Incluye los avisos antiguos guardados con el código, sin modificar sus datos.
+  return (!item.titulo || item.titulo === item.tipo) && Object.hasOwn(titulos, item.tipo) ? titulos[item.tipo] : item.titulo;
+}
 
 function iconoNotif(tipo) {
   if (String(tipo).startsWith("PROPUESTA_REASIGNACION_")) return NOTIF_ICONOS.CITA_REASIGNADA;
@@ -102,7 +115,7 @@ function filaNotif(item) {
   return `<button type="button" class="notif-item${noLeida ? " is-unread" : ""}" data-notif-id="${Number(item.id)}" data-notif-enlace="${escNotif(item.enlace || "#")}">
       <span class="notif-item__icon${grave ? " is-grave" : ""}"><i class="bi ${iconoNotif(item.tipo)}" aria-hidden="true"></i></span>
       <span class="notif-item__text">
-        <span class="notif-item__title">${escNotif(item.titulo)}</span>
+        <span class="notif-item__title">${escNotif(tituloNotif(item))}</span>
         <span class="notif-item__msg">${escNotif(item.mensaje)}</span>
         <span class="notif-item__time" title="${escNotif(creada)}">${escNotif(tiempoRelativo(item.fecha_creacion))}</span>
       </span>
@@ -131,7 +144,10 @@ async function loadSystemNotifications() {
       badge.textContent = noLeidas > 0 ? contadorNotif(noLeidas) : "";
     }
     if (countEl) countEl.textContent = `${noLeidas} sin leer`;
-    if (bell) bell.setAttribute("aria-label", etiquetaCampana(noLeidas));
+    if (bell) {
+      bell.setAttribute("aria-label", etiquetaCampana(noLeidas));
+      bell.dataset.pendientes = String(noLeidas > 0);
+    }
 
     // HU-45: el boton de "marcar todas" solo tiene sentido si hay pendientes.
     const markAll = document.getElementById("notifMarkAll");

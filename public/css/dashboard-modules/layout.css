@@ -376,6 +376,21 @@ a.cabecera-clinica:hover {
 .cabecera-cuenta .notifications-wrapper {
     margin: 0;
 }
+.cabecera-cuenta .notif-btn[data-pendientes="true"][aria-expanded="false"] > .bi-bell {
+    display: inline-block;
+    transform-origin: 50% 15%;
+    animation: campana-aviso 2.5s ease-in-out infinite;
+}
+@keyframes campana-aviso {
+    0%, 34%, 100% { transform: rotate(0); }
+    6%, 17%, 28% { transform: rotate(13deg); }
+    11%, 22% { transform: rotate(-13deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cabecera-cuenta .notif-btn[data-pendientes="true"][aria-expanded="false"] > .bi-bell {
+        animation: none;
+    }
+}
 .cabecera-cuenta__boton.header-user {
     display: grid;
     place-items: center;
@@ -836,7 +851,7 @@ a.cabecera-clinica:hover {
 }
 
 /* Notificaciones — mockup aprobado (2026-10-27). Campana gris; con nuevas, contador rojo
-   con el número (1…9, «9+»). Sin timbre animado ni amarillos: azul de marca y rojo solo
+   con el número (1…9, «9+»). Movimiento breve con pendientes (2026-11-02), sin amarillos: azul de marca y rojo solo
    para lo grave (cita cancelada, límite del plan). */
 .notifications-wrapper {
   position: relative;

@@ -407,3 +407,27 @@
         grid-row: 1;
     }
 }
+@media (min-width: 1536px) {
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado :is(.view-grid, #ownersGrid, #petsGrid) {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+}
+@media (min-width: 1800px) {
+    :is(#usuariosModulo, .pacientes-modulo).directorio-unificado :is(.view-grid, #ownersGrid, #petsGrid) {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    }
+}
+:is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta :is(.card-title-mini, .contact-text-mini) {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+:is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .contact-text-mini {
+    display: block;
+}
+:is(#usuariosModulo, .pacientes-modulo).directorio-unificado .directorio-tarjeta .contact-text-mini > i {
+    margin-right: 6px;
+}

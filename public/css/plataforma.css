@@ -1023,29 +1023,41 @@
 }
 .plataforma .tabs-wrapper {
     align-self: stretch;
-    gap: 20px;
+    align-items: center;
+    gap: 8px;
     padding: 0;
     background: none;
     border: 0;
     box-shadow: none;
 }
 .plataforma .tabs-wrapper .tab-btn {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 7px;
-    min-height: 60px;
-    padding: 0;
+    min-height: 40px;
+    padding: 8px 10px;
     border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
+    border-radius: 10px;
     background: none;
     color: var(--z-text-muted);
     font-size: 14px;
     box-shadow: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 .plataforma .tabs-wrapper .tab-btn.active {
     color: var(--z-primary);
-    border-bottom-color: var(--z-primary);
+}
+.plataforma .tabs-wrapper .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    bottom: -10px;
+    left: 10px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--z-primary);
 }
 .plataforma .tabs-wrapper .tab-btn > i {
     display: none;
@@ -1243,6 +1255,38 @@
     margin: 0;
     padding: 0;
 }
+/* HU-0.3: la etiqueta del bloqueo pertenece a los datos, no a la columna del icono. */
+.plataforma #panelSeguridad .plataforma-tarjeta {
+    align-items: start;
+}
+.plataforma-seguridad__titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+}
+.plataforma #panelSeguridad .plataforma-seguridad__titulo .card-title-mini {
+    margin: 0;
+    line-height: 1.5;
+}
+.plataforma #panelSeguridad .card-body-mini,
+.plataforma #panelSeguridad .card-contact-mini {
+    min-width: 0;
+    line-height: 1.5;
+}
+.plataforma #panelSeguridad .contact-text-mini {
+    align-items: flex-start;
+    line-height: 1.5;
+}
+.plataforma #panelSeguridad .contact-text-mini > .plataforma-recorte {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.plataforma #panelSeguridad .card-footer-mini {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
 .plataforma #panelSoporte .plataforma-tarjeta__texto {
     margin: 5px 0 0;
     font-size: 13px;
@@ -1405,12 +1449,27 @@
     }
     .plataforma .tabs-wrapper {
         flex: 1;
-        gap: 12px;
+        min-width: 0;
+        max-width: 100%;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 4px 0 8px;
         justify-content: space-between;
     }
     .plataforma .tabs-wrapper .tab-btn {
-        min-height: 48px;
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 8px 6px;
         font-size: 13px;
+    }
+    .plataforma .tabs-wrapper .tab-btn.active::after {
+        bottom: -4px;
+    }
+    .plataforma #panelSeguridad .plataforma-tarjeta {
+        grid-template-columns: 44px minmax(0, 1fr);
+    }
+    .plataforma #panelSeguridad .card-footer-mini {
+        grid-column: 2;
     }
     .plataforma .plataforma-pagos-global {
         min-height: 40px;
@@ -1557,4 +1616,130 @@
 :is(.plataforma-contenido, #gestionarClinica) :is(button, summary, .grafo-tipo):not(:disabled):focus-visible {
     outline: 2px solid var(--z-primary);
     outline-offset: 2px;
+}
+
+/* Modo demo: aprovechar el ancho permite ver las tres acciones sin recortar su contenido. */
+.plataforma-demo {
+    grid-column: 1 / -1;
+    max-width: none;
+    margin-top: 0;
+    cursor: default;
+}
+.plataforma-demo__acciones {
+    display: grid;
+    gap: 0.85rem 1.5rem;
+    margin-top: 0.5rem;
+}
+.plataforma-demo__form {
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--z-bg-light);
+    justify-items: start;
+    align-content: start;
+    gap: 0.65rem;
+    min-width: 0;
+}
+.plataforma-demo__form .input-group {
+    width: 100%;
+}
+.plataforma-demo__form [data-error-campo]:empty {
+    display: none;
+}
+.plataforma-demo__clave {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+}
+.plataforma-demo__form .plataforma-demo__clave input {
+    padding-right: 3rem;
+}
+.plataforma-demo__ver-clave {
+    position: absolute;
+    top: 50%;
+    right: 0.4rem;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+}
+.plataforma-demo__ver-clave[aria-pressed="false"] .bi-eye-slash,
+.plataforma-demo__ver-clave[aria-pressed="true"] .bi-eye {
+    display: none;
+}
+@media (min-width: 1024px) {
+    .plataforma-demo__acciones {
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    }
+    .plataforma-demo__form[data-demo-accion="plataforma_demo_crear_ajax"] {
+        grid-row: span 2;
+    }
+}
+.plataforma-demo__titulo {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--z-text);
+}
+.plataforma-demo__form input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+.plataforma-demo__form input:focus {
+    outline: none;
+    border-color: var(--z-primary);
+    box-shadow: 0 0 0 4px var(--z-primary-soft);
+}
+.plataforma-demo__form input[aria-invalid="true"] {
+    border-color: var(--z-danger);
+}
+.plataforma-demo__form button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+.plataforma-demo__borrar {
+    border-color: var(--z-danger);
+    color: var(--z-danger-dark);
+}
+.plataforma-demo__resultado {
+    display: grid;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--z-text-secondary);
+}
+.plataforma-demo__resultado:empty {
+    display: none;
+}
+.plataforma-demo__resultado dl {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.2rem 0.75rem;
+    margin: 0;
+}
+.plataforma-demo__resultado dt {
+    font-weight: 600;
+    color: var(--z-text-muted);
+}
+.plataforma-demo__resultado dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+.plataforma-demo__resultado [data-demo-error] {
+    margin: 0;
+    color: var(--z-danger-dark);
 }

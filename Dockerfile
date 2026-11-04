@@ -24,6 +24,15 @@ WORKDIR /var/www/html/Zooki
 # Copiar los archivos de la aplicación (lo que no se copia está en .dockerignore)
 COPY . .
 
+# Cada imagen identifica sus estáticos aunque siga en la misma versión del producto.
+# Dokploy/CI puede pasar --build-arg SOURCE_COMMIT=<hash>; sin él se usa la fecha UTC.
+ARG SOURCE_COMMIT
+RUN if printf '%s' "$SOURCE_COMMIT" | grep -Eq '^[0-9a-fA-F]{7,40}$'; then \
+        printf '%.12s\n' "$SOURCE_COMMIT" > VERSION_BUILD; \
+    else \
+        date -u +%Y%m%dT%H%M%SZ > VERSION_BUILD; \
+    fi
+
 # Instalar dependencias de PHP (si existe el archivo composer.json)
 RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
 

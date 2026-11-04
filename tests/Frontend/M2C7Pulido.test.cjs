@@ -60,8 +60,9 @@ test('1. el historial dice «Sin peso registrado» para cualquier peso NULL, en 
     assert.match(leer('views/portal/imprimir_historial.php'), /'Sin peso registrado'/);
     // La lista de Consultas (y su detalle) se retiró por decisión del dueño (2026-10-22).
     // La casilla del formulario no cambia.
-    assert.match(leer('views/vet/modal_consulta.php'), /No se pudo pesar/);
-    assert.match(leer('views/vet/atencion.php'), /<span>No se pudo pesar<\/span>/);
+    assert.match(leer('views/vet/modal_consulta.php'), /partials\/consulta_pasos\.php/);
+    assert.match(leer('views/partials/consulta_pasos.php'), /No se pudo pesar/);
+    assert.match(leer('views/vet/atencion.php'), /partials\/consulta_pasos\.php/);
 });
 
 test('2. los síntomas salen en el historial del portal y su imprimible', () => {
@@ -86,11 +87,12 @@ test('3. el imprimible del portal tiene las alergias y alertas activas con su cl
 });
 
 test('4. el modal tiene frecuencia respiratoria y observaciones con los límites y avisos del servidor', () => {
-    const modal = leer('views/vet/modal_consulta.php');
-    assert.match(modal, /name="frecuencia_respiratoria" data-consulta-campo="frecuencia_respiratoria" data-aviso-rango="<\?= \$avisoConsulta\('frecuencia_respiratoria'\) \?>"/);
-    // M2 C8 (H8): los límites y la restricción de entrada salen de ValidadorClinico::atributosSigno (FR_MIN y FR_MAX).
-    assert.match(modal, /<\?= ValidadorClinico::atributosSigno\('frecuencia_respiratoria'\) \?> name="frecuencia_respiratoria"/);
-    assert.match(modal, /name="observaciones" rows="2" maxlength="<\?= ValidadorClinico::TEXTO_MAX \?>"/);
+    const modal = leer('views/partials/consulta_pasos.php');
+    assert.match(leer('views/vet/modal_consulta.php'), /partials\/consulta_pasos\.php/);
+    assert.match(modal, /'frecuencia_respiratoria' => 'Frec. respiratoria'/);
+    assert.match(modal, /ValidadorClinico::atributosSigno\(\$campoVital\)/);
+    assert.match(modal, /ValidadorClinico::AVISOS_CONSULTA\[\$campoVital\]/);
+    assert.match(modal, /name="observaciones"[^>]*maxlength="<\?= ValidadorClinico::TEXTO_MAX \?>"/);
     assert.doesNotMatch(modal, /\son[a-z]+=|style=/);
 });
 
@@ -118,7 +120,7 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
     const { contexto } = medical();
     assert.equal(typeof contexto.openNewConsultationFlow, 'undefined');
     assert.doesNotMatch(leer('public/css/consulta-clinica.css'), /paciente-resultado/);
-    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda#llegadas"/);
+    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda&amp;agendar=[^"\n]+&amp;modo_llegada=ahora"/);
 });
 
 test('6. «Vincular mascota de un cliente» abre la búsqueda del propietario con el mismo flujo', () => {

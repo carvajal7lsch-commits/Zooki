@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { errorCampo } = require('../../public/js/llegadas-agenda.js');
-const { activarPanelAgenda, iniciarHerramientasAgenda } = require('../../public/js/agenda-herramientas.js');
+const { activarPanelAgenda, iniciarHerramientasAgenda, sincronizarPanelAgenda } = require('../../public/js/agenda-herramientas.js');
 
 // D: validación en tiempo real de los formularios de llegada (RE-4.19, RE-4.18).
 test('llegadas valida motivo, segundos, hora y fecha como el servidor', () => {
@@ -39,7 +39,7 @@ function dom(claves) {
 
 test('pestañas muestran un solo panel, avisan al mostrarse y navegan con flechas', () => {
     global.CustomEvent = class { constructor(type) { this.type = type; } };
-    const d = dom(['triage', 'llegadas', 'urgencias']);
+    const d = dom(['triage', 'reasignaciones', 'urgencias']);
     iniciarHerramientasAgenda({ querySelectorAll: () => [d.raiz] });
     assert.deepEqual(d.eventos, [['triage', 'agenda:mostrar']]);
     d.tabs[2].oyentes.click();
@@ -52,12 +52,62 @@ test('pestañas muestran un solo panel, avisan al mostrarse y navegan con flecha
     assert.ok(prevenido);
     assert.equal(d.paneles['#agenda-panel-triage'].hidden, false);
     assert.ok(d.tabs[0].enfocada);
-    activarPanelAgenda(d.raiz, 'llegadas', false);
-    assert.deepEqual(d.eventos.at(-1), ['llegadas', 'agenda:mostrar']);
+    activarPanelAgenda(d.raiz, 'reasignaciones', false);
+    assert.deepEqual(d.eventos.at(-1), ['reasignaciones', 'agenda:mostrar']);
 });
 
 test('las vistas de herramientas no llevan estilos ni eventos en línea', () => {
     for (const archivo of ['views/partials/agenda_herramientas.php', 'views/partials/solicitudes_agenda.php', 'views/partials/llegadas_agenda.php', 'views/partials/reasignaciones_agenda.php', 'views/partials/urgencias_agenda.php']) {
         assert.doesNotMatch(fs.readFileSync(archivo, 'utf8'), /\sstyle="|\son[a-z]+="|<script>\s*\S/, archivo);
     }
+});
+
+test('Pendientes sincroniza cada diez segundos sin solapar consultas ni reemplazar una edición', async () => {
+    const eventos = {};
+    const eventosVentana = {};
+    let intervalo;
+    let milisegundos;
+    let consultas = 0;
+    let resolver;
+    let enfoque = false;
+    let edicion = false;
+    let modal = false;
+    const ventana = {
+        addEventListener: (nombre, fn) => { eventosVentana[nombre] = fn; },
+        setInterval: (fn, tiempo) => { intervalo = fn; milisegundos = tiempo; return 1; },
+        clearInterval: () => {},
+    };
+    const documento = { hidden: false, defaultView: ventana, querySelector: () => modal, addEventListener: () => {} };
+    const raiz = {
+        ownerDocument: documento,
+        querySelector: () => enfoque || edicion,
+        addEventListener: (nombre, fn) => { eventos[nombre] = fn; },
+    };
+    sincronizarPanelAgenda(raiz, async automatica => {
+        assert.equal(automatica, true);
+        consultas++;
+        await new Promise(resolve => { resolver = resolve; });
+    });
+    assert.equal(milisegundos, 10000);
+    assert.equal(consultas, 1);
+    await intervalo();
+    assert.equal(consultas, 1, 'No duplica una consulta pendiente.');
+    resolver();
+    await new Promise(setImmediate);
+    for (const bloquear of ['enfoque', 'edicion', 'modal', 'oculta']) {
+        enfoque = bloquear === 'enfoque';
+        edicion = bloquear === 'edicion';
+        modal = bloquear === 'modal';
+        documento.hidden = bloquear === 'oculta';
+        await intervalo();
+        assert.equal(consultas, 1, bloquear);
+    }
+    enfoque = edicion = modal = documento.hidden = false;
+    const refresco = eventosVentana['agenda:urgencia']();
+    assert.equal(consultas, 2);
+    resolver();
+    await refresco;
+    const form = { dataset: {} };
+    eventos.input({ target: { closest: () => form } });
+    assert.equal(form.dataset.agendaEditando, '1', 'Conserva la edición aunque el campo pierda el foco.');
 });

@@ -167,12 +167,39 @@ class Mascota extends ModeloClinica
             if (array_key_exists($campo,$datos) && $datos[$campo] != $actual[$campo]) $this->denegar($actual['id_mascota']);
         }
     }
+    public function completarFichaConsulta(int $idMascota, array $datos): bool
+    {
+        require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), static fn (): array => ['usuarios' => [Contexto::idUsuario()], 'mascotas' => [$idMascota]], function () use ($idMascota, $datos): bool {
+                $q = $this->conn->prepare("SELECT 1 FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario=uc.id_usuario JOIN clinicas c ON c.id_clinica=uc.id_clinica WHERE uc.id_clinica=? AND uc.id_usuario=? AND uc.id_rol=2 AND uc.estado='activo' AND u.estado=1 AND c.estado='activa'");
+                $q->execute([$this->clinica(), Contexto::idUsuario()]);
+                if (Contexto::rolActivo() !== Roles::VETERINARIO || !$q->fetchColumn()) {
+                    throw new AccesoDenegado(403, 'Solo el veterinario activo puede completar esta ficha.');
+                }
+                $this->exigirMascotaActiva($idMascota);
+                $permitidos = array_intersect_key($datos, array_flip(['sexo', 'esterilizado', 'fecha_nacimiento']));
+                if (!$permitidos || count($permitidos) !== count($datos)) {
+                    throw new InvalidArgumentException('Indica únicamente los datos de la ficha que vas a completar.');
+                }
+                return $this->guardarCambios(['id_mascota' => $idMascota] + $permitidos, true);
+            });
+        } catch (AccesoDenegado $error) {
+            $this->denegar($idMascota);
+        }
+    }
+
     public function update(array $datos): bool
+    {
+        return $this->guardarCambios($datos);
+    }
+
+    private function guardarCambios(array $datos, bool $fichaParcial = false): bool
     {
         $id=(int)($datos['id_mascota'] ?? 0);
         $this->comprobarEdicion($this->getById($id),$datos);
         try {
-            return Transaccion::ejecutar($this->conn,function () use ($id,$datos) {
+            return Transaccion::ejecutar($this->conn,function () use ($id,$datos,$fichaParcial) {
                 // RN-110: releer bajo bloqueo; editar peso no sobrescribe identidad concurrente.
                 if ($this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
                     $this->conn->prepare('SELECT id_mascota FROM mascotas WHERE id_mascota = ? FOR UPDATE')->execute([$id]);
@@ -181,7 +208,19 @@ class Mascota extends ModeloClinica
                 $this->comprobarEdicion($actual,$datos);
                 $entrada=array_replace($actual,$datos);
                 $entrada['colores']=$datos['colores'] ?? array_filter(explode(',',$actual['colores_ids']));
-                $entrada=$this->validar($entrada);
+                if ($fichaParcial) {
+                    // Una ficha incompleta no obliga a inventar raza o peso para completar otro dato.
+                    $resultado = ValidadorMascota::validarFicha($datos, new DateTimeImmutable('today', new DateTimeZone('America/Bogota')));
+                    if ($resultado['error']) {
+                        throw new CampoInvalido($resultado['campo'], ValidadorMascota::aviso($resultado['campo']), $resultado['error']);
+                    }
+                    if (array_key_exists('fecha_nacimiento', $datos) && !$resultado['datos']['fecha_nacimiento']) {
+                        throw new CampoInvalido('fecha_nacimiento', ValidadorMascota::AVISO_OBLIGATORIO, 'Indica la fecha de nacimiento.');
+                    }
+                    $entrada = array_replace($entrada, $resultado['datos']);
+                } else {
+                    $entrada = $this->validar($entrada);
+                }
                 $this->comprobarEdicion($actual,$entrada);
                 $campos=array_intersect_key($entrada,array_flip(self::EDITABLES),$datos);
                 // Las dos representaciones de raza deben seguir siendo excluyentes.
@@ -199,6 +238,7 @@ class Mascota extends ModeloClinica
                     $this->conn->prepare($sql)->execute([...array_values($campos),$id,$this->clinica()]);
                     foreach ($campos as $campo=>$valor) $this->registrarAuditoria($id,$campo,$actual[$campo],$valor);
                 }
+                $entrada['colores'] ??= [];
                 $antes=array_map('intval',array_filter(explode(',',$actual['colores_ids']))); sort($antes);
                 if (array_key_exists('colores',$datos) && $antes !== $entrada['colores']) {
                     $this->escribirColores($id,$entrada['colores']);

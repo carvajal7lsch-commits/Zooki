@@ -2,6 +2,7 @@
 require_once __DIR__ . '/Roles.php';
 require_once __DIR__ . '/Contexto.php';
 require_once __DIR__ . '/AccesoDenegado.php';
+require_once __DIR__ . '/InterruptorDemo.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 
 /**
@@ -110,6 +111,11 @@ class Security {
      * respuesta ni termina el proceso, para que se pueda probar.
      */
     public static function autorizar(string $action): void {
+        // Botón de demo (decisión del dueño, 2026-11-03): apagado, sus rutas no existen para nadie.
+        if (in_array($action, InterruptorDemo::ACCIONES, true) && !InterruptorDemo::habilitada()) {
+            throw new AccesoDenegado(404, 'Página no encontrada.');
+        }
+
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
             if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'activar_propietario', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -170,7 +176,8 @@ class Security {
             self::validarClinicaDeLaPeticion($actual);
         }
 
-        if (in_array($action, self::ACCIONES_PLATAFORMA, true) && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        $soloPost = in_array($action, self::ACCIONES_PLATAFORMA, true) || in_array($action, InterruptorDemo::ACCIONES, true);
+        if ($soloPost && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             throw new AccesoDenegado(403, 'La operación requiere POST.');
         }
         self::validateCsrf($action);
@@ -353,7 +360,7 @@ class Security {
             // HU-6.2 (RE-6.2.8, RE-6.2.9): agenda por veterinario y calendario del Inicio; solo lectura.
             'panel_admin_dia_ajax',
             'admin_auditoria', 'admin_configuracion', 'admin_suscripcion',
-            'suscripcion_pagar_ajax', 'suscripcion_estado_ajax', 'suscripcion_historial_ajax', 'suscripcion_retorno',
+            'suscripcion_descartar_intencion', 'suscripcion_pagar_ajax', 'suscripcion_estado_ajax', 'suscripcion_historial_ajax', 'suscripcion_retorno',
             'suscripcion_fuente_preparar_ajax', 'suscripcion_fuente_ajax', 'suscripcion_automatico_ajax', 'suscripcion_retirar_fuente_ajax',
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
@@ -408,7 +415,7 @@ class Security {
             // HU-2.1, RE-2.1.5: registrar y desactivar alergias y alertas es un acto clínico.
             'registrar_alerta_medica_ajax', 'desactivar_alerta_medica_ajax', 'buscar_nodo_alerta_ajax',
             'sugerir_diagnosticos_ajax',
-            'validar_prescripcion_ajax', 'buscar_farmaco_ajax',
+            'validar_prescripcion_ajax', 'buscar_farmaco_ajax', 'sugerir_tratamientos_ajax', 'consulta_contexto_ajax', 'fechas_control_ajax', 'completar_ficha_consulta_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita
@@ -476,6 +483,9 @@ class Security {
         $matriz['plataforma_grafo'] = $plataforma;
         $matriz['obtener_grafo_conocimiento_ajax'] = $plataforma;
         foreach (self::ACCIONES_PLATAFORMA as $accion) {
+            $matriz[$accion] = $plataforma;
+        }
+        foreach (InterruptorDemo::ACCIONES as $accion) {
             $matriz[$accion] = $plataforma;
         }
 

@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../models/ConsentimientoDatos.php';
 require_once __DIR__ . '/../controllers/ContextoController.php';
 require_once __DIR__ . '/RetornoCarnet.php';
+require_once __DIR__ . '/DestinoInicial.php';
 
 /**
  * Abre la sesión de una identidad ya autenticada (contraseña, Google o
@@ -58,7 +59,7 @@ final class InicioSesion
         if ((int) $usuario['debe_cambiar_password'] === 1) {
             return 'cambiar_password';
         }
-        return $retornoCarnet !== null ? 'portal_propietario' : (count($disponibles) === 1 ? Contexto::destino($disponibles[0]) : 'seleccionar_contexto');
+        return $retornoCarnet !== null ? 'portal_propietario' : (count($disponibles) === 1 ? DestinoInicial::resolver($this->db, $disponibles[0]) : 'seleccionar_contexto');
     }
 
     private function debeAceptarPolitica(array $usuario): bool

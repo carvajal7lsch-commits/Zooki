@@ -6,6 +6,28 @@ require_once __DIR__ . '/../../helpers/PrescripcionPublica.php';
 
 final class MotorPrescripcionTest extends TestCase
 {
+    public function testSarnaCollieDescartadaConFuenteYCriolloAlternativaNuncaPrecargada(): void
+    {
+        $grafo = ConocimientoRealPrueba::instantanea();
+        foreach (['collie' => true, 'criollo_canino' => false] as $raza => $bloqueada) {
+            $contexto = ['especie' => 'especie.canino', 'raza' => ['codigo' => 'raza.' . $raza], 'edad_meses' => 48];
+            $resultado = MotorPrescripcion::sugerir('diagnostico.sarna_sarcoptica', 28, $contexto, [], [], $grafo, new DateTimeImmutable('2026-11-01'));
+            $coleccion = array_column($resultado[$bloqueada ? 'descartadas' : 'tratamientos'], null, 'farmaco');
+            $ivermectina = $coleccion['farmaco.ivermectina'];
+            $this->assertFalse($ivermectina['precargar']);
+            $this->assertSame($bloqueada, $ivermectina['seguridad']['bloqueada']);
+            $this->assertNotContains('farmaco.ivermectina', array_column($resultado[$bloqueada ? 'tratamientos' : 'descartadas'], 'farmaco'));
+            if ($bloqueada) {
+                $motivo = $ivermectina['seguridad']['motivos'][0];
+                $this->assertSame('toxicidad', $motivo['tipo']);
+                $this->assertSame('Collie', $motivo['paciente']);
+                $this->assertNotEmpty($motivo['fuentes'][0]['url']);
+                $this->assertArrayNotHasKey('arista', $motivo);
+                $this->assertArrayNotHasKey('origen', $motivo);
+            }
+        }
+    }
+
     private function evaluar(?string $farmaco, array $contexto, array $alergias = [], array $vigentes = [], array $otras = []): array
     {
         return MotorPrescripcion::evaluar($farmaco, $contexto, $alergias, $vigentes, $otras, ConocimientoRealPrueba::instantanea(), new DateTimeImmutable('2026-10-15'));

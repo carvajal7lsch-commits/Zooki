@@ -1495,7 +1495,7 @@ mark {
 .mmd-viewer.mmd-active .mmd-hint{display:none;}
 .mmd-viewer.mmd-active .mmd-viewport{box-shadow:inset 0 0 0 2px var(--accent,#7c3aed);}
 
-/* ─── Ver y descargar el documento (specs/descargas-documentacion.md) ─── */
+/* ─── Ver y descargar el documento ─── */
 /* Botón de la barra superior: hereda el aspecto de .theme-toggle-btn. */
 .topbar-actions {
     display: flex;

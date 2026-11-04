@@ -27,6 +27,7 @@ let calendarInstance = null;
 let _selectedDate = null;
 let _cargando = true;
 let _panel = { modo: 'dia', eventoId: null };
+const reajustesAnunciados = new Set();
 
 // ═══════════════════════════════════════
 // Utilidades
@@ -62,6 +63,43 @@ function esDiaPasado(date) {
     return inicioDelDia(date) < inicioDelDia(new Date());
 }
 
+function contextoDeAgenda() {
+    const texto = document.querySelector?.('.agenda')?.dataset.contextoAgenda;
+    return texto ? JSON.parse(texto) : null;
+}
+
+function diaNoReservable(date) {
+    return esDiaPasado(date) || diaNoLaboral(date);
+}
+
+/** Un cierre se distingue de una fecha pasada, aunque ambas impidan reservar. */
+function diaNoLaboral(date) {
+    const datos = contextoDeAgenda();
+    if (!datos) return false;
+    const dia = date.getDay() || 7;
+    const apertura = (datos.apertura || []).find(f => Number(f.dia_semana) === dia && Number(f.activo));
+    if (!apertura) return true;
+    const fecha = toLocalDateStr(date);
+    let libres = ['morning', 'afternoon'].filter(p => Number(apertura['bloque_' + p + '_activo'])).map(p => [
+        new Date(fecha + 'T' + apertura['bloque_' + p + '_inicio']).getTime(),
+        new Date(fecha + 'T' + apertura['bloque_' + p + '_fin']).getTime()
+    ]);
+    for (const cierre of datos.cierres || []) {
+        if (!Number(cierre.activo)) continue;
+        const a = new Date(cierre.inicio.replace(' ', 'T')).getTime();
+        const b = new Date(cierre.fin.replace(' ', 'T')).getTime();
+        libres = libres.flatMap(([inicio, fin]) => b <= inicio || a >= fin ? [[inicio, fin]] : [[inicio, Math.min(a, fin)], [Math.max(b, inicio), fin]].filter(([x, y]) => x < y));
+    }
+    return libres.length === 0;
+}
+
+function cambioPermitidoCalendario(inicio, datos) {
+    if (datos.cambiable === false) return false;
+    if (datos.prioridad === 'rojo' || !isUsuarioVeterinario()) return true;
+    const minutos = Number(contextoDeAgenda()?.anticipacion_cambios_min || 0);
+    return minutos === 0 || inicio.getTime() - Date.now() >= minutos * 60000;
+}
+
 function esHoy(date) {
     return toLocalDateStr(date) === toLocalDateStr(new Date());
 }
@@ -84,6 +122,69 @@ function formatearHoraReserva(hora) {
 
 function formatHora(date) {
     return date ? format12h(`${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`) : '';
+}
+
+function fechaEstimadaAgenda(valor) {
+    if (!valor) return null;
+    const fecha = new Date(String(valor).replace(' ', 'T'));
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function horaEstimadaAgenda(valor, fechaCita) {
+    const fecha = fechaEstimadaAgenda(valor);
+    if (!fecha) return '';
+    const hora = formatearHoraReserva(fecha.toTimeString().slice(0, 5));
+    return toLocalDateStr(fecha) === toLocalDateStr(fechaCita) ? hora : `${formatFecha(fecha, { day: 'numeric', month: 'long', year: 'numeric' })} · ${hora}`;
+}
+
+function minutosRetrasoAgenda(valor, horaPactada) {
+    const inicio = fechaEstimadaAgenda(valor);
+    return inicio ? (inicio.getTime() - horaPactada.getTime()) / 60000 : 0;
+}
+
+function chipRetrasoAgenda(valor, horaPactada, compacto = false) {
+    // RE-4.5.3: comparar con la hora pactada, sin alterar la estimación de la cascada.
+    const minutos = minutosRetrasoAgenda(valor, horaPactada);
+    if (minutos < 5) return '';
+    const texto = compacto ? `+${Math.round(minutos)} min` : `${Math.round(minutos)} min tarde por la cita anterior`;
+    return `<small class="agenda-detail__retraso${compacto ? ' agenda-retraso--compacto' : ''}${minutos > 30 ? ' agenda-detail__retraso--alto' : ''}">${texto}</small>`;
+}
+
+function anunciarReajusteAgenda(datos) {
+    if (!isUsuarioVeterinario()) return;
+    const hoy = toLocalDateStr(new Date());
+    const corridas = datos.filter(cita => {
+        if ((cita.tipo || 'cita') !== 'cita' || cita.fecha !== hoy || !['pendiente', 'confirmada'].includes(cita.estado)) return false;
+        if (Number(cita.id_veterinario) !== Number(getUsuarioId()) || !Number.isFinite(Number(cita.umbral_aviso_min))) return false;
+        const pactada = new Date(cita.fecha + 'T' + cita.hora);
+        return minutosRetrasoAgenda(cita.inicio_estimado, pactada) > Number(cita.umbral_aviso_min);
+    });
+    if (!corridas.length) return;
+    const huella = JSON.stringify(corridas.map(cita => [cita.id_cita, cita.fecha_ultimo_calculo, cita.inicio_estimado]).sort((a, b) => a[0] - b[0]));
+    const clave = `zooki_reajuste_${corridas[0].id_clinica}_${getUsuarioId()}_${hoy}`;
+    try {
+        for (const anterior of JSON.parse(sessionStorage.getItem(clave) || '[]')) reajustesAnunciados.add(anterior);
+    } catch (error) {
+        // El aviso sigue siendo único durante esta página si el almacenamiento no está disponible.
+    }
+    if (reajustesAnunciados.has(huella)) return;
+    reajustesAnunciados.add(huella);
+    try {
+        sessionStorage.setItem(clave, JSON.stringify([...reajustesAnunciados].slice(-100)));
+    } catch (error) {
+        // No impedir la consulta de agenda por una restricción del navegador.
+    }
+    mostrarToast(`La agenda se reajustó: ${corridas.length} ${corridas.length === 1 ? 'cita se corrió' : 'citas se corrieron'}`, 'info');
+    const enlace = document.createElement('button');
+    enlace.type = 'button';
+    enlace.className = 'cal-toast__dia';
+    enlace.textContent = 'Ver Día';
+    enlace.addEventListener('click', () => {
+        calendarInstance.changeView('timeGridDay', hoy);
+        seleccionarDia(new Date());
+        document.getElementById('calToast')?.remove();
+    });
+    document.getElementById('calToast')?.append(enlace);
 }
 
 function minutosDe(hora) {
@@ -217,8 +318,9 @@ async function cargarEventos(info, exito, fallo) {
     try {
         const inicio = info.startStr.split('T')[0];
         const fin = info.endStr.split('T')[0];
-        const res = await fetch(`index.php?action=listar_citas_ajax&inicio=${inicio}&fin=${fin}`);
+        const res = await fetch(`index.php?action=listar_citas_ajax&inicio=${inicio}&fin=${fin}`, { cache: 'no-store' });
         const datos = await res.json();
+        anunciarReajusteAgenda(Array.isArray(datos) ? datos : []);
 
         exito((Array.isArray(datos) ? datos : []).map(e => {
             const tipo = e.tipo || 'cita';
@@ -239,9 +341,12 @@ async function cargarEventos(info, exito, fallo) {
                     propietario_nombre: e.propietario_nombre || '',
                     tipo_cita_nombre: e.tipo_cita_nombre || '',
                     inicio_estimado: e.inicio_estimado || '',
+                    hora_llegada: e.hora_llegada || '',
+                    tolerancia_llegada_min: e.tolerancia_llegada_min,
                     fin_estimado: e.fin_estimado || '',
                     estado_reajuste: e.estado_reajuste || '',
                     prioridad: e.prioridad || '',
+                    cambiable: e.cambiable,
                     orden_sobrecupo: e.orden_sobrecupo
                 }
             };
@@ -254,10 +359,19 @@ async function cargarEventos(info, exito, fallo) {
 }
 
 function mountDayAddButton(arg) {
-    if (!isUsuarioVeterinario()) return;
-    if (arg.view.type !== 'dayGridMonth' || esDiaPasado(arg.date)) return;
+    if (arg.view.type !== 'dayGridMonth') return;
+    // H-2: el día del popover no entrega una celda; una excepción aquí rompe su cierre nativo.
+    if (!arg.el) return;
     const top = arg.el.querySelector('.fc-daygrid-day-top');
-    if (!top || top.querySelector('.fc-day-add-btn')) return;
+    if (!top) return;
+    if (diaNoLaboral(arg.date)) {
+        const etiqueta = document.createElement('small');
+        etiqueta.className = 'agenda-dia-no-laboral';
+        etiqueta.textContent = 'No laboral';
+        arg.el.querySelector('.fc-daygrid-day-frame').append(etiqueta);
+        return;
+    }
+    if (!isUsuarioVeterinario() || esDiaPasado(arg.date) || top.querySelector('.fc-day-add-btn')) return;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -276,6 +390,51 @@ function tieneEventos(date) {
     return !!calendarInstance && eventosDelDia(date).length > 0;
 }
 
+function contenidoCitaSemanal(info) {
+    const fila = document.createElement('div');
+    fila.className = 'agenda-cita-semanal';
+    const nombre = document.createElement('strong');
+    nombre.textContent = info.event.extendedProps.mascota_nombre || info.event.title;
+    const detalle = document.createElement('span');
+    const hora = info.event.start.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const tipo = info.event.extendedProps.tipo_cita_nombre || TIPOS_EVENTO[info.event.extendedProps.tipo];
+    detalle.textContent = [hora, tipo].filter(Boolean).join(' · ');
+    fila.append(nombre, detalle);
+    if (info.event.extendedProps.tipo === 'cita') {
+        const chip = document.createElement('template');
+        chip.innerHTML = chipRetrasoAgenda(info.event.extendedProps.inicio_estimado, info.event.start, true);
+        fila.append(chip.content);
+    }
+    return { domNodes: [fila] };
+}
+
+/** La escala semanal sigue la apertura de la clínica, sin una hora de entrada fija. */
+function horarioVisibleSemana() {
+    const franjas = (contextoDeAgenda()?.apertura || []).filter(dia => Number(dia.activo)).flatMap(dia =>
+        ['morning', 'afternoon'].filter(bloque => Number(dia['bloque_' + bloque + '_activo'])).map(bloque => ({
+            daysOfWeek: [Number(dia.dia_semana) % 7],
+            startTime: dia['bloque_' + bloque + '_inicio'],
+            endTime: dia['bloque_' + bloque + '_fin']
+        }))
+    );
+    if (!franjas.length) return {};
+    const inicio = franjas.map(franja => franja.startTime).sort()[0];
+    const fin = franjas.map(franja => franja.endTime).sort().at(-1);
+    return { slotMinTime: inicio, slotMaxTime: fin, scrollTime: inicio, businessHours: franjas };
+}
+
+function marcarCitaCalendario() {
+    document.querySelectorAll('#calendar [data-agenda-evento]').forEach(elemento => {
+        const seleccionada = _panel.modo === 'detalle' && elemento.dataset.agendaEvento === String(_panel.eventoId);
+        elemento.classList.toggle('agenda-evento-seleccionado', seleccionada);
+    });
+}
+
+/** El detalle de una cita vive en Citas: abrirlo desde Pendientes cambia de vista. */
+function verPanelCitas() {
+    window.ZookiPanelAgenda?.mostrarCitas();
+}
+
 /** Marca la celda del día y, salvo que se pida lo contrario, pinta su lista en el panel. */
 function seleccionarDia(date, pintarLista = true) {
     _selectedDate = inicioDelDia(date);
@@ -283,6 +442,9 @@ function seleccionarDia(date, pintarLista = true) {
     const celda = document.querySelector(`.fc-daygrid-day[data-date="${toLocalDateStr(_selectedDate)}"]`);
     if (celda) celda.classList.add('is-selected');
     if (pintarLista) renderPanelDia();
+    // Decisión del dueño (2026-11-03): Pendientes se queda abierto y sigue el día elegido.
+    window.ZookiAgendaDia = toLocalDateStr(_selectedDate);
+    window.ZookiPanelAgenda?.cambiarDia(window.ZookiAgendaDia);
     window.ZookiAgendaMovil?.actualizar();
 }
 
@@ -295,56 +457,79 @@ function iniciarCalendario() {
         height: '100%',
         expandRows: true,
         fixedWeekCount: false,
-        dayMaxEvents: true,
+        // Mantener las semanas equilibradas: el contenido que no cabe va a «+N más».
+        dayMaxEventRows: true,
         eventDisplay: 'block',
         nowIndicator: true,
         allDaySlot: false,
         scrollTime: '07:00:00',
-        views: { dayGridMonth: { displayEventTime: false } },
+        views: {
+            dayGridMonth: { displayEventTime: false },
+            timeGridDay: { ...horarioVisibleSemana(), eventContent: contenidoCitaSemanal },
+            timeGridWeek: {
+                ...horarioVisibleSemana(),
+                eventContent: contenidoCitaSemanal,
+                slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                slotLabelInterval: '01:00:00'
+            }
+        },
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', hour12: true },
         // Decisión del usuario (revisión de C5): se arrastra cita por cita; ver puedeArrastrar().
         editable: false,
         eventDurationEditable: false,
         moreLinkText: n => `+${n} más`,
         moreLinkClick: info => {
-            seleccionarDia(info.date);
+            // FullCalendar entrega aquí un marcador UTC; convertirlo a hora local restaba un día.
+            const fecha = info.jsEvent.target.closest('.fc-daygrid-day')?.dataset.date || info.date.toISOString().slice(0, 10);
+            seleccionarDia(new Date(fecha + 'T12:00:00'));
             return 'popover';
         },
         events: cargarEventos,
-        eventsSet: () => window.ZookiAgendaMovil?.actualizar(),
+        eventsSet: () => {
+            // El lote ya está en FullCalendar: loading puede terminar antes de que getEvents lo publique.
+            refrescarPanel();
+            window.ZookiAgendaMovil?.actualizar();
+            window.ZookiLlegadasCita?.enfocar();
+        },
         loading: cargando => {
             _cargando = cargando;
             if (!cargando) FilterManager.aplicar();
         },
         dayCellDidMount: mountDayAddButton,
         // Conserva la selección cuando FullCalendar vuelve a pintar las celdas.
-        dayCellClassNames: arg => (
-            _selectedDate && toLocalDateStr(arg.date) === toLocalDateStr(_selectedDate) ? ['is-selected'] : []
-        ),
+        dayCellClassNames: arg => [
+            ...(_selectedDate && toLocalDateStr(arg.date) === toLocalDateStr(_selectedDate) ? ['is-selected'] : []),
+            ...(diaNoLaboral(arg.date) ? ['fc-day-past', 'agenda-dia-cerrado'] : [])
+        ],
         dateClick: info => {
             // Días pasados: solo consulta. Sin actividad no hay nada que mostrar
             // y el clic no hace nada (antes salía un aviso y la celda temblaba
             // en rojo, castigando un clic que la vista debía prevenir).
-            if (esDiaPasado(info.date) && !tieneEventos(info.date)) return;
+            if (diaNoReservable(info.date) && !tieneEventos(info.date)) return;
             seleccionarDia(info.date);
         },
         eventClick: info => {
             info.jsEvent.preventDefault();
+            verPanelCitas();
             seleccionarDia(info.event.start, false);
             mostrarDetalleCita(info.event.id);
         },
         eventDidMount: info => {
             const p = info.event.extendedProps;
+            info.el.dataset.agendaEvento = info.event.id;
+            info.el.classList.toggle('agenda-evento-seleccionado', _panel.modo === 'detalle' && String(_panel.eventoId) === info.event.id);
             if (p.tipo === 'cita') info.el.dataset.estado = p.estado;
             else info.el.dataset.tipo = p.tipo;
             info.el.title = [
                 formatHora(info.event.start),
                 p.mascota_nombre,
+                ...(info.view.type === 'timeGridWeek' ? [p.tipo_cita_nombre] : []),
                 p.tipo === 'cita' ? ESTADOS_CITA[p.estado] : TIPOS_EVENTO[p.tipo]
             ].filter(Boolean).join(' · ');
+            if (puedeArrastrar(p.tipo, p)) info.el.title += '\nPuedes arrastrar esta cita para reprogramarla.';
         },
         // Arrastrar una cita a un día pasado se bloquea antes de soltarla.
-        eventAllow: drop => !esDiaPasado(drop.start),
+        eventAllow: (drop, evento) => !diaNoReservable(drop.start) && (!evento || cambioPermitidoCalendario(evento.start, evento.extendedProps)),
         eventDrop: reprogramarPorArrastre,
         datesSet: info => {
             const titulo = info.view.title.replace(' de ', ' ');
@@ -432,16 +617,17 @@ function resumenDia(nCitas, nOtros) {
 function renderPanelDia() {
     if (!_selectedDate || !calendarInstance) return;
     _panel = { modo: 'dia', eventoId: null };
+    marcarCitaCalendario();
 
     const date = _selectedDate;
-    const pasado = esDiaPasado(date);
+    const pasado = diaNoReservable(date);
     const todos = eventosDelDia(date);
     const visibles = todos.filter(ev => FilterManager.esVisible(ev));
     const citas = visibles.filter(ev => ev.extendedProps.tipo === 'cita');
     const otros = visibles.filter(ev => ev.extendedProps.tipo !== 'cita');
 
     const diaSemana = capitalizar(formatFecha(date, { weekday: 'long' }));
-    const eyebrow = pasado ? 'Día pasado · solo consulta' : (esHoy(date) ? `Hoy · ${diaSemana}` : diaSemana);
+    const eyebrow = pasado ? (esDiaPasado(date) ? 'Día pasado · solo consulta' : 'Clínica cerrada · solo consulta') : (esHoy(date) ? `Hoy · ${diaSemana}` : diaSemana);
 
     document.getElementById('agendaPanelHead').innerHTML = `
         <div class="agenda-panel__titles">
@@ -485,21 +671,40 @@ function itemPanel(ev) {
         ? `<span class="estado-pill" data-estado="${esc(p.estado)}">${esc(ESTADOS_CITA[p.estado] || p.estado)}</span>`
         : `<span class="estado-pill" data-tipo="${esc(p.tipo)}">${esc(TIPOS_EVENTO[p.tipo] || p.tipo)}</span>`;
 
-    return `
+    const fila = `
         <button type="button" class="agenda-item" data-accion="detalle" data-id="${esc(ev.id)}">
             <span class="agenda-item__time">${esc(formatHora(ev.start))}</span>
             <span class="agenda-item__main">
                 <span class="agenda-item__name">${esc(p.mascota_nombre || ev.title)}</span>
                 <span class="agenda-item__sub">${esc(sub)}</span>
+                ${esCita ? chipRetrasoAgenda(p.inicio_estimado, ev.start, true) : ''}
             </span>
             ${pill}
         </button>`;
+    const llegadas = window.ZookiLlegadasCita?.botones(ev) || '';
+    return llegadas ? `<div class="agenda-cita-con-acciones" role="group" aria-label="Cita de ${esc(p.mascota_nombre || ev.title)}">${fila}${llegadas}</div>` : fila;
+}
+
+function llegadaCitaTardia(ev, ahora = new Date()) {
+    const minutos = Number(ev.extendedProps.tolerancia_llegada_min);
+    if (!Number.isInteger(minutos) || minutos < 0) return false;
+    const sello = ev.extendedProps.hora_llegada;
+    const llegada = sello ? new Date(String(sello).replace(' ', 'T')) : ahora;
+    return llegada.getTime() > ev.start.getTime() + minutos * 60000;
+}
+
+function resolverLlegadaCita(idCita) {
+    const detalle = document.getElementById('agendaDetalleMovil');
+    if (detalle?.open) detalle.close();
+    document.querySelector('[data-agenda-vista="citas"]')?.click();
+    document.dispatchEvent(new CustomEvent('agenda:resolver-llegada', { detail: { idCita } }));
 }
 
 function mostrarDetalleCita(eventId) {
     const ev = calendarInstance && calendarInstance.getEventById(eventId);
     if (!ev) { renderPanelDia(); return; }
     _panel = { modo: 'detalle', eventoId: eventId };
+    marcarCitaCalendario();
 
     const p = ev.extendedProps;
     const esCita = p.tipo === 'cita';
@@ -517,16 +722,18 @@ function mostrarDetalleCita(eventId) {
     // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora.
     const iniciaDesde = new Date(ev.start.getTime() - MINUTOS_ANTES_DE_INICIAR * 60000);
     const enDiaDeInicio = esSuCita && abierta && esHoy(ev.start);
-    const puedeIniciar = enDiaDeInicio && new Date() >= iniciaDesde;
-    const esperaInicio = enDiaDeInicio && !puedeIniciar;
+    const requiereResolverLlegada = enDiaDeInicio && llegadaCitaTardia(ev);
+    const puedeIniciar = enDiaDeInicio && !requiereResolverLlegada && new Date() >= iniciaDesde;
+    const esperaInicio = enDiaDeInicio && new Date() < iniciaDesde;
     // RN-409: una atención abierta se completa registrando su consulta
     const puedeContinuar = esSuCita && enAtencion;
-    const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
+    const puedeNoAsistio = enDiaDeInicio && !p.hora_llegada && llegadaCitaTardia(ev);
     const puedeConfirmar = gestiona && estado === 'pendiente' && !pasada;
-    const puedeReprogramar = gestiona && abierta && !pasada;
+    const puedeReprogramar = gestiona && abierta && !pasada && cambioPermitidoCalendario(ev.start, p);
 
     // Una sola acción principal, según el estado; el resto, secundarias.
     const primaria = puedeIniciar ? ['iniciar', 'fa-play', 'Iniciar atención']
+        : requiereResolverLlegada ? ['resolver_llegada', 'fa-door-open', 'Resolver llegada']
         : esperaInicio ? ['esperar', 'fa-clock', `Disponible desde las ${formatHora(iniciaDesde)}`]
         : puedeContinuar ? ['continuar', 'fa-stethoscope', estado === 'sin_cerrar' ? 'Registrar consulta' : 'Continuar atención']
         : puedeConfirmar ? ['confirmar', 'fa-check', 'Confirmar cita']
@@ -572,8 +779,8 @@ function mostrarDetalleCita(eventId) {
         ['Veterinario', esCita ? p.veterinario : ''],
         ['Tipo', esCita ? (p.tipo_cita_nombre || 'Cita') : TIPOS_EVENTO[p.tipo]],
         ['Motivo', p.motivo],
-        ['Inicio estimado', p.inicio_estimado],
-        ['Fin clínico estimado', p.fin_estimado],
+        ['Inicio estimado', horaEstimadaAgenda(p.inicio_estimado, ev.start), esCita ? chipRetrasoAgenda(p.inicio_estimado, ev.start) : ''],
+        ['Fin clínico estimado', horaEstimadaAgenda(p.fin_estimado, ev.start)],
         ['Reajuste', p.estado_reajuste === 'pendiente_reprogramacion' ? 'Requiere reprogramar con el propietario' : p.estado_reajuste === 'pendiente_reasignacion' ? 'Esperando aceptación de otro veterinario' : p.estado_reajuste === 'pendiente_revision' ? 'Requiere revisión del personal' : '']
     ].filter(([, valor]) => valor);
 
@@ -588,9 +795,10 @@ function mostrarDetalleCita(eventId) {
     document.getElementById('agendaPanelBody').innerHTML = `
         <div class="agenda-detail">
             <dl class="agenda-detail__list">
-                ${filas.map(([k, v]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}
+                ${filas.map(([k, v, chip]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}${chip ? ' · ' + chip : ''}</dd></div>`).join('')}
             </dl>
             ${acciones}
+            ${window.ZookiLlegadasCita?.botones(ev, ['no_asistio', ...(requiereResolverLlegada ? ['resolver'] : [])]) || ''}
         </div>`;
 }
 
@@ -603,6 +811,7 @@ function manejarClicPanel(e) {
         case 'detalle': mostrarDetalleCita(id); break;
         case 'volver': renderPanelDia(); break;
         case 'iniciar': iniciarAtencionCita(id); break;
+        case 'resolver_llegada': resolverLlegadaCita(id); break;
         case 'continuar': continuarAtencionCita(id); break;
         case 'confirmar': confirmarCita(id); break;
         case 'reprogramar': abrirModalReprogramar(id); break;
@@ -618,14 +827,25 @@ async function postCita(accion, datos) {
     const cuerpo = new URLSearchParams(datos);
     if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
     // B.9: el botón ya indica la reprogramación; el velo global tapaba el resultado.
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
-    return res.json();
+    const botones = datos.id_cita ? [...document.querySelectorAll('.agenda-detail [data-id]')].filter(boton => boton.dataset.id === String(datos.id_cita)) : [];
+    const anteriores = botones.map(boton => boton.disabled);
+    botones.forEach(boton => { boton.disabled = true; });
+    try {
+        const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
+        return await res.json();
+    } finally {
+        botones.forEach((boton, indice) => { if (boton.isConnected) boton.disabled = anteriores[indice]; });
+    }
 }
 
 async function iniciarAtencionCita(idCita) {
     try {
         const r = await postCita('iniciar_cita_ajax', { id_cita: idCita });
         if (!r.success) {
+            if (r.campo === 'llegada') {
+                resolverLlegadaCita(idCita);
+                return;
+            }
             mostrarToast(r.message || 'No se pudo iniciar la atención.', 'error');
             return;
         }
@@ -655,8 +875,8 @@ async function confirmarCita(idCita) {
             mostrarToast(r.message || 'No se pudo confirmar la cita.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita, estado: 'confirmada' });
         mostrarToast('Cita confirmada.', 'success');
-        calendarInstance.refetchEvents();
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'confirmacion');
     } catch (e) {
         console.error(e);
@@ -671,7 +891,7 @@ async function marcarNoAsistio(idCita) {
     try {
         const r = await postCita('marcar_no_asistio_ajax', { id_cita: idCita });
         mostrarToast(r.message || (r.success ? 'Inasistencia registrada.' : 'No se pudo marcar la inasistencia.'), r.success ? 'success' : 'error');
-        if (r.success) calendarInstance.refetchEvents();
+        if (r.success) actualizarAgendaTrasCambio({ idCita, estado: 'no_asistio' });
     } catch (e) {
         console.error(e);
         mostrarToast('No se pudo marcar la inasistencia.', 'error');
@@ -687,8 +907,8 @@ async function cancelarCita(idCita) {
             mostrarToast(r.message || 'No se pudo cancelar la cita.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita, estado: 'cancelada' });
         mostrarToast('Cita cancelada.', 'success');
-        calendarInstance.refetchEvents();
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'cancelacion');
     } catch (e) {
         console.error(e);
@@ -704,7 +924,7 @@ async function cancelarCita(idCita) {
  */
 function puedeArrastrar(tipo, evento) {
     const abierta = ['pendiente', 'confirmada'].includes(normalizarEstado(evento.estado));
-    return tipo === 'cita' && isUsuarioVeterinario() && abierta && String(evento.id_veterinario || '') === getUsuarioId();
+    return tipo === 'cita' && isUsuarioVeterinario() && abierta && evento.cambiable !== false && String(evento.id_veterinario || '') === getUsuarioId();
 }
 
 function reprogramarPorArrastre(info) {
@@ -719,6 +939,7 @@ function reprogramarPorArrastre(info) {
             mostrarToast(r.message || 'El horario no está disponible para ese veterinario.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita: info.event.id });
         mostrarToast('Cita reprogramada.', 'success');
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'reprogramacion');
     }).catch(() => {
@@ -786,7 +1007,7 @@ function renderSlots(id, horas, alElegir) {
 
     cont.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
         `<div class="slot-grid" data-franja="${clave}" aria-label="${clave === 'manana' ? 'Mañana' : 'Tarde'}"${i ? ' hidden' : ''}>${hs.map(h =>
-            `<button type="button" class="slot-chip" data-hora="${esc(h)}" aria-pressed="false">${esc(formatearHoraReserva(h))}</button>`
+            `<button type="button" class="slot-chip" data-hora="${esc(h)}" aria-pressed="false">${esc(formatearHoraReserva(h))}${h === horas[0] ? '<span class="slot-recomendado">Recomendado</span>' : ''}</button>`
         ).join('')}</div>`
     ).join('');
 
@@ -912,18 +1133,24 @@ function avanzarPasoCita() {
     mostrarPasoCita(pasoCitaModal + 1);
 }
 
-function abrirCitaModal(date) {
+function abrirCitaModal(date, opciones = {}) {
+    const contexto = contextoDeAgenda();
+    if (contexto && !contexto.franjas?.length && !opciones.control) {
+        mostrarToast('Aún no tienes horario aprobado: propón tu horario en Mi perfil', 'info');
+        return;
+    }
     if (!isUsuarioVeterinario()) return;
     triageModalC4?.reiniciar();
     comandosC3.registrar_cita_ajax.reiniciar();
-    if (!date || esDiaPasado(date)) return;
+    if (!date || (diaNoReservable(date) && !opciones.control)) return;
     const fecha = inicioDelDia(date);
+    _modoLlegadaCita = opciones.llegoAhora === true;
     const esVet = isUsuarioVeterinario();
 
     val('modal_fecha', toLocalDateStr(fecha));
     document.getElementById('citaModalFechaLabel').textContent =
         capitalizar(formatFecha(fecha, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })) +
-        (esVet ? ' · Tu agenda' : '');
+        (esVet ? ' · Tu agenda' : '') + (_modoLlegadaCita ? ' · Llegó ahora' : '');
 
     limpiarMascotaSeleccionada();
     ['modal_tipo_cita', 'modal_duracion_minutos', 'modal_motivo', 'modal_hora'].forEach(id => val(id, ''));
@@ -957,19 +1184,41 @@ function closeCitaModal() {
 // HU-6.1 (RE-6.1.9): «+ Agendar» en un hueco del Inicio abre este mismo modal en ese día
 // (?agendar=AAAA-MM-DD&hora=HH:MM) y, cuando aparecen los horarios, marca esa hora si sigue libre.
 let _horaPreferidaCita = null;
+let _modoLlegadaCita = false;
 
-function abrirAgendarDesdeEnlace() {
+async function abrirAgendarDesdeEnlace() {
     const parametros = new URLSearchParams(window.location.search);
-    const fecha = parametros.get('agendar') || '';
+    const control = parametros.has('control_mascota');
+    const llegoAhora = parametros.get('modo_llegada') === 'ahora';
+    parametros.delete('modo_llegada');
+    const mascota = parametros.get('control_mascota');
+    if (control && parametros.get('control_veterinario') !== String(getUsuarioId())) return;
+    const fecha = parametros.get(control ? 'control_fecha' : 'agendar') || '';
     const hora = parametros.get('hora') || '';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !isUsuarioVeterinario()) return;
     parametros.delete('agendar');
     parametros.delete('hora');
+    for (const nombre of ['control_mascota', 'control_veterinario', 'control_fecha']) parametros.delete(nombre);
     // Al recargar la agenda no se vuelve a abrir el modal.
     window.history.replaceState(null, '', `${window.location.pathname}?${parametros}${window.location.hash}`);
     const [anio, mes, dia] = fecha.split('-').map(Number);
-    abrirCitaModal(new Date(anio, mes - 1, dia));
+    abrirCitaModal(new Date(anio, mes - 1, dia), { control, llegoAhora });
     _horaPreferidaCita = /^\d{2}:\d{2}$/.test(hora) ? hora : null;
+    if (!control) return;
+    try {
+        const [mascotas, tipos] = await Promise.all([obtenerMascotas(), obtenerTipos()]);
+        const paciente = mascotas.find(m => String(m.id) === mascota);
+        if (!paciente) throw new Error('La mascota no tiene vínculo activo en esta clínica.');
+        const tipo = tipos.find(t => /control/i.test(t.data.nombre)) || tipos.find(t => t.data.nombre.toLowerCase() === 'consulta general');
+        if (tipo) val('modal_tipo_cita', tipo.value);
+        seleccionarMascota(paciente.id, paciente.nombre, paciente.propietario);
+        val('modal_motivo', 'Control posterior a consulta');
+        triageModalC4?.ponerControl();
+        actualizarResumenModal();
+        if (!contextoDeAgenda()?.franjas?.length) mostrarErrorModal('Falta tu horario aprobado. Puedes revisar los datos; la reserva necesita disponibilidad.');
+    } catch (error) {
+        mostrarErrorModal(error.message || 'No se pudo prellenar el control.');
+    }
 }
 
 function marcarHoraPreferida(idContenedor) {
@@ -1151,6 +1400,10 @@ async function cargarSlotsModal() {
             ocultarErrorModal();
             actualizarResumenModal();
         });
+        if (triageModalC4?.resultado?.()?.nivel === 'naranja') {
+            document.querySelectorAll('#modal_slots_container .slot-chip').forEach((chip, i) => { chip.disabled = i > 0; });
+            document.querySelector('#modal_slots_container .slot-chip')?.click();
+        }
         marcarHoraPreferida('modal_slots_container');
     } catch (e) {
         if (turno !== _turnoSlotsCita) return;
@@ -1215,7 +1468,8 @@ async function crearCitaModal(e) {
         fecha: val('modal_fecha'),
         hora: val('modal_hora'),
         motivo: val('modal_motivo'),
-        id_tipo_cita: val('modal_tipo_cita')
+        id_tipo_cita: val('modal_tipo_cita'),
+        ...(_modoLlegadaCita ? { modo_llegada: 'ahora' } : {})
     };
 
     enviosC3.reserva = true;
@@ -1245,6 +1499,7 @@ async function crearCitaModal(e) {
 // Modal: reprogramar cita
 // ═══════════════════════════════════════
 let _reprogramarCitaId = null;
+let _reprogramarCitaActual = null;
 let _turnoSlotsReprog = 0;
 
 function actualizarBotonReprog() {
@@ -1263,11 +1518,13 @@ function ocultarErrorReprog() {
 function cerrarModalReprogramar() {
     cerrarOverlay('reprogramarModalOverlay');
     _reprogramarCitaId = null;
+    _reprogramarCitaActual = null;
 }
 
 async function abrirModalReprogramar(idCita) {
     comandosC3.reprogramar_cita_ajax.reiniciar();
     _reprogramarCitaId = idCita;
+    _reprogramarCitaActual = null;
     ocultarErrorReprog();
     val('reprogramar_hora', '');
     actualizarBotonReprog();
@@ -1294,6 +1551,7 @@ async function abrirModalReprogramar(idCita) {
             return;
         }
         const cita = datos.cita;
+        _reprogramarCitaActual = cita;
         document.getElementById('reprogramar_tipo_cita').dataset.mascota = cita.id_mascota;
         const vetSel = document.getElementById('reprogramar_veterinario');
         const tipoSel = document.getElementById('reprogramar_tipo_cita');
@@ -1334,7 +1592,7 @@ async function cargarSlotsReprogramar() {
         setSlotsEstado(id, 'guia', 'Elige la nueva fecha y el veterinario para ver los horarios libres.');
         return;
     }
-    if (esDiaPasado(new Date(`${fecha}T12:00:00`))) {
+    if (diaNoReservable(new Date(`${fecha}T12:00:00`))) {
         setSlotsEstado(id, 'vacio', 'No se puede reprogramar a un día pasado.');
         return;
     }
@@ -1345,9 +1603,9 @@ async function cargarSlotsReprogramar() {
         const data = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsReprog) return;
         if (mostrarFalloSlots(id, data)) return;
-        const horas = data.sugerencias;
+        const horas = zookiHorariosReprogramacion(data.sugerencias, fecha, _reprogramarCitaActual);
         if (!horas.length) {
-            setSlotsEstado(id, 'vacio', data.motivo || 'No hay horarios libres ese día. Prueba con otra fecha o veterinario.');
+            setSlotsEstado(id, 'vacio', data.motivo || 'No quedan otros horarios libres ese día. El horario actual de la cita no es una opción de reprogramación. Prueba otra fecha o veterinario.');
             return;
         }
         renderSlots(id, horas, hora => {
@@ -1384,7 +1642,7 @@ async function confirmarReprogramacion() {
         cerrarModalReprogramar();
         mostrarToast(`Cita reprogramada para el ${formatFecha(new Date(`${fecha}T12:00:00`), { day: 'numeric', month: 'long' })}, ${format12h(hora)}.`, 'success');
         seleccionarDia(new Date(`${fecha}T12:00:00`));
-        calendarInstance.refetchEvents();
+        actualizarAgendaTrasCambio({ idCita: _reprogramarCitaId });
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'reprogramacion');
     } catch (e) {
         console.error('Error al reprogramar:', e);
@@ -1435,7 +1693,8 @@ document.addEventListener('keydown', e => {
     if (document.querySelector('dialog[open]')) return;
     if (document.getElementById('reprogramarModalOverlay')?.classList.contains('is-open')) cerrarModalReprogramar();
     else if (document.getElementById('citaModalOverlay')?.classList.contains('is-open')) closeCitaModal();
-    document.querySelectorAll('.fc-popover').forEach(p => p.remove());
+    // Cerrar mediante FullCalendar conserva su estado y permite volver a abrir «+N más».
+    document.querySelector('.fc-popover-close')?.click();
 });
 
 document.addEventListener('click', e => {
@@ -1505,11 +1764,17 @@ function evitarEnvioCitaConEnter(evento) {
 
 function irAUrgenciasDesdeCita() {
     if (enviosC3.reserva || triageModalC4?.resultado?.()?.nivel !== 'rojo') return;
+    const detalle = {
+        id_solicitud: triageModalC4.resultado().id_solicitud,
+        id_mascota: val('modal_mascota'),
+        resumen: triageModalC4.resumen?.() || 'Evaluación roja confirmada al agendar'
+    };
     closeCitaModal();
     const pestana = document.querySelector('[data-agenda-tab="urgencias"]');
     pestana?.click();
     pestana?.focus();
     pestana?.scrollIntoView({ block: 'nearest' });
+    document.dispatchEvent(new CustomEvent('agenda:ingreso-rojo', { detail: detalle }));
 }
 
 // Clic o teclado (flechas, Enter y Esc con ZookiCombobox): Enter elige la mascota
@@ -1545,6 +1810,18 @@ document.addEventListener('DOMContentLoaded', () => {
     conectarBuscadorMascota();
     abrirAgendarDesdeEnlace();
     iniciarCalendario();
+    sincronizarPanelAgenda(document.querySelector('.agenda'), async () => calendarInstance.refetchEvents(), () => _cargando);
 });
 
 window.addEventListener('agenda:urgencia', () => calendarInstance?.refetchEvents());
+window.addEventListener('agenda:volver-hoy', () => {
+    calendarInstance?.today();
+    seleccionarDia(new Date());
+});
+window.addEventListener('agenda:actualizada', evento => {
+    const { idCita, estado } = evento.detail || {};
+    if (idCita && estado) calendarInstance?.getEventById(String(idCita))?.setExtendedProp('estado', estado);
+    refrescarPanel();
+    window.ZookiAgendaMovil?.actualizar();
+    calendarInstance?.refetchEvents();
+});

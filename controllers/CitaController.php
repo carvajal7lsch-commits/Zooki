@@ -37,6 +37,11 @@ class CitaController
 
     // ── Agendar ─────────────────────────────────────────────────────────
 
+    public function contextoAgenda(): array
+    {
+        return (new CoordinacionHorarios($this->db))->leer(Contexto::idUsuario());
+    }
+
     /** HU-4.1: el veterinario agenda para sí mismo; el administrador elige el veterinario. */
     public function registrarAjax(): void
     {
@@ -132,9 +137,13 @@ class CitaController
     private function eventoDeCita(array $cita): array
     {
         return [
+            'cambiable' => $this->citas->permiteCambio($cita),
             'id_cita' => (int) $cita['id_cita'],
+            'id_clinica' => (int) $cita['id_clinica'],
             'prioridad' => $cita['prioridad'],
             'inicio_estimado' => $cita['inicio_estimado'],
+            'fecha_ultimo_calculo' => $cita['fecha_ultimo_calculo'],
+            'umbral_aviso_min' => (int) $cita['umbral_aviso_min'],
             'fin_estimado' => $cita['fin_estimado'],
             'estado_reajuste' => $cita['estado_reajuste'],
             'motivo_reajuste' => $cita['motivo_reajuste'],
@@ -143,6 +152,8 @@ class CitaController
             'tipo' => 'cita',
             'fecha' => $cita['fecha'],
             'hora' => $cita['hora'],
+            'hora_llegada' => $cita['hora_llegada'],
+            'tolerancia_llegada_min' => (int)$cita['tolerancia_llegada_min'],
             'estado' => $cita['estado'],
             'motivo' => $cita['motivo'],
             'id_veterinario' => (int) $cita['id_veterinario'],
@@ -375,7 +386,7 @@ class CitaController
             $cita = $this->citaDelContexto($this->idDeLaPeticion());
             $modelo = Contexto::rolActivo() === Roles::PROPIETARIO
                 ? $this->citas->enClinicaDelPropietario((int) $cita['id_clinica']) : $this->citas;
-            $modelo->cancelar($cita, $_POST['clave_operacion'] ?? null);
+            $modelo->cancelar($cita, $_POST['clave_operacion'] ?? null, (string) ($_POST['motivo'] ?? ''));
             return ['message' => 'Cita cancelada correctamente.', 'id_cita' => (int) $cita['id_cita']];
         }, 'C4 cancelación');
     }
@@ -507,6 +518,7 @@ class CitaController
         $ahora = $this->ahora();
         // RN-407: la vista solo ofrece «Iniciar atención» desde 15 minutos antes.
         $esDiaDeLaCita = ReglaAtencion::puedeIniciar($cita['fecha'], $cita['hora'], $ahora);
+        $inicioRequiereSala = ReglaAtencion::llegadaFueraDeTolerancia($cita, (int)$cita['tolerancia_llegada_min'], $ahora);
 
         $mascota = (new Mascota($this->db))->getById($cita['id_mascota']);
         $consultaModel = new Consulta($this->db);
@@ -708,6 +720,7 @@ class CitaController
         try {
             require_once __DIR__ . '/../helpers/VigilanteAtenciones.php';
             (new VigilanteAtenciones($this->db))->revisar($this->ahora());
+            (new CascadaAgenda($this->db, fn () => $this->ahora()))->marcarInasistencias($this->ahora()->format('Y-m-d'));
         } catch (Throwable $e) {
             error_log('No se pudieron revisar las atenciones abiertas: ' . $e->getMessage());
         }

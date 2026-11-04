@@ -1,5 +1,8 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
+
+
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
 > **Revisión 3.7** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
@@ -460,7 +463,7 @@ Conforme al ISO/IEC/IEEE 29148:2018, cada requisito es verificable y tiene asoci
 | Demostración | Ejecución observable de una función. | RF-2.9 (bloqueo de fármaco tóxico), RF-4.5 (propagación de retraso). |
 | Prueba | Caso automatizado con resultado esperado. | RF-1.1…RF-2.5 y helpers, con PHPUnit en integración continua. |
 
-**Regla de verificación.** Todo `RF` nuevo debe quedar cubierto por una prueba automatizada o, si es puramente visual, por una demostración descrita en su plan (`specs/`). La matriz de trazabilidad (§5.3) enlaza cada requisito con su módulo y su medio de verificación.
+**Regla de verificación.** Todo `RF` nuevo debe quedar cubierto por una prueba automatizada o, si es puramente visual, por una demostración descrita en el plan de su módulo. La matriz de trazabilidad (§5.3) enlaza cada requisito con su módulo y su medio de verificación.
 
 ## 5. Apéndices
 

@@ -1,3 +1,5 @@
+@import url('mascota-sexo.css?v=1');
+
 /* D: herramientas de agenda en pestañas. Móvil < 768, tableta 768–1023, escritorio ≥ 1024 (RNF-16). */
 .agenda-herramientas {
     margin-top: 24px;
@@ -96,6 +98,9 @@
 .ah-opcional { font-weight: 400; color: #94A3B8; }
 
 .ah-lista { display: flex; flex-direction: column; gap: 8px; }
+.ah-item[hidden], .ah-solo-hoy[hidden], .ah-volver-hoy[hidden] { display: none; }
+/* Otro día sin nada de ese día: el mismo aviso de lista vacía. */
+.ah-lista:not(:empty):not(:has(> :not([hidden])))::before,
 .ah-lista:empty::before {
     content: attr(data-vacio);
     padding: 14px;
@@ -105,6 +110,7 @@
     font-size: 0.82rem;
     color: #94A3B8;
 }
+.ah-lista:not(:empty):not(:has(> :not([hidden])))::before { content: 'Nada pendiente para este día.'; }
 .ah-item {
     display: flex;
     flex-direction: column;
@@ -117,6 +123,12 @@
     overflow-wrap: anywhere;
 }
 .ah-item--fila { flex-direction: row; align-items: center; flex-wrap: wrap; }
+/* Pendientes de otro día (decisión del dueño, 2026-11-03): Sala y Rojos solo existen hoy. */
+[data-otro-dia="true"] #agenda-panel-urgencias > :not(.ah-solo-hoy) { display: none; }
+.ah-volver-hoy { margin-top: 6px; padding: 4px 10px; border: 1px solid var(--z-primary, #2563EB); border-radius: 8px; background: transparent; color: var(--z-primary, #2563EB); font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+.ah-volver-hoy:hover { background: var(--z-primary-soft, #DBEAFE); }
+/* La solicitud que abrió el aviso de la campana se distingue de las demás. */
+.ah-item--pedida { border-color: var(--z-primary, #2563EB); box-shadow: 0 0 0 3px var(--z-primary-soft, #DBEAFE); }
 .ah-item--fila > .ah-item__head, .ah-item--fila > .ah-item__texto { flex: 1 1 260px; }
 .ah-item--fila > .ah-item__form { flex: 0 0 auto; }
 .ah-item--rojo { border-left: 3px solid #DC2626; }
@@ -260,6 +272,128 @@
 .ah-marca { font-size: 0.72rem; font-weight: 600; color: #64748B; }
 
 /* HU-4.15: misma conciliación en ventana para administrador y veterinario. */
+.urgencia-conciliacion .zk-dialogo__head h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.urgencia-conciliacion .zk-dialogo__head h3 > i {
+    color: var(--z-primary);
+}
+.urgencia-conciliacion__buscador {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+.urgencia-conciliacion__contacto {
+    border-top: 1px solid var(--z-border);
+    padding-top: 12px;
+}
+.urgencia-conciliacion__contacto > summary {
+    color: var(--z-text-secondary);
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.urgencia-conciliacion__contacto > summary:hover {
+    color: var(--z-primary);
+}
+.urgencia-conciliacion__contacto > p {
+    margin: 10px 0;
+}
+.urgencia-conciliacion .zk-dialogo__cerrar:hover,
+.urgencia-conciliacion .zk-dialogo__cerrar:focus-visible {
+    color: var(--z-primary);
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+}
+.urgencia-rapida__opciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.urgencia-rapida__opciones button {
+    min-height: 42px;
+    padding: 8px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.urgencia-rapida__opciones button[aria-pressed="true"] {
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.urgencia-rapida__opciones button:hover {
+    border-color: var(--z-primary);
+}
+.urgencia-rapida__opciones button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+.urgencia-rapida__opciones button:disabled {
+    cursor: default;
+}
+.urgencia-rapida__ayuda {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .8rem;
+    line-height: 1.5;
+}
+.urgencia-rapida__paciente {
+    display: grid;
+    gap: 6px;
+}
+.urgencia-rapida__resultados {
+    display: grid;
+    max-height: 210px;
+    overflow-y: auto;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+}
+.urgencia-rapida__resultados[hidden] {
+    display: none;
+}
+.urgencia-rapida__resultados button {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--z-text);
+    font: inherit;
+    font-size: .85rem;
+    text-align: left;
+    cursor: pointer;
+}
+.urgencia-rapida__resultados button:hover,
+.urgencia-rapida__resultados button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+}
+.urgencia-rapida__resultados button span,
+.urgencia-rapida__resultados p {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .75rem;
+}
+.urgencia-rapida__resultados p {
+    padding: 12px;
+}
+.urgencia-rapida__resultados button strong,
+.urgencia-rapida__resultados button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .urgencia-conciliacion .zk-dialogo__cuerpo {
     display: grid;
     gap: 12px;
@@ -271,7 +405,9 @@
     min-width: 0;
     font-size: 14px;
 }
-.urgencia-conciliacion input, .urgencia-conciliacion select {
+.urgencia-conciliacion .zk-dialogo__cuerpo > label input:not([type="checkbox"]),
+.urgencia-conciliacion__buscador input,
+.urgencia-conciliacion__contacto input {
     min-width: 0;
     width: 100%;
     min-height: 44px;
@@ -300,4 +436,136 @@
     .urgencia-conciliacion input, .urgencia-conciliacion select {
         font-size: 16px;
     }
+}
+.urgencia-conciliacion .identidad-mascota {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 12px;
+}
+.urgencia-conciliacion .identidad-mascota .form-grid-2-gap {
+    margin: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.urgencia-conciliacion .identidad-mascota .input-group {
+    min-width: 0;
+    margin: 0;
+}
+.urgencia-conciliacion .identidad-mascota .input-group > label {
+    display: block;
+    margin-bottom: .4rem;
+    font-size: .8rem;
+}
+.urgencia-conciliacion .identidad-mascota .segmento__opcion {
+    display: block;
+}
+.urgencia-conciliacion .identidad-mascota [data-error-campo] {
+    display: block;
+    font-size: .75rem;
+    line-height: 1.4;
+}
+.urgencia-conciliacion .identidad-confirmacion {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    color: var(--z-text-secondary);
+    line-height: 1.5;
+    cursor: pointer;
+}
+.urgencia-conciliacion .identidad-confirmacion input {
+    width: 18px;
+    height: 18px;
+    min-height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--z-primary);
+    cursor: pointer;
+}
+.llegada-dialogo .ah-decisiones,
+.llegada-dialogo .zk-dialogo__cuerpo,
+.llegada-dialogo .ah-item__form {
+    display: grid;
+    min-width: 0;
+    gap: 12px;
+}
+.llegada-dialogo .ah-item__form {
+    margin: 0;
+    padding: 0;
+}
+.llegada-dialogo label {
+    display: grid;
+    gap: 6px;
+    font-size: .85rem;
+    color: var(--z-text-secondary);
+}
+.llegada-dialogo input,
+.llegada-dialogo select {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--z-border);
+    border-radius: 10px;
+    background: var(--z-surface);
+    color: var(--z-text);
+    font: inherit;
+}
+.llegada-dialogo button {
+    white-space: nowrap;
+}
+.llegada-dialogo [data-error-campo] {
+    color: var(--z-danger);
+    font-size: .75rem;
+}
+
+.llegada-dialogo .llegada-nivel {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.llegada-dialogo .llegada-nivel legend {
+    padding: 0;
+    margin-bottom: 6px;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--z-text-secondary);
+}
+.llegada-niveles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-bg-light);
+}
+.llegada-niveles button {
+    min-width: 0;
+    min-height: 40px;
+    padding: 6px 4px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.llegada-niveles button:hover {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.llegada-niveles button[aria-pressed="true"] {
+    border-color: var(--z-primary);
+    background: var(--z-surface);
+    color: var(--z-primary);
+}
+.llegada-niveles button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 1px;
 }

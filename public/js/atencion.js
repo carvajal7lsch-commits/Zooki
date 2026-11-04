@@ -1,7 +1,7 @@
 /*
  * Pantalla de atención de una cita (views/vet/atencion.php).
  *
- * La página no hace scroll: la vista ocupa el alto disponible y el trabajo se
+ * La página desplaza las tarjetas completas y el trabajo se
  * reparte en pestañas (Consulta, Vacuna, Desparasitación, Historial) y, dentro
  * de la consulta, en pasos. "Finalizar atención" guarda la consulta y completa
  * la cita en un solo paso. Nada recarga la página salvo al terminar.
@@ -25,17 +25,9 @@
 
     let hayCambiosSinGuardar = false;
     let finalizando = false;
+    let confirmandoSalida = false;
     // M2 C5a: síntomas, diagnósticos sugeridos y avisos junto al campo, los mismos del modal.
     let consulta = null;
-
-    // ── Alto disponible (sin scroll de página) ──────────────────────────
-    function ajustarAlto() {
-        const cuerpo = document.querySelector('.content-body');
-        const paddingInferior = cuerpo ? parseFloat(getComputedStyle(cuerpo).paddingBottom) || 0 : 0;
-        const arriba = app.getBoundingClientRect().top + window.scrollY;
-        const alto = Math.max(window.innerHeight - arriba - paddingInferior, 560);
-        app.style.setProperty('--atencion-alto', `${Math.floor(alto)}px`);
-    }
 
     // ── Utilidades ──────────────────────────────────────────────────────
     const fechaCorta = (iso) => {
@@ -71,8 +63,57 @@
         campo.addEventListener('input', () => campo.classList.remove('is-invalid'), { once: true });
     }
 
+    // RE-2.1.6: las tarjetas de procedimientos conservan sus límites y validan junto al campo.
+    function validarCampoProcedimiento(campo) {
+        if (!campo.willValidate) return null;
+        let mensaje = '';
+        if (campo.required && campo.value.trim() === '') mensaje = 'Este campo es obligatorio.';
+        else if (campo.maxLength > 0 && [...campo.value].length > campo.maxLength) mensaje = `Admite hasta ${campo.maxLength} caracteres.`;
+        else if (!campo.checkValidity()) mensaje = campo.type === 'date' ? 'Revisa la fecha indicada.' : 'Revisa este campo.';
+        let aviso = campo.parentElement.querySelector('[data-aviso-procedimiento]');
+        if (!aviso && mensaje) {
+            aviso = document.createElement('small');
+            aviso.dataset.avisoProcedimiento = '';
+            aviso.className = 'cuenta-validacion cuenta-validacion--error';
+            aviso.id = campo.form.id + '-' + campo.name + '-aviso';
+            aviso.setAttribute('aria-live', 'polite');
+            campo.setAttribute('aria-describedby', aviso.id);
+            campo.insertAdjacentElement('afterend', aviso);
+        }
+        if (aviso) aviso.textContent = mensaje;
+        campo.setAttribute('aria-invalid', String(Boolean(mensaje)));
+        campo.classList.toggle('is-invalid', Boolean(mensaje));
+        return mensaje ? campo : null;
+    }
+
+    function validarProcedimiento(form) {
+        const proxima = form.elements.fecha_proxima;
+        if (proxima) proxima.min = form.elements.fecha_aplicacion.value || form.elements.fecha_aplicacion.max;
+        const errores = [...form.querySelectorAll('input, select, textarea')].map(validarCampoProcedimiento);
+        return errores.find(Boolean) || null;
+    }
+
+    function iniciarValidacionProcedimiento(form) {
+        for (const campo of form.querySelectorAll('input:not([type="hidden"]), select, textarea')) {
+            const comprobar = () => {
+                validarCampoProcedimiento(campo);
+                if (campo.name === 'fecha_aplicacion' && form.elements.fecha_proxima) {
+                    form.elements.fecha_proxima.min = campo.value || campo.max;
+                    if (form.elements.fecha_proxima.value) validarCampoProcedimiento(form.elements.fecha_proxima);
+                }
+            };
+            campo.addEventListener('input', comprobar);
+            campo.addEventListener('change', comprobar);
+        }
+    }
+
     // ── Pestañas ────────────────────────────────────────────────────────
     const navPasos = document.getElementById('navPasos');
+    app.querySelector('[data-abrir-alertas]')?.addEventListener('click', () => {
+        const alertas = app.querySelector('.atencion-franja__alertas');
+        const abierta = alertas.classList.toggle('is-abierta');
+        app.querySelector('[data-abrir-alertas]').setAttribute('aria-expanded', String(abierta));
+    });
 
     function activarPestana(nombre) {
         app.querySelectorAll('.atencion__tab').forEach((boton) => {
@@ -84,6 +125,10 @@
             vista.classList.toggle('is-active', vista.dataset.vista === nombre);
         });
         if (navPasos) navPasos.hidden = nombre !== 'consulta';
+        const progreso = app.querySelector('[data-pasos-paciente]');
+        if (progreso) progreso.hidden = nombre !== 'consulta';
+        const acciones = document.getElementById('accionesAtencion');
+        if (acciones && formConsulta) acciones.hidden = nombre !== 'consulta';
 
         if (nombre === 'historial') cargarHistorialCompacto();
         if (nombre === 'vacuna') cargarCatalogosVacuna();
@@ -114,16 +159,7 @@
     let pasoActual = 0;
 
     function mostrarPaso(indice) {
-        if (!pasos.length) return;
-        pasoActual = Math.max(0, Math.min(indice, pasos.length - 1));
-        pasos.forEach((paso, i) => paso.classList.toggle('is-active', i === pasoActual));
-        botonesPaso.forEach((boton, i) => {
-            boton.classList.toggle('is-active', i === pasoActual);
-            boton.classList.toggle('is-hecho', i < pasoActual);
-        });
-        if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches && botonesPaso[pasoActual]) botonesPaso[pasoActual].scrollIntoView({ block: 'nearest', inline: 'nearest' });
-        if (btnAnterior) btnAnterior.disabled = pasoActual === 0;
-        if (btnSiguiente) btnSiguiente.hidden = pasoActual === pasos.length - 1;
+        if (consulta?.pasos) consulta.pasos.ir(indice, false);
     }
 
     // Lleva al paso del campo, lo marca y lo enfoca.
@@ -153,85 +189,19 @@
         return false;
     }
 
-    // ── Borrador automático ─────────────────────────────────────────────
-    // Solo los campos de texto y números: archivos y medicamentos no se
-    // pueden guardar en el navegador (por eso sigue el aviso al salir).
-    const CLAVE_BORRADOR = `zooki_atencion_borrador_${idCita}`;
-    const CAMPOS_BORRADOR = [
-        'motivo', 'anamnesis', 'peso', 'temperatura', 'frecuencia_cardiaca',
-        'frecuencia_respiratoria', 'diagnostico', 'plan_tratamiento', 'observaciones',
-    ];
-    const estadoBorrador = document.getElementById('estadoBorrador');
-    let temporizadorBorrador = null;
-
-    function mostrarEstadoBorrador(marcaTiempo) {
-        if (!estadoBorrador || !marcaTiempo) return;
-        const hora = new Date(marcaTiempo).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-        estadoBorrador.textContent = `Borrador guardado ${hora}`;
-    }
-
-    function guardarBorrador() {
-        try {
-            const datos = {};
-            CAMPOS_BORRADOR.forEach((nombre) => {
-                const campo = formConsulta.elements[nombre];
-                if (campo) datos[nombre] = campo.value;
-            });
-            // C5a: los síntomas marcados también son datos editables del borrador.
-            if (consulta && consulta.sintomas) datos.sintomas = consulta.sintomas.marcados();
-            // C5b: «No se pudo pesar» se recuerda como lo que es, no como un peso.
-            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
-            if (sinPeso) datos.sin_peso = sinPeso.checked;
-            const ahora = Date.now();
-            localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ datos, guardado: ahora }));
-            mostrarEstadoBorrador(ahora);
-        } catch (e) {
-            // Sin almacenamiento disponible (modo privado, etc.): no pasa nada.
-        }
-    }
-
-    function restaurarBorrador() {
-        try {
-            const crudo = localStorage.getItem(CLAVE_BORRADOR);
-            if (!crudo) return;
-            const { datos, guardado } = JSON.parse(crudo);
-            let restaurado = false;
-            CAMPOS_BORRADOR.forEach((nombre) => {
-                const campo = formConsulta.elements[nombre];
-                if (campo && datos[nombre] && campo.value !== datos[nombre]) {
-                    campo.value = datos[nombre];
-                    restaurado = true;
-                }
-            });
-            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
-            if (sinPeso && datos.sin_peso === true && !sinPeso.checked) {
-                sinPeso.checked = true;
-                sinPeso.dispatchEvent(new Event('change'));
-                restaurado = true;
-            }
-            if (consulta && consulta.sintomas && Array.isArray(datos.sintomas) && datos.sintomas.length) {
-                consulta.sintomas.poner(datos.sintomas);
-                restaurado = true;
-            }
-            if (restaurado) {
-                hayCambiosSinGuardar = true;
-                zookiToast('Recuperamos el borrador que no alcanzaste a guardar.', 'info');
-            }
-            mostrarEstadoBorrador(guardado);
-        } catch (e) {
-            // Borrador ilegible: se ignora.
-        }
-    }
-
+    // RE-2.1.7: el componente común conserva la procedencia de cada sugerencia.
     function borrarBorrador() {
-        try { localStorage.removeItem(CLAVE_BORRADOR); } catch (e) { /* sin almacenamiento */ }
+        consulta?.pasos?.borrar(true);
     }
 
     // ── Iniciar atención ────────────────────────────────────────────────
     function marcarEnCurso() {
         app.dataset.estado = 'en_curso';
         const estado = document.getElementById('atencionEstado');
-        estado.textContent = 'En curso';
+        const punto = document.createElement('i');
+        punto.className = 'fas fa-circle';
+        punto.setAttribute('aria-hidden', 'true');
+        estado.replaceChildren(punto, document.createTextNode(' En curso'));
         estado.className = 'atencion__estado estado--en_curso';
         const aviso = document.getElementById('avisoIniciar');
         if (aviso) aviso.hidden = true;
@@ -244,6 +214,10 @@
         try {
             const r = await postJson('index.php?action=iniciar_cita_ajax', new URLSearchParams({ id_cita: idCita }));
             if (!r.success) {
+                if (r.campo === 'llegada') {
+                    globalThis.location.assign(`index.php?action=vet_agenda&llegada_cita=${encodeURIComponent(idCita)}`);
+                    return;
+                }
                 zookiAviso(r.message || 'No se pudo iniciar la atención.');
                 return;
             }
@@ -270,13 +244,10 @@
         // C5b: las alertas de prescripción deben estar al día antes de validar.
         if (!consultaRegistrada && consulta) await consulta.listo();
         if (!consultaRegistrada && formConsulta && !validarConsulta()) return;
-
-        const mensaje = consultaRegistrada
-            ? 'La cita quedará marcada como completada.'
-            : 'Se guardará la consulta en la historia clínica y la cita quedará completada. Después no se puede editar.';
-        if (!(await zookiConfirmarCorto(mensaje, 'Sí, finalizar'))) return;
+        if (!consultaRegistrada && consulta?.pasos && !consulta.pasos.validarPaso(2)) return;
 
         finalizando = true;
+        let mensajeCierre = 'Atención registrada';
         textoBotonFinalizar(true);
 
         try {
@@ -286,7 +257,7 @@
                 const res = await postJson('index.php?action=registrar_consulta_ajax', new FormData(formConsulta));
                 if (!res.success) {
                     finalizando = false;
-                    if (avisarAdjuntosRechazados(res)) return;
+                    if (avisarAdjuntosRechazados(res, formConsulta)) return;
                     // C5a: el error de un campo va junto a ese campo, en su paso.
                     const campo = consulta ? consulta.mostrarErrorServidor(res) : null;
                     if (campo) {
@@ -299,6 +270,7 @@
                 app.dataset.consultaRegistrada = '1';
                 hayCambiosSinGuardar = false;
                 borrarBorrador();
+                if (res.control?.creado === false) mensajeCierre += '. Agenda el control desde Nueva cita.';
             } else {
                 // La consulta ya existía pero la cita quedó abierta (datos de
                 // antes de v1.9.0, cuando eran dos pasos): solo falta cerrarla.
@@ -310,7 +282,7 @@
                 }
             }
 
-            zookiRecargarConAviso('Atención finalizada. La consulta quedó en la historia clínica.', 'success');
+            zookiRedirigirConAviso('index.php?action=vet_agenda', mensajeCierre, 'success');
         } catch (e) {
             console.error('finalizarAtencion', e);
             finalizando = false;
@@ -333,11 +305,9 @@
         evento.preventDefault();
         const form = evento.currentTarget;
 
-        const error = primerCampoInvalido(form);
+        const error = validarProcedimiento(form);
         if (error) {
-            marcarInvalido(error.campo);
-            error.campo.focus();
-            zookiToast(error.mensaje, 'error');
+            error.focus();
             return;
         }
 
@@ -409,14 +379,36 @@
         if (boton) boton.addEventListener('click', () => { hayCambiosSinGuardar = true; });
     }
 
+    /** RE-2.1.7: salir desde la app usa su modal; el borrador no completa la atención. */
+    async function confirmarSalida(evento) {
+        if (!hayCambiosSinGuardar || finalizando || evento.defaultPrevented || evento.button !== 0) return;
+        if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+        const enlace = evento.target.closest?.('a[href]');
+        if (!enlace || enlace.hasAttribute('download') || (enlace.target && enlace.target !== '_self')) return;
+        if (enlace.getAttribute('href').trim().startsWith('#')) return;
+        const destino = new URL(enlace.href, location.href);
+        if (!['http:', 'https:'].includes(destino.protocol)) return;
+        if (destino.origin === location.origin && destino.pathname === location.pathname && destino.search === location.search && destino.hash) return;
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        if (confirmandoSalida) return;
+        confirmandoSalida = true;
+        try {
+            consulta?.pasos?.guardar();
+            const adjuntos = [...(formConsulta?.querySelectorAll('[type="file"]') || [])].some(campo => campo.files.length > 0);
+            const descripcion = 'La atención seguirá abierta; salir no registra la consulta.'
+                + (adjuntos ? ' Tendrás que volver a elegir los archivos adjuntos.' : '');
+            if (!(await zookiConfirmarCorto('¿Salir de Atención?', 'Salir de Atención', [], 'Seguir atendiendo', descripcion))) return;
+            consulta?.pasos?.guardar();
+            hayCambiosSinGuardar = false;
+            window.location.assign(destino.href);
+        } finally {
+            confirmandoSalida = false;
+        }
+    }
+
     // ── Arranque ────────────────────────────────────────────────────────
     function iniciar() {
-        ajustarAlto();
-        // El layout entra con una animación de 0.5 s que desplaza el contenido:
-        // se vuelve a medir cuando termina.
-        setTimeout(ajustarAlto, 600);
-        window.addEventListener('resize', ajustarAlto);
-
         const foto = document.getElementById('atencionFoto');
         if (foto) foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
 
@@ -424,11 +416,6 @@
             boton.addEventListener('click', () => activarPestana(boton.dataset.tab));
         });
 
-        botonesPaso.forEach((boton) => {
-            boton.addEventListener('click', () => mostrarPaso(Number(boton.dataset.paso)));
-        });
-        if (btnAnterior) btnAnterior.addEventListener('click', () => mostrarPaso(pasoActual - 1));
-        if (btnSiguiente) btnSiguiente.addEventListener('click', () => mostrarPaso(pasoActual + 1));
         mostrarPaso(0);
 
         const btnIniciar = document.getElementById('btnIniciarAtencion');
@@ -441,17 +428,14 @@
                     idMascota: () => idMascota,
                     alCambiarSintomas: () => {
                         hayCambiosSinGuardar = true;
-                        clearTimeout(temporizadorBorrador);
-                        temporizadorBorrador = setTimeout(guardarBorrador, 600);
+
                     },
                 });
             }
-            restaurarBorrador();
             formConsulta.addEventListener('input', (e) => {
                 if (e.target.type === 'file') return;
                 hayCambiosSinGuardar = true;
-                clearTimeout(temporizadorBorrador);
-                temporizadorBorrador = setTimeout(guardarBorrador, 600);
+
             });
             // Enter en un input no debe enviar nada: se finaliza con el botón.
             formConsulta.addEventListener('submit', (e) => e.preventDefault());
@@ -462,6 +446,7 @@
         }
 
         const formVacuna = document.getElementById('formVacunaAtencion');
+        if (formVacuna) iniciarValidacionProcedimiento(formVacuna);
         if (formVacuna) formVacuna.addEventListener('submit', (e) => registrarProcedimiento(e, {
             endpoint: 'index.php?action=registrar_vacuna_ajax',
             lista: 'listaVacunasAplicadas',
@@ -471,6 +456,7 @@
         }));
 
         const formDesp = document.getElementById('formDesparasitacionAtencion');
+        if (formDesp) iniciarValidacionProcedimiento(formDesp);
         if (formDesp) formDesp.addEventListener('submit', (e) => registrarProcedimiento(e, {
             endpoint: 'index.php?action=registrar_desparasitacion_ajax',
             lista: 'listaDesparasitacionesAplicadas',
@@ -479,12 +465,8 @@
             exito: 'Desparasitación registrada',
         }));
 
-        window.addEventListener('beforeunload', (e) => {
-            if (hayCambiosSinGuardar && !finalizando) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
+        // El navegador no admite modales personalizados al recargar/cerrar; consulta-pasos conserva el borrador.
+        document.addEventListener('click', confirmarSalida, true);
     }
 
     document.addEventListener('DOMContentLoaded', iniciar);

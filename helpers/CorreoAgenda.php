@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../models/MarcaClinica.php';
+require_once __DIR__ . '/PresentacionEstimacionAgenda.php';
 
 /** C4: el worker recibe datos reconstruidos y autorizados, nunca un correo del cliente. */
 final class CorreoAgenda
@@ -18,10 +19,13 @@ final class CorreoAgenda
     public static function contenido(array $cita, string $titulo): string
     {
         $h = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
-        $estimacion = empty($cita['inicio_estimado']) ? '' : '<dt>Inicio estimado</dt><dd>' . $h($cita['inicio_estimado']) . '</dd>';
+        $esEstimacion = ($cita['tipo'] ?? '') === 'ESTIMACION_CITA';
+        $pactada = $cita['hora_pactada'] ?? $cita['hora'];
+        $estimacion = empty($cita['inicio_estimado']) ? '' : '<dt>Inicio estimado</dt><dd>' . $h($esEstimacion ? PresentacionEstimacionAgenda::estimada($cita) : $cita['inicio_estimado']) . '</dd>';
+        $causa = $esEstimacion ? '<p>' . $h(PresentacionEstimacionAgenda::texto($cita)) . '</p>' : '';
         $alternativas = ($cita['tipo'] ?? '') === 'REPROGRAMAR_NECESARIO' ? '<p>En Mis citas, elige Reprogramar para consultar las alternativas vigentes de tu clínica y confirmar un nuevo horario. Si no encuentras un espacio compatible, contacta a la clínica. Tu cita conserva su hora pactada mientras se acuerda el cambio.</p>' : '';
-        return $alternativas . '<p>' . $h($titulo) . '</p><dl><dt>Mascota</dt><dd>' . $h($cita['mascota_nombre'])
-            . '</dd><dt>Fecha</dt><dd>' . $h($cita['fecha']) . '</dd><dt>Hora pactada</dt><dd>' . $h($cita['hora_pactada'] ?? $cita['hora'])
+        return $alternativas . $causa . '<p>' . $h($titulo) . '</p><dl><dt>Mascota</dt><dd>' . $h($cita['mascota_nombre'])
+            . '</dd><dt>Fecha</dt><dd>' . $h($cita['fecha']) . '</dd><dt>Hora pactada</dt><dd>' . $h($esEstimacion ? PresentacionEstimacionAgenda::hora($pactada) : $pactada)
             . '</dd>' . $estimacion . '<dt>Veterinario</dt><dd>' . $h($cita['veterinario_nombre']) . '</dd></dl>';
     }
 }

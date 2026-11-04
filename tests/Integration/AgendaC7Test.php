@@ -112,7 +112,7 @@ final class AgendaC7Test extends TestCase
         $this->urgencias()->atender($id,1,'',str_repeat('d',64));
     }
 
-    public function testOrdenPresencialReordenamientoMotivadoYNoPausaAnidada(): void
+    public function testOrdenPresencialReordenamientoMotivadoYDecisionAntesDeOtraPausa(): void
     {
         $a = $this->rojo(1);
         $b = $this->rojo(2);
@@ -132,8 +132,78 @@ final class AgendaC7Test extends TestCase
         } catch (InvalidArgumentException $error) {
             $this->assertStringContainsString('decisión',$error->getMessage());
         }
-        $this->assertTrue($this->urgencias()->atender($c,1,'Continuar atención actual; rojo espera',str_repeat('4',64))['espera']);
-        $this->assertSame(1,(int)$this->db->query('SELECT COUNT(*) FROM pausas_cita WHERE fin IS NULL')->fetchColumn());
+        $this->assertFalse($this->urgencias()->atender($c,1,'Priorizar el nuevo rojo; el anterior está estable',str_repeat('4',64))['espera']);
+        $this->assertSame(2,(int)$this->db->query('SELECT COUNT(*) FROM pausas_cita WHERE fin IS NULL')->fetchColumn());
+    }
+
+    public static function tiposAutomaticos(): array
+    {
+        return [
+            'urgencia antes de consulta' => [1, 1, 1, 4],
+            'consulta si no hay urgencia' => [0, 1, 1, 3],
+            'primer activo no exclusivo' => [0, 0, 1, 5],
+            'ningun tipo elegible' => [0, 0, 0, null],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('tiposAutomaticos')]
+    public function testTipoAutomaticoDeUrgenciaRespetaPreferenciaYClinica(int $urgencia, int $consulta, int $control, ?int $esperado): void
+    {
+        $this->db->exec("UPDATE tipos_cita SET nombre_tipo='Cirugía exclusiva',solo_personal=1 WHERE id_tipo_cita=1");
+        $this->db->exec("UPDATE tipos_cita SET nombre_tipo='Urgencia de otra clínica' WHERE id_tipo_cita=2");
+        $this->db->exec("INSERT INTO tipos_cita (id_tipo_cita,id_clinica,nombre_tipo,duracion_minutos,margen_minutos,pausable,solo_personal,activo) VALUES (3,1,'Consulta general/Enfermedad',30,10,1,0,$consulta),(4,1,'Urgencia presencial',30,10,0,1,$urgencia),(5,1,'Control disponible',20,5,1,0,$control)");
+        $id = $this->rojo();
+        if ($esperado === null) {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('tipo activo');
+        }
+        $resultado = $this->urgencias()->atender($id, null, '', hash('sha256', 'tipo automatico'));
+        $this->assertFalse($resultado['espera']);
+        $cita = $this->fila($resultado['id_cita']);
+        $this->assertSame($esperado, (int) $cita['id_tipo_cita']);
+        $this->assertSame(1, (int) $cita['id_clinica']);
+        $this->assertSame('en_curso', $cita['estado']);
+        $this->assertSame($resultado, $this->urgencias()->atender($id, null, '', hash('sha256', 'tipo automatico')));
+    }
+
+    public function testRojoConAgendaLlenaIniciaAtencionYRecalculaCascada(): void
+    {
+        $ocupada = $this->cita(2, '09:10:00');
+        $siguiente = $this->cita(4, '09:50:00');
+        $this->agenda->procesar('2030-01-07');
+        $antes = $this->fila($ocupada)['inicio_estimado'];
+        try {
+            (new DisponibilidadAgenda($this->db, fn () => IntervalosAgenda::fecha($this->ahora)))->exigirCapacidadUrgente(2, 2, 2400);
+            $this->fail('El escenario debe tener la agenda ocupada.');
+        } catch (HorarioOcupado $error) {
+            $this->assertStringContainsString('disponibilidad', $error->getMessage());
+        }
+        $id = $this->rojo(2);
+        $resultado = $this->urgencias()->atender($id, null, '', hash('sha256', 'agenda llena'));
+        $this->assertFalse($resultado['espera']);
+        $urgencia = $this->fila($resultado['id_cita']);
+        $this->assertSame('en_curso', $urgencia['estado']);
+        $this->assertSame($this->ahora, $urgencia['hora_inicio_real']);
+        $this->assertGreaterThan($antes, $this->fila($ocupada)['inicio_estimado']);
+        $this->assertGreaterThanOrEqual($urgencia['fin_estimado'], $this->fila($ocupada)['inicio_estimado']);
+        $this->assertGreaterThanOrEqual($this->fila($ocupada)['fin_estimado'], $this->fila($siguiente)['inicio_estimado']);
+        $this->assertSame('09:10:00', $this->fila($ocupada)['hora']);
+        $this->assertSame('confirmada', $this->fila($ocupada)['estado']);
+    }
+
+    public function testRojoNoDuplicaAtencionRealDelPaciente(): void
+    {
+        $actual = $this->cita(2, '09:00:00', 'en_curso', 5);
+        $this->db->exec("UPDATE citas SET hora_inicio_real='2030-01-07 09:00:00' WHERE id_cita=$actual");
+        $id = $this->rojo(2);
+        try {
+            $this->urgencias()->atender($id, null, '', hash('sha256', 'atencion real simultanea'));
+            $this->fail('Una reserva se desplaza; dos atenciones reales del mismo paciente no se permiten.');
+        } catch (HorarioOcupado $error) {
+            $this->assertStringContainsString('atención real', $error->getMessage());
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM citas WHERE id_mascota=2 AND estado='en_curso'")->fetchColumn());
+            $this->assertSame('en_curso', $this->fila($actual)['estado']);
+        }
     }
 
     private function provisional(): array

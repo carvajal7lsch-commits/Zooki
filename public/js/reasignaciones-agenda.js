@@ -27,17 +27,20 @@
         const control = crearControl();
         const lista = bloque.querySelector('[data-reasignaciones-lista]');
         const mensaje = bloque.querySelector('[data-reasignaciones-mensaje]');
+        let respondiendo = false;
 
-        async function cargar() {
+        async function cargar(automatica = false) {
             const numero = control.iniciarConsulta();
             try {
                 const r = await (await fetch('index.php?action=listar_reasignaciones_ajax')).json();
                 if (!control.vigente(numero)) return;
                 if (!r.success) throw new Error(r.message || 'No se pudieron consultar las propuestas.');
+                if (automatica && panelAgendaEnEdicion(bloque)) return;
                 lista.replaceChildren();
                 for (const propuesta of r.propuestas) {
                     const tarjeta = document.createElement('article');
                     tarjeta.className = 'ah-item ah-item--fila';
+                    tarjeta.dataset.fecha = String(propuesta.inicio_propuesto).slice(0, 10);
                     const texto = document.createElement('p');
                     texto.className = 'ah-item__texto';
                     const partes = [
@@ -72,6 +75,7 @@
                         boton.addEventListener('click', async () => {
                             const id = String(propuesta.id_reasignacion);
                             if (!control.tomar(id)) return;
+                            respondiendo = true;
                             const botones = tarjeta.querySelectorAll('button');
                             botones.forEach(b => { b.disabled = true; });
                             const forma = new FormData();
@@ -87,6 +91,7 @@
                                 mensaje.textContent = 'No se recibió la respuesta. Reintenta la misma decisión.';
                             } finally {
                                 control.liberar(id);
+                                respondiendo = false;
                                 botones.forEach(b => { b.disabled = false; });
                             }
                         });
@@ -99,8 +104,7 @@
                 if (control.vigente(numero)) mensaje.textContent = error.message || 'No se pudieron consultar las propuestas.';
             }
         }
-        bloque.querySelector('[data-reasignaciones-actualizar]').addEventListener('click', cargar);
-        cargar();
+        sincronizarPanelAgenda(bloque, cargar, () => respondiendo);
     }
 
     if (typeof module !== 'undefined' && module.exports) module.exports = { crearControl };

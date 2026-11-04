@@ -540,7 +540,7 @@ class BlockPicker {
     }
 
     // ── events ────────────────────────────────────────────────
-    _bindHourRow(hEl, mEl, badgeEl) {
+    _bindHourRow(hEl, mEl, badgeEl, campo) {
         hEl.placeholder = this.options.period === 'morning' ? '6-12' : '1-12';
 
         hEl.addEventListener('focus', () => {
@@ -562,6 +562,7 @@ class BlockPicker {
                 hEl.value = this._clampHour(num).toString().padStart(2,'0');
             }
             this._applyNoonLock(hEl.value, mEl, badgeEl);
+            this._acotarApertura(hEl, mEl, badgeEl, campo);
             if (hEl.value.length === 2) mEl.focus();
         });
 
@@ -572,7 +573,20 @@ class BlockPicker {
             if (!isNaN(num) && val.length === 2) {
                 mEl.value = this._snapMinute(num).toString().padStart(2,'0');
             }
+            this._acotarApertura(hEl, mEl, badgeEl, campo);
         });
+    }
+
+    _acotarApertura(hora, minuto, insignia, campo) {
+        if (!campo?.min || hora.value.length !== 2 || minuto.value.length !== 2) return;
+        const ampm = insignia ? insignia.textContent.trim() : this._periodAmpm();
+        const actual = this._to24(hora.value, minuto.value, ampm);
+        const acotado = actual < campo.min ? campo.min : actual > campo.max ? campo.max : actual;
+        if (acotado === actual) return;
+        const valor = this._to12(acotado);
+        hora.value = String(valor.h).padStart(2, '0');
+        minuto.value = String(valor.m).padStart(2, '0');
+        if (insignia) insignia.textContent = valor.ampm;
     }
 
     _bindEvents() {
@@ -583,8 +597,8 @@ class BlockPicker {
         const bS = this.picker.querySelector('.bp-ampm-start');
         const bE = this.picker.querySelector('.bp-ampm-end');
 
-        this._bindHourRow(hS, mS, bS);
-        this._bindHourRow(hE, mE, bE);
+        this._bindHourRow(hS, mS, bS, this.startInput);
+        this._bindHourRow(hE, mE, bE, this.endInput);
 
         this.picker.querySelector('.tp-btn-cancel').addEventListener('click', () => this.close());
         this.picker.querySelector('.tp-btn-ok').addEventListener('click', () => this.confirm());
@@ -631,9 +645,10 @@ class BlockPicker {
         // El selector compartido no confirma entradas vacías ni turnos fuera de su periodo.
         const horaValida = valor => /^([01]\d|2[0-3]):[0-5]\d$/.test(valor);
         const fueraPeriodo = this.options.period === 'morning' ? start24 < '06:00' || end24 > '12:00' : this.options.period === 'afternoon' ? start24 < '12:00' || end24 > '21:00' : false;
-        if (!horaValida(start24) || !horaValida(end24) || end24 <= start24 || fueraPeriodo) {
+        const fueraApertura = (this.startInput.min && start24 < this.startInput.min) || (this.endInput.max && end24 > this.endInput.max);
+        if (!horaValida(start24) || !horaValida(end24) || end24 <= start24 || fueraPeriodo || fueraApertura) {
             if (errEl) {
-                errEl.textContent = 'La hora fin debe ser mayor a la hora inicio';
+                errEl.textContent = fueraApertura ? 'Elige solo las horas de apertura de la clínica.' : 'La hora fin debe ser mayor a la hora inicio';
                 errEl.hidden = false;
             }
             return; // Don't close

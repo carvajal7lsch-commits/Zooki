@@ -55,7 +55,9 @@ final class PoliticaTemporalAgenda
                 $fin = max($nominal, $ahora->getTimestamp());
             }
         }
-        return ['inicio' => $inicio, 'nominal' => $nominal, 'fin' => $fin, 'extremo' => max($nominal + (int) $margen * 60, $fin)];
+        // Decisión del dueño, 2026-10-29 (RN-412): completar acredita capacidad libre desde el fin real.
+        $extremo = $cita['estado'] === 'completada' ? $fin : max($nominal + (int) $margen * 60, $fin);
+        return ['inicio' => $inicio, 'nominal' => $nominal, 'fin' => $fin, 'extremo' => $extremo];
     }
 
     public static function hora(string $hora): string

@@ -10,7 +10,7 @@
     'use strict';
     const CLAVE_VISTA = 'zooki-plataforma-vista';
     const CLAVE_PESTANA = 'zooki-plataforma-pestana';
-    const PESTANAS = ['clinicas', 'soporte', 'seguridad'];
+    const PESTANAS = ['clinicas', 'soporte', 'seguridad', 'demo'];
 
     function guardar(clave, valor) {
         try {
@@ -44,7 +44,9 @@
     }
 
     function pestana(nombre) {
-        const elegida = PESTANAS.includes(nombre) ? nombre : 'clinicas';
+        // HU-0.3: el servidor determina las pestañas disponibles, incluida Demo si está habilitada.
+        const disponible = nombre !== 'demo' || document.querySelector('[data-panel="demo"]') !== null;
+        const elegida = PESTANAS.includes(nombre) && disponible ? nombre : 'clinicas';
         document.querySelectorAll('[data-pestana]').forEach(boton => {
             const activa = boton.dataset.pestana === elegida;
             boton.classList?.toggle('active', activa);
@@ -61,10 +63,10 @@
 
     function restaurarPestana() {
         const pedida = window.location.hash?.slice(1);
-        const desdeCorreo = ['soporte', 'seguridad'].includes(pedida);
+        const desdeCorreo = ['soporte', 'seguridad', 'demo'].includes(pedida);
         pestana(desdeCorreo ? pedida : (leer(CLAVE_PESTANA) || 'clinicas'));
         // La campana abre la sección pedida una vez; después se conserva la pestaña elegida.
-        if (desdeCorreo) window.history?.replaceState(null, '', window.location.href.replace(/#(?:soporte|seguridad)$/, ''));
+        if (desdeCorreo) window.history?.replaceState(null, '', window.location.href.replace(/#(?:soporte|seguridad|demo)$/, ''));
     }
 
     function filtros() {

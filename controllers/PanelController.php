@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Panel.php';
+require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/DisponibilidadAgenda.php';
 require_once __DIR__ . '/../models/SolicitudAgenda.php';
 require_once __DIR__ . '/../models/CascadaAgenda.php';
@@ -96,13 +97,8 @@ class PanelController
             ];
         }
 
-        // Las atenciones de hoy ya se ven en la agenda con su botón; aquí solo
-        // se listan las que exigen algo aparte: las abiertas de días anteriores
-        // y las que quedaron sin cerrar.
-        $pendientes = array_values(array_filter(
-            $this->conAccion($this->panel->atencionesAbiertas($idVeterinario), $ahora),
-            fn($c) => $c['estado'] === 'sin_cerrar' || $c['fecha'] !== $hoy
-        ));
+        // HU-6.1 / HU-4.15: también se puede retomar desde Pendientes una urgencia de hoy.
+        $pendientes = $this->conAccion($this->panel->atencionesAbiertas($idVeterinario), $ahora);
 
         $recordatorios = $this->panel->recordatoriosDeSusPacientes(
             $idVeterinario,
@@ -312,6 +308,7 @@ class PanelController
             'mes' => $this->mes(null, $ahora->format('Y-m'), $ahora, $hoy),
             'agenda' => $agenda,
             'plan' => $this->usoDelPlan($hoy),
+            'oferta_lanzamiento' => TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && !(new Suscripcion($this->db, (int) Contexto::clinicaActiva()))->tienePagosAprobados(),
             'mes_actual' => $this->nombreMes($ahora),
             'propietarios_nuevos' => $this->panel->contarPropietariosNuevos($inicioMes->format('Y-m-d H:i:s'), $inicioManana),
             'no_asistencia' => $asistencia + ['porcentaje' => ResumenPanel::porcentaje($asistencia['no_asistio'], $asistencia['agendadas'])],
@@ -387,6 +384,7 @@ class PanelController
         try {
             require_once __DIR__ . '/../helpers/VigilanteAtenciones.php';
             (new VigilanteAtenciones($this->db))->revisar($ahora);
+            (new CascadaAgenda($this->db, fn () => $ahora))->marcarInasistencias($ahora->format('Y-m-d'));
         } catch (Throwable $e) {
             error_log('No se pudieron revisar las atenciones abiertas: ' . $e->getMessage());
         }

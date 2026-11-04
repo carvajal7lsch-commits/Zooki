@@ -164,7 +164,8 @@ final class PagoSuscripcion
         $servicio = new Suscripcion($this->db, $this->clinica, $this->reloj);
         $s = $servicio->estado();
         $resultado = ['situacion' => $s['situacion'], 'plan' => $s['plan_efectivo']['nombre'], 'fin' => $s['periodo_fin'],
-            'fin_incluido' => VigenciaSuscripcion::fechaIncluida($s['periodo_fin'])];
+            'fin_incluido' => VigenciaSuscripcion::fechaIncluida($s['periodo_fin']),
+            'oferta_lanzamiento_disponible' => TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && !$servicio->tienePagosAprobados()];
         try {
             $entorno = $this->configuracion->entorno();
         } catch (RuntimeException $error) {

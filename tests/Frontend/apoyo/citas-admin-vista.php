@@ -2,6 +2,7 @@
 if (defined('ZOOKI_URGENCIAS_VISTA')) {
     echo '<link rel="stylesheet" href="css/agenda-herramientas.css">';
     echo '<script src="js/comando-agenda.js"></script>';
+    echo '<script src="js/agenda-herramientas.js"></script>';
     require __DIR__ . '/../../../views/partials/urgencias_agenda.php';
     return;
 }

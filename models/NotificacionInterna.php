@@ -17,6 +17,12 @@ class NotificacionInterna {
     /** Condición común: de la clínica y dirigidas a la persona o a su rol en ella. */
     private const DESTINATARIO = "id_clinica = :id_clinica AND (id_usuario = :id_usuario OR id_rol_destino = :id_rol)";
 
+    // RN-409: cubre avisos anteriores y el que pudiera publicar el vigilante después del cierre.
+    private const ATENCION_VIGENTE = "(tipo NOT IN ('ATENCION_ABIERTA','ATENCION_SIN_CERRAR')
+        OR NOT EXISTS (SELECT 1 FROM citas c
+            WHERE c.id_cita=notificaciones_internas.id_cita
+              AND c.id_clinica=notificaciones_internas.id_clinica AND c.estado='completada'))";
+
     /**
      * La conexion es opcional: el controlador lo instancia sin argumentos y se
      * crea la conexion real de siempre. En pruebas se inyecta un PDO propio
@@ -88,17 +94,37 @@ class NotificacionInterna {
         return $stmt->execute();
     }
 
-    private function enlazarDestinatario(PDOStatement $stmt, int $idClinica, int $idUsuario, int $idRol): void {
-        $stmt->bindValue(':id_clinica', $idClinica, PDO::PARAM_INT);
+    /** RN-409/RE-4.5.1: solo los avisos operativos; el llamador mantiene la unidad del cierre. */
+    public function expirarAvisosDeAtencion(int $idClinica, int $idCita, string $ahora): bool {
+        $stmt = $this->conn->prepare("UPDATE notificaciones_internas SET vigente_hasta=:ahora
+            WHERE id_clinica=:id_clinica AND id_cita=:id_cita
+              AND tipo IN ('ATENCION_ABIERTA','ATENCION_SIN_CERRAR')
+              AND (vigente_hasta IS NULL OR vigente_hasta>:limite)");
+        return $stmt->execute([':ahora' => $ahora, ':limite' => $ahora, ':id_clinica' => $idClinica, ':id_cita' => $idCita]);
+    }
+
+    /** RE-5.7.4: el portal global solo recibe estimaciones de sus mascotas actuales. */
+    private function condicionDestinatario(?int $idClinica): string {
+        if ($idClinica !== null) return self::DESTINATARIO;
+        return "id_usuario=:id_usuario AND id_rol_destino IS NULL AND tipo='ESTIMACION_CITA'
+            AND EXISTS (SELECT 1 FROM citas c JOIN mascotas m ON m.id_mascota=c.id_mascota
+                WHERE c.id_cita=notificaciones_internas.id_cita AND c.id_clinica=notificaciones_internas.id_clinica
+                AND m.id_propietario=notificaciones_internas.id_usuario)";
+    }
+
+    private function enlazarDestinatario(PDOStatement $stmt, ?int $idClinica, int $idUsuario, int $idRol): void {
         $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+        if ($idClinica === null) return;
+        $stmt->bindValue(':id_clinica', $idClinica, PDO::PARAM_INT);
         $stmt->bindValue(':id_rol', $idRol, PDO::PARAM_INT);
     }
 
     /** Notificaciones vigentes de la persona en la clínica (incluye las de su rol). */
-    public function obtenerParaUsuario(int $idClinica, int $idUsuario, int $idRol, $limit = 10) {
+    public function obtenerParaUsuario(?int $idClinica, int $idUsuario, int $idRol, $limit = 10) {
         $stmt = $this->conn->prepare(
             "SELECT * FROM " . $this->table_name . "
-             WHERE " . self::DESTINATARIO . "
+             WHERE " . $this->condicionDestinatario($idClinica) . "
+               AND " . self::ATENCION_VIGENTE . "
                AND (vigente_hasta IS NULL OR vigente_hasta > :ahora)
              ORDER BY fecha_creacion DESC, id DESC
              LIMIT :limit"
@@ -112,10 +138,11 @@ class NotificacionInterna {
     }
 
     /** Número de notificaciones vigentes no leídas. */
-    public function contarNoLeidas(int $idClinica, int $idUsuario, int $idRol): int {
+    public function contarNoLeidas(?int $idClinica, int $idUsuario, int $idRol): int {
         $stmt = $this->conn->prepare(
             "SELECT COUNT(*) FROM " . $this->table_name . "
-             WHERE leida = 0 AND " . self::DESTINATARIO . "
+             WHERE leida = 0 AND " . $this->condicionDestinatario($idClinica) . "
+               AND " . self::ATENCION_VIGENTE . "
                AND (vigente_hasta IS NULL OR vigente_hasta > :ahora)"
         );
         $this->enlazarDestinatario($stmt, $idClinica, $idUsuario, $idRol);
@@ -134,9 +161,9 @@ class NotificacionInterna {
      * `leida = 1`, asi que volver a marcar algo ya leido se habria confundido
      * con un intento de acceso ajeno.
      */
-    public function perteneceA($id_notificacion, int $idClinica, int $idUsuario, int $idRol): bool {
+    public function perteneceA($id_notificacion, ?int $idClinica, int $idUsuario, int $idRol): bool {
         $stmt = $this->conn->prepare(
-            "SELECT 1 FROM " . $this->table_name . " WHERE id = :id AND " . self::DESTINATARIO . " LIMIT 1"
+            "SELECT 1 FROM " . $this->table_name . " WHERE id = :id AND " . $this->condicionDestinatario($idClinica) . " LIMIT 1"
         );
         $stmt->bindValue(':id', (int) $id_notificacion, PDO::PARAM_INT);
         $this->enlazarDestinatario($stmt, $idClinica, $idUsuario, $idRol);
@@ -151,9 +178,9 @@ class NotificacionInterna {
      * T-01 — El WHERE incluye al destinatario y la clínica: con solo el id,
      * cualquier sesión podía marcar la notificación de otra persona.
      */
-    public function marcarLeida($id_notificacion, int $idClinica, int $idUsuario, int $idRol): bool {
+    public function marcarLeida($id_notificacion, ?int $idClinica, int $idUsuario, int $idRol): bool {
         $stmt = $this->conn->prepare(
-            "UPDATE " . $this->table_name . " SET leida = 1 WHERE id = :id AND " . self::DESTINATARIO
+            "UPDATE " . $this->table_name . " SET leida = 1 WHERE id = :id AND " . $this->condicionDestinatario($idClinica)
         );
         $stmt->bindValue(':id', (int) $id_notificacion, PDO::PARAM_INT);
         $this->enlazarDestinatario($stmt, $idClinica, $idUsuario, $idRol);
@@ -162,9 +189,9 @@ class NotificacionInterna {
     }
 
     /** Marcar todas las de la persona en la clínica como leídas. */
-    public function marcarTodasLeidas(int $idClinica, int $idUsuario, int $idRol): bool {
+    public function marcarTodasLeidas(?int $idClinica, int $idUsuario, int $idRol): bool {
         $stmt = $this->conn->prepare(
-            "UPDATE " . $this->table_name . " SET leida = 1 WHERE leida = 0 AND " . self::DESTINATARIO
+            "UPDATE " . $this->table_name . " SET leida = 1 WHERE leida = 0 AND " . $this->condicionDestinatario($idClinica)
         );
         $this->enlazarDestinatario($stmt, $idClinica, $idUsuario, $idRol);
 

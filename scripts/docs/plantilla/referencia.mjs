@@ -1,5 +1,5 @@
 // Arma la plantilla de Word (reference.docx de Pandoc) con el formato de la
-// plantilla de documentos del proyecto (specs/exportar-documentos.md): Arial,
+// plantilla de documentos del proyecto: Arial,
 // títulos en negrita, tablas con cuadrícula y encabezado gris, y encabezado y
 // pie en cada hoja salvo la portada. Parte de la plantilla por defecto de
 // Pandoc y reemplaza los estilos que usa. Se arma en cada exportación (tarda

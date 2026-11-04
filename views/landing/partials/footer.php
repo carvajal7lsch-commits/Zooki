@@ -19,7 +19,7 @@
                     creado para resolver un problema real de las clínicas pequeñas.
                 </p>
                 <ul class="lp-footer__meta">
-                    <li><i class="ri-map-pin-line" aria-hidden="true"></i> Neiva, Huila &middot; Colombia</li>
+                    <li><i class="ri-map-pin-line" aria-hidden="true"></i> Florencia, Caquetá &middot; Colombia</li>
                     <li><i class="ri-global-line" aria-hidden="true"></i> Aplicación web, sin instalación</li>
                 </ul>
             </div>
@@ -27,10 +27,8 @@
             <div>
                 <h3 class="lp-footer__title">Producto</h3>
                 <nav class="lp-footer__links">
-                    <a href="#modulos">Módulos</a>
-                    <a href="#roles">Para tu equipo</a>
-                    <a href="#como-funciona">Cómo funciona</a>
-                    <a href="#pacientes">Pacientes</a>
+                    <a href="#funciones">Funciones</a>
+                    <a href="#planes">Planes</a>
                     <a href="#seguridad">Seguridad</a>
                 </nav>
             </div>

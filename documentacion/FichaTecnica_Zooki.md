@@ -1,5 +1,8 @@
 # Ficha Técnica del Proyecto — Zooki
 
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
+
+
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
 > **Revisión 3.6** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
@@ -19,7 +22,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.1.0 preparada para revisión e integración**: Inicio del administrador y suscripción con Wompi, vigencia, avisos, automático mensual y panel financiero. D8/D10 pendientes antes de dinero real. Producción se confirma al desplegar; conocimiento pendiente de validación veterinaria |
+| Estado actual | **2.3.0 lista para desplegar**: triage provisional y vacunación desde registros; correcciones de horario, mascotas, cirugía, selección por nivel y plazo de cambios; Atención en3 pasos con borrador y control posterior al commit clínico. 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN, 65 tablas. Conserva D8/D10 pendientes antes de dinero real y validación veterinaria del conocimiento. |
 | Versión del documento | 3.6 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -129,7 +132,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (126 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (464 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (128 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (472 RE identificados (471 vigentes y 1 retirado)) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -156,6 +159,10 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 - **Inversión real del proyecto (aprendiz).** ≈ **145 h × $40.000 COP/h = $5.800.000 COP** de esfuerzo propio (estimación; no se llevó registro de horas). En contexto SENA no representa un costo monetario directo, pero sí el valor del trabajo invertido.
 - **Valoración referencial de mercado** (si se contratara externamente, todos los roles: Scrum Master, Frontend, Backend, BD & DevOps y QA): las mismas 145 h a la tarifa de cada rol ≈ **$6.430.000 COP**. El aprendiz cobra todos los roles a tarifa de junior.
 - **Infraestructura y herramientas.** Servidor propio (VPS), MySQL, almacenamiento en filesystem, PHPMailer con Brevo, Algolia, Cloudflare Turnstile, Google Identity, GitHub y Docker/Dokploy: propios o en su plan gratuito.
+
+Profesional: **$40.000 COP/mes o $400.000 COP/año (2 meses gratis)**, según RN-008.
+La oferta de lanzamiento concede dos meses al primer pago mensual aprobado sin pagos aprobados previos; se puede apagar desde un único interruptor.
+Con los supuestos del presupuesto (sin comisiones), el equilibrio operativo requiere dos clínicas; recuperar la inversión en el primer año con la oferta requiere quince clínicas de pago.
 
 ## 10. Resultados Esperados e Impacto
 

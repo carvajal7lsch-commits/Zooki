@@ -255,6 +255,16 @@
     color: var(--lp-primary);
 }
 
+.lp-chip__icon--danger {
+    background: var(--lp-danger-soft);
+    color: var(--lp-danger);
+}
+
+.lp-chip__icon--warn {
+    background: var(--lp-warning-soft);
+    color: var(--lp-warning);
+}
+
 .lp-chip__label {
     display: block;
     font-size: 0.7rem;

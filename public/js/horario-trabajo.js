@@ -27,6 +27,7 @@
         const tabla = raiz.querySelector('[data-franjas]');
         const dias = new Map();
         let bloqueado = false;
+        let apertura = null;
         let selectores = [];
         const filas = () => Array.from(tabla.querySelectorAll('[data-dia-semana]'));
         const controles = (fila, periodo) => ({
@@ -38,12 +39,23 @@
             filas().forEach(fila => {
                 const dato = dias.get(Number(fila.dataset.diaSemana));
                 const activo = fila.querySelector('[data-dia-activo]');
-                activo.disabled = bloqueado || dato?.especial;
+                const horario = apertura?.find(f => Number(f.dia_semana) === Number(fila.dataset.diaSemana));
+                const cerrado = apertura !== null && (!horario || !Number(horario.activo));
+                activo.disabled = bloqueado || dato?.especial || cerrado;
+                if (cerrado) activo.checked = false;
                 fila.classList.toggle('dia-cerrado', !activo.checked);
                 let minutos = 0;
                 PERIODOS.forEach(periodo => {
                     const c = controles(fila, periodo);
-                    c.activo.disabled = bloqueado || !activo.checked || dato?.especial;
+                    const noAbre = apertura !== null && (!horario || !Number(horario['bloque_' + periodo + '_activo']));
+                    if (noAbre) c.activo.checked = false;
+                    c.activo.disabled = bloqueado || !activo.checked || dato?.especial || noAbre;
+                    if (horario && !cerrado && !noAbre) {
+                        c.inicio.min = String(horario['bloque_' + periodo + '_inicio']).slice(0, 5);
+                        c.inicio.max = String(horario['bloque_' + periodo + '_fin']).slice(0, 5);
+                        c.fin.min = c.inicio.min;
+                        c.fin.max = c.inicio.max;
+                    }
                     const deshabilitado = c.activo.disabled || !c.activo.checked;
                     c.inicio.disabled = deshabilitado;
                     c.fin.disabled = deshabilitado;
@@ -83,6 +95,7 @@
                 const dato = dias.get(numero);
                 if (!dato) return [];
                 // Guardar otro día nunca redondea ni reescribe un horario histórico.
+                if (apertura !== null && !apertura.some(f => Number(f.dia_semana) === numero && Number(f.activo))) return [];
                 if (!dato.editado || dato.especial) return dato.originales.map(f => ({ ...f }));
                 if (!fila.querySelector('[data-dia-activo]').checked) return [];
                 return PERIODOS.flatMap(periodo => {
@@ -107,25 +120,46 @@
             if (bloqueado) return;
             modal.querySelector('[id$="mdError"]').textContent = '';
             modal.showModal();
+            modal.querySelectorAll('.md-day-check').forEach(c => {
+                c.disabled = apertura !== null && !apertura.some(f => Number(f.dia_semana) === Number(c.value) && Number(f.activo));
+                if (c.disabled) c.checked = false;
+            });
             if (!selectoresModal.length) PERIODOS.forEach(periodo => {
                 const sufijo = periodo === 'morning' ? 'Morning' : 'Afternoon';
                 selectoresModal.push(new BlockPicker(modal.querySelector('[id$="md' + sufijo + 'Inicio"]'), modal.querySelector('[id$="md' + sufijo + 'Fin"]'), { minuteInterval: 1, period: periodo }));
             });
+            limitarModal();
         });
         modal.addEventListener('click', evento => {
             if (evento.target.closest('[data-cerrar-modal]')) modal.close();
         });
-        modal.addEventListener('change', () => {
+        function limitarModal() {
+            const elegidos = Array.from(modal.querySelectorAll('.md-day-check:checked:not(:disabled)'), c => Number(c.value));
             selectoresModal.forEach((p, indice) => {
                 const sufijo = indice === 0 ? 'Morning' : 'Afternoon';
-                const deshabilitado = !modal.querySelector('[id$="md' + sufijo + 'Activo"]').checked;
+                const activo = modal.querySelector('[id$="md' + sufijo + 'Activo"]');
+                if (apertura !== null) {
+                    const periodo = PERIODOS[indice];
+                    const diasAbiertos = apertura.filter(f => Number(f.activo) && (!elegidos.length || elegidos.includes(Number(f.dia_semana))));
+                    const turnos = diasAbiertos.filter(f => Number(f['bloque_' + periodo + '_activo']));
+                    activo.disabled = !turnos.length || turnos.length !== diasAbiertos.length;
+                    if (activo.disabled) activo.checked = false;
+                    if (turnos.length) {
+                        const inicio = turnos.map(f => String(f['bloque_' + periodo + '_inicio']).slice(0, 5)).sort().at(-1);
+                        const fin = turnos.map(f => String(f['bloque_' + periodo + '_fin']).slice(0, 5)).sort()[0];
+                        p.startInput.min = p.endInput.min = inicio;
+                        p.startInput.max = p.endInput.max = fin;
+                    }
+                }
+                const deshabilitado = activo.disabled || !activo.checked;
                 p.startInput.disabled = deshabilitado;
                 p.endInput.disabled = deshabilitado;
                 p.display.disabled = deshabilitado;
             });
-        });
+        }
+        modal.addEventListener('change', limitarModal);
         modal.querySelector('[id$="btnAplicarMultiDia"]').addEventListener('click', () => {
-            const elegidos = Array.from(modal.querySelectorAll('.md-day-check:checked'), c => Number(c.value));
+            const elegidos = Array.from(modal.querySelectorAll('.md-day-check:checked:not(:disabled)'), c => Number(c.value));
             const error = modal.querySelector('[id$="mdError"]');
             if (!elegidos.length) { error.textContent = 'Selecciona al menos un día.'; return; }
             if (elegidos.some(d => dias.get(d).especial)) { error.textContent = 'El horario especial se conserva. Excluye ese día para aplicar los turnos.'; return; }
@@ -139,13 +173,17 @@
                 nuevos.push({ hora_inicio: inicio + ':00', hora_fin: fin + ':00' });
             }
             if (!nuevos.length) { error.textContent = 'Activa al menos un turno.'; return; }
+            if (apertura !== null && elegidos.some(d => nuevos.some(f => !apertura.some(h => Number(h.dia_semana) === d && Number(h.activo) && PERIODOS.some(p => Number(h['bloque_' + p + '_activo']) && f.hora_inicio >= h['bloque_' + p + '_inicio'] && f.hora_fin <= h['bloque_' + p + '_fin']))))) {
+                error.textContent = 'Elige solo las horas de apertura de la clínica.';
+                return;
+            }
             const actuales = franjas().filter(f => !elegidos.includes(Number(f.dia_semana)));
             elegidos.forEach(d => nuevos.forEach(f => actuales.push({ dia_semana: String(d), ...f })));
             pintar(actuales);
             opciones.alCambiar?.();
             modal.close();
         });
-        return { pintar, franjas, bloquear(valor) { bloqueado = valor; actualizar(); } };
+        return { pintar, franjas, apertura(valor) { apertura = Array.isArray(valor) ? valor : null; }, bloquear(valor) { bloqueado = valor; actualizar(); } };
     }
     if (typeof module !== 'undefined' && module.exports) module.exports = { adaptarDia };
     else global.HorarioTrabajo = { crear };

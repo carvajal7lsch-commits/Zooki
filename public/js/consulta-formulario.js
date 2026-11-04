@@ -101,8 +101,11 @@
         camposDe(form).forEach(campo => {
             const mensaje = errorDe(campo);
             pintarAviso(form, campo, mensaje);
-            if (mensaje && primero === null) primero = campo;
+            if (mensaje && primero === null) primero = campo.type === 'hidden' ? form.querySelector('[data-otras-indicaciones]') || campo : campo;
         });
+        for (const archivo of form.querySelectorAll('[data-consulta-archivos]')) {
+            if (validarAdjuntos(archivo) && primero === null) primero = archivo;
+        }
         return primero;
     }
 
@@ -118,7 +121,7 @@
         const campo = form.querySelector(`[data-consulta-campo="${respuesta.campo}"]`);
         if (!campo) return null;
         pintarAviso(form, campo, respuesta.aviso || respuesta.message);
-        return campo;
+        return campo.type === 'hidden' ? form.querySelector('[data-otras-indicaciones]') || campo : campo;
     }
 
     /**
@@ -129,13 +132,18 @@
         const idMascota = opciones.idMascota || (() => '');
         const raizDiagnosticos = form.querySelector('[data-diagnosticos]');
         const campoDiagnostico = form.querySelector('[data-consulta-campo="diagnostico"]');
+        let sugerencias = null;
         const diagnosticos = raizDiagnosticos && window.ZookiDiagnosticos
-            ? window.ZookiDiagnosticos.crear(raizDiagnosticos, { idMascota, campoDiagnostico })
+            ? window.ZookiDiagnosticos.crear(raizDiagnosticos, { idMascota, campoDiagnostico, alUsar: candidato => {
+                if (sugerencias) sugerencias.usar(candidato);
+                else window.ZookiDiagnosticos.usarDiagnostico(campoDiagnostico, candidato.etiqueta);
+            } })
             : null;
         const raizTratamientos = form.querySelector('[data-tratamientos]');
         const tratamientos = raizTratamientos && window.ZookiTratamientos
             ? window.ZookiTratamientos.crear(raizTratamientos, { idMascota })
             : null;
+        if (diagnosticos && tratamientos) sugerencias = window.ZookiDiagnosticos.completar(form, raizDiagnosticos, tratamientos, idMascota);
         const raizSintomas = form.querySelector('[data-sintomas]');
         const sintomas = raizSintomas && window.ZookiSintomas
             ? window.ZookiSintomas.crear(raizSintomas, {
@@ -148,10 +156,11 @@
             : null;
         preparar(form);
 
-        return {
+        const controlador = {
             sintomas,
             diagnosticos,
             tratamientos,
+            sugerencias,
             /** Primero los campos de la consulta; después las filas de tratamiento. */
             validar() {
                 const campo = validarTodo(form);
@@ -161,6 +170,7 @@
             /** Antes de validar al guardar: que las alertas de prescripción estén al día. */
             listo: () => (tratamientos ? tratamientos.listo() : Promise.resolve()),
             limpiar() {
+                if (sugerencias) sugerencias.limpiar();
                 reiniciar(form);
                 if (sintomas) sintomas.limpiar();
                 if (diagnosticos) diagnosticos.limpiar();
@@ -177,6 +187,8 @@
                 return mostrarErrorServidor(form, respuesta);
             },
         };
+        if (form.querySelector('[data-consulta-tres]') && window.ZookiConsultaPasos) controlador.pasos = window.ZookiConsultaPasos.crear(form, controlador, opciones);
+        return controlador;
     }
 
     // ── Adaptador del modal de consulta (views/vet/modal_consulta.php) ──────
@@ -201,6 +213,13 @@
 
     /** Lleva a la pestaña del campo y lo enfoca. */
     function irAlCampoDelModal(campo) {
+        const consulta = controladorModal();
+        if (consulta?.pasos) {
+            const paso = campo.closest('[data-consulta-paso]');
+            if (paso) consulta.pasos.ir(Number(paso.dataset.consultaPaso), false);
+            campo.focus();
+            return;
+        }
         const pestana = campo.closest('.modal-tab-content');
         if (pestana) mostrarPestana(pestana.id);
         campo.focus();
@@ -216,7 +235,8 @@
         if (inicial) inicial.textContent = typeof inicialesDueno === 'function' ? inicialesDueno(nombre) : String(nombre || '?').charAt(0).toUpperCase();
         const archivos = document.getElementById('fileList');
         if (archivos) archivos.replaceChildren();
-        controladorModal().limpiar();
+        const consulta = controladorModal();
+        consulta.limpiar();
         // C5b: las alergias y alertas de esta mascota, a la vista antes de prescribir.
         const modal = document.getElementById('modalConsulta');
         const alertas = modal.querySelector('[data-alertas-consulta]') || form.querySelector('[data-alertas-consulta]');
@@ -229,7 +249,10 @@
             window.ZookiPacienteCompacto.preparar(modal);
             cargarFichaCompacta(modal, id);
         }
-        mostrarPestana('tabMotivo');
+        if (consulta.pasos) {
+            consulta.pasos.mostrar(0);
+            consulta.pasos.activar();
+        } else mostrarPestana('tabMotivo');
         openModal('modalConsulta');
     }
 
@@ -263,8 +286,13 @@
         evento.preventDefault();
         const form = evento.currentTarget || evento.target;
         const consulta = controladorModal();
+        if (consulta.pasos && consulta.pasos.actual !== 2) {
+            consulta.pasos.ir(consulta.pasos.actual + 1);
+            return;
+        }
         await consulta.listo();
         const invalido = consulta.validar();
+        if (!invalido && consulta.pasos && !consulta.pasos.validarPaso(2)) return;
         if (invalido) {
             irAlCampoDelModal(invalido);
             return;
@@ -276,13 +304,17 @@
             const idMascota = String(document.getElementById('consultation_id_mascota').value);
             const res = await (await fetch('index.php?action=registrar_consulta_ajax', { method: 'POST', body: new FormData(form) })).json();
             if (res.success) {
+                consulta.pasos?.borrar(true);
                 closeModal('modalConsulta');
                 // La pantalla se pone al día con la respuesta, sin recargar ni esperar al aviso.
                 document.dispatchEvent(new CustomEvent(EVENTO_REGISTRADA, { detail: { idMascota, consulta: res.consulta || null } }));
-                zookiToast(res.message);
+                if (window.ZookiCierreConsulta) {
+                    const destino = await window.ZookiCierreConsulta.mostrar(res, form);
+                    if (destino) window.location.href = destino;
+                } else zookiToast(res.message);
                 return;
             }
-            if (avisarAdjuntosRechazados(res)) return;
+                if (avisarAdjuntosRechazados(res, form)) return;
             const campo = consulta.mostrarErrorServidor(res);
             if (campo) {
                 irAlCampoDelModal(campo);
@@ -303,8 +335,26 @@
         if (consulta && consulta.tratamientos) consulta.tratamientos.agregar();
     }
 
+    /** RN-204: tamaño y formato al elegir; el servidor siempre verifica el contenido real. */
+    function validarAdjuntos(input) {
+        const aviso = input.closest('.file-upload-zone')?.querySelector('[data-adjuntos-aviso]');
+        if (!aviso) return false;
+        const maximo = Number(input.dataset.adjuntoMax);
+        const tipos = JSON.parse(input.dataset.adjuntoTipos);
+        const errores = [];
+        for (const archivo of input.files) {
+            if (archivo.size <= 0) errores.push(archivo.name + ': está vacío.');
+            else if (archivo.size > maximo) errores.push(archivo.name + ': supera los 10 MB permitidos.');
+            else if (archivo.type && !tipos.includes(archivo.type)) errores.push(archivo.name + ': elige JPG, PNG o PDF.');
+        }
+        aviso.textContent = errores.join(' ');
+        input.setAttribute('aria-invalid', errores.length ? 'true' : 'false');
+        return errores.length > 0;
+    }
+
     /** Muestra los nombres de los archivos elegidos en un input de adjuntos. */
     function updateFileList(input) {
+        validarAdjuntos(input);
         const zona = input.closest('.file-upload-zone');
         const lista = zona ? zona.querySelector('.file-list, #fileList') : null;
         if (!lista) return;
@@ -322,8 +372,16 @@
      * HU-34: si el servidor rechazó adjuntos, dice cuáles y por qué, uno por
      * uno. Devuelve true si mostró el aviso. La usan el modal y Atención.
      */
-    function avisarAdjuntosRechazados(res) {
+    function avisarAdjuntosRechazados(res, form = null) {
         if (!Array.isArray(res.adjuntos_rechazados) || !res.adjuntos_rechazados.length) return false;
+        const aviso = form?.querySelector('[data-adjuntos-aviso]');
+        if (aviso) {
+            aviso.textContent = res.adjuntos_rechazados.map(a => a.archivo + ': ' + a.motivo).join(' ');
+            const archivo = form.querySelector('[data-consulta-archivos]');
+            archivo.setAttribute('aria-invalid', 'true');
+            archivo.focus();
+            return true;
+        }
 
         const lista = res.adjuntos_rechazados
             .map(a => `<li><strong>${escapeHtml(a.archivo)}</strong>: ${escapeHtml(a.motivo)}</li>`)

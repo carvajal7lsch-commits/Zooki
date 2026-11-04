@@ -2,9 +2,9 @@
 
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
-> **Revisión 3.6** · 464 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.6** · 472 requisitos identificados (471 vigentes y 1 retirado) para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
-> **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
+> **Preparación de la agenda — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN.
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -14,11 +14,13 @@ La **Revisión 3.5 (23/10/2026)** prepara 2.0.0: verifica RE-5.10.1–5 y RE-5.1
 
 **Criterio de aceptación:** describe una prueba concreta, con su entrada y el resultado esperado, que permite decir si el requisito se cumple.
 
-_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo (`specs/M0-T-base-saas-identidad.md`, §2). Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
+_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo. Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
 
-_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo (`specs/M5-portal-multiclinica.md`, §2). Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
+_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo. Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
 
 _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia final de M2 en su plan, §2; peso desconocido explícito, alergias y alertas compartidas, diagnósticos sugeridos, alertas de prescripción y mapa de conocimiento. RE-2.11.1–7 quedan verificados en cálculo, buscador y batería; la captura de agenda, las urgencias, revisión previa a asignar horario, el aviso de aislamiento y ajuste veterinario se completan en M4. El conocimiento sigue pendiente de validación veterinaria._
+
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Producción se confirma al desplegar.
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
@@ -26,7 +28,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.1.1 | El sistema debe ofrecer un formulario público con los datos de la clínica y del administrador inicial. | Funcional | Se capturan ambos conjuntos de datos en tres pasos (clínica, administrador, confirmación); un paso con errores no avanza y volver atrás conserva lo escrito. Sin JavaScript el formulario se envía completo y el servidor valida todo. | Alta |
+| RE-0.1.1 | El sistema debe ofrecer un formulario público con los datos de la clínica y del administrador inicial. | Funcional | Se capturan ambos conjuntos de datos en tres pasos (clínica, administrador, confirmación); un paso con errores no avanza y volver atrás conserva lo escrito. Sin JavaScript el formulario se envía completo y el servidor valida todo. Sin plan muestra «Empieza gratis. Puedes pasar a Profesional cuando quieras.»; desde Profesional conserva ciclo mensual/anual y muestra un único precio de TarifaSuscripcion. El servidor rechaza plan/ciclo fuera de la lista y guarda la intención con la clínica pendiente, sin cobrar. | Alta |
 | RE-0.1.2 | El sistema debe validar el formato del correo y la unicidad del NIT, sin duplicar identidades ni revelar si una cuenta existe. | Validación | Con NIT y DV válidos, la comprobación al escribir avisa el duplicado junto al campo y permite reportarlo a soporte; está limitada por IP. Al enviar también se rechaza el duplicado. La respuesta pública es «Revisa tu correo para activar la clínica»: correo existente confirma con su titular conservando identidad, contraseña y roles; si el correo es nuevo y el documento existe, confirma el titular del documento. Si correo y documento son de personas distintas, prevalece el correo. | Alta |
 | RE-0.1.3 | El sistema debe aceptar un único NIT o cédula con DV opcional y validar el DV escrito con el algoritmo de la DIAN. | Validación | Sin guion, se conserva el número completo (2 a 14 cifras) y el servidor calcula su DV, incluso cuando es la cédula de una persona natural. Con guion, se separan número (hasta 14 cifras) y DV escrito (una cifra), que se comprueba. No se deduce la presencia de DV por longitud ni por coincidencia del último dígito. Al pegar limpia puntos/espacios; al escribir o salir no añade guion ni recorta cifras. Un dígito solo no es válido; un DV explícito incorrecto se rechaza con «El dígito de verificación no corresponde. Revísalo en tu RUT.». Registro, ayuda AJAX y reporte usan la misma separación y conversión de entrada; se guarda el formato normalizado existente, número más DV, sin migración. Rectificación aprobada por el dueño, 2026-10-26: sustituye la obligación de introducir siempre el DV, también sin guion. | Alta |
 | RE-0.1.4 | El formulario público debe exigir superar una verificación anti-bot (CAPTCHA) validada en el servidor. | Seguridad | Un envío sin token anti-bot válido se rechaza aunque los datos sean correctos. | Alta |
@@ -44,7 +46,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-0.2.1 | El enlace de verificación debe vencer a las 24 horas. | Seguridad | Un enlace usado después de 24 horas se rechaza. | Alta |
-| RE-0.2.2 | Al verificar, el sistema debe activar la clínica, asignar el plan gratuito y habilitar el rol administrador. | Funcional | La clínica queda activa con plan gratuito. | Alta |
+| RE-0.2.2 | Al verificar, el sistema debe activar la clínica, asignar el plan gratuito y habilitar el rol administrador. | Funcional | La clínica queda activa con plan gratuito. Si eligió Profesional y no hay pagos aprobados, el primer acceso al contexto administrador redirige una sola vez a Suscripción con el ciclo elegido; elegir el contexto de otra clínica no consume esa intención. Sigue gratis hasta aprobar el pago. | Alta |
 | RE-0.2.3 | Si el plazo expira, el sistema debe eliminar el registro pendiente. | Funcional | La clínica pendiente se elimina; su cuenta nueva solo sin otros vínculos, nunca una preexistente. | Media |
 | RE-0.2.4 | Tras activar, el administrador debe iniciar sesión acotado a su id_clinica. | Funcional | Entra al ámbito de su clínica. | Alta |
 | RE-0.2.5 | Al activar la clínica, el sistema debe copiarle en la misma transacción los catálogos iniciales por defecto: tipos de cita, horarios de atención, vacunas base con su relación por especie, laboratorios y productos de desparasitación. | Funcional | Una clínica recién activada tiene 6 tipos de cita, 7 días de horario, 15 vacunas base con su relación por especie, 11 laboratorios y 15 productos, todos con su `id_clinica`; si la activación falla no queda ninguna copia parcial, y los catálogos de las demás clínicas no cambian. | Alta |
@@ -83,7 +85,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.5.1 | Registrar ciclo mensual o anual, vigencia y precio contratado sin modificar periodos pagados. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 89.990 COP genera 8.999.000 centavos; 899.900 genera 89.990.000. Un cambio posterior de catálogo conserva importe y fechas anteriores. | Alta |
+| RE-0.5.1 | Registrar ciclo mensual o anual, vigencia y precio contratado sin modificar periodos pagados. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 40.000 COP genera 4.000.000 centavos; 400.000 genera 40.000.000. El primer pago mensual aprobado sin aprobados previos concede dos meses si la oferta está activa; segundo pago uno, anual doce y oferta apagada uno; aplicación auditada e idempotente por clínica. Suscripción y páginas públicas leen el catálogo; la oferta no se muestra a quien ya tiene pagos aprobados. Una orden anterior conserva su monto y se aprueba aunque difiera del catálogo nuevo. La intención del registro ofrece Pagar con Wompi o «Seguir con el plan gratis por ahora»; descartarla requiere administrador del contexto activo y POST con CSRF, es idempotente y no cambia plan/pagos. Inicio ofrece la campaña solo si está activa y no hay pagos aprobados; puede cerrarse y se recuerda por clínica en el navegador. | Alta |
 | RE-0.5.2 | Mantener beneficios de pago durante la gracia configurada y aplicar luego el gratuito a nuevas altas. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | Con fin exclusivo 25/10/2026 00:00 y gracia 3, profesional hasta antes del 28/10 00:00; desde ese instante gratuito efectivo aunque el cron se retrase. | Alta |
 | RE-0.5.3 | Ejecutar vencimiento, congelación y reserva de avisos mediante tarea programada, sin depender de visitas. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dos ejecuciones y dos trabajadores simultáneos materializan una transición y un aviso por destinatario; reloj inyectado cubre días omitidos por caída del trabajador. | Alta |
 | RE-0.5.4 | Permitir en v2.1 pagar o renovar con botón Wompi mediante tarjeta, PSE o Nequi habilitados para el comercio. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Integración | Abre la ventana con configuración del servidor; pago pendiente/declinado o cierre no amplían vigencia. El anterior veto RF-F.1 queda sustituido. | Alta |
@@ -98,7 +100,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-0.5.13 | Consultar la transacción en la API de Wompi y cotejarla con el intento local antes de acreditar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Integración | Solo APPROVED concordante en id, comercio cuando se informe, referencia, importe, moneda, entorno y beneficiario local concede periodo. API caída conserva evidencia pendiente. Si falta el evento, el retorno aporta solo un ID validado: el GET privado debe localizar un intento de la clínica activa antes de conciliar con idénticos cotejos e idempotencia. Plataforma puede conciliar por ID y motivo auditado, sin elegir la clínica; ID ajeno, inventado o API caída no acreditan. | Alta |
 | RE-0.5.14 | Deduplicar eventos e intentos y aplicar cada pago lógico una sola vez, incluso con concurrencia. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Dos clics, dos pestañas y dos peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Eventos repetidos o distintos del mismo pago conceden un periodo. D5 solo cubre caminos externos o doble aprobación del banco, no doble envío de Zooki. | Alta |
 | RE-0.5.15 | Conservar estados pendientes/inciertos y conciliar sin repetir un cargo de resultado desconocido. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Corte después de POST remoto, antes de guardar su id, no dispara otro POST. Un evento tardío recupera el intento por su referencia; un evento viejo no revierte un aprobado. Un checkout manual vencido sin ID se recupera automáticamente solo tras búsqueda privada por referencia con respuesta válida completa y vacía, revalidación bajo candado y auditoría, conservando el historial; errores, resultados pendientes y automáticos inciertos no se liberan. Si existe transacción se concilia su ID; un aprobado tardío de una orden cerrada pasa a incidencia. Comprobación al reintentar y en el Schedule existente; --revisar no consulta red ni escribe (decisión del dueño, 2026-10-26). | Alta |
-| RE-0.5.16 | Calcular periodos con calendario y ancla contractual, conservando saldo temporal al renovar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 31/01 → último día de febrero → 31/03; anual desde 29/02 conserva regla de año bisiesto. Renovación anticipada no pierde días. Caso de gracia y cambio de ciclo se fija con D2/D3. | Alta |
+| RE-0.5.16 | Calcular periodos con calendario y ancla contractual, conservando saldo temporal al renovar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 31/01 → último día de febrero → 31/03; anual desde 29/02 conserva regla de año bisiesto. La oferta mensual de dos meses conserva el ancla (31/01 → 31/03). Renovación anticipada no pierde días. Caso de gracia y cambio de ciclo se fija con D2/D3. | Alta |
 | RE-0.5.17 | Mostrar historial financiero propio sin fuentes completas ni datos clínicos. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dentro de Ajustes › Suscripción; conserva sección, pestaña de historial y origen al paginar o volver de Wompi, y regreso a Inicio si entró desde allí. Solo clínica autorizada; paginación estable y salida escapada de fecha, referencia, ciclo, importe, estado y periodo; id de otra clínica denegado. Al consultar después de recargar o volver de Wompi, recupera el último intento de la clínica y del entorno aunque el navegador haya perdido la referencia. Distingue el plan vigente del resultado de esa orden y señala cotización vencida sin resultado confirmado. Volver mediante la caché del navegador restaura los controles y solo consulta el estado; no inicia un pago. | Media |
 | RE-0.5.18 | Registrar fuentes de tarjeta o Nequi mediante tokenización Wompi y aceptación explícita. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Sin las dos aceptaciones o sin fuente verificada del servidor no se guarda. Solo id externo, tipo y marca/últimos 4 disponibles, más metadatos de vínculo/consentimiento; PAN/CVC/teléfono Nequi no persisten en la fuente. | Alta |
 | RE-0.5.19 | Exigir autorización separada del automático mensual y permitir retirarla o quitar la fuente. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Guardar no activa el automático. Retirar antes de reclamar trabajo evita el cargo; retirar tras envío informa cargo en curso y detiene los siguientes. Lo pagado conserva su vigencia. | Alta |
@@ -338,7 +340,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-1.1.1 | El sistema debe exigir nombre, especie, raza, fecha de nacimiento, peso y sexo; si se conoce, registra si está esterilizada, porque el triage lo usa. _(M5, decisión del usuario 2026-10-13: el color ya no se pide.)_ | Funcional | Guardar sin un campo obligatorio muestra error. | Alta |
 | RE-1.1.2 | El sistema debe permitir subir una fotografía JPG/PNG validando tipo y tamaño. | Validación | Un archivo no permitido o excedido es rechazado. | Media |
 | RE-1.1.3 | El sistema debe impedir guardar una mascota sin propietario. | Restricción | Guardar sin propietario es rechazado. | Alta |
-| RE-1.1.4 | El sistema debe validar los campos en cliente y servidor. | Validación | La validación falla en cliente y en servidor. | Alta |
+| RE-1.1.4 | El sistema debe validar la mascota en cliente y servidor con ValidadorMascota. | Validación | Nueva/Editar mascota del veterinario mantienen reglas y validación en vivo; los obligatorios llevan asterisco, los demás «(opcional)» y la nota «* Obligatorio. Lo demás es opcional.», igual que el portal. | Alta |
 | RE-1.1.5 | El sistema debe reflejar la mascota en el listado y la búsqueda. | Funcional | La mascota creada aparece en listado y búsqueda. | Alta |
 | RE-1.1.6 | Si el propietario ya tiene mascotas en la plataforma, el sistema debe ofrecer vincular una existente antes de registrar una nueva (HU-1.5). | Funcional | Al registrar para un propietario con mascotas, se muestra primero la lista para vincular. | Alta |
 
@@ -369,7 +371,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-1.4.1 | El sistema debe permitir editar la ficha; la especie, la raza, el sexo y la fecha de nacimiento solo los cambian el propietario o la clínica que registró la mascota. | Funcional | Una clínica vinculada que no la registró puede cambiar el peso, pero no la especie (403). | Alta |
+| RE-1.4.1 | El sistema debe permitir editar la ficha; la especie, la raza, el sexo y la fecha de nacimiento solo los cambian el propietario o la clínica que registró la mascota. | Funcional | Una clínica vinculada que no la registró puede cambiar el peso, pero no la especie (403). Atención y modal completan sexo, esterilización y nacimiento faltantes con las mismas reglas; veterinario activo, vínculo activo y protección de identidad en servidor. No exige otros datos desconocidos; cada cambio deja auditoría y aviso de HU-1.4. | Alta |
 | RE-1.4.2 | El sistema debe registrar en auditoría fecha, usuario y campo modificado. | Funcional | El cambio genera una entrada de auditoría. | Media |
 | RE-1.4.3 | El sistema debe ocultar de búsquedas activas a las inactivas conservando su historial. | Restricción | La inactiva desaparece pero su historial se consulta. | Media |
 | RE-1.4.4 | El sistema debe impedir la eliminación física con historial clínico. | Restricción | Eliminar una mascota con historial es rechazado. | Alta |
@@ -397,7 +399,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.1.2 | El sistema debe generar un número de HC único en la primera consulta. | Funcional | La primera consulta genera un N.° de HC único. | Alta |
 | RE-2.1.3 | El sistema debe impedir guardar una consulta sin diagnóstico. | Restricción | Guardar sin diagnóstico es rechazado. | Alta |
 | RE-2.1.4 | El sistema debe vincular la consulta a la mascota y mostrarla en su historial. | Funcional | La consulta aparece en el historial cronológico. | Alta |
-| RE-2.1.5 | _(v2.0)_ El veterinario debe poder registrar y desactivar alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua), enlazadas al nodo del Grafo I cuando exista. | Funcional | Una alerta registrada aparece en la ficha de toda clínica vinculada; al desactivarla deja de mostrarse, pero queda en el historial. _Implementado en M2 (2.0.0-alpha.4) en ficha, portal e impresión; la presentación en el carnet sigue para el final de la v2.0._ | Alta |
+| RE-2.1.5 | _(v2.0)_ El veterinario debe poder registrar y desactivar alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua), enlazadas al nodo del Grafo I cuando exista. | Funcional | Una alerta registrada aparece en la ficha de toda clínica vinculada; al desactivarla deja de mostrarse, pero queda en el historial. En2.3.0 el formulario separa Alérgico/a a (fármaco/sustancia), Medicamento que toma (fármaco) o Condición de los detalles libres. Se busca por nombre o sinónimo y se selecciona una sugerencia; «No encuentro el nombre» conserva nombre y detalles como aviso sin nodo. Otra alerta solo pide descripción. El servidor revalida código, tipo, actividad y nombre actual; no interpreta las frases de los detalles. Nombre y detalles respetan juntos los255 caracteres existentes, sin truncarlos. Se audita la procedencia y se descartan selecciones y respuestas atrasadas al cambiar nombre, tipo o paciente; editar los detalles conserva la elección. _Implementado en M2 (2.0.0-alpha.4) en ficha, portal e impresión; la presentación en el carnet sigue para el final de la v2.0._ | Alta |
+| RE-2.1.6 | Atención y modal deben compartir Evaluación, Diagnóstico y tratamiento y Cierre con validación en vivo y antes de avanzar. | Usabilidad | Se conserva todo al ir/volver; Finalizar solo aparece en Cierre; franja del paciente en grilla, alertas verticales (dos y +N más), pestañas visibles, stepper y tarjetas según mockups. Contexto con ficha incompleta y Reintentar ante fallo: formulario usable, solo control desactivado. Azul/neutros, errores y Sin cerrar rojos; referencia vital informativa por especie sin bloquear fuera de normalidad; perro solo en escritorio≥1024; sin desborde360/390/1366. Guardar en Atención vuelve automáticamente a Agenda con el toast «Atención registrada», sin recibo modal; si falla la reserva del control, conserva el aviso para agendarlo desde Nueva cita. | Alta |
+| RE-2.1.7 | El borrador de Atención debe conservarse localmente por cita y veterinario, incluyendo tratamientos y procedencia de las sugerencias. | Funcional | Guarda periódicamente y al salir con try/catch; muestra Recuperamos tu borrador y Descartar, conserva qué se editó, limpia al descartar o finalizar y evita restauración silenciosa del navegador. No persiste borradores en servidor. | Alta |
 
 **Reglas de negocio:** RN-201, RN-202, RN-203, RN-112, RN-113
 
@@ -405,11 +409,11 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.2.1 | El acceso «Atención sin cita» debe crear una cita de llegada antes de iniciar toda nueva atención, enlazando después su consulta. | Funcional | Un doble envío devuelve la misma cita y consulta; ninguna nueva atención por este acceso queda con id_cita NULL. El administrador no crea la cita. | Alta |
+| RE-2.2.1 | «Atención sin cita» abre Nueva cita para hoy en modo «llegó ahora», del veterinario de la sesión en la clínica activa. | Funcional | El servidor valida rol, clínica, fecha de hoy y disponibilidad; guarda origen llegada_sin_reserva y hora_llegada actual junto con la cita, auditados en la misma transacción. Un doble envío devuelve la misma cita; fallo revierte ambas marcas. El rojo sigue por Urgencias y no se crea consulta huérfana. | Alta |
 | RE-2.2.2 | El sistema debe permitir buscar al paciente y exigir los mismos datos que una consulta normal. | Funcional | Exige motivo y diagnóstico. | Alta |
 | RE-2.2.3 | El sistema debe asignar el número de historia clínica si es la primera consulta. | Funcional | Se genera el N.º de HC la primera vez. | Alta |
 | RE-2.2.4 | El sistema debe conservar el origen «llegada sin reserva» y distinguirlo de la reserva ordinaria y de los históricos sin cita. | Funcional | El historial (Pacientes y Atención) muestra el origen aunque exista id_cita; las consultas históricas NULL conservan la etiqueta «Sin cita». La lista de Consultas médicas se retiró (decisión del dueño, 2026-10-22). | Baja |
-| RE-2.2.5 | Una llegada verde/amarilla sin hueco debe registrarse en espera y recibir alternativas, sin sobrecupo automático ni consulta hasta crear su cita. | Restricción | No cambia el color para eludir capacidad; al conseguir espacio compatible se crea una sola cita con origen y se conserva la llegada. Amarillo precede a verde; dentro de cada color, fecha_llegada/id_solicitud ascendentes. Verde llegado 09:00 y amarillos 09:05 con IDs 21/22 se ordenan amarillo 21, amarillo 22, verde, revalidando capacidad antes de asignar. | Alta |
+| RE-2.2.5 | **Retirado (decisión del dueño, 2026-11-03).** La cola presencial sin cita se retira de la interfaz. | Restricción | Verde/amarillo sin hueco eligen otro horario o veterinario desde Nueva cita, sin sobrecupo automático; naranja y rojo conservan sus reglas. No se borran solicitudes ni métodos/rutas de espera del servidor; Triage y Rojos conservan los casos que les corresponden. | Retirado |
 
 **Reglas de negocio:** RN-102, RN-203, RN-208, RN-411, RN-415
 
@@ -469,11 +473,12 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.8.1 | Con los síntomas y el contexto del paciente, el Grafo I debe ordenar los diagnósticos probables por peso. | Funcional | Se muestran diagnósticos rankeados. | Alta |
-| RE-2.8.2 | El sistema debe permitir aceptar un diagnóstico sugerido o escribir el propio. | Funcional | El veterinario decide el diagnóstico. | Alta |
+| RE-2.8.1 | Con los síntomas y el contexto del paciente, el Grafo I debe ordenar los diagnósticos probables por peso. | Funcional | Se muestran diagnósticos rankeados. Completar datos faltantes de la ficha conforme a RE-1.4.1/5 vuelve a calcular; vacunación solo modifica esta evaluación. | Alta |
+| RE-2.8.2 | El sistema debe permitir aceptar un diagnóstico sugerido o escribir el propio y completar como sugerencia editable el plan y las pautas disponibles. | Funcional | Usar agrega diagnóstico, Exámenes sugeridos y Recomendaciones sin borrar texto, y filas con código de fármaco, dosis, vía, duración, fin e indicación. No duplica al repetir; cada fila dice «Sugerido por Zooki · verifica la dosis». Un aviso indica qué se llenó y Deshacer quita solo lo agregado, conservando lo escrito previamente y las ediciones posteriores. | Alta |
 | RE-2.8.3 | Si el grafo no encuentra coincidencias, el sistema debe permitir escribir el diagnóstico libremente, y debe exigirlo. | Validación | Sin diagnóstico no se continúa. | Alta |
-| RE-2.8.4 | La sugerencia debe ser de apoyo y no diagnosticar por sí sola. | Restricción | La decisión final es del veterinario. | Alta |
-| RE-2.8.5 | El conocimiento clínico debe ser global y compartido entre clínicas. | Funcional | El grafo no pertenece a una clínica. | Media |
+| RE-2.8.4 | La sugerencia debe ser de apoyo y no diagnosticar ni guardar por sí sola (RN-209). | Restricción | El veterinario revisa y edita antes de guardar. Solo se precarga la preferida por clase y grupo de elección del diagnóstico; una duplicada vigente advierte y no se precarga. Las demás aparecen en Alternativas junto a Zooki llenó, con consulta vigente de seguridad/peso al usarlas y Deshacer. La dosis muestra mg/kg y, con peso de la consulta, mg calculados y rango redondeados; sin peso dice «calcula con el peso». Cambiar peso recalcula solo dosis sugeridas aún no editadas. | Alta |
+| RE-2.8.5 | El conocimiento clínico debe ser global y compartido entre clínicas, con pautas declarativas y plan opcional del diagnóstico. | Funcional | El grafo no pertenece a una clínica. El cargador valida la lista cerrada de pauta, especie y fuente clínica con localizador, y los límites del plan; conserva IDs en recargas y cambia la versión ante cambios de pauta o plan. | Media |
+| RE-2.8.6 | Plan, exámenes, recomendaciones y tratamientos sugeridos deben conservar el diagnóstico de origen. | Funcional | Cambiar a este reemplaza lo sugerido sin editar y conserva como propio lo editado; borrar el diagnóstico retira sus sugerencias sin editar. Deshacer solo existe con contenido sugerido; borrador restaura esos vínculos. Usar desde Evaluación abre el paso2 lleno; panel marca En uso y los síntomas confirmados. Exámenes seleccionables, recomendaciones editables y Otras indicaciones componen un único plan sin duplicación al guardar. | Alta |
 
 **Reglas de negocio:** RN-209, RN-210, RN-212, RN-202
 
@@ -484,7 +489,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.9.1 | Al prescribir, el Grafo I debe cruzar el fármaco con la especie, la raza, las alergias y la medicación vigente, incluidas las registradas por otras clínicas. | Funcional | Se evalúa en cada prescripción. | Alta |
 | RE-2.9.2 | Una alergia registrada del paciente a ese fármaco o una contraindicación por especie o raza (toxicidad) debe bloquear la prescripción. | Restricción | Una prescripción tóxica o de un fármaco al que el paciente es alérgico se bloquea. | Alta |
 | RE-2.9.3 | Una interacción con la medicación vigente debe advertirse; el veterinario confirma o cambia y queda en auditoría. Si el tratamiento que origina la alerta pertenece a otra clínica y no hay autorización de lectura, el motor lo evalúa internamente pero solo emite un aviso genérico; antes de confirmar, el veterinario documenta la conciliación con el propietario o solicita autorización. | Funcional | La alerta detecta la interacción aun sin autorización; ni interfaz ni respuesta AJAX revelan el tratamiento protegido, y la verificación y la decisión quedan en auditoría. | Alta |
-| RE-2.9.4 | El soporte debe ser de apoyo y no recetar por sí solo. | Restricción | La decisión final es del veterinario. | Alta |
+| RE-2.9.4 | El soporte debe ser de apoyo y no recetar por sí solo. | Restricción | Solo veterinario con vínculo activo obtiene pautas aplicables ordenadas por preferencia; se excluyen las bloqueadas por toxicidad o alergia, se marcan advertencias y se oculta evidencia protegida. Las filas editables pasan por validar_prescripcion_ajax y por la validación del guardado, como las manuales. | Alta |
 
 **Reglas de negocio:** RN-209, RN-211, RN-212, RN-113
 
@@ -503,15 +508,15 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.11.1 | El formulario captura al menos un síntoma confirmado del catálogo o «Otro / no sé», nota libre opcional y tiempo por evento. El buscador solo sugiere y la nota no calcula el nivel. | Funcional | Solo texto no permite calcular. Se acepta tiempo conocido, «No sé» con revisión cuando sea decisivo o «No aplica» para preventivo; no se inventan datos ausentes. | Alta |
+| RE-2.11.1 | El formulario captura al menos un síntoma confirmado del catálogo o «Otro / no sé», nota libre opcional y tiempo por evento. El buscador solo sugiere y la nota no calcula el nivel. | Funcional | Solo texto no permite calcular. Se acepta tiempo conocido, «No sé» con revisión cuando sea decisivo o «No aplica» para preventivo. RN-416 permite calcular exposición tóxica sin hora como reciente (0min), conservando el tiempo desconocido y la revisión; jamás se supone el tiempo de un síntoma. Buscador por palabras de contenido, prefijo/similitud mínima0,65 para cada palabra, orden por promedio, máximo8 y Otro/no sé al final; no selecciona. | Alta |
 | RE-2.11.2 | El nivel final debe ser el máximo de los síntomas y combinaciones; los datos tranquilizadores no deben bajarlo. | Cálculo | T-04 y T-18 de la batería dan el nivel esperado. | Alta |
-| RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. | Alta |
+| RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. Sin declaración de vacunación, solo se leen las vacunas de esa mascota en cualquier clínica: próxima dosis vencida → incompleta; alguna vacuna y ninguna vencida → completa; sin registros → desconocida. Lo declarado manda; una mascota ajena no aporta datos (RN-416/RN-113). Poscelo solo caninas desde6 meses. Tamaño canino ausente se deriva del último peso visible según RN-416, conservando el tamaño acreditado de raza. | Alta |
 | RE-2.11.4 | Las señales de alarma universales deben dar 🔴 en cualquier especie. | Restricción | T-21 (loro con dificultad respiratoria) da 🔴. | Alta |
-| RE-2.11.5 | Todo resultado que requiera revisión humana debe resolverlo un veterinario antes de ofrecer horario reservable; el rojo conserva derivación inmediata. | Restricción | T-20/T-22/T-16 con revisión no ofrecen ni aceptan reserva antes de confirmar/ajustar con motivo cuando corresponda; cambio de marcas/contexto/versión invalida resolución. El propietario no se autoriza a sí mismo. | Alta |
+| RE-2.11.5 | Todo resultado con revisión conserva nivel provisional y permite reservar; la revisión inmediata tampoco bloquea. El rojo conserva derivación inmediata sin horarios. | Restricción | T-20/T-22/T-16 mantienen revisión y ofrecen/aceptan reserva según el nivel provisional, con el mensaje de RN-418 y aviso REVISION_TRIAGE al veterinario, marcado inmediato en T-20. El veterinario confirma/ajusta con motivo y auditoría antes o después de reservar; el propietario no se autoriza a sí mismo. Cambio de marcas/contexto/versión invalida resolución. | Alta |
 | RE-2.11.6 | Ante una posible enfermedad contagiosa, el sistema debe avisar a la clínica. | Funcional | T-11 genera el aviso de aislamiento. | Media |
 | RE-2.11.7 | La batería de casos de triage debe ejecutarse como prueba automatizada del cálculo. | Verificación | Los 26 casos clínicos coinciden con su nivel esperado o la diferencia queda justificada. | Alta |
 
-**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209
+**Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113
 
 ### HU-2.12 — Explorar el mapa del conocimiento clínico
 
@@ -597,9 +602,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.1.1 | Solo veterinario y propietario deben poder crear citas con fecha, hora, mascota, tipo/motivo y veterinario. | Funcional | El veterinario crea dentro de su alcance; el propietario solo para mascota propia/clínica vinculada; POST de creación del administrador da 403 sin retirar su supervisión, cancelación, reprogramación ni configuración autorizadas. | Alta |
+| RE-4.1.1 | Solo veterinario y propietario deben crear citas dentro de su contexto autorizado. | Funcional | Administrador no crea. La misma persona propietario/veterinario puede reservar para su propia mascota en ambos contextos; se auditan actor, rol activo y coincidencia del veterinario con el propietario (RN-G18). | Alta |
 | RE-4.1.2 | El sistema debe impedir intervalos incompatibles del veterinario y la mascota, incluso entre clínicas. | Restricción | Dos comienzos distintos que se solapan se rechazan; la respuesta no identifica la otra clínica ni paciente. Sobrecupo naranja es demanda adicional ordenada, nunca dos atenciones reales simultáneas. | Alta |
-| RE-4.1.3 | La reserva ordinaria debe caber completa, duración más margen, en la disponibilidad vigente. | Restricción | Una reserva que acaba exactamente en el extremo de franja cabe; un segundo después no. Sin horario de clínica o veterinario no se ofrece disponibilidad. | Alta |
+| RE-4.1.3 | La reserva debe caber completa en la disponibilidad vigente; solo una jornada aprobada permite empezar a agendar. | Restricción | Duración más margen cabe al extremo exacto de franja. Al abrir Nueva cita sin horario aprobado se avisa «Aún no tienes horario aprobado: propón tu horario en Mi perfil» y no se inicia el formulario. El portal excluye veterinarios sin horario aprobado. | Alta |
 | RE-4.1.4 | El sistema debe enviar correo de confirmación al crear. | Funcional | El propietario recibe confirmación. | Alta |
 | RE-4.1.5 | El sistema debe mostrar la cita en el calendario. | Funcional | La cita aparece en el calendario. | Media |
 
@@ -613,14 +618,15 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.2.2 | El sistema debe notificar el cambio por correo. | Funcional | El propietario recibe correo del cambio. | Media |
 | RE-4.2.3 | El sistema debe conservar las canceladas con su estado. | Restricción | La cancelada queda con estado cancelada. | Media |
 | RE-4.2.4 | El sistema debe impedir reprogramar a un horario ocupado. | Restricción | Reprogramar a un horario ocupado es rechazado. | Alta |
+| RE-4.2.5 | El servidor debe aplicar el plazo configurable de cambios ordinarios RN-430. | Restricción | Propietario/veterinario son rechazados a menos de N minutos de la hora pactada original, incluso por POST o arrastre; exacto N permite y N=0 desactiva. Portal muestra el mensaje de RN-430; veterinario oculta acciones. Administrador cancela con motivo de 1–255 caracteres auditado. Urgencias, cascada y decisión clínica de llegada desde Citas mantienen sus flujos y permisos. | Alta |
 
-**Reglas de negocio:** RN-405
+**Reglas de negocio:** RN-430, RN-405
 
 ### HU-4.3 — Marcar cita como completada
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada o no asistida, no. | Media |
+| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada o no asistida, no. El cierre retira solo ATENCION_ABIERTA/ATENCION_SIN_CERRAR de esa cita y clínica en la misma transacción, conservando sus filas y los otros avisos; un fallo revierte también el retiro. Los avisos anteriores de una cita completada no aparecen ni cuentan como no leídos. | Media |
 | RE-4.3.2 | El sistema debe completar la cita al registrar su consulta, en la misma transacción. | Funcional | Guardar la consulta deja la cita completada; si algo falla no queda ninguna de las dos. | Alta |
 | RE-4.3.3 | El sistema debe excluir las completadas de la agenda futura. | Funcional | Una completada no aparece en la agenda futura. | Media |
 | RE-4.3.4 | El sistema debe permitir iniciar la atención solo al veterinario asignado, el día de la cita y desde 15 minutos antes de su hora. | Restricción | Otro rol, otro veterinario, otra fecha o una hora anterior son rechazados. | Alta |
@@ -629,8 +635,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.3.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
 | RE-4.3.8 | _(Derogado en v2.0: RN-410 se deroga.)_ En v1.11.0 el veterinario asignado podía cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | En v2.0 no existe la acción: una atención iniciada solo se completa con su consulta. | Media |
 | RE-4.3.9 | El sistema debe revisar las atenciones abiertas con una tarea programada al menos cada 5 minutos, además de al cargar el calendario. | Integración | Sin que nadie abra el calendario, el aviso llega a más tardar 15 minutos después de la hora de fin. | Alta |
+| RE-4.3.10 | Al finalizar, el veterinario puede solicitar un control posterior al commit de la consulta, en la misma petición y como operación separada e idempotente (RN-431). | Funcional | Conserva misma mascota/veterinario/clínica; tipo Control existente o Consulta general, control preventivo verde y flujo de reserva/eventos/correo existente. Un error del control conserva la consulta y devuelve Agendar control con Nueva cita prellenada. El enlace permite abrir el formulario sin horario aprobado, avisándolo; la reserva conserva la disponibilidad obligatoria. Otro rol/clínica/veterinario no puede forzarlo. | Alta |
+| RE-4.3.11 | El próximo control debe proponer el fin conocido más lejano o el plazo supletorio de la clínica (default7 días), con fecha editable y disponibilidad real. | Funcional | Selector excluye días cerrados o sin jornada por cierres/ausencias. Al cerrar reserva el primer hueco del día o siguiente hábil y avisa el cambio; busca hasta el horizonte de la clínica (default30 días), ambos parámetros enteros de1 a365 días, configurables junto al plazo RN-430. Sin hueco, usa el fallback de RE-4.3.10; no pierde la consulta. | Alta |
 
-**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410
+**Reglas de negocio:** RN-406, RN-407, RN-409, RN-410, RN-431
 
 ### HU-4.4 — Confirmación automática de cita por correo
 
@@ -649,7 +657,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.5.1 | El sistema debe sellar la hora real al iniciar y al completar la atención. | Funcional | Quedan registradas las horas reales de inicio y fin. | Alta |
 | RE-4.5.2 | El sistema debe detectar exceso activo respecto del fin nominal vigente, durante la atención y al finalizar. | Cálculo | Con inicio real 09:20 y servicio completo 30, nominal 09:50; una pausa 09:10–09:30 para inicio 09:00 y servicio 30 desplaza nominal a 09:50, sin cambiar sellos. No reiniciar el nominal en cada recálculo. | Alta |
-| RE-4.5.3 | El sistema debe recalcular las siguientes citas con la política M y conservar pactadas, estimadas y reales separadas. | Cálculo | Nominal 09:50 y margen 10: fin 10:00 conserva extremo 10:00; fin 10:01 lo lleva a 10:01. Recalcular idénticos hechos/reloj no acumula otro delta; después de completar, avanzar reloj no altera el resultado. | Alta |
+| RE-4.5.3 | El sistema debe recalcular con política M, separando horas pactadas, estimadas y reales. | Cálculo | Durante atención el margen único no se regenera. Al completar a las 10:00, el extremo queda a las 10:00, aunque el nominal más margen sea posterior; el sobrante permite reservas y recupera retrasos de la cascada sin adelantar pactadas. Avanzar reloj tras completar no altera el resultado. Día/Semana/lista móvil y detalle muestran retrasos desde5 minutos, redondeados; azul hasta30 inclusive y rojo después, con horas legibles. El veterinario ve un toast por lote recalculado de hoy sobre el umbral clínico, con acceso a Día; repetir su sincronización no lo duplica. | Alta |
 
 **Reglas de negocio:** RN-401, RN-412
 
@@ -666,7 +674,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.7.1 | El sistema debe permitir marcar una cita como "no asistió". | Funcional | Se marca la cita como no asistida. | Media |
+| RE-4.7.1 | El sistema debe registrar la inasistencia automáticamente según RN-408 y conservar la acción manual del veterinario asignado tras la tolerancia. | Funcional | Sin llegada ni inicio real: espera durante el hueco; pasada la tolerancia y al empezar la siguiente cita posterior del mismo veterinario, marca no_asistio; sin otra posterior, lo hace al cierre configurado. No cuenta canceladas/no asistidas como siguiente turno. No cambia llegadas registradas ni atenciones iniciadas; es idempotente, aislado por clínica y atómico con auditoría/cascada. | Media |
 | RE-4.7.2 | El sistema debe liberar el espacio de una cita no asistida. | Funcional | Tras marcar «no asistió», esa franja vuelve a ofrecerse como disponible al agendar. | Media |
 | RE-4.7.3 | El sistema debe permitir reportar la tasa de ausentismo. | Funcional | El administrador ve en el Inicio el porcentaje de no asistencia del mes de su clínica (RE-6.2.12). | Baja |
 
@@ -680,7 +688,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.8.1 | El sistema debe permitir registrar bloqueos por veterinario y fecha. | Funcional | Se crean bloqueos que restan disponibilidad. | Alta |
 | RE-4.8.2 | El sistema debe representar festivos y cierres puntuales por fecha/rango de la clínica. | Funcional | Cerrar solo un lunes no cierra los demás; se excluye el intervalo completo [inicio, fin), sin convertir el cierre en recurrencia ni ausencia de cada veterinario. | Alta |
-| RE-4.8.3 | El sistema debe excluir esos periodos de la disponibilidad. | Restricción | No se agenda en bloqueos ni festivos. | Alta |
+| RE-4.8.3 | La disponibilidad y el calendario deben excluir periodos cerrados. | Restricción | Un día completamente cerrado por semana o cierre puntual tiene el aspecto de pasado, sin «+», sin agendar al tocar ni recibir arrastres; sus eventos siguen consultables. Un cierre parcial solo resta sus intervalos. | Alta |
 
 **Reglas de negocio:** RN-402, RN-703
 
@@ -709,10 +717,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-4.11.1 | El sistema debe permitir definir franjas recurrentes por día de la semana para cada veterinario. | Funcional | Se guardan las franjas por día. | Alta |
-| RE-4.11.2 | Las franjas no deben solaparse entre sí ni con el horario del mismo veterinario en otra clínica, y deben caer dentro del horario de la clínica. | Validación | Un solape o una franja fuera de rango se rechaza; si el choque es con otra clínica, el aviso no muestra el horario de esa clínica. | Alta |
+| RE-4.11.2 | Las franjas no deben solaparse ni salir de la apertura, tampoco chocar con horarios del mismo veterinario en otra clínica. | Validación | Clínica lunes–viernes 08–12 y 14–18 acepta propuesta idéntica. Sábado/domingo cerrados quedan bloqueados en el formulario; límites de horas y validación en vivo impiden proponer fuera. El servidor rechaza también un envío forzado; un conflicto ajeno no revela horas ni clínica. | Alta |
 | RE-4.11.3 | La disponibilidad solo debe ofrecer espacios dentro de esas franjas. | Restricción | La agenda respeta las franjas. | Alta |
 | RE-4.11.4 | El cambio de horario debe guardar atómicamente marcas de reajuste para las citas que queden fuera. | Funcional | Modificar/restaurar/aprobar mientras otra conexión reserva produce un antes/después íntegro; las afectadas quedan visibles como pendientes, sin cambiar horas pactadas para esconderlas. | Alta |
-| RE-4.11.5 | Solo el administrador debe poder modificar el horario; el veterinario solo puede proponer cambios, que se aplican al ser aprobados. | Seguridad | Un veterinario que intenta guardar su horario directamente recibe 403; su propuesta queda pendiente hasta que el administrador la aprueba. | Alta |
+| RE-4.11.5 | El administrador modifica/aprueba el horario; el veterinario solo propone. | Seguridad | Guardado directo del veterinario da 403. Propuesta y aviso interno pendiente al administrador de esa clínica se guardan atómicamente y sin duplicar al reintentar; no cambian aún jornada ni citas. | Alta |
 
 **Reglas de negocio:** RN-706, RN-703, RN-415
 
@@ -732,15 +740,15 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.13.1 | El Grafo I debe calcular el nivel de triage a partir de los síntomas; el propietario no lo elige. | Funcional | El nivel se asigna automáticamente. | Alta |
+| RE-4.13.1 | El Grafo I debe calcular el nivel de triage a partir de los síntomas; el propietario no lo elige. Otro síntoma exige una descripción de lo observado. | Funcional | Sin descripción, Otro síntoma se rechaza en cliente y servidor sin crear solicitud. Una descripción válida de1 a255 caracteres se conserva y se muestra completa al personal, sin interpretar su texto para calcular el nivel. La falta de cobertura mantiene revisión y nivel provisional según RN-418. | Alta |
 | RE-4.13.2 | El sistema debe verificar el límite del plan antes de reservar, salvo en los casos 🔴. | Restricción | Con la clínica al límite, un 🟡 se rechaza y un 🔴 se deriva a urgencia igual. | Alta |
-| RE-4.13.3 | Tras la revisión veterinaria que proceda, el sistema debe ubicar por nivel: rojo a derivación, naranja a sobrecupo, amarillo primer espacio y verde elección. | Funcional | Revisión pendiente no ofrece horario; rojo avisa/deriva de inmediato sin acreditar presencia ni pausar; naranja respeta bloque/tope, amarillo primer intervalo completo y verde elige. | Alta |
+| RE-4.13.3 | El sistema debe ofrecer horarios por nivel aprobado o provisional. | Funcional | Verde y amarillo muestran todos los horarios libres del día, el primero «Recomendado», y permiten elegir cualquiera en portal y Nueva cita. Naranja muestra los tres más cercanos, se asigna al primero libre y explica «Nivel naranja: se le asigna el primer horario libre para atenderlo cuanto antes»; respeta RN-422. Rojo deriva sin horarios. Revisión pendiente/inmediata permite reservar con aviso; revisión posterior aplica reclasificación con motivo/auditoría, rojo a Urgencias y descenso conserva espacio. | Alta |
 | RE-4.13.4 | La disponibilidad debe ser horario clínica ∩ horario veterinario, menos cierres puntuales, ausencias aprobadas y ocupación, por duración más margen. | Cálculo | Sugerencias y guardado restan exactamente esos intervalos; contactos o calendarios ajenos no se exponen. | Alta |
-| RE-4.13.5 | La reserva debe bloquear recursos estables y revalidar el hueco; si se ocupó, buscar alternativas. | Restricción | Amarillo recalcula primer compatible y naranja bloque/tope; verde recibe alternativas para elegir, sin confirmar otra hora unilateralmente. | Alta |
+| RE-4.13.5 | La reserva debe bloquear recursos estables y revalidar el hueco. | Restricción | Verde/amarillo conservan la hora elegida si sigue disponible; si se ocupó reciben alternativas sin cambiarla unilateralmente. Naranja recalcula el primero libre y el tope del bloque. | Alta |
 | RE-4.13.6 | Al crear la cita, el sistema debe registrar el tipo, la duración, el margen y la prioridad, notificar y auditar. | Funcional | La cita queda creada y notificada. | Alta |
 | RE-4.13.7 | Cada franja continua original del veterinario por fecha admite el tope naranja de clínica (default 2), sin multiplicarlo por ausencias parciales. | Restricción | El tercero excedente avisa sin insertarse; dividir la franja no duplica cupos; completadas consumen y canceladas/no_asistio liberan. Orden fecha_registro/id_cita; cambio veterinario exige motivo/auditoría. | Alta |
 
-**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-420, RN-422
+**Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423, RN-424
 
 ### HU-4.14 — Reajuste de agenda en vivo (efecto cascada)
 
@@ -752,7 +760,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.14.4 | Solo el veterinario destino debe poder aceptar una reasignación en vivo pendiente y vigente. | Restricción | Antes del límite y con hueco aún compatible, aceptación cambia cita/propuesta/evento en una transacción; admin, otro vet o clínica ajena reciben 403. Una propuesta no aparta el hueco mientras espera. | Alta |
 | RE-4.14.5 | Sin veterinario disponible, la cita debe reprogramarse con el propietario; los cambios se notifican y auditan. | Funcional | Se ofrece reprogramar; notificación y auditoría. | Media |
 | RE-4.14.6 | El destino debe responder dentro del plazo configurado; rechazo o vencimiento prueban siguiente candidato compatible. | Funcional | Vigencia [fecha, fecha_limite): en el límite ya venció. Dos conexiones aceptando/venciendo dejan una sola transición; un hueco perdido no mueve la cita y, sin candidato, queda pendiente de reprogramar. | Alta |
-| RE-4.14.7 | Los cambios de hora estimada deben avisarse solo al superar el umbral acumulado y como máximo una vez cada 30 minutos por cita; la reasignación y la reprogramación se avisan siempre. | Restricción | Diez recálculos de 3 minutos en una hora generan como máximo dos avisos. | Media |
+| RE-4.14.7 | Los cambios de hora estimada deben avisarse solo al superar el umbral acumulado y como máximo una vez cada 30 minutos por cita; la reasignación y la reprogramación se avisan siempre. | Restricción | Diez recálculos de 3 minutos en una hora generan como máximo dos avisos. Cada ESTIMACION_CITA validado para despacho publica una campana del propietario y un correo con hora pactada/estimada legibles y causa; reintentar el mismo evento no duplica la campana. El portal muestra el recuadro si el retraso respecto a la pactada supera el umbral de esa clínica. | Media |
 
 **Reglas de negocio:** RN-412, RN-413, RN-415, RN-428, RN-429
 
@@ -760,11 +768,11 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.15.1 | El rojo remoto debe registrar derivación y aviso inmediato; solo llegada física acreditada habilita el circuito presencial de prioridad máxima. | Funcional | O-01/O-02 no crean reserva ordinaria, hora_llegada, pausa ni inicio real desde el portal; al llegar se enlaza el mismo caso sin duplicarlo ni retrasar aviso por revisión o cuota. | Alta |
-| RE-4.15.2 | Entre rojos presentes se debe ordenar inicialmente por llegada física/ID y asignar libre, pausable o espera sin veterinario. | Funcional | Solo personal clínico altera el orden con motivo auditado; si todos son no pausables queda espera durable sin vet ficticio. Un nuevo rojo con una atención pausada requiere decisión del vet, sin interrupciones anidadas automáticas. | Alta |
+| RE-4.15.1 | El rojo remoto debe registrar derivación/aviso inmediato; solo llegada física acreditada habilita atención presencial. | Funcional | «Ir a Urgencias» desde Nueva cita abre llegada con mascota y resumen de síntomas/exposiciones ya cargados, reutilizando la solicitud y su evaluación persistida. Abrir no acredita llegada ni crea otra solicitud. Confirmar la llegada enlaza el mismo caso; rojo remoto no crea reserva, pausa ni inicio real. | Alta |
+| RE-4.15.2 | Entre rojos presentes se debe ordenar inicialmente por llegada física/ID; la capacidad de agenda no impide iniciar la atención y la cascada reacomoda las demás citas (RN-427), conservando RN-401. | Funcional | Solo personal clínico altera el orden con motivo auditado; otro rojo anterior se resuelve en el mismo modal con motivo y reintento. Solo espera si la atención actual no es pausable o ya hay otra pausada sin decisión explícita; el aviso identifica al paciente actual y confirma que la urgencia quedó primera en la fila, sin vet ficticio ni interrupciones anidadas automáticas. | Alta |
 | RE-4.15.3 | El portal usa propietario/mascota autenticados; presencial reutiliza identidad/titularidad verificadas o crea provisional sin atribuir propiedad ni cuenta. Admin y vet autorizado de esa clínica pueden completar/consolidar tras verificar titularidad. | Funcional | Las cuatro ramas conservan IDs, clínica y autores; se usa identidad/vínculo legítimo vigente, sin nuevo documento, plazo o reto de verificación. Conocer un ID no acredita titularidad. Propietario no fusiona; admin no crea citas ni actos clínicos. S activa/finalizada y su cita usan identidad vigente tras conciliar, conservando episodio/contexto original como historia. Activas invalidan revisión/huella; terminales no se reabren. Comandos y eventos revalidan identidad, contexto, versiones, destinatario y permisos actuales, también en reintentos sin duplicar efectos; no reutilizan autorización anterior ni recalculan decisiones pasadas. Fallo intermedio revierte S/C/ingreso, actos, versiones, revisión, eventos y operación; dos operadores no consolidan dos veces. | Alta |
-| RE-4.15.4 | La atención debe continuar por el flujo de consulta vía Atención/Urgencias. | Funcional | Enlaza con la consulta clínica. | Alta |
-| RE-4.15.5 | El uso del espacio debe enlazar con el reajuste de agenda en vivo. | Funcional | La agenda del día se reacomoda. | Media |
+| RE-4.15.4 | Nueva urgencia → Atender ahora debe abrir Atención directamente con la cita iniciada; el sistema elige el tipo activo de la clínica: Urgencia → Consulta general → primer tipo activo no exclusivo del personal. | Funcional | Sin pedir tipo ni motivo inicial; se usa «Ingreso de urgencia presencial» y puede identificarse después. Si ya existe llegada no se duplica; un fallo al atender conserva el registro y ofrece Reintentar atender con su explicación. Decisión clínica y priorización solo aparecen cuando el servidor las exige, con motivos predefinidos y detalle libre opcional; elegir reintenta dentro del mismo modal. | Alta |
+| RE-4.15.5 | La urgencia roja presente inicia aunque la agenda esté llena y recalcula la cascada para reacomodar las demás citas. | Funcional | Con capacidad ocupada se crea la cita en curso, se registra su inicio real y se recalculan las estimaciones conservando las horas pactadas; no se devuelve espera por falta de hueco. Solo espera por atención actual no pausable o por otra pausa sin decisión, según RN-427 y RE-4.15.2. | Alta |
 | RE-4.15.6 | Un caso 🔴 desde el portal fuera del horario de la clínica debe informar que está cerrada, mostrar su teléfono de urgencias si existe y recomendar un servicio 24 horas. | Funcional | A las 11 p. m. el mensaje no promete atención y muestra la recomendación. | Alta |
 | RE-4.15.7 | La urgencia no debe bloquearse por el límite del plan ni por la mora. | Restricción | Con la clínica al límite y en mora, la urgencia se registra y se atiende. | Alta |
 | RE-4.15.8 | Solo se pausa tipo pausable por rojo presente y se reanuda antes de las siguientes, conservando segmentos y primer inicio real. | Restricción | Pausa 09:10–09:30, r=09:00/D=30/m=10: restante 20, N=09:50/L=10:00. Varias pausas no regeneran margen; no completar pausada ni inventar reanudación. Ante otro rojo decide el vet. | Alta |
@@ -797,7 +805,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.18.1 | El veterinario debe poder cambiar el nivel de triage con motivo obligatorio. | Funcional | Sin motivo, el cambio se rechaza. | Alta |
+| RE-4.18.1 | El veterinario debe poder cambiar el nivel de triage con motivo obligatorio mediante opciones rápidas y detalle libre opcional. | Funcional | Cambiar el nivel sin motivo se rechaza; elegir un motivo rápido permite guardar sin redactar. Confirmar el nivel calculado guarda la confirmación del veterinario. Motivo compuesto de hasta255 caracteres, sin perder datos ante un error. | Alta |
 | RE-4.18.2 | El cambio debe auditarse y guardar el nivel calculado y el ajustado. | Seguridad | La entrada de auditoría muestra ambos niveles y el motivo. | Alta |
 | RE-4.18.3 | Si el ajuste cambia la ubicación, la agenda debe reacomodarse y notificar. | Funcional | La cita se mueve según el nuevo nivel y llega el aviso. | Media |
 | RE-4.18.4 | Las reclasificaciones deben verse al personal autorizado de la clínica solo sobre sus propios casos asociados al propietario. | Funcional | El historial no incluye reclasificaciones de Sur al consultar Norte ni genera sanciones/puntuación automática; conserva calculado/ajustado, motivo, autor y fecha. | Baja |
@@ -810,8 +818,8 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.19.1 | El sistema debe registrar la hora de llegada del propietario. | Funcional | La cita guarda la hora de llegada. | Alta |
 | RE-4.19.2 | Dentro de la tolerancia, el veterinario decide atender el servicio completo con cascada o reprogramar; si no alcanza el tiempo, también se ofrecen duración reducida explícita si cabe y otro veterinario compatible. | Funcional | A los 8 y exactamente 10 minutos, con tolerancia 10, conserva el servicio completo salvo decisión veterinaria explícita; una reducción exige duración y capacidad, sin cambiar el snapshot original. Las alternativas no asignan automáticamente otro veterinario. | Alta |
-| RE-4.19.3 | Pasada la tolerancia, el veterinario debe poder marcar «no asistió», atender en el siguiente espacio libre o reprogramar. | Funcional | Con 15 minutos de retraso aparecen las tres opciones. | Alta |
-| RE-4.19.4 | La agenda debe recalcularse y la decisión registrarse en auditoría. | Seguridad | Las citas siguientes muestran su nueva hora estimada y la decisión queda auditada. | Media |
+| RE-4.19.3 | Pasada la tolerancia, una reserva sin llegada espera mientras haya hueco hasta la siguiente cita posterior del mismo veterinario o el cierre de jornada; allí se marca no asistió según RN-408. Una llegada registrada durante el hueco se resuelve desde la propia cita de hoy en el panel Citas mediante un modal. | Funcional | La tolerancia sola no cierra una reserva con hueco libre. No se ajusta nivel de un paciente que no ha llegado. Registrar llegada abre las opciones de siguiente horario disponible o reprogramar en modal; sin horarios no se ofrece una acción inválida. La llegada puntual no se penaliza por demora veterinaria; el inicio directo tardío sigue rechazado y las atenciones antiguas ya iniciadas/sin cerrar conservan RN-409. | Alta |
+| RE-4.19.4 | La agenda debe recalcularse y la decisión registrarse en auditoría. | Seguridad | Las citas siguientes muestran su nueva hora estimada y la decisión queda auditada. El calendario, el detalle y el panel Citas actualizan estado/acciones al responder el guardado de No asistió, resolver o reprogramar, sin esperar la sincronización periódica ni exigir recarga manual. | Media |
 
 **Reglas de negocio:** RN-426, RN-408, RN-412
 
@@ -882,21 +890,21 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-5.6.1 | El sistema debe permitir al propietario cancelar una cita futura propia. | Funcional | El propietario cancela su cita y queda en estado cancelada. | Alta |
-| RE-5.6.2 | El sistema debe permitir reprogramar a un horario disponible. | Funcional | Se reprograma solo a horarios libres. | Alta |
+| RE-5.6.1 | El propietario debe poder cancelar su cita futura propia dentro del plazo permitido. | Funcional | Aplica RN-430 y conserva la cancelada; dentro de la ventana se sustituye la acción por «Ya no se puede cambiar: comunícate con la clínica», también se rechaza POST forzado. | Alta |
+| RE-5.6.2 | El propietario debe reprogramar solo a horarios disponibles y dentro del plazo permitido. | Funcional | Se revalida la hora pactada original con RN-430, además de permisos y disponibilidad destino; ocultar controles no sustituye el control del servidor. | Alta |
 | RE-5.6.3 | El sistema debe permitirlo solo sobre citas propias. | Seguridad | No puede tocar citas de otros propietarios. | Alta |
 | RE-5.6.4 | El sistema debe notificar el cambio a la clínica y registrarlo en auditoría. | Funcional | El cambio notifica a la clínica y queda en auditoría. | Media |
 
-**Reglas de negocio:** RN-405, RN-401, RN-G02
+**Reglas de negocio:** RN-430, RN-405, RN-401, RN-G02
 
 ### HU-5.7 — Centro de notificaciones del propietario
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-5.7.1 | El sistema debe mostrar al propietario un listado de sus notificaciones en el portal. | Funcional | El propietario ve sus notificaciones en el portal. | Media |
+| RE-5.7.1 | El sistema debe mostrar al propietario un listado de sus notificaciones en el portal. | Funcional | La campana lista ESTIMACION_CITA y permite abrir su cita por el enlace, también en celular; los demás tipos de aviso siguen pendientes. | Media |
 | RE-5.7.2 | El sistema debe mostrar un contador de no leídas. | Funcional | Hay un contador de no leídas. | Media |
-| RE-5.7.3 | El sistema debe permitir marcarlas como leídas. | Funcional | Puede marcar como leídas. | Baja |
-| RE-5.7.4 | El sistema debe mostrar solo las notificaciones del propietario. | Seguridad | El propietario A no ve las notificaciones del propietario B ni pidiéndolas por URL (403). | Alta |
+| RE-5.7.3 | El sistema debe permitir marcarlas como leídas. | Funcional | Puede marcar una o todas sus estimaciones como leídas, mediante POST con CSRF; el contador se actualiza. | Baja |
+| RE-5.7.4 | El sistema debe mostrar solo las notificaciones del propietario. | Seguridad | El propietario A no ve las notificaciones del propietario B ni pidiéndolas por URL (403); el portal global solo incluye ESTIMACION_CITA dirigidas a su usuario y cuya mascota sigue siendo suya, sin mezclar avisos de sus roles de personal. | Alta |
 
 **Reglas de negocio:** RN-G02
 
@@ -967,7 +975,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-5.13.1 | El portal debe permitir al propietario vincularse con un clic a una clínica activa de la lista, sin repetir la verificación del correo. | Funcional | Tras vincularse, la clínica aparece entre sus clínicas y en la selección al agendar. | Alta |
-| RE-5.13.2 | Al vincularse, la clínica nueva solo debe ver los datos del propietario; las mascotas se le vinculan al agendar o al ser atendidas allí. | Seguridad | Recién vinculada, la clínica no ve mascotas del propietario hasta que se cumpla una de las dos condiciones. | Alta |
+| RE-5.13.2 | Una clínica recién vinculada ve al propietario; las mascotas previas se vinculan al reservar o ser atendidas. Las creadas después se vinculan desde su alta a todas sus clínicas activas. | Seguridad | Alta global y vínculos se guardan atómicamente, con límites y auditoría por clínica; una inactiva o vínculo inactivo no se reactiva. Sin clínicas activas conserva ficha global. No duplica mascota por cambiar de rol. | Alta |
 | RE-5.13.3 | El propietario debe poder desvincularse; se rechaza si tiene citas pendientes en esa clínica. | Restricción | Con citas pendientes se informa que debe cancelarlas primero; sin ellas, el vínculo pasa a inactivo. | Media |
 | RE-5.13.4 | Cada vinculación y desvinculación debe registrarse en auditoría. | Seguridad | Ambas operaciones generan entrada de auditoría. | Media |
 | RE-5.13.5 | Desde el portal, el propietario debe poder tener como máximo 3 clínicas con vínculo activo (RN-116); el tope no aplica cuando una clínica lo registra o confirma su vínculo. | Restricción | Con 3 clínicas activas, «Vincularme» se muestra deshabilitado con una línea que lo explica y el servidor rechaza una cuarta vinculación desde el portal; una clínica sí liga a un propietario que ya tiene 3; al desvincularse de una, puede vincularse a otra. El registro desde el enlace o QR de una clínica no cuenta como vinculación desde el portal (decisión del usuario, M5 C3). | Media |
@@ -996,12 +1004,12 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-6.1.2 | El sistema debe ofrecer accesos rápidos a funciones frecuentes. | Usabilidad | Los accesos llevan a las funciones correctas. | Media |
 | RE-6.1.3 | El dashboard debe cargar en menos de 3 s. | Rendimiento | Carga en menos de 3 s. | Media |
 | RE-6.1.4 | El sistema debe filtrar los datos según el usuario. | Seguridad | Cada usuario ve solo lo que le corresponde. | Alta |
-| RE-6.1.5 | El panel del veterinario debe destacar el siguiente paciente con su nivel, su llegada, sus alergias y la acción disponible: registrar la llegada, iniciar, esperar la ventana de inicio o continuar. | Usabilidad | El botón respeta la ventana de 15 minutos de RN-407 y se habilita sin recargar. «Registrar llegada» usa la acción de Llegadas; pasada la tolerancia, la decisión se toma en Llegadas (RN-426). | Alta |
+| RE-6.1.5 | El panel del veterinario debe destacar el siguiente paciente con su nivel, su llegada, sus alergias y la acción disponible: registrar la llegada, iniciar, esperar la ventana de inicio o continuar. | Usabilidad | El botón respeta la ventana de 15 minutos de RN-407 y se habilita sin recargar. «Registrar llegada» usa el endpoint existente; pasada la tolerancia, abre la cita enfocada y Resolver llegada en el panel Citas (RN-426). | Alta |
 | RE-6.1.6 | El panel del veterinario debe listar sus atenciones sin cerrar o abiertas de días anteriores. | Funcional | Cada una lleva a la pantalla de atención para cerrarla. | Alta |
 | RE-6.1.7 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Sin datos, el panel muestra un estado vacío. | Alta |
 | RE-6.1.8 | El Inicio del veterinario debe mostrar el calendario del mes con hoy resaltado y un punto en los días con sus citas de la clínica activa; al tocar un día, «Tu día» muestra esa fecha. | Funcional | La fecha y el mes se piden por una acción de solo lectura del veterinario, que toma su agenda de la sesión: un id de otro veterinario en la petición no cambia lo que ve. Una fecha o un mes inválidos responden con error, sin datos. | Alta |
 | RE-6.1.9 | «Tu día» debe listar en orden de hora las citas con su estado, los huecos libres de la disponibilidad real (RN-415) y el almuerzo, los cierres puntuales y las ausencias. | Funcional | Con jornada 8–12 y 14–18, citas a las 9:00 y 10:00 y un cierre de 15:00 a 16:00: libre 8:00, citas, libre 10:40, almuerzo 12:00, libre 14:00, cierre 15:00 y libre 16:00. Un hueco más corto que el tipo de cita más corto no se ofrece; de hoy, solo desde ahora; de un día pasado, ninguno. Cada hueco abre el agendamiento con su fecha y hora. Un día sin citas muestra lo libre y el próximo día con citas. | Alta |
-| RE-6.1.10 | El Inicio debe resumir el día (citas, atendidas, sin cerrar y pendientes) y agrupar los pendientes por tipo: atenciones sin cerrar, triages por revisar, reasignaciones y próximas dosis. | Usabilidad | Solo aparecen los tipos con algo, cada uno con su número y su acción; sin pendientes se ve «Todo al día». | Media |
+| RE-6.1.10 | El Inicio debe resumir el día (citas, atendidas, sin cerrar y pendientes) y agrupar los pendientes por tipo: atenciones abiertas, triages por revisar, reasignaciones y próximas dosis. | Usabilidad | Solo aparecen los tipos con algo, cada uno con su número y su acción; las atenciones abiertas incluyen las de hoy y las urgencias aún sin propietario identificado, con acceso directo para continuarlas; sin pendientes se ve «Todo al día». | Media |
 | RE-6.1.11 | El Inicio debe mostrar los pacientes que el veterinario atendió recientemente en la clínica activa. | Funcional | Una fila por mascota con su consulta más reciente, sin consultas de otro veterinario, de otra clínica ni de mascotas desvinculadas; cada una abre su ficha. | Media |
 | RE-6.1.12 | El Inicio debe caber sin desplazar la página en escritorio (1366×768) y reordenarse en tableta y celular (RNF-16). | Usabilidad | En escritorio solo la lista de «Tu día» se desplaza por dentro; en el celular el orden es siguiente paciente, atención sin cita y hoy, tu día, pendientes, calendario y recientes; sin desplazamiento horizontal en 360 px. | Media |
 
@@ -1017,7 +1025,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-6.2.4 | El sistema debe graficar las citas atendidas y no asistidas de los últimos 6 meses. | Funcional | Los meses sin citas aparecen en cero y los datos tienen una tabla accesible. | Media |
 | RE-6.2.5 | El sistema debe listar las citas de hoy con un filtro por estado en Gestión de citas; el Inicio muestra la agenda por veterinario (decisión del dueño con el mockup aprobado, 2026-10-24). | Funcional | En Gestión de citas, al filtrar hoy por «en curso», solo aparecen las citas de hoy en ese estado. El Inicio enlaza a Gestión de citas. | Media |
 | RE-6.2.6 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Con la base de datos vacía, todos los indicadores muestran cero. | Media |
-| RE-6.2.7 | La tarjeta «Hoy en la clínica» debe mostrar citas de hoy, atendidas, en espera y urgencias de la clínica activa, con acceso a Gestión de citas. | Funcional | En espera = citas de hoy con llegada registrada que aún no empiezan + llegadas sin reserva en espera presencial; urgencias = casos rojos de hoy, atendidos o en cola. Las canceladas no cuentan. No hay botón para agendar: el administrador no crea citas (RN-401). | Alta |
+| RE-6.2.7 | La tarjeta «Hoy en la clínica» debe mostrar citas de hoy, atendidas, en espera y urgencias de la clínica activa, con acceso a Gestión de citas. | Funcional | En espera = solo citas de hoy con llegada registrada que aún no empiezan; urgencias = casos rojos de hoy, atendidos o en cola. Las canceladas no cuentan. No hay botón para agendar: el administrador no crea citas (RN-401). | Alta |
 | RE-6.2.8 | El Inicio del administrador debe mostrar el calendario del mes con hoy resaltado y un punto en los días con citas de la clínica activa; al tocar un día, la agenda por veterinario muestra esa fecha. | Funcional | El día y el mes se piden por una acción de solo lectura del administrador; el veterinario y el propietario reciben 403. Una fecha o un mes inválidos responden con error, sin datos. | Alta |
 | RE-6.2.9 | La agenda del día debe mostrar cada veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales (RN-415), el almuerzo, las ausencias y su porcentaje de ocupación. | Funcional | Los huecos, el almuerzo y las ausencias son los mismos del Inicio del veterinario para esa fecha; de hoy, los huecos solo desde ahora. Ocupación = tiempo no libre / jornada efectiva (jornada − cierres − ausencias). En escritorio y tableta se conserva la columna por veterinario y el desplazamiento horizontal interior con más de tres. En celular, un selector muestra solo la agenda del veterinario elegido; con uno solo, el selector se oculta (decisión del dueño, 2026-10-27). | Alta |
 | RE-6.2.10 | El Inicio debe mostrar el uso del plan (mascotas, citas del mes y personal contra su límite, HU-0.4) y accesos a Usuarios y Configuración. | Funcional | Los valores son los de LimitePlan para la clínica activa; un plan sin límite muestra el uso sin barra de tope. Al 80 % se advierte y al 100 % se marca «al límite». | Media |
@@ -1104,6 +1112,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-7.4.4 | La marca debe identificar cada clínica en su portal/contexto, correos y documentos; el historial multi-clínica mantiene cabecera Zooki y procedencia por acto. | Funcional | Un correo/documento de Norte no usa marca Sur; historial global no atribuye todos los actos a una sola clínica. Las descargas documentales públicas no se personalizan por clínica. | Baja |
 | RE-7.4.5 | Todo debe ser propio de cada clínica y quedar en auditoría. | Restricción | Los datos de marca y los tipos de cita de la clínica A no aparecen en la clínica B, y cada cambio queda en auditoría. | Media |
 | RE-7.4.6 | Cada tipo de cita debe indicar si es pausable ante una urgencia. | Funcional | El formulario del tipo de cita tiene la opción y la agenda la respeta. | Media |
+| RE-7.4.7 | Los tipos deben indicar si son solo para personal y disponer de Cirugía programada por defecto. | Funcional | Cirugía: 120 minutos, margen 15, no pausable y solo_personal=1. Administrador cambia la marca por clínica con validación en vivo y auditoría; portal excluye y rechaza tipo restringido aun por POST. Migración repetible agrega solo donde no existe tipo del mismo nombre, sin sobreescribir personalizaciones; pendientes de correo reciben los siete tipos al activarse. | Alta |
 
 **Reglas de negocio:** RN-009, RN-415, RN-421, RN-701, RN-427
 
@@ -1114,8 +1123,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-7.5.1 | El sistema debe permitir configurar la duración de cita por defecto y el buffer entre citas. | Funcional | Los valores se guardan y se aplican. | Media |
 | RE-7.5.2 | El sistema debe aplicar los parámetros en la agenda y en los recordatorios. | Restricción | Agenda y cron usan los parámetros configurados. | Media |
 | RE-7.5.3 | _(v2.1)_ El administrador debe poder configurar la tolerancia de llegada, el plazo de reasignación, el umbral de aviso, el tope de sobrecupos y el teléfono de urgencias. Los valores por defecto y el teléfono registrado como dato de la clínica funcionan desde v2.0. | Funcional | En v2.0 la agenda aplica los valores por defecto; en v2.1, al cambiarlos desde configuración, aplica los nuevos valores. | Media |
+| RE-7.5.4 | El administrador debe configurar la anticipación mínima de cambios ordinarios de su clínica. | Validación | Entero de 0 a 1440 minutos, por defecto 30; 0 desactiva. Formulario restringe/valida en vivo y servidor repite; guardar queda auditado sin afectar otra clínica.  Próximo control configura horizonte de búsqueda (30 días por defecto) y plazo sin duración conocida (7 por defecto), ambos enteros de1 a365; validación en vivo/servidor y auditoría aislada por clínica (RN-431). | Alta |
 
-**Reglas de negocio:** RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429
+**Reglas de negocio:** RN-431, RN-430, RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429
 
 ## Módulo 8 — Reputación y comunicaciones *(v2.0)*
 
@@ -1215,17 +1225,17 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |
-| HU-2.1 | RN-201, RN-202, RN-203, RN-112, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5 |
-| HU-2.2 | RN-102, RN-203, RN-208, RN-411, RN-415 | RE-2.2.1, RE-2.2.2, RE-2.2.3, RE-2.2.4, RE-2.2.5 |
+| HU-2.1 | RN-201, RN-202, RN-203, RN-112, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5, RE-2.1.6, RE-2.1.7 |
+| HU-2.2 | RN-102, RN-203, RN-208, RN-411, RN-415 | RE-2.2.1, RE-2.2.2, RE-2.2.3, RE-2.2.4; RE-2.2.5 retirado |
 | HU-2.3 | RN-204, RN-205 | RE-2.3.1, RE-2.3.2, RE-2.3.3, RE-2.3.4 |
 | HU-2.4 | RN-205 | RE-2.4.1, RE-2.4.2, RE-2.4.3 |
 | HU-2.5 | RN-206, RN-113 | RE-2.5.1, RE-2.5.2, RE-2.5.3, RE-2.5.4 |
 | HU-2.6 | RN-204, RN-206 | RE-2.6.1, RE-2.6.2, RE-2.6.3 |
 | HU-2.7 | RN-201, RN-207, RN-208, RN-G02 | RE-2.7.1, RE-2.7.2, RE-2.7.3 |
-| HU-2.8 | RN-209, RN-210, RN-212, RN-202 | RE-2.8.1, RE-2.8.2, RE-2.8.3, RE-2.8.4, RE-2.8.5 |
+| HU-2.8 | RN-209, RN-210, RN-212, RN-202 | RE-2.8.1, RE-2.8.2, RE-2.8.3, RE-2.8.4, RE-2.8.5, RE-2.8.6 |
 | HU-2.9 | RN-209, RN-211, RN-212, RN-113 | RE-2.9.1, RE-2.9.2, RE-2.9.3, RE-2.9.4 |
 | HU-2.10 | RN-112, RN-113 | RE-2.10.1, RE-2.10.2, RE-2.10.3, RE-2.10.4 |
-| HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
+| HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209, RN-113 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
 | HU-2.12 | RN-212, RN-209, RN-004, RN-G13 | RE-2.12.1, RE-2.12.2, RE-2.12.3, RE-2.12.4, RE-2.12.5, RE-2.12.6 |
 | HU-3.1 | RN-301, RN-306 | RE-3.1.1, RE-3.1.2, RE-3.1.3 |
 | HU-3.2 | RN-303, RN-304, RN-305 | RE-3.2.1, RE-3.2.2, RE-3.2.3, RE-3.2.4, RE-3.2.5 |
@@ -1233,9 +1243,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-3.4 | RN-302 | RE-3.4.1, RE-3.4.2, RE-3.4.3 |
 | HU-3.5 | RN-301 | RE-3.5.1, RE-3.5.2, RE-3.5.3 |
 | HU-3.6 | RN-303, RN-304, RN-305 | RE-3.6.1, RE-3.6.2, RE-3.6.3, RE-3.6.4 |
-| HU-4.1 | RN-401, RN-402, RN-403, RN-404 | RE-4.1.1, RE-4.1.2, RE-4.1.3, RE-4.1.4, RE-4.1.5 |
-| HU-4.2 | RN-405 | RE-4.2.1, RE-4.2.2, RE-4.2.3, RE-4.2.4 |
-| HU-4.3 | RN-406, RN-407, RN-409, RN-410 | RE-4.3.1, RE-4.3.2, RE-4.3.3, RE-4.3.4, RE-4.3.5, RE-4.3.6, RE-4.3.7, RE-4.3.8, RE-4.3.9 |
+| HU-4.1 | RN-401, RN-402, RN-403, RN-404, RN-G18 | RE-4.1.1, RE-4.1.2, RE-4.1.3, RE-4.1.4, RE-4.1.5 |
+| HU-4.2 | RN-405, RN-430 | RE-4.2.1, RE-4.2.2, RE-4.2.3, RE-4.2.4, RE-4.2.5 |
+| HU-4.3 | RN-406, RN-407, RN-409, RN-410, RN-431 | RE-4.3.1, RE-4.3.2, RE-4.3.3, RE-4.3.4, RE-4.3.5, RE-4.3.6, RE-4.3.7, RE-4.3.8, RE-4.3.9, RE-4.3.10, RE-4.3.11 |
 | HU-4.4 | RN-404 | RE-4.4.1, RE-4.4.2, RE-4.4.3, RE-4.4.4 |
 | HU-4.5 | RN-401, RN-412 | RE-4.5.1, RE-4.5.2, RE-4.5.3 |
 | HU-4.6 | RN-401, RN-403, RN-415 | RE-4.6.1, RE-4.6.2 |
@@ -1245,7 +1255,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-4.10 | RN-404, RN-405 | RE-4.10.1, RE-4.10.2, RE-4.10.3 |
 | HU-4.11 | RN-706, RN-703, RN-415 | RE-4.11.1, RE-4.11.2, RE-4.11.3, RE-4.11.4, RE-4.11.5 |
 | HU-4.12 | RN-414, RN-415 | RE-4.12.1, RE-4.12.2, RE-4.12.3, RE-4.12.4, RE-4.12.5 |
-| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-420, RN-422 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
+| HU-4.13 | RN-411, RN-415, RN-401, RN-402, RN-418, RN-419, RN-420, RN-422, RN-423, RN-424 | RE-4.13.1, RE-4.13.2, RE-4.13.3, RE-4.13.4, RE-4.13.5, RE-4.13.6, RE-4.13.7 |
 | HU-4.14 | RN-412, RN-413, RN-415, RN-428, RN-429 | RE-4.14.1, RE-4.14.2, RE-4.14.3, RE-4.14.4, RE-4.14.5, RE-4.14.6, RE-4.14.7 |
 | HU-4.15 | RN-411, RN-415, RN-420, RN-421, RN-427, RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | RE-4.15.1, RE-4.15.2, RE-4.15.3, RE-4.15.4, RE-4.15.5, RE-4.15.6, RE-4.15.7, RE-4.15.8, RE-4.15.9, RE-4.15.10 |
 | HU-4.16 | RN-803 | RE-4.16.1, RE-4.16.2 |
@@ -1254,10 +1264,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-4.19 | RN-426, RN-408, RN-412 | RE-4.19.1, RE-4.19.2, RE-4.19.3, RE-4.19.4 |
 | HU-5.1 | RN-G02 | RE-5.1.1, RE-5.1.2, RE-5.1.3, RE-5.1.4, RE-5.1.5, RE-5.1.6, RE-5.1.7, RE-5.1.8, RE-5.1.9, RE-5.1.10 |
 | HU-5.2 | RN-101, RN-G06, RN-501 | RE-5.2.1, RE-5.2.2, RE-5.2.3, RE-5.2.4, RE-5.2.5 |
-| HU-5.3 | RN-401, RN-402, RN-501, RN-109, RN-110 | RE-5.3.1, RE-5.3.2, RE-5.3.3, RE-5.3.4, RE-5.3.5 |
+| HU-5.3 | RN-401, RN-402, RN-501, RN-109, RN-110, RN-G18 | RE-5.3.1, RE-5.3.2, RE-5.3.3, RE-5.3.4, RE-5.3.5 |
 | HU-5.4 | RN-104, RN-108, RN-G02 | RE-5.4.1, RE-5.4.2, RE-5.4.3 |
 | HU-5.5 | RN-206, RN-G02, RN-114 | RE-5.5.1, RE-5.5.2, RE-5.5.3 |
-| HU-5.6 | RN-405, RN-401, RN-G02 | RE-5.6.1, RE-5.6.2, RE-5.6.3, RE-5.6.4 |
+| HU-5.6 | RN-430, RN-405, RN-401, RN-G02 | RE-5.6.1, RE-5.6.2, RE-5.6.3, RE-5.6.4 |
 | HU-5.7 | RN-G02 | RE-5.7.1, RE-5.7.2, RE-5.7.3, RE-5.7.4 |
 | HU-5.8 | RN-109, RN-G06 | RE-5.8.1, RE-5.8.2, RE-5.8.3, RE-5.8.4, RE-5.8.5, RE-5.8.6 |
 | HU-5.9 | RN-109, RN-114, RN-G13 | RE-5.9.1, RE-5.9.2, RE-5.9.3, RE-5.9.4 |
@@ -1274,8 +1284,8 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-7.1 | RN-703, RN-701 | RE-7.1.1, RE-7.1.2, RE-7.1.3, RE-7.1.4 |
 | HU-7.2 | RN-702 | RE-7.2.1, RE-7.2.2, RE-7.2.3 |
 | HU-7.3 | RN-705, RN-009, RN-701 | RE-7.3.1, RE-7.3.2, RE-7.3.3, RE-7.3.4, RE-7.3.5 |
-| HU-7.4 | RN-009, RN-415, RN-421, RN-701, RN-427 | RE-7.4.1, RE-7.4.2, RE-7.4.3, RE-7.4.4, RE-7.4.5, RE-7.4.6 |
-| HU-7.5 | RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 | RE-7.5.1, RE-7.5.2, RE-7.5.3 |
+| HU-7.4 | RN-009, RN-415, RN-421, RN-701, RN-427 | RE-7.4.1, RE-7.4.2, RE-7.4.3, RE-7.4.4, RE-7.4.5, RE-7.4.6, RE-7.4.7 |
+| HU-7.5 | RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429, RN-430, RN-431 | RE-7.5.1, RE-7.5.2, RE-7.5.3, RE-7.5.4 |
 | HU-8.1 | RN-801, RN-804, RN-805, RN-G18 | RE-8.1.1, RE-8.1.2, RE-8.1.3, RE-8.1.4, RE-8.1.5, RE-8.1.6, RE-8.1.7 |
 | HU-8.2 | RN-802 | RE-8.2.1, RE-8.2.2 |
 | HU-8.3 | RN-806 | RE-8.3.1, RE-8.3.2, RE-8.3.3 |

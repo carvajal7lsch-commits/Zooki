@@ -125,7 +125,7 @@ jobs:
           (SELECT COUNT(*) FROM razas), (SELECT COUNT(*) FROM colores_base), (SELECT COUNT(*) FROM especialidades),
           (SELECT COUNT(*) FROM usuarios), (SELECT COUNT(*) FROM clinicas))")
         echo "roles,planes,especies,razas,colores,especialidades,usuarios,clinicas = $conteos"
-        test "$conteos" = "4,2,6,55,9,0,0,0"
+        test "$conteos" = "4,2,6,59,9,0,0,0"
 
     - name: Pruebas PHPUnit contra MySQL 8
       shell: bash

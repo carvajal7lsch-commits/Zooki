@@ -12,6 +12,10 @@ $cita = ['id_cita' => 5, 'estado' => 'en_curso', 'fecha' => '2026-10-16', 'hora'
 $mascota = ['id_mascota' => 7, 'nombre' => 'Luna', 'nombre_especie' => 'Canino', 'nombre_raza' => 'Mestizo', 'sexo' => 'Hembra', 'peso' => '9.00', 'numero_historia_clinica' => 'HC-000001', 'url_foto' => null, 'fecha_nacimiento' => '2022-01-01', 'raza_indicada' => null, 'propietario_nombre' => 'Fabio Propietario'];
 $consultaCita = null;
 $esDiaDeLaCita = true;
+if (($argv[2] ?? '') === 'tardia') {
+    $cita['estado'] = 'confirmada';
+    $inicioRequiereSala = true;
+}
 $resumenClinico = ['ultimo_peso' => '9.00', 'alertas' => [], 'ultima_consulta' => ['fecha' => '2026-10-01', 'diagnostico' => 'Control digestivo']];
 $propietario = ['nombre_completo' => 'Fabio Propietario', 'telefono' => '3001122333'];
 $edadMascota = '4 años';

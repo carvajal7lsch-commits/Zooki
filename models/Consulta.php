@@ -4,6 +4,7 @@ require_once __DIR__ . '/ArchivoClinico.php';
 require_once __DIR__ . '/Tratamiento.php';
 require_once __DIR__ . '/ValidacionPrescripcion.php';
 require_once __DIR__ . '/ConsultaSintoma.php';
+require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
@@ -406,6 +407,9 @@ class Consulta extends ModeloHistoria
 
         if ($consulta->rowCount() !== 1) {
             throw new RuntimeException('La cita ' . $idCita . ' dejó de estar en curso antes de guardar la consulta.');
+        }
+        if (!(new NotificacionInterna($this->conn))->expirarAvisosDeAtencion($clinica, $idCita, $ahora)) {
+            throw new RuntimeException('No se pudieron retirar los avisos de la atención finalizada.');
         }
         require_once __DIR__ . '/UrgenciaAgenda.php';
         (new UrgenciaAgenda($this->conn, fn () => IntervalosAgenda::fecha($ahora)))->despuesDeCompletar($idCita);

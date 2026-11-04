@@ -51,8 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 error.textContent = r.message || 'No se pudieron consultar horarios.';
                 return;
             }
-            for (const instante of r.sugerencias) hora.add(new Option(zookiHoraAgenda(instante, 'a. m.', 'p. m.'), instante));
-            if (!r.sugerencias.length) error.textContent = 'No hay horarios compatibles para esta fecha.';
+            const horarios = zookiHorariosReprogramacion(r.sugerencias, fecha.value, cita);
+            for (const [indice, instante] of horarios.entries()) {
+                const etiqueta = zookiHoraAgenda(instante, 'a. m.', 'p. m.') + (indice === 0 ? ' · Recomendado' : '');
+                hora.add(new Option(etiqueta, instante));
+            }
+            if (!horarios.length) error.textContent = 'No quedan otros horarios compatibles para esta fecha. El horario actual no es una opción de reprogramación.';
         } catch (fallo) {
             if (actual === consulta) error.textContent = 'No se pudieron consultar horarios.';
         }

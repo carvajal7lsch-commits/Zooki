@@ -45,6 +45,39 @@ class InicioVeterinarioTest extends TestCase
         $_GET = [];
     }
 
+    /** HU-4.15 / RE-6.1.9/10: identificar después no oculta la atención ni su acceso. */
+    public function testUrgenciaSinPropietarioApareceEnTuDiaYPendientes(): void
+    {
+        $this->db->prepare('INSERT INTO mascotas (id_mascota, id_clinica_registro, token_carnet, ficha_por_completar) VALUES (99, ?, ?, 1)')
+            ->execute([DosClinicas::NORTE, str_repeat('u', 43)]);
+        $this->cita(DosClinicas::NORTE, 99, DosClinicas::VET_NORTE, self::HOY, '08:00:00', 'en_curso', 'rojo');
+        $id = (int) $this->db->lastInsertId();
+        $this->db->exec("UPDATE citas SET hora_inicio_real = '2026-10-07 08:00:00', duracion_activa_objetivo_segundos = 1800 WHERE id_cita = $id");
+        $this->como(DosClinicas::NORTE, DosClinicas::VET_NORTE);
+        $panel = $this->panel('10:00');
+
+        $this->assertSame(1, $panel['dia']['citas']);
+        $this->assertSame(['Paciente por identificar'], array_column($panel['agenda'], 'mascota'));
+        $this->assertSame([$id], array_map('intval', array_column($panel['pendientes'], 'id_cita')));
+        $this->assertSame('continuar', $panel['pendientes'][0]['accion']['tipo']);
+        $this->assertNotNull($panel['dia']['aviso']);
+        $dia = $panel['dia'];
+        ob_start();
+        require __DIR__ . '/../../views/vet/partials/inicio_dia.php';
+        $html = (string) ob_get_clean();
+        $this->assertStringContainsString('Paciente por identificar', $html);
+        $this->assertStringContainsString('Continuar atención', $html);
+        $this->assertStringContainsString('vet_atencion&amp;id_cita=' . $id, $html);
+        $this->assertStringNotContainsString('No se pueden mostrar los huecos', $html);
+
+        $this->como(DosClinicas::NORTE, DosClinicas::DOBLE);
+        $this->assertSame([], $this->panel('10:00')['pendientes']);
+        $this->como(DosClinicas::SUR, DosClinicas::VET_SUR);
+        $sur = $this->panel('10:00');
+        $this->assertSame([], $sur['pendientes']);
+        $this->assertSame(0, $sur['dia']['citas']);
+    }
+
     /**
      * RE-6.1.9: las citas y la disponibilidad real en orden de hora. El hueco
      * de 20 minutos no se ofrece (la cita más corta dura 30), el almuerzo sale

@@ -61,7 +61,7 @@ final class AgendaC8Test extends TestCase
     private function evaluar(int $pet = 1, string $nivel = 'verde'): int
     {
         $s = new SolicitudAgenda($this->db, $this->reloj());
-        $r = $s->evaluar(['id_mascota' => $pet, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'sintomas' => [['codigo' => $nivel === 'verde' ? 'sintoma.control_preventivo' : 'sintoma.otro_no_se', 'tiempo' => $nivel === 'verde' ? 'no_aplica' : 'no_se']]]);
+        $r = $s->evaluar(['id_mascota' => $pet, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.', 'sintomas' => [['codigo' => $nivel === 'verde' ? 'sintoma.control_preventivo' : 'sintoma.otro_no_se', 'tiempo' => $nivel === 'verde' ? 'no_aplica' : 'no_se']]]);
         if ($nivel !== 'verde') {
             $s->revisar($r['id_solicitud'], $nivel, 'Revisión explícita C8', $r['huella'], null);
         }
@@ -161,9 +161,11 @@ final class AgendaC8Test extends TestCase
         $this->assertSame('verde', $this->fila($id)['prioridad_calculada']);
         $this->assertSame('naranja', $this->fila($id)['prioridad']);
         $this->assertSame('08:00:00', $this->fila($id)['hora']);
+        $citas = new Cita($this->db, $this->reloj());
+        $citas->reprogramar($citas->getById($id), 2, '2030-01-07', '10:00:00');
         $this->agenda()->ajustar($id, 'amarillo', 'Revisión posterior', null);
         $this->assertSame('verde', $this->fila($id)['prioridad_calculada']);
-        $this->assertSame('08:00:00', $this->fila($id)['hora']);
+        $this->assertSame('10:00:00', $this->fila($id)['hora'], 'RN-423: bajar no adelanta al hueco libre de las 08:00.');
         $this->assertCount(2, $this->agenda()->leer()['historial']);
         $this->como(4, 2);
         $this->assertSame([], $this->agenda()->leer()['historial']);

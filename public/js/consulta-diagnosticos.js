@@ -4,8 +4,8 @@
  *
  * Al cambiar los síntomas (con una espera corta) pide sugerir_diagnosticos_ajax
  * y muestra hasta 5 candidatos con su cobertura, los síntomas que coinciden y
- * la fuente, sin porcentajes. «Usar este diagnóstico» copia el texto al campo
- * para que el veterinario lo edite: nunca se rellena solo y el campo sigue
+ * la fuente, sin porcentajes. «Usar» agrega diagnóstico, plan y pautas editables
+ * con Deshacer (2.3.0); el veterinario revisa antes de guardar. El campo sigue
  * siendo obligatorio. Los datos que ayudarían (revisión de C2) salen con
  * nombre legible; vacunación y días desde el celo tienen un campo opcional que
  * vuelve a calcular y no se guarda en la consulta.
@@ -21,7 +21,7 @@
     const MAXIMO = 5;
     const APOYO = 'Sugerencia de apoyo · pendiente de validación veterinaria';
     const TEXTOS = {
-        sinSintomas: 'Marca síntomas en «Motivo» para ver diagnósticos probables del conocimiento.',
+        sinSintomas: 'Marca síntomas en la evaluación y te sugiero diagnósticos',
         buscando: 'Buscando diagnósticos probables…',
         sinCoincidencias: 'Sin coincidencias en el conocimiento: escribe el diagnóstico.',
         error: 'No se pudieron calcular las sugerencias. Escribe el diagnóstico.',
@@ -118,6 +118,7 @@
      */
     function crear(raiz, opciones = {}) {
         const estado = raiz.querySelector('[data-diagnosticos-estado]');
+        const guia = raiz.querySelector('[data-diagnosticos-guia]');
         const lista = raiz.querySelector('[data-diagnosticos-lista]');
         const zonaDatos = raiz.querySelector('[data-diagnosticos-datos]');
         const ficha = raiz.querySelector('[data-diagnosticos-ficha]');
@@ -126,6 +127,9 @@
         let sintomas = [];
         let temporizador = null;
         let peticion = 0;
+        let enUso = null;
+        let candidatosActuales = [];
+        const miniFicha = window.ZookiFichaConsulta?.crear(raiz.closest('form'), idMascota, programar);
 
         function datosDeclarados() {
             const datos = {};
@@ -135,7 +139,8 @@
 
         function mostrarEstado(texto) {
             estado.textContent = texto;
-            estado.hidden = texto === '';
+            if (guia) guia.hidden = texto !== TEXTOS.sinSintomas;
+            estado.hidden = texto === '' || Boolean(guia && !guia.hidden);
         }
 
         function pintarDatos(legibles) {
@@ -145,7 +150,7 @@
                 const clave = envoltura.dataset.dato;
                 envoltura.hidden = !pedidos.includes(clave) && declarados[clave] === '';
             });
-            const deLaFicha = legibles.filter(dato => !dato.editable);
+            const deLaFicha = legibles.filter(dato => !dato.editable && (!miniFicha || !['sexo', 'edad_meses', 'esterilizado'].includes(dato.clave)));
             ficha.replaceChildren(...deLaFicha.map(dato => elemento('li', '', dato.etiqueta)));
             ficha.hidden = deLaFicha.length === 0;
             const algunCampo = [...raiz.querySelectorAll('[data-dato]')].some(envoltura => !envoltura.hidden);
@@ -175,9 +180,33 @@
             usar.dataset.usarDiagnostico = candidato.codigo;
             usar.setAttribute('aria-label', `Usar este diagnóstico: ${candidato.etiqueta}`);
             usar.addEventListener('click', () => {
+                if (opciones.alUsar) {
+                    opciones.alUsar(candidato);
+                    return;
+                }
                 if (opciones.campoDiagnostico) usarDiagnostico(opciones.campoDiagnostico, candidato.etiqueta);
             });
+            const coincidencia = elemento('progress', 'consulta-sugerencia__barra');
+            coincidencia.max = candidato.cobertura?.caracteristicos || 1;
+            coincidencia.value = candidato.cobertura?.coinciden || 0;
+            coincidencia.setAttribute('aria-label', cobertura || 'Coincidencia de síntomas');
+            abrir.append(coincidencia);
+            if (enUso === candidato.codigo) {
+                usar.textContent = 'En uso';
+                usar.disabled = true;
+                item.classList.add('is-en-uso');
+            } else if (enUso) {
+                usar.textContent = 'Cambiar a este';
+            }
             fila.append(abrir, usar);
+            if (raiz.closest('#atencionApp')) {
+                // RE-2.1.6: la acción ocupa una línea; cobertura y barra son información aparte.
+                const contenido = elemento('div', 'consulta-sugerencia__contenido');
+                const textoCobertura = abrir.querySelector('.consulta-sugerencia__cobertura');
+                abrir.title = candidato.etiqueta;
+                abrir.before(contenido);
+                contenido.append(abrir, coincidencia, textoCobertura);
+            }
 
             const coinciden = (candidato.sintomas_coincidentes || []).map(codigo => etiquetas[codigo]).filter(Boolean);
             if (coinciden.length) detalle.append(elemento('p', 'consulta-sugerencia__sintomas', `Coinciden: ${coinciden.join(', ')}`));
@@ -205,6 +234,7 @@
             const etiquetas = {};
             sintomas.forEach(sintoma => { etiquetas[sintoma.codigo] = sintoma.etiqueta; });
             const candidatos = (Array.isArray(respuesta.candidatos) ? respuesta.candidatos : []).slice(0, MAXIMO);
+            candidatosActuales = candidatos;
             lista.replaceChildren(...candidatos.map(candidato => tarjeta(candidato, etiquetas)));
             lista.hidden = candidatos.length === 0;
             mostrarEstado(candidatos.length === 0 ? TEXTOS.sinCoincidencias : '');
@@ -256,17 +286,442 @@
         reiniciar();
 
         return {
+            actualizarFicha: datos => miniFicha?.actualizar(datos),
+            cargarFicha: () => miniFicha?.cargar(),
+            marcarEnUso(codigo) {
+                enUso = codigo;
+                const etiquetas = Object.fromEntries(sintomas.map(s => [s.codigo, s.etiqueta]));
+                lista.replaceChildren(...candidatosActuales.map(c => tarjeta(c, etiquetas)));
+            },
             actualizar(nuevos) {
                 sintomas = Array.isArray(nuevos) ? nuevos.slice() : [];
+                const chips = raiz.querySelector('[data-sintomas-panel]');
+                if (chips) chips.replaceChildren(...sintomas.map(s => elemento('span', 'consulta-chip', s.etiqueta)));
                 programar();
             },
             limpiar() {
                 sintomas = [];
+                enUso = null;
+                candidatosActuales = [];
+                miniFicha?.actualizar(null);
                 campos.forEach(campo => { campo.value = ''; });
                 reiniciar();
             },
         };
     }
 
-    window.ZookiDiagnosticos = { RUTA_SUGERIR, MAXIMO, APOYO, TEXTOS, datosLegibles, fuentePrincipal, usarDiagnostico, cuerpoPeticion, crear };
+    /** RE-2.8.2/4: una operación reversible por diagnóstico, compartida por modal y Atención. */
+    function completar(form, raiz, tratamientos, idMascota) {
+        const diagnostico = form.querySelector('[data-consulta-campo="diagnostico"]');
+        const plan = form.querySelector('[name="plan_tratamiento"]');
+        const peso = form.querySelector('[data-consulta-campo="peso"]');
+        const editorPlan = window.ZookiPlanConsulta?.crear(form);
+        const marca = form.querySelector('[data-diagnostico-marca]');
+        const operaciones = new Map();
+        const registros = [];
+        let generacion = 0;
+        let ultima = null;
+        let temporizadorPeso = null;
+        let pendiente = null;
+        let planActual = null;
+        let cambiando = false;
+        const aviso = elemento('div', 'consulta-ayuda');
+        aviso.setAttribute('role', 'status');
+        aviso.hidden = true;
+        const mensaje = elemento('span');
+        const deshacer = elemento('button', 'consulta-sugerencia__usar', 'Deshacer');
+        deshacer.type = 'button';
+        deshacer.dataset.deshacerSugerencia = '';
+        const alternativas = elemento('button', 'consulta-sugerencia__usar', 'Alternativas');
+        alternativas.type = 'button';
+        alternativas.dataset.tratamientosAlternativas = '';
+        alternativas.hidden = true;
+        alternativas.setAttribute('aria-expanded', 'false');
+        const descartadas = elemento('div', 'consulta-descartadas');
+        descartadas.dataset.prescripcionDescartadas = '';
+        descartadas.setAttribute('role', 'status');
+        descartadas.hidden = true;
+        const panelAlternativas = elemento('div', 'consulta-alternativas');
+        panelAlternativas.popover = 'auto';
+        panelAlternativas.dataset.alternativasLista = '';
+        panelAlternativas.setAttribute('aria-label', 'Tratamientos alternativos');
+        panelAlternativas.addEventListener('toggle', evento => alternativas.setAttribute('aria-expanded', String(evento.newState === 'open')));
+        aviso.append(mensaje, alternativas, deshacer);
+        if (form.closest('#atencionApp')) form.querySelector('[data-tratamientos-lista]').after(descartadas);
+        else aviso.append(descartadas);
+        form.append(panelAlternativas);
+        (form.querySelector('[data-sugerencia-aviso]') || raiz).append(aviso);
+        const pesoActual = () => peso && !peso.disabled ? peso.value.trim().replace(',', '.') : '';
+        const notificar = campo => campo.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Mantiene el intervalo agregado al editar texto anterior o posterior; una edición dentro se conserva.
+        for (const campo of [diagnostico, plan].filter(Boolean)) {
+            let anterior = campo.value;
+            campo.addEventListener('input', () => {
+                const actual = campo.value;
+                let inicio = 0;
+                while (inicio < anterior.length && inicio < actual.length && anterior[inicio] === actual[inicio]) inicio++;
+                let fin = anterior.length;
+                let finNuevo = actual.length;
+                while (fin > inicio && finNuevo > inicio && anterior[fin - 1] === actual[finNuevo - 1]) {
+                    fin--;
+                    finNuevo--;
+                }
+                for (const registro of registros.filter(r => r.campo === campo && !r.editado)) {
+                    if (fin <= registro.inicio) {
+                        registro.inicio += actual.length - anterior.length;
+                    } else if (inicio < registro.inicio + registro.texto.length) {
+                        registro.editado = true;
+                    }
+                }
+                anterior = actual;
+            });
+        }
+
+        function agregarTexto(campo, texto, operacion) {
+            if (!campo || !texto || campo.value.split('\n').map(t => t.trim()).includes(texto)) return;
+            const agregado = (campo.value ? '\n' : '') + texto;
+            if (campo.maxLength > 0 && campo.value.length + agregado.length > campo.maxLength) {
+                throw new Error('No cabe la sugerencia completa. Reduce el texto del diagnóstico o plan y vuelve a usarla.');
+            }
+            const inicio = campo.value.length;
+            campo.value += agregado;
+            notificar(campo);
+            const registro = { campo, inicio, texto: agregado, editado: false };
+            registros.push(registro);
+            operacion.textos.push(registro);
+        }
+
+        async function consultar(codigo, vigente) {
+            let respuesta;
+            do {
+                const valorPeso = pesoActual();
+                const cuerpo = new URLSearchParams({ id_mascota: String(idMascota()), diagnostico: codigo, peso: valorPeso });
+                respuesta = await (await fetch('index.php?action=sugerir_tratamientos_ajax', { method: 'POST', body: cuerpo })).json();
+                if (vigente !== generacion) return null;
+                if (!respuesta.success) throw new Error(respuesta.message || 'No se pudieron obtener las pautas. Vuelve a intentarlo.');
+                if (valorPeso === pesoActual()) return respuesta;
+            } while (vigente === generacion);
+            return null;
+        }
+
+        function cerrarAlternativas() {
+            if (panelAlternativas.matches(':popover-open')) panelAlternativas.hidePopover();
+            panelAlternativas.replaceChildren();
+        }
+
+        function pintarDescartadas(filas = []) {
+            descartadas.replaceChildren();
+            // La línea pertenece a Atención; el modal compartido conserva su estructura.
+            if (!form.closest('#atencionApp')) return;
+            for (const pauta of filas) {
+                const motivo = pauta.seguridad?.motivos?.[0];
+                if (!motivo) continue;
+                const fuentes = motivo.fuentes || [];
+                const mdr1 = fuentes.some(f => /mdr1/i.test(`${f.titulo || ''} ${f.url || ''}`));
+                const razon = motivo.tipo === 'toxicidad' && motivo.paciente && mdr1
+                    ? `los ${motivo.paciente} pueden tener la mutación MDR1 y la ${pauta.medicamento.toLocaleLowerCase('es')} puede causarles toxicidad neurológica grave.`
+                    : `${motivo.mensaje}${motivo.paciente ? ' Paciente: ' + motivo.paciente + '.' : ''}`;
+                const linea = elemento('div', 'consulta-descartada');
+                linea.dataset.prescripcionDescartada = pauta.farmaco;
+                linea.title = fuentes.map(f => `${f.entidad}: ${f.titulo}${f.url ? ' · ' + f.url : ''}`).join('\n');
+                const escudo = elemento('i', 'fas fa-shield-alt');
+                escudo.setAttribute('aria-hidden', 'true');
+                const contenido = elemento('p');
+                contenido.append(elemento('strong', '', `${pauta.medicamento} descartada: `), document.createTextNode(razon));
+                const fuente = fuentePrincipal(fuentes.filter(f => urlSegura(f.url)));
+                if (fuente?.url) {
+                    const enlace = elemento('a', '', 'Ver fuente');
+                    enlace.href = fuente.url;
+                    enlace.target = '_blank';
+                    enlace.rel = 'noopener noreferrer';
+                    enlace.title = fuente.texto;
+                    contenido.append(document.createTextNode(' '), enlace);
+                }
+                linea.append(escudo, contenido);
+                descartadas.append(linea);
+            }
+            descartadas.hidden = descartadas.children.length === 0;
+        }
+
+        alternativas.addEventListener('click', async () => {
+            const operacion = ultima;
+            if (!operacion || alternativas.disabled) return;
+            alternativas.disabled = true;
+            try {
+                const respuesta = await consultar(operacion.codigo, generacion);
+                if (!respuesta || ultima !== operacion) return;
+                pintarDescartadas(respuesta.descartadas);
+                cerrarAlternativas();
+                panelAlternativas.append(elemento('strong', '', 'Tratamientos alternativos'));
+                for (const pauta of respuesta.tratamientos.filter(p => p.precargar === false && !p.seguridad.bloqueada)) {
+                    if (tratamientos.filas().some(f => f.dataset.pautaSugerida === pauta.codigo)) continue;
+                    const fila = elemento('div', 'consulta-alternativas__fila');
+                    const datos = elemento('div');
+                    datos.append(elemento('strong', '', pauta.medicamento), elemento('small', '', `${pauta.dosis} · ${pauta.via_administracion}`));
+                    const usar = elemento('button', 'consulta-sugerencia__usar', 'Usar');
+                    usar.type = 'button';
+                    usar.dataset.usarAlternativa = pauta.codigo;
+                    usar.setAttribute('aria-label', `Usar ${pauta.medicamento}`);
+                    usar.addEventListener('click', async () => {
+                        usar.disabled = true;
+                        try {
+                            // Peso, contexto y seguridad se vuelven a consultar; el borrador no acredita vigencia.
+                            const vigente = await consultar(operacion.codigo, generacion);
+                            const actual = vigente?.tratamientos.find(p => p.codigo === pauta.codigo && !p.seguridad.bloqueada);
+                            if (!actual || ultima !== operacion || tratamientos.filas().some(f => f.dataset.pautaSugerida === actual.codigo)) return;
+                            operacion.filas.push(tratamientos.agregarSugerida(actual));
+                            notificar(form);
+                            cerrarAlternativas();
+                        } catch (error) {
+                            mensaje.textContent = error.message;
+                        } finally {
+                            usar.disabled = false;
+                        }
+                    });
+                    fila.append(datos, usar);
+                    panelAlternativas.append(fila);
+                }
+                if (panelAlternativas.children.length === 1) panelAlternativas.append(elemento('p', '', 'No quedan alternativas nuevas para agregar.'));
+                panelAlternativas.showPopover();
+            } catch (error) {
+                mensaje.textContent = error.message;
+            } finally {
+                alternativas.disabled = false;
+            }
+        });
+
+        async function usar(candidato) {
+            if (operaciones.has(candidato.codigo) || pendiente === candidato.codigo) return;
+            const vigente = ++generacion;
+            pendiente = candidato.codigo;
+            const operacion = { textos: [], filas: [], cargando: true, codigo: candidato.codigo };
+            try {
+                const respuesta = await consultar(candidato.codigo, vigente);
+                if (!respuesta) return;
+                for (const anterior of operaciones.values()) retirar(anterior);
+                operaciones.clear();
+                operaciones.set(candidato.codigo, operacion);
+                operacion.etiqueta = candidato.etiqueta;
+                agregarTexto(diagnostico, candidato.etiqueta, operacion);
+                const partes = [];
+                if (respuesta.plan.examenes.length) partes.push('Exámenes sugeridos: ' + respuesta.plan.examenes.join('; '));
+                if (respuesta.plan.recomendaciones.length) partes.push('Recomendaciones: ' + respuesta.plan.recomendaciones.join('; '));
+                if (editorPlan) editorPlan.agregar(respuesta.plan, candidato.codigo);
+                else for (const parte of partes) agregarTexto(plan, parte, operacion);
+                for (const pauta of respuesta.tratamientos) {
+                    if (pauta.seguridad.bloqueada || pauta.precargar === false) continue;
+                    if (tratamientos.filas().some(f => f.dataset.pautaSugerida === pauta.codigo)) continue;
+                    const fila = tratamientos.agregarSugerida(pauta);
+                    operacion.filas.push(fila);
+                }
+                // Atención debe advertir cambios incluso si solo se agregaron filas al texto existente.
+                notificar(form);
+                operacion.cargando = false;
+                ultima = operacion;
+                cerrarAlternativas();
+                operacion.tieneAlternativas = respuesta.tratamientos.some(p => p.precargar === false && !p.seguridad.bloqueada);
+                alternativas.hidden = !operacion.tieneAlternativas;
+                pintarDescartadas(respuesta.descartadas);
+                pendiente = null;
+                planActual = respuesta.plan;
+                pintarPlan();
+                const llenado = [];
+                if (operacion.textos.some(r => r.campo === diagnostico)) llenado.push('diagnóstico');
+                if (operacion.textos.some(r => r.campo === plan) || (editorPlan && partes.length)) llenado.push('plan');
+                if (operacion.filas.length) llenado.push(`${operacion.filas.length} tratamiento${operacion.filas.length === 1 ? '' : 's'}`);
+                const resumen = llenado.length > 1 ? llenado.slice(0, -1).join(', ') + ' y ' + llenado[llenado.length - 1] : llenado[0];
+                mensaje.textContent = llenado.length ? `Zooki llenó: ${resumen}. Revisa antes de guardar. ` : 'No hay contenido nuevo para agregar. ';
+                aviso.hidden = false;
+                deshacer.hidden = false;
+                comunicarUso(candidato.codigo);
+            } catch (error) {
+                if (vigente !== generacion) return;
+                retirar(operacion);
+                operaciones.delete(candidato.codigo);
+                mensaje.textContent = error.message;
+                aviso.hidden = false;
+                deshacer.hidden = true;
+                pendiente = null;
+            }
+        }
+
+        function comunicarUso(codigo) {
+            if (typeof CustomEvent === 'function') form.dispatchEvent(new CustomEvent('zooki:diagnostico-usado', { bubbles: true, detail: { codigo } }));
+        }
+
+        function pintarPlan() {
+            if (marca) marca.hidden = !ultima;
+            if (editorPlan) return;
+            const envoltura = form.querySelector('[data-plan-elegible]');
+            if (!envoltura) return;
+            const examenes = form.querySelector('[data-examenes-elegibles]');
+            const recomendaciones = form.querySelector('[data-recomendaciones-elegibles]');
+            examenes.replaceChildren();
+            recomendaciones.replaceChildren();
+            envoltura.hidden = !planActual || !(planActual.examenes.length || planActual.recomendaciones.length);
+            if (!planActual) return;
+            const elegidos = new Set(planActual.elegidos || planActual.examenes);
+            for (const examen of planActual.examenes) {
+                const etiqueta = elemento('label', 'consulta-examen');
+                const casilla = elemento('input');
+                casilla.type = 'checkbox';
+                casilla.checked = elegidos.has(examen);
+                etiqueta.append(casilla, document.createTextNode(examen));
+                casilla.addEventListener('change', () => {
+                    if (casilla.checked) elegidos.add(examen);
+                    else elegidos.delete(examen);
+                    const registro = ultima?.textos.find(r => r.campo === plan && r.texto.includes('Exámenes sugeridos:'));
+                    if (registro && plan.value.slice(registro.inicio, registro.inicio + registro.texto.length) === registro.texto) {
+                        registro.editado = true;
+                        const texto = (registro.inicio ? '\n' : '') + 'Exámenes sugeridos: ' + [...elegidos].join('; ');
+                        plan.value = plan.value.slice(0, registro.inicio) + texto + plan.value.slice(registro.inicio + registro.texto.length);
+                        notificar(plan);
+                        registro.texto = texto;
+                    }
+                    planActual.elegidos = [...elegidos];
+                });
+                examenes.append(etiqueta);
+            }
+            for (const texto of planActual.recomendaciones) recomendaciones.append(elemento('li', '', texto));
+        }
+
+        function retirar(operacion) {
+            cerrarAlternativas();
+            pintarDescartadas();
+            alternativas.hidden = true;
+            const cambioAnterior = cambiando;
+            cambiando = true;
+            for (const registro of operacion.textos.slice().reverse()) {
+                const { campo, inicio, texto, editado } = registro;
+                registro.editado = true;
+                if (!editado && campo.value.slice(inicio, inicio + texto.length) === texto) {
+                    campo.value = campo.value.slice(0, inicio) + campo.value.slice(inicio + texto.length);
+                    notificar(campo);
+                }
+            }
+            editorPlan?.retirar(operacion.codigo);
+            tratamientos.retirarSugeridas(operacion.filas);
+            notificar(form);
+            cambiando = cambioAnterior;
+        }
+
+        deshacer.addEventListener('click', () => {
+            if (!ultima) return;
+            retirar(ultima);
+            operaciones.delete(ultima.codigo);
+            ultima = [...operaciones.values()].filter(o => !o.cargando).pop() || null;
+            mensaje.textContent = 'Se quitó lo agregado; se conservaron tus ediciones. ';
+            deshacer.hidden = !ultima;
+            planActual = null;
+            pintarPlan();
+            comunicarUso(ultima?.codigo || null);
+        });
+
+        diagnostico.addEventListener('input', () => {
+            const sustituido = [...operaciones.values()].some(o => o.textos.some(r => r.campo === diagnostico && r.editado));
+            if (cambiando || operaciones.size === 0 || (diagnostico.value.trim() !== '' && !sustituido)) return;
+            generacion++;
+            for (const operacion of operaciones.values()) retirar(operacion);
+            operaciones.clear();
+            ultima = null;
+            planActual = null;
+            pintarPlan();
+            aviso.hidden = true;
+            comunicarUso(null);
+        });
+        form.addEventListener('input', () => {
+            if (!ultima) return;
+            const textoPendiente = ultima.textos.some(r => !r.editado && r.campo.value.slice(r.inicio, r.inicio + r.texto.length) === r.texto);
+            const filaPendiente = ultima.filas.some(f => tratamientos.filas().includes(f) && !f._sugerenciaEditada);
+            deshacer.hidden = !textoPendiente && !filaPendiente && !editorPlan?.pendiente(ultima.codigo);
+        });
+
+        async function recalcular() {
+            const vigente = generacion;
+            for (const operacion of operaciones.values()) {
+                if (operacion.cargando) continue;
+                try {
+                    const respuesta = await consultar(operacion.codigo, vigente);
+                    if (respuesta && operaciones.get(operacion.codigo) === operacion) {
+                        tratamientos.recalcularSugeridas(operacion.filas, respuesta.tratamientos);
+                        if (ultima === operacion) pintarDescartadas(respuesta.descartadas);
+                    }
+                } catch (error) {
+                    if (vigente !== generacion) return;
+                    mensaje.textContent = 'No se pudieron recalcular las dosis. Revisa el peso y vuelve a intentarlo. ';
+                    aviso.hidden = false;
+                }
+            }
+        }
+        function programarRecalculo() {
+            clearTimeout(temporizadorPeso);
+            temporizadorPeso = setTimeout(recalcular, 250);
+        }
+        if (peso) peso.addEventListener('input', programarRecalculo);
+        const sinPeso = form.querySelector('[data-sin-peso]');
+        if (sinPeso) sinPeso.addEventListener('change', programarRecalculo);
+        return {
+            usar,
+            exportar() {
+                return {
+                    plan: planActual,
+                    editorPlan: editorPlan?.exportar(),
+                    operaciones: [...operaciones.values()].filter(o => !o.cargando).map(o => ({
+                        codigo: o.codigo,
+                        etiqueta: o.etiqueta,
+                        tieneAlternativas: o.tieneAlternativas,
+                        textos: o.textos.map(r => ({ campo: r.campo === plan ? 'plan_tratamiento' : 'diagnostico', inicio: r.inicio, texto: r.texto, editado: r.editado })),
+                        filas: o.filas.map(f => tratamientos.filas().indexOf(f)).filter(i => i >= 0),
+                    })),
+                };
+            },
+            restaurar(datos) {
+                operaciones.clear();
+                registros.length = 0;
+                for (const o of datos?.operaciones || []) {
+                    const textos = (o.textos || []).filter(r => (r.campo === 'diagnostico' || (!editorPlan && r.campo === 'plan_tratamiento')) && Number.isInteger(r.inicio) && typeof r.texto === 'string').map(r => ({ ...r, campo: r.campo === 'diagnostico' ? diagnostico : plan }));
+                    const filas = (o.filas || []).map(i => tratamientos.filas()[i]).filter(Boolean);
+                    const operacion = { ...o, textos, filas, cargando: false };
+                    operaciones.set(o.codigo, operacion);
+                    registros.push(...textos);
+                    ultima = operacion;
+                }
+                planActual = datos?.plan || null;
+                editorPlan?.restaurar(datos?.editorPlan, datos);
+                pintarPlan();
+                aviso.hidden = !ultima;
+                cerrarAlternativas();
+                alternativas.hidden = !ultima?.tieneAlternativas;
+                pintarDescartadas();
+                if (ultima) {
+                    const restaurada = ultima;
+                    consultar(restaurada.codigo, generacion).then(respuesta => {
+                        if (respuesta && ultima === restaurada) pintarDescartadas(respuesta.descartadas);
+                    }).catch(() => pintarDescartadas());
+                }
+                deshacer.hidden = !ultima;
+                // RE-2.1.7: Atención ya informa la recuperación del borrador en su pie.
+                mensaje.textContent = ultima && !form.closest('#atencionApp') ? 'Sugerencias recuperadas. Revisa antes de guardar. ' : '';
+                comunicarUso(ultima?.codigo || null);
+            },
+            limpiar() {
+                generacion++;
+                clearTimeout(temporizadorPeso);
+                operaciones.clear();
+                registros.length = 0;
+                ultima = null;
+                pendiente = null;
+                planActual = null;
+                editorPlan?.limpiar();
+                pintarPlan();
+                aviso.hidden = true;
+                cerrarAlternativas();
+                alternativas.hidden = true;
+                pintarDescartadas();
+            },
+        };
+    }
+
+    window.ZookiDiagnosticos = { RUTA_SUGERIR, MAXIMO, APOYO, TEXTOS, datosLegibles, fuentePrincipal, usarDiagnostico, cuerpoPeticion, crear, completar };
 })();

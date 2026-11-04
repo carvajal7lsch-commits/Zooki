@@ -10,13 +10,11 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <header class="ah-head">
         <div>
             <h3>Urgencias</h3>
-            <p>El aviso remoto no acredita llegada. La prioridad y la interrupción las decide el veterinario.</p>
         </div>
         <div class="ah-acciones">
             <?php if ($esVetUrgencia): ?>
-            <button type="button" class="zk-btn zk-btn--peligro" data-abrir-dialogo="dialogoRojo"><i class="fas fa-plus" aria-hidden="true"></i> Rojo presencial</button>
+            <button type="button" class="zk-btn zk-btn--peligro" data-abrir-dialogo="dialogoRojo"><i class="fas fa-plus" aria-hidden="true"></i> Urgencia</button>
             <?php endif; ?>
-            <button type="button" class="zk-icono" data-urgencias-actualizar title="Actualizar" aria-label="Actualizar urgencias"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
         </div>
     </header>
     <div data-urgencias-csrf hidden><?php Csrf::field(); ?></div>
@@ -24,6 +22,7 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <div class="ah-grupo">
         <h4 class="ah-sub">Rojos activos</h4>
         <div class="ah-lista" data-rojos-lista data-vacio="No hay urgencias activas."></div>
+        <p class="ah-tarjetas__nota">El aviso remoto no acredita la llegada. La prioridad la decide el veterinario.</p>
     </div>
     <div class="ah-grupo">
         <h4 class="ah-sub">Identidad pendiente <span class="ah-ayuda">Solo cuenta, vínculo o confirmación del titular acreditan propiedad.</span></h4>
@@ -32,39 +31,109 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
     <?php if ($esVetUrgencia): ?>
     <dialog class="zk-dialogo" id="dialogoRojo" aria-labelledby="dialogoRojoTitulo">
         <form data-ingreso-rojo novalidate class="zk-dialogo__form ah-dialogo">
+            <input type="hidden" name="id_solicitud" value="">
+            <input type="hidden" name="identidad" value="provisional">
+            <input type="hidden" name="motivo" value="Ingreso de urgencia presencial">
+            <input type="hidden" name="decision" value="">
             <header class="zk-dialogo__head">
-                <h3 id="dialogoRojoTitulo">Registrar rojo presencial</h3>
+                <h3 id="dialogoRojoTitulo"><i class="fas fa-kit-medical" aria-hidden="true"></i> Nueva urgencia</h3>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </header>
             <div class="zk-dialogo__cuerpo">
-                <label>Identidad <select name="identidad"><option value="conocida">Cuenta y ficha verificadas</option><option value="provisional">Relación no verificada o sin cuenta</option></select></label>
-                <label data-identidad-conocida>Mascota <select name="id_mascota" required></select><span data-error-campo="id_mascota" aria-live="polite"></span></label>
-                <fieldset data-identidad-provisional hidden disabled>
-                    <legend>Ficha provisional: no atribuye propiedad ni crea cuenta.</legend>
-                    <label>Nombre de mascota <span class="ah-opcional">(opcional)</span> <input name="nombre_mascota" <?= ValidadorMascota::atributosHtml('nombre') ?>><span data-error-campo="nombre_mascota" aria-live="polite"></span></label>
-                    <label>Nombre del acompañante <span class="ah-opcional">(opcional)</span> <input name="nombre_acompanante" <?= ValidadorCuenta::atributosHtml('nombre_completo') ?>><span data-error-campo="nombre_acompanante" aria-live="polite"></span></label>
-                    <label>Teléfono del acompañante <span class="ah-opcional">(opcional)</span> <input name="telefono_acompanante" <?= ValidadorTelefono::atributosHtml() ?>><span data-error-campo="telefono_acompanante" aria-live="polite"></span></label>
-                </fieldset>
-                <label>Motivo clínico <input name="motivo" maxlength="255" data-caracteres="\P{C}" data-espacios="normalizar" required placeholder="Ej. dificultad respiratoria"><span data-error-campo="motivo" aria-live="polite"></span></label>
-                <p data-aviso role="status"></p>
+                <p data-evaluacion-conservada hidden></p>
+                <div class="urgencia-rapida__opciones" role="group" aria-label="Identificación del paciente">
+                    <button type="button" data-urgencia-identidad="provisional" aria-pressed="true">Identificar después</button>
+                    <button type="button" data-urgencia-identidad="conocida" aria-pressed="false">Buscar paciente</button>
+                </div>
+                <p class="urgencia-rapida__ayuda" data-identidad-provisional>Puedes completar la identificación del paciente después.</p>
+                <div class="urgencia-rapida__paciente" data-identidad-conocida hidden>
+                    <input type="hidden" name="id_mascota" value="" disabled>
+                    <label for="urgenciaBuscarPaciente">Buscar paciente</label>
+                    <input id="urgenciaBuscarPaciente" type="search" data-urgencia-buscar autocomplete="off" placeholder="Mascota, propietario o cédula" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="urgenciaPacientes" aria-describedby="urgenciaPacienteError">
+                    <div id="urgenciaPacientes" class="urgencia-rapida__resultados" role="listbox" aria-label="Pacientes encontrados" data-urgencia-resultados hidden></div>
+                    <span id="urgenciaPacienteError" data-error-campo="id_mascota" aria-live="polite"></span>
+                </div>
+                <div class="urgencia-rapida__excepcion" data-ingreso-excepcion hidden>
+                    <p class="urgencia-rapida__ayuda" data-ingreso-excepcion-titulo></p>
+                    <label>Detalle adicional <span class="ah-opcional">(opcional)</span> <input name="detalle_urgencia" maxlength="200" data-caracteres="\P{C}" data-espacios="normalizar" disabled></label>
+                    <div class="urgencia-rapida__motivos" role="group" aria-label="Motivo clínico">
+                        <button type="button" data-urgencia-motivo>Este paciente es más grave</button>
+                        <button type="button" data-urgencia-motivo>El otro paciente está estable</button>
+                        <button type="button" data-urgencia-motivo>Orden del veterinario</button>
+                    </div>
+                </div>
+                <p class="ah-error" data-aviso role="status"></p>
             </div>
             <footer class="zk-dialogo__pie">
-                <button type="button" class="zk-btn zk-btn--sec" data-cerrar-dialogo>Cancelar</button>
-                <button type="submit" class="zk-btn zk-btn--peligro">Registrar llegada roja</button>
+                <button type="button" class="zk-btn zk-btn--sec" data-ingreso-solo-llegada>Solo registrar llegada</button>
+                <button type="submit" class="zk-btn zk-btn--peligro">Atender ahora</button>
             </footer>
         </form>
     </dialog>
     <?php endif; ?>
     <template data-completar-ficha>
-        <fieldset>
-            <legend>Completar la misma ficha</legend>
-            <label>Nombre <input name="nombre" <?= ValidadorMascota::atributosHtml('nombre') ?> required><span data-error-campo="nombre"></span></label>
-            <label>Especie <select name="especie" required></select><span data-error-campo="especie"></span></label>
-            <label>Raza <select name="raza" required></select><span data-error-campo="raza"></span></label>
-            <label>Sexo <select name="sexo" required><option value="">Elige</option><option>Macho</option><option>Hembra</option></select><span data-error-campo="sexo"></span></label>
-            <label>Peso (kg) <input name="peso" <?= ValidadorMascota::atributosHtml('peso') ?> required><span data-error-campo="peso"></span></label>
-            <label>Nacimiento <span class="ah-opcional">(opcional)</span> <input name="fecha_nacimiento" type="date"><span data-error-campo="fecha_nacimiento"></span></label>
+        <fieldset class="identidad-mascota" aria-label="Datos de la mascota">
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Nombre de la mascota *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-paw field-icon" aria-hidden="true"></i>
+                        <input type="text" name="nombre" required placeholder="Ej.: Firulais" autocomplete="off" <?= ValidadorMascota::atributosHtml('nombre') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="nombre" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Sexo *</label>
+                    <div class="mascota-sexo">
+                        <div class="segmento" role="group" aria-label="Sexo obligatorio">
+                            <?php foreach (ValidadorMascota::SEXOS as $sexoIdentidad): ?>
+                            <label class="segmento__opcion">
+                                <input type="radio" name="sexo" value="<?= htmlspecialchars($sexoIdentidad, ENT_QUOTES, 'UTF-8') ?>" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
+                                <span><i class="fas <?= $sexoIdentidad === 'Macho' ? 'fa-mars' : 'fa-venus' ?>" aria-hidden="true"></i> <?= htmlspecialchars($sexoIdentidad, ENT_QUOTES, 'UTF-8') ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="sexo" aria-live="polite"></small>
+                </div>
+            </div>
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Especie *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-cat field-icon" aria-hidden="true"></i>
+                        <select name="especie" required <?= ValidadorMascota::atributosHtml('especie') ?>></select>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="especie" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Raza *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-dna field-icon" aria-hidden="true"></i>
+                        <select name="raza" required <?= ValidadorMascota::atributosHtml('raza') ?>></select>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="raza" aria-live="polite"></small>
+                </div>
+            </div>
+            <div class="form-grid-2-gap">
+                <div class="input-group">
+                    <label>Fecha de nacimiento <span class="ah-opcional">(opcional)</span></label>
+                    <div class="input-wrapper">
+                        <i class="far fa-calendar-alt field-icon" aria-hidden="true"></i>
+                        <input type="text" name="fecha_nacimiento" placeholder="Selecciona la fecha…" <?= ValidadorMascota::atributosHtml('fecha_nacimiento') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="fecha_nacimiento" aria-live="polite"></small>
+                </div>
+                <div class="input-group">
+                    <label>Peso (kg) *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-weight field-icon" aria-hidden="true"></i>
+                        <input type="text" name="peso" required placeholder="Ej.: 4,5" <?= ValidadorMascota::atributosHtml('peso') ?>>
+                    </div>
+                    <small class="cuenta-validacion mascota-aviso" data-error-campo="peso" aria-live="polite"></small>
+                </div>
+            </div>
         </fieldset>
     </template>
 </section>
-<script src="js/urgencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="js/urgencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/urgencias-agenda.js'), 0, 12) ?>" defer></script>

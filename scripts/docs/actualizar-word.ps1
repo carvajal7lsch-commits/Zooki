@@ -1,4 +1,4 @@
-# Retoque final de los .docx con Microsoft Word (specs/exportar-documentos.md).
+# Retoque final de los .docx con Microsoft Word.
 # Lo llama scripts/docs/word.mjs. Hace lo que Pandoc no puede expresar:
 #  - EX-4: llena el índice (campo TOC) con los números de página reales.
 #  - EX-6: repite el encabezado de cada tabla en cada hoja, no parte filas

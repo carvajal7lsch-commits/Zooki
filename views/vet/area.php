@@ -1,7 +1,7 @@
 <?php
 /**
  * Inicio del veterinario en la clínica activa (HU-6.1, RE-6.1.1 a RE-6.1.12).
- * Diseño aprobado por el dueño: specs/referencias/inicio-veterinario.dc.html.
+ * Diseño aprobado por el dueño.
  * Los datos llegan de PanelController::datosVeterinario() en $panel; el día de
  * hoy y el mes en curso vienen pintados del servidor, sin esperar al AJAX.
  */
@@ -56,9 +56,10 @@ $pendientes = [];
 if ($panel['pendientes']) {
     $primero = $panel['pendientes'][0];
     $n = count($panel['pendientes']);
-    $pendientes[] = ['clave' => 'cerrar', 'n' => $n, 'texto' => 'Sin cerrar',
+    $hayAtencionHoy = count(array_filter($panel['pendientes'], fn($c) => $c['estado'] === 'en_curso' && $c['fecha'] === $panel['hoy'])) > 0;
+    $pendientes[] = ['clave' => 'cerrar', 'n' => $n, 'texto' => $hayAtencionHoy ? 'Atenciones abiertas' : 'Sin cerrar',
         'detalle' => $primero['mascota'] . ', ' . mb_strtolower($primero['dia']) . ' ' . ResumenPanel::hora($primero['hora']) . ($n > 1 ? ' y ' . ($n - 1) . ' más' : ''),
-        'accion' => 'Cerrar', 'etiqueta' => 'Cerrar la atención de ' . $primero['mascota'], 'href' => $atencionUrl($primero)];
+        'accion' => 'Continuar', 'etiqueta' => 'Continuar la atención de ' . $primero['mascota'], 'href' => $atencionUrl($primero)];
 }
 if ($panel['triages']) {
     $n = count($panel['triages']);
@@ -162,7 +163,7 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
 
         <div class="inicio-lado">
             <!-- HU-2.2: la atención sin cita se registra como llegada en la agenda -->
-            <a class="inicio-tile inicio-sincita" href="index.php?action=vet_agenda#llegadas">
+            <a class="inicio-tile inicio-sincita" href="index.php?action=vet_agenda&amp;agendar=<?= $e($panel['hoy']) ?>&amp;modo_llegada=ahora">
                 <span class="inicio-sincita__cuarto" aria-hidden="true"></span>
                 <img class="inicio-sincita__mascota" src="img/cachorro-negro.png" alt="" decoding="async">
                 <span class="inicio-sincita__icono" aria-hidden="true"><i class="fas fa-plus"></i></span>

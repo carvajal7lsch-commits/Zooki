@@ -22,6 +22,134 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testMigracion19PreciosRepetibleYSemillaSinSobrescribir(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("UPDATE planes SET precio_mensual=89990,precio_anual=899900 WHERE nombre='Profesional'");
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->assertSame([40000, 400000], array_map('intval', $this->db->query("SELECT precio_mensual,precio_anual FROM planes WHERE nombre='Profesional'")->fetch(PDO::FETCH_NUM)));
+        $this->db->exec("UPDATE planes SET precio_mensual=45000 WHERE nombre='Profesional'");
+        $this->cargar('02_semilla.sql');
+        $this->assertSame(45000, (int)$this->db->query("SELECT precio_mensual FROM planes WHERE nombre='Profesional'")->fetchColumn());
+        $this->assertSame(0, (int)$this->db->query("SELECT precio_mensual FROM planes WHERE nombre='Gratuito'")->fetchColumn());
+    }
+
+    public function testMigracion18RazasYCargaRealSonRepetibles(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('DELETE FROM razas WHERE id_raza BETWEEN 56 AND 59');
+        $this->cargar('18_razas_mdr1.sql');
+        $this->cargar('18_razas_mdr1.sql');
+        $this->cargar('02_semilla.sql');
+        $razas = $this->db->query('SELECT nombre_raza FROM razas WHERE id_raza BETWEEN 56 AND 59 ORDER BY id_raza')->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertSame(['Collie', 'Border Collie', 'Pastor Australiano', 'Pastor de Shetland'], $razas);
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        $cargador = new CargadorConocimiento($this->db);
+        $cargador->cargar(__DIR__ . '/../../database/conocimiento');
+        $antes = $this->db->query('SELECT codigo,id_nodo FROM grafo_nodos ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC);
+        $segunda = $cargador->cargar(__DIR__ . '/../../database/conocimiento');
+        $this->assertSame(0, $segunda['altas'] + $segunda['cambios'] + $segunda['retiros']);
+        $this->assertSame($antes, $this->db->query('SELECT codigo,id_nodo FROM grafo_nodos ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function testControlMigracion17DosVecesConservaParametros(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN control_busqueda_dias');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN control_dias_sin_duracion');
+        $this->cargar('17_control_consulta.sql');
+        $this->db->exec("INSERT INTO clinicas (id_clinica,nombre,nit,estado,control_busqueda_dias,control_dias_sin_duracion) VALUES (99,'Control','900123999','activa',365,1)");
+        $this->cargar('17_control_consulta.sql');
+        $this->assertSame(['365', '1'], array_map('strval', array_values($this->db->query('SELECT control_busqueda_dias,control_dias_sin_duracion FROM clinicas WHERE id_clinica=99')->fetch(PDO::FETCH_ASSOC))));
+    }
+
+    public function testPautaMigracion16DobleConservaContenido(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec('ALTER TABLE grafo_aristas DROP COLUMN pauta');
+        $this->cargar('16_pautas_tratamiento.sql');
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        (new CargadorConocimiento($this->db))->cargar(__DIR__ . '/../Fixtures/conocimiento/pautas');
+        $antes = $this->db->query('SELECT codigo, pauta FROM grafo_aristas ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC);
+        $this->cargar('16_pautas_tratamiento.sql');
+        $this->assertSame($antes, $this->db->query('SELECT codigo, pauta FROM grafo_aristas ORDER BY codigo')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertCount(8, $antes);
+        $this->assertNotNull(array_column($antes, 'pauta', 'codigo')['trata.prueba']);
+    }
+
+    public function testCorrecciones230Migracion15DoblePreservaTiposYConfiguraSoloSuClinica(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/ConfiguracionClinica.php';
+        require_once __DIR__ . '/../../models/CopiaCatalogosClinica.php';
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN anticipacion_cambios_min');
+        $this->db->exec('ALTER TABLE tipos_cita DROP COLUMN solo_personal');
+        $this->db->exec("INSERT INTO tipos_cita (id_tipo_cita,id_clinica,nombre_tipo,duracion_minutos,margen_minutos,pausable) VALUES (99,1,'Cirugía programada',150,20,1)");
+        $this->db->exec("INSERT INTO clinicas (id_clinica,nombre,nit,estado) VALUES (44,'Pendiente','900111444','pendiente_verificacion')");
+        $this->cargar('15_correcciones_agenda.sql');
+        $this->cargar('15_correcciones_agenda.sql');
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM tipos_cita WHERE id_clinica=1 AND nombre_tipo='Cirugía programada'")->fetchColumn());
+        $this->assertSame(150, (int) $this->db->query('SELECT duracion_minutos FROM tipos_cita WHERE id_tipo_cita=99')->fetchColumn());
+        $this->assertSame(['120', '15', '0', '1'], array_map('strval', array_values($this->db->query("SELECT duracion_minutos,margen_minutos,pausable,solo_personal FROM tipos_cita WHERE id_clinica=2 AND nombre_tipo='Cirugía programada'")->fetch(PDO::FETCH_ASSOC))));
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM tipos_cita WHERE id_clinica=44')->fetchColumn());
+        $this->db->exec("UPDATE clinicas SET estado='activa' WHERE id_clinica=44");
+        (new CopiaCatalogosClinica($this->db))->copiar(44);
+        $this->assertSame(7, (int) $this->db->query('SELECT COUNT(*) FROM tipos_cita WHERE id_clinica=44')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT solo_personal FROM tipos_cita WHERE id_clinica=44 AND nombre_tipo='Cirugía programada'")->fetchColumn());
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        $configuracion = new ConfiguracionClinica($this->db);
+        $marca = $configuracion->leer()['marca'];
+        $configuracion->guardarMarca(array_replace($marca, ['anticipacion_cambios_min' => '0']));
+        $configuracion->guardarTipo(99, ['nombre_tipo' => 'Cirugía programada', 'duracion_minutos' => '150', 'margen_minutos' => '20', 'pausable' => '1', 'solo_personal' => '1']);
+        $this->cargar('15_correcciones_agenda.sql');
+        $this->assertSame(0, (int) $this->db->query('SELECT anticipacion_cambios_min FROM clinicas WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(30, (int) $this->db->query('SELECT anticipacion_cambios_min FROM clinicas WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT solo_personal FROM tipos_cita WHERE id_tipo_cita=99')->fetchColumn());
+    }
+
+    public function testTriageProvisionalReservaYRevisionPosteriorConVacunasGlobales(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/LlegadaAgenda.php';
+        DosClinicas::poblarAgenda($this->db);
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $reloj = static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00');
+        $agenda = new SolicitudAgenda($this->db, $reloj);
+        $entrada = ['id_mascota' => 1, 'id_veterinario' => 2, 'id_tipo_cita' => 1, 'fecha' => '2030-01-07', 'otro_sintoma' => 'Camina de lado y no aparece entre las opciones.',
+            'sintomas' => [['codigo' => 'sintoma.otro_no_se', 'tiempo' => 'no_se']]];
+        foreach (['verde', 'naranja', 'rojo'] as $nivel) {
+            $r = $agenda->evaluar($entrada);
+            $this->assertTrue($r['reservable']);
+            $hora = $agenda->horas($r['id_solicitud'], $entrada)[0];
+            $guardada = $agenda->reservar($entrada + ['id_solicitud' => $r['id_solicitud'], 'hora' => $hora, 'ignore_warning' => '1']);
+            $antes = (new Cita($this->db))->getById($guardada['id_cita']);
+            $agenda->revisar($r['id_solicitud'], $nivel, 'Valoración posterior a reservar', $r['huella'], null);
+            $cita = (new Cita($this->db))->getById($guardada['id_cita']);
+            $this->assertSame($nivel, $cita['prioridad']);
+            $this->assertSame('amarillo', $cita['prioridad_calculada']);
+            if ($nivel === 'verde') {
+                $this->assertSame($antes['hora'], $cita['hora']);
+            }
+        }
+        $this->assertCount(1, (new UrgenciaAgenda($this->db, $reloj))->listar());
+        $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='citas' AND descripcion LIKE 'Reclasificación veterinaria%'")->fetchColumn());
+        $grafo = (new GrafoConocimiento($this->db))->instantanea();
+        $paciente = new PacienteDiagnostico($this->db);
+        $this->assertSame('desconocida', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->db->exec("INSERT INTO vacunas (id_mascota,id_clinica,nombre_vacuna,fecha_aplicacion,fecha_proxima_dosis) VALUES (1,2,'Rabia','2029-01-01','2031-01-01')");
+        $this->assertSame('completa', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->db->exec("UPDATE vacunas SET fecha_proxima_dosis='2029-01-02'");
+        $this->assertSame('incompleta', $paciente->contexto(1, $grafo, $reloj(), [])['vacunacion']);
+        $this->assertSame('completa', $paciente->contexto(1, $grafo, $reloj(), ['vacunacion' => 'completa'])['vacunacion']);
+    }
+
     public static function carrerasCheckout(): array
     {
         return [['checkout_workers', 0, 'cancelado'], ['checkout_evento_primero', 1, 'confirmado'], ['checkout_cierre_primero', 0, 'revision']];
@@ -42,7 +170,7 @@ class BaseV2MysqlTest extends TestCase
             putenv('APP_URL');
         }
         if ($fase !== 'checkout_workers') {
-            $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+            $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso'));
         }
         $resultados = $this->competirS2($fase);
@@ -91,7 +219,7 @@ class BaseV2MysqlTest extends TestCase
         } finally {
             putenv('APP_URL');
         }
-        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
         foreach ([1, 2] as $timestamp) {
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
         }
@@ -178,7 +306,7 @@ class BaseV2MysqlTest extends TestCase
         $fuente = new FuentePago($this->db, 1, $cliente, ClienteWompiFalso::configuracion('test', '1', '1'), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
         $version = AutorizacionCobro::contratos($cliente->datosComercio)['version'];
         $fuente->guardar('CARD', 'tok_test_mysql', true, true, $version, 1);
-        $fuente->automatico(true, $version, 8999000, 1);
+        $fuente->automatico(true, $version, 4000000, 1);
     }
 
     public function testS3DosTrabajadoresUnSoloPost(): void
@@ -256,7 +384,7 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, $this->contar('pagos_suscripcion'));
         $this->assertSame(1, $this->contar('intentos_pago'));
         $this->assertSame(0, $this->contar('suscripcion_periodos'));
-        $this->assertSame(8999000, $resultados[0]['resultado']['total_centavos']);
+        $this->assertSame(4000000, $resultados[0]['resultado']['total_centavos']);
     }
 
     public function testS2DosEventosConcurrentesAcreditanUnaVezConAuditoria(): void
@@ -273,13 +401,13 @@ class BaseV2MysqlTest extends TestCase
         } finally {
             putenv($urlAnterior === false ? 'APP_URL' : 'APP_URL=' . $urlAnterior);
         }
-        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 4000000, 'currency' => 'COP'];
         foreach ([1, 2] as $timestamp) {
             (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
         }
         $this->competirS2('acreditar');
         $this->assertSame(1, $this->contar('suscripcion_periodos'));
-        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('2026-12-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado='procesado'")->fetchColumn());
         $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
@@ -408,7 +536,9 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('12_suscripcion_pagos.sql');
         $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
         $this->assertNull($this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=2')->fetchColumn());
-        $this->assertSame([89990,899900], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->cargar('19_precios_lanzamiento.sql');
+        $this->assertSame([40000,400000], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
         $this->db->exec('UPDATE planes SET precio_mensual=123456,precio_anual=1234560 WHERE id_plan=2');
         $this->db->exec('ALTER TABLE clinicas DROP COLUMN aviso_vencimiento_2_dias');
         $this->db->exec('DROP TABLE wompi_eventos');
@@ -735,7 +865,7 @@ class BaseV2MysqlTest extends TestCase
             copy(__DIR__ . '/../Fixtures/conocimiento/nodos.json', $carpeta . '/nodos.json');
             $cargador->cargar($carpeta);
             $this->assertSame(1, (int) $this->db->query('SELECT activo FROM grafo_nodos WHERE id_nodo = ' . $id)->fetchColumn());
-            $this->assertSame(55, $this->contar('razas'));
+            $this->assertSame(59, $this->contar('razas'));
             foreach ([[$carpeta, 0], [$carpeta . '/ausente', 1]] as [$directorio, $esperado]) {
                 $proceso = proc_open([PHP_BINARY, __DIR__ . '/../../scripts/cargar_conocimiento.php', '--revisar', '--carpeta=' . $directorio], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
                 $salida = stream_get_contents($pipes[1]);
@@ -765,7 +895,7 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame([0, 0, 0], [$segunda['altas'], $segunda['cambios'], $segunda['retiros']]);
         $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
         // Las razas y especies del conjunto se enlazan al catálogo real, sin crear taxonomía.
-        $this->assertSame(55, $this->contar('razas'));
+        $this->assertSame(59, $this->contar('razas'));
         $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE tipo IN ('especie', 'raza') AND id_especie IS NULL AND id_raza IS NULL")->fetchColumn());
         $this->assertSame(55, (int) $this->db->query("SELECT id_raza FROM grafo_nodos WHERE codigo = 'raza.gran_danes'")->fetchColumn());
         $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE codigo NOT LIKE 'legado.%' AND estado_validacion <> 'pendiente'")->fetchColumn());
@@ -1059,7 +1189,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('05_limites_plan_gratuito.sql');
         $this->cargar('02_semilla.sql');
         $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
-        $this->assertSame(89990, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+        $this->assertSame(40000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
     }
 
     public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
@@ -1389,7 +1519,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         }
         $this->db->exec('DROP TRIGGER fallo_d3');
         $clinica = $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
-        foreach (['tipos_cita' => 6, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $esperado) {
+        foreach (['tipos_cita' => 7, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $esperado) {
             $this->assertSame($esperado, (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla . ' WHERE id_clinica = ' . $clinica)->fetchColumn());
         }
         $persona = (new Usuario($this->db))->buscarParaLogin('fabio@zooki.test');
@@ -1527,7 +1657,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $this->cargar('02_semilla.sql');
         $this->cargar('02_semilla.sql');
 
-        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 55, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
+        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 59, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
         $this->assertSame(
             [1 => 'administrador', 2 => 'veterinario', 4 => 'propietario', 5 => 'super-administrador'],
             $this->db->query('SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol')->fetchAll(PDO::FETCH_KEY_PAIR)
@@ -1545,7 +1675,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql', '15_correcciones_agenda.sql', '16_pautas_tratamiento.sql', '17_control_consulta.sql', '18_razas_mdr1.sql', '19_precios_lanzamiento.sql', '20_intencion_profesional.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -1578,7 +1708,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
                 'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
             $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
-            $this->assertSame(55, $this->contar('razas'));
+            $this->assertSame(59, $this->contar('razas'));
             $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
             $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
@@ -1629,6 +1759,8 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
     {
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
+        // La plataforma cambia el catálogo después de aplicar las migraciones de la versión.
+        $this->migrador()->migrar();
         $this->db->exec("UPDATE planes SET precio_mensual = 120000 WHERE id_plan = 2");
         $this->db->exec("UPDATE colores_base SET nombre_color = 'Café oscuro' WHERE id_color = 3");
 
@@ -1807,7 +1939,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $inicializador->copiar(2);
         $inicializador->copiar(1);
         $inicializador->copiar(2);
-        foreach (['tipos_cita'=>12,'horarios_clinica'=>14,'vacunas_base'=>30,'especie_vacunas'=>42,
+        foreach (['tipos_cita'=>14,'horarios_clinica'=>14,'vacunas_base'=>30,'especie_vacunas'=>42,
                   'laboratorios_base'=>22,'productos_desparasitacion_base'=>30] as $tabla=>$cantidad) {
             $this->assertSame($cantidad, $this->contar($tabla));
         }
@@ -1815,7 +1947,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
         $catalogo = new CatalogoClinica($this->db);
         $tipos = $catalogo->tiposCita();
-        $this->assertCount(6, $tipos);
+        $this->assertCount(7, $tipos);
         $this->assertCount(12, $catalogo->vacunasPorEspecie(1));
         $horario = new HorarioClinica($this->db);
         $horario->guardar([[1,1,1,0,'09:00:00','11:00:00',null,null]]);

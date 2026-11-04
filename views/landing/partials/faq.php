@@ -16,43 +16,67 @@
 
             <article class="lp-faq__item">
                 <button type="button" class="lp-faq__question" aria-expanded="false">
-                    ¿Zooki reemplaza la historia clínica en papel?
+                    ¿Zooki ya está disponible para mi clínica?
                     <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
                 </button>
                 <div class="lp-faq__answer">
                     <p>
-                        Sí. Cada consulta se registra digitalmente con anamnesis, constantes fisiológicas,
-                        diagnóstico, plan de tratamiento y receta, y permite adjuntar exámenes e imágenes.
-                        El expediente queda vinculado al paciente de forma permanente y trazable, sin
-                        depender de un archivador físico.
+                        Sí. Cualquier clínica veterinaria en Colombia puede registrarse hoy, empezar con
+                        el plan gratuito y pasar a Profesional pagando en línea.
                     </p>
                 </div>
             </article>
 
             <article class="lp-faq__item">
                 <button type="button" class="lp-faq__question" aria-expanded="false">
-                    ¿Qué pasa con los datos personales de los propietarios?
+                    ¿Cómo funciona la oferta «paga 1, lleva 2»?
                     <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
                 </button>
                 <div class="lp-faq__answer">
                     <p>
-                        Se tratan conforme a la Ley 1581 de 2012 y su decreto reglamentario. Las contraseñas
-                        se almacenan cifradas, el acceso está restringido por rol y cada operación queda
-                        registrada en auditoría. La política de tratamiento de datos, con las finalidades,
-                        los derechos del titular y el canal de atención, será publicada como documento formal.
+                        Es de lanzamiento: el primer pago mensual de tu clínica te da dos meses. Desde el
+                        siguiente, cada pago mensual cubre un mes. No se acumula con el anual.
                     </p>
                 </div>
             </article>
 
             <article class="lp-faq__item">
                 <button type="button" class="lp-faq__question" aria-expanded="false">
-                    ¿Necesito instalar algo o comprar equipos?
+                    ¿Qué pasa si llego al límite del plan gratuito?
                     <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
                 </button>
                 <div class="lp-faq__answer">
                     <p>
-                        No. Zooki es una aplicación web: funciona en Chrome, Firefox y Edge sin instalación
-                        adicional. Basta con el computador que ya usa la clínica y una conexión estable.
+                        Zooki te avisa y no deja crear más mascotas, citas o personal por encima del tope.
+                        Lo que ya tienes sigue funcionando y las urgencias rojas nunca se bloquean.
+                    </p>
+                </div>
+            </article>
+
+            <article class="lp-faq__item">
+                <button type="button" class="lp-faq__question" aria-expanded="false">
+                    ¿Cómo se paga y qué pasa si dejo de pagar?
+                    <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
+                </button>
+                <div class="lp-faq__answer">
+                    <p>
+                        Se paga en línea con Wompi y el precio publicado es el total, sin IVA. Si no
+                        renuevas, conservas Profesional durante los días de gracia y luego la clínica
+                        queda con los límites del plan gratuito, sin perder datos: sigues atendiendo y
+                        consultando las historias, y las urgencias rojas nunca se bloquean.
+                    </p>
+                </div>
+            </article>
+
+            <article class="lp-faq__item">
+                <button type="button" class="lp-faq__question" aria-expanded="false">
+                    ¿El copiloto reemplaza el criterio del veterinario?
+                    <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
+                </button>
+                <div class="lp-faq__answer">
+                    <p>
+                        No. Sugiere diagnósticos, calcula el triage y bloquea combinaciones peligrosas,
+                        pero la decisión final siempre es del veterinario.
                     </p>
                 </div>
             </article>
@@ -64,23 +88,22 @@
                 </button>
                 <div class="lp-faq__answer">
                     <p>
-                        El portal del propietario está diseñado específicamente para móvil, con formularios
-                        y paneles pensados para pantalla táctil. Los módulos clínicos y la agenda están
-                        optimizados para escritorio, que es donde ocurre el trabajo de la clínica.
+                        Sí. Los paneles del administrador y del veterinario, y el portal del propietario,
+                        se adaptan a celular, tableta y computador. No hay nada que instalar.
                     </p>
                 </div>
             </article>
 
             <article class="lp-faq__item">
                 <button type="button" class="lp-faq__question" aria-expanded="false">
-                    ¿Quién puede ver la historia clínica de una mascota?
+                    ¿Qué pasa con los datos personales?
                     <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
                 </button>
                 <div class="lp-faq__answer">
                     <p>
-                        El equipo clínico de la veterinaria y el propietario de esa mascota, cada uno con
-                        el alcance que le corresponde. Un propietario solo ve a sus propios pacientes, y
-                        los archivos adjuntos requieren sesión activa y autorización explícita.
+                        Se tratan conforme a la Ley 1581 de 2012 y a nuestra
+                        <a href="index.php?action=privacidad">política de privacidad</a>: contraseñas
+                        cifradas, acceso por rol, datos aislados por clínica y auditoría de cada cambio.
                     </p>
                 </div>
             </article>
@@ -95,21 +118,6 @@
                         Sí. La cartilla de salud de cualquier paciente se descarga en PDF con el historial
                         de vacunación, desparasitaciones y consultas, en un formato membretado listo para
                         imprimir o compartir.
-                    </p>
-                </div>
-            </article>
-
-            <article class="lp-faq__item">
-                <button type="button" class="lp-faq__question" aria-expanded="false">
-                    ¿Zooki ya está disponible para mi clínica?
-                    <i class="ri-arrow-down-s-line lp-faq__chevron" aria-hidden="true"></i>
-                </button>
-                <div class="lp-faq__answer">
-                    <p>
-                        Zooki está en desarrollo activo y publica versiones de forma continua. El sistema
-                        es funcional y se documenta en el portal público, pero todavía no se ofrece como
-                        servicio comercial abierto. Si te interesa conocerlo o participar en las pruebas,
-                        escríbenos.
                     </p>
                 </div>
             </article>

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/../../helpers/FotoMascota.php';
 require_once __DIR__ . '/../../models/MarcaClinica.php';
 
 /**
@@ -44,7 +45,6 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
             <p class="portal-cita__cuando">
                 <strong><?= $e($cita['nombre_mascota']) ?></strong>
                 <span class="portal-cita__hora"><?= $e(ResumenPanel::etiquetaDia($cita['fecha'], $hoy)) ?> · <?= $e(ResumenPanel::hora($cita['hora'])) ?></span>
-                <?php if (!empty($cita['inicio_estimado'])): ?><span>Inicio estimado: <?= $e($cita['inicio_estimado']) ?></span><?php endif; ?>
                 <?php if (($cita['estado_reajuste'] ?? '') === 'pendiente_reprogramacion'): ?><span>Contacta a la clínica o elige Reprogramar para consultar alternativas.</span><?php endif; ?>
             </p>
             <p class="portal-cita__donde">
@@ -52,6 +52,7 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
                 <?php if (!empty($cita['nombre_tipo'])): ?><span><?= $e($cita['nombre_tipo']) ?></span><?php endif; ?>
                 <span><i class="ri-stethoscope-line" aria-hidden="true"></i> <?= $e($cita['veterinario_nombre'] ?? 'Veterinario') ?></span>
             </p>
+            <?php if (!empty($cita['aviso_estimacion'])): ?><p class="portal-cita__reajuste"><?= $e($cita['aviso_estimacion']) ?></p><?php endif; ?>
         </div>
         <span class="portal-cita__estado <?= PresentacionPortal::claseEstado($cita['estado']) ?>"><?= $e(PresentacionPortal::estado($cita['estado'])) ?></span>
         <?php // RN-405: solo se cancela en una clínica con vínculo activo; es lo único que confirma. ?>
@@ -888,10 +889,10 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                     <div class="foto-campo" data-foto="<?= $p ?>">
                         <div class="foto-campo__vista" aria-hidden="true"><i class="ri-image-line"></i></div>
                         <div class="foto-campo__acciones">
-                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" accept="image/jpeg,image/png" class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda" <?= ValidadorMascota::atributosHtml('foto') ?>>
+                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" <?= FotoMascota::atributosHtml() ?> class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda" <?= ValidadorMascota::atributosHtml('foto') ?>>
                             <label class="foto-campo__boton" for="<?= $p ?>_pet_foto"><i class="ri-upload-2-line" aria-hidden="true"></i> <span><?= $editar ? 'Cambiar foto' : 'Elegir foto' ?></span></label>
                             <button type="button" class="btn-enlace foto-campo__quitar" hidden>Quitar la foto elegida</button>
-                            <p class="portal-ayuda foto-campo__ayuda" id="<?= $p ?>_foto_ayuda">JPG o PNG, hasta 5 MB.</p>
+                            <p class="portal-ayuda foto-campo__ayuda" id="<?= $p ?>_foto_ayuda"><?= htmlspecialchars(FotoMascota::ayuda(), ENT_QUOTES, 'UTF-8') ?></p>
                         </div>
                     </div>
                 </div>
@@ -1029,6 +1030,7 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                 <div class="cita-info__mascota">Mascota: <span id="detCitaMascota">—</span></div>
                 <div class="cita-info__vet">Veterinario: <span id="detCitaVet">—</span></div>
                 <div class="cita-info__fecha"><i class="ri-calendar-line" aria-hidden="true"></i> <span id="detCitaFechaHora">—</span></div>
+                <p id="detCitaEstimacion" class="portal-cita__reajuste" hidden></p>
             </div>
 
             <div id="detCitaClinicaArea" class="cita-clinica">

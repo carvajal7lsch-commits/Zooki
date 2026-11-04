@@ -1,21 +1,10 @@
-/*
- * Pantalla de atención de una cita (views/vet/atencion.php).
- *
- * Sin scroll de página: .atencion ocupa exactamente el alto disponible
- * (--atencion-alto, lo calcula js/atencion.js) y el contenido se reparte en
- * pestañas y pasos.
- *
- * M2 C8: identidad de Zooki con las variables de css/identidad.css (H5); la
- * ficha del paciente es más compacta (H4); cada paso de la consulta es el único
- * contenedor que desplaza, sin listas con scroll dentro que atrapen la rueda o
- * el dedo (H7). Los campos y la consulta compartida están en consulta-clinica.css.
- */
+/* RE-2.1.6: Atención crece con el contenido; desplaza la página. */
 
 .atencion {
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
-    height: var(--atencion-alto, calc(100dvh - 150px));
+
     min-height: 560px;
     color: var(--z-text);
 }
@@ -310,7 +299,6 @@
 .atencion__panel {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .atencion__tabs {
@@ -373,7 +361,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
-    overflow: hidden;
 }
 
 .atencion__aviso {
@@ -489,16 +476,14 @@
     color: var(--z-danger-dark);
 }
 
-/* H7: el paso desplaza solo, de punta a punta; ninguna lista interna tiene su propio scroll. */
+/* RE-2.1.6: cada paso crece con su contenido y desplaza la página. */
 .atencion__paso {
     display: none;
     flex: 1;
     min-height: 0;
     flex-direction: column;
     padding: 0 0.15rem 1rem 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+
 }
 
 .atencion__paso.is-active { display: flex; }
@@ -551,7 +536,6 @@
     flex-direction: column;
     gap: 0.9rem;
     min-height: 0;
-    overflow-y: auto;
 }
 
 .consulta-resumen__signos {
@@ -631,7 +615,7 @@
     padding: 0;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -766,10 +750,8 @@
 
 /* Pantallas angostas: se apila y ahí sí se permite el scroll de página. */
 @media (max-width: 960px) {
-    .atencion { height: auto; }
     .atencion__cuerpo { grid-template-columns: minmax(0, 1fr); }
     .atencion__paciente { overflow: visible; }
-    .atencion__paso { overflow: visible; }
     .procedimiento { grid-template-columns: minmax(0, 1fr); }
     .procedimiento__registros { border-left: none; padding-left: 0; }
 }

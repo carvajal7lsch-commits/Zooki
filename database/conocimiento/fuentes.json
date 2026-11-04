@@ -128,6 +128,14 @@
     "seccion": "Signos clínicos, cistitis idiopática y obstrucción uretral en machos"
   },
   {
+    "codigo": "cornell.urgencias",
+    "entidad": "Cornell Richard P. Riney Canine Health Center",
+    "titulo": "When to go to the ER",
+    "url": "https://riney.vet.cornell.edu/member-benefits-health-tips/when-to-go-to-the-er-june-2025",
+    "fecha_consulta": "2026-10-29",
+    "seccion": "Top Reasons to Head to the Emergency Vet"
+  },
+  {
     "codigo": "cornell.boas",
     "entidad": "Cornell Richard P. Riney Canine Health Center",
     "titulo": "Brachycephalic Obstructive Airway Syndrome (BOAS)",
@@ -374,5 +382,221 @@
     "url": "https://github.com/carvajal7lsch-commits/Zooki/blob/v2/m2-grafo/specs/M2-grafo-clinico.md",
     "fecha_consulta": "2026-10-14",
     "seccion": "B2 — Revisión: decisiones 1, 2 y 3 del usuario (2026-10-14); política del producto, no evidencia clínica"
+  },
+  {
+    "codigo": "msd.ehrlichiosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Ehrlichiosis in Dogs",
+    "url": "https://www.msdvetmanual.com/infectious-diseases/rickettsial-diseases-in-dogs/ehrlichiosis-in-dogs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Ehrlichiosis in Dogs; Treatment of Ehrlichiosis in Dogs"
+  },
+  {
+    "codigo": "msd.leptospirosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Leptospirosis in Dogs",
+    "url": "https://www.msdvetmanual.com/generalized-conditions/leptospirosis/leptospirosis-in-dogs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Signs and Test Results of Leptospirosis in Dogs; Treatment of Leptospirosis in Dogs"
+  },
+  {
+    "codigo": "msd.moquillo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Canine Distemper",
+    "url": "https://www.msdvetmanual.com/generalized-conditions/canine-distemper/canine-distemper-overview",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Canine Distemper; Treatment of Canine Distemper"
+  },
+  {
+    "codigo": "msd.giardiasis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Giardiasis in Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings and Lesions of Giardiasis; Treatment of Giardiasis"
+  },
+  {
+    "codigo": "msd.dapp",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Flea Allergy Dermatitis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/fleas-and-flea-allergy-dermatitis/flea-allergy-dermatitis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Diagnosis; Treatment and Control of Flea Allergy Dermatitis in Dogs and Cats"
+  },
+  {
+    "codigo": "msd.atopia",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Canine Atopic Dermatitis",
+    "url": "https://www.msdvetmanual.com/integumentary-system/atopic-dermatitis/canine-atopic-dermatitis",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Atopic Dermatitis in Dogs; Treatment of Atopic Dermatitis in Dogs"
+  },
+  {
+    "codigo": "msd.sarnas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Mange in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Sarcoptic Mange (Canine Scabies); Canine Demodicosis"
+  },
+  {
+    "codigo": "msd.cistitis_bacteriana",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Bacterial Cystitis in Small Animals",
+    "url": "https://www.msdvetmanual.com/urinary-system/infectious-diseases-of-the-urinary-system-in-small-animals/bacterial-cystitis-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Characteristics; Treatment of Bacterial Cystitis in Small Animals"
+  },
+  {
+    "codigo": "msd.pancreatitis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Pancreatitis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/digestive-system/the-exocrine-pancreas/pancreatitis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Pancreatitis in Dogs and Cats; Treatment"
+  },
+  {
+    "codigo": "msd.respiratorio_felino",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Feline Respiratory Disease Complex",
+    "url": "https://www.msdvetmanual.com/respiratory-system/respiratory-diseases-of-small-animals/feline-respiratory-disease-complex",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Treatment"
+  },
+  {
+    "codigo": "msd.hipertiroidismo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Hyperthyroidism in Animals",
+    "url": "https://www.msdvetmanual.com/endocrine-system/the-thyroid-gland/hyperthyroidism-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Feline Hyperthyroidism; Treatment of Hyperthyroidism in Animals"
+  },
+  {
+    "codigo": "msd.ascaridos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Roundworms in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-small-animals/roundworms-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings; Treatment and Control"
+  },
+  {
+    "codigo": "msd.dermatofitosis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Dermatophytosis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/integumentary-system/dermatophytosis/dermatophytosis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Dermatophytosis in Dogs and Cats; Treatment"
+  },
+  {
+    "codigo": "msd.periodontal",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Periodontal Disease in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/dentistry-in-small-animals/periodontal-disease-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings and Lesions; Treatment of Periodontal Disease in Small Animals"
+  },
+  {
+    "codigo": "msd.conjuntivitis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "The Conjunctiva in Animals",
+    "url": "https://merckvetmanual.com/eye-and-ear/ophthalmology/conjunctiva",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Conjunctivitis: clinical signs and treatment"
+  },
+  {
+    "codigo": "msd.obstruccion_gi",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Gastrointestinal Obstruction in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/diseases-of-the-stomach-and-intestines-in-small-animals/gastrointestinal-obstruction-in-small-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Findings of Gastrointestinal Obstruction in Small Animals; Treatment"
+  },
+  {
+    "codigo": "msd.hipotiroidismo",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Hypothyroidism in Animals",
+    "url": "https://www.msdvetmanual.com/endocrine-system/the-thyroid-gland/hypothyroidism-in-animals",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Clinical Signs of Canine Hypothyroidism; Treatment"
+  },
+  {
+    "codigo": "msd.aine_tabla",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "NSAIDs Used for Pain Management in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/multimedia/table/nsaids-used-for-pain-management-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Tabla: dosis de meloxicam y carprofeno en perros y gatos"
+  },
+  {
+    "codigo": "msd.antiepilepticos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Antiepileptic Drugs",
+    "url": "https://merckvetmanual.com/multimedia/table/antiepileptic-drugs",
+    "fecha_consulta": "2026-10-30",
+    "seccion": "Tabla: dosis de fenobarbital y levetiracetam"
+  },
+  {
+    "codigo": "msd.raticidas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Anticoagulant Rodenticide Poisoning in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/rodenticide-poisoning/anticoagulant-rodenticide-poisoning-in-animals",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Clinical Signs, Decontamination y Key Points: hemorragia diferida y exposición que requiere evaluación; el tipo de raticida debe confirmarse."
+  },
+  {
+    "codigo": "ucd.mdr1",
+    "entidad": "University of California, Davis, Veterinary Genetics Laboratory",
+    "titulo": "Multidrug Sensitivity (MDR1)",
+    "url": "https://vgl.vetmed.ucdavis.edu/test/multidrug-sensitivity-mdr1",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Phenotype y Breeds appropriate for testing; ivermectina/loperamida, Collie, Australian Shepherd, Shetland Sheepdog, Border Collie y German Shepherd."
+  },
+  {
+    "codigo": "wsu.mdr1_farmacos",
+    "entidad": "Washington State University, WADDL",
+    "titulo": "Is your pet at risk of an adverse reaction to common drugs?",
+    "url": "https://waddl.vetmed.wsu.edu/2021/10/19/is-your-pet-at-risk-of-an-adverse-reaction-to-common-drugs/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Ivermectin y Loperamide: neurotoxicidad con dosis para sarna en perros con mutación MDR1; la raza no sustituye la prueba genética."
+  },
+  {
+    "codigo": "iscaid.respiratorio",
+    "entidad": "International Society for Companion Animal Infectious Diseases",
+    "titulo": "Antimicrobial use Guidelines for Treatment of Respiratory Tract Disease in Dogs and Cats",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5354050/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Table 2: amoxicilina-clavulanato 12,5 mg/kg PO cada12h en gatos; solo infección bacteriana secundaria, no infección viral por sí sola."
+  },
+  {
+    "codigo": "vmd.clav_periodontal",
+    "entidad": "Veterinary Medicines Directorate (UK)",
+    "titulo": "Clavaseptin250mg: prospecto para perros",
+    "url": "https://www.vmd.defra.gov.uk/productinformationdatabase/files/QRD_Documents/QRD-Auth_725417.PDF",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Prospecto§4 indicaciones periodontales;§8 dosis combinada12,5mg/kg cada12h y duración7 días (páginas4,6–7)."
+  },
+  {
+    "codigo": "msd.quinolonas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Quinolones, Including Fluoroquinolones, for Use in Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/antibacterial-agents/quinolones-including-fluoroquinolones-for-use-in-animals",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Adverse effects: degeneración retiniana en gatos con enrofloxacina, riesgo dependiente de dosis."
+  },
+  {
+    "codigo": "uzh.metamizol",
+    "entidad": "Universität Zürich, CliniPharm",
+    "titulo": "Metamizol: dosificaciones",
+    "url": "https://www-vetpharm.uzh.ch/Wirkstoffe/000000000590/7380_05.html",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Katze: evitar preparados con alcohol bencílico; formulación y dosis deben ser revisadas por el veterinario. No se deriva una pauta para diagnósticos sin indicación localizada."
+  },
+  {
+    "codigo": "haleon.dolex",
+    "entidad": "Haleon Consumer Healthcare Colombia",
+    "titulo": "Dolex Colombia: productos",
+    "url": "https://www.dolex.com.co/productos/",
+    "fecha_consulta": "2026-11-01",
+    "seccion": "Dolex tabletas: composición acetaminofén500mg. El alias solo ofrece el nodo; se confirma producto exacto y no descarta otros componentes de presentaciones combinadas."
   }
 ]

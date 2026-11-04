@@ -1,9 +1,22 @@
 <?php
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/CatalogoPlanes.php';
+require_once __DIR__ . '/../models/Suscripcion.php';
 
 class LandingController {
+    public function __construct(private ?PDO $db = null) {
+    }
+
     public function index() {
+        $db = $this->db ?? (new Database())->getConnection();
+        $clinica = Contexto::clinicaActiva();
+        $oferta = $clinica === null || !(new Suscripcion($db, $clinica))->tienePagosAprobados();
+        $planProfesional = CatalogoPlanes::profesional($db);
+        $planGratuito = CatalogoPlanes::gratuito($db);
+        $ofertaLanzamiento = TarifaSuscripcion::OFERTA_LANZAMIENTO_ACTIVA && $oferta;
+        $tarifasPublicas = TarifaSuscripcion::textos($planProfesional, $oferta);
         // Renderizar la vista de la landing page
-        require_once '../views/landing/index.php';
+        require_once __DIR__ . '/../views/landing/index.php';
     }
 
     public function privacidad() {

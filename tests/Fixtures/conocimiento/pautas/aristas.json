@@ -1,0 +1,210 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "arista.prueba",
+    "origen": "sintoma.prueba",
+    "destino": "diagnostico.prueba",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "trata.prueba",
+    "origen": "diagnostico.prueba",
+    "destino": "farmaco.prueba",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 1.0,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.prueba"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 0.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Indicación de prueba sin uso clínico"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "trata.rango",
+    "origen": "diagnostico.prueba",
+    "destino": "farmaco.rango",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.9,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.prueba"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 1
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Indicación de prueba sin uso clínico"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "trata.texto",
+    "origen": "diagnostico.prueba",
+    "destino": "farmaco.texto",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.prueba"
+    },
+    "pauta": {
+      "dosis_mg_kg": null,
+      "dosis_texto": "1 gota de prueba",
+      "via": "otica",
+      "frecuencia_horas": null,
+      "duracion_dias": null,
+      "indicacion": "Indicación de prueba sin uso clínico"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "trata.bloqueado",
+    "origen": "diagnostico.prueba",
+    "destino": "farmaco.bloqueado",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.7,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.prueba"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 0.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Indicación de prueba sin uso clínico"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "trata.alergeno",
+    "origen": "diagnostico.prueba",
+    "destino": "farmaco.alergeno",
+    "tipo_relacion": "trata",
+    "signo": "positivo",
+    "peso": 0.6,
+    "efecto": "evidencia",
+    "condiciones": {
+      "predicado": "especie",
+      "codigo": "especie.prueba"
+    },
+    "pauta": {
+      "dosis_mg_kg": {
+        "minimo": 0.5,
+        "maximo": 0.5
+      },
+      "dosis_texto": null,
+      "via": "oral",
+      "frecuencia_horas": 24,
+      "duracion_dias": 5,
+      "indicacion": "Indicación de prueba sin uso clínico"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "toxico.prueba",
+    "origen": "especie.prueba",
+    "destino": "farmaco.bloqueado",
+    "tipo_relacion": "toxico_para",
+    "signo": "negativo",
+    "peso": 0.8,
+    "efecto": "bloqueo"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "interaccion.prueba",
+    "origen": "farmaco.vigente",
+    "destino": "farmaco.prueba",
+    "tipo_relacion": "interactua_con",
+    "signo": "negativo",
+    "peso": 0.8,
+    "efecto": "advertencia"
+  }
+]

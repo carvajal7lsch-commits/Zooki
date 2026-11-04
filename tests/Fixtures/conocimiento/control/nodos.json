@@ -1,0 +1,38 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Escenario sintético de control",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "especie.control_prueba",
+    "tipo": "especie",
+    "etiqueta": "Canino sintético",
+    "taxonomia": {
+      "especie": "Canino"
+    },
+    "metadatos": {
+      "cobertura": {
+        "triage": "completa"
+      }
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Escenario sintético de control",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sintoma.control_preventivo",
+    "tipo": "sintoma",
+    "etiqueta": "Control preventivo sintético",
+    "nivel_triage": "verde",
+    "moderado": false
+  }
+]

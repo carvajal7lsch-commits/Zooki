@@ -1,5 +1,7 @@
 <?php
 $h = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$intencionProfesional = $intencionProfesional ?? null;
+$cicloPreseleccionado = $cicloPreseleccionado ?? 'mensual';
 $s = $estadoSuscripcion;
 $contrato = $s['plan_contratado'];
 $profesional = $profesionalSuscripcion;
@@ -18,9 +20,18 @@ $paginaHistorial = static fn (int $pagina): string => EnlaceAjustes::suscripcion
 $medioTexto = $fuentePago ? ($fuentePago['tipo'] === 'NEQUI' ? 'Nequi' : (($fuentePago['marca'] ?: 'Tarjeta') . ($fuentePago['ultimos_cuatro'] ? ' · termina en ' . $fuentePago['ultimos_cuatro'] : ''))) : 'No tienes un medio guardado.';
 $automaticoActivo = $fuentePago && (int) $fuentePago['cobro_automatico'] === 1;
 $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['precio_mensual'] * 10;
+$textosTarifa = TarifaSuscripcion::textos($profesional, !empty($ofertaLanzamientoDisponible));
 ?>
 <?php // Rediseño v2 (aprobado 2026-10-26): «Mi plan» e «Historial de pagos» en pestañas; pagar y el medio de pago en ventanas. ?>
 <section class="suscripcion" aria-label="Suscripción" data-suscripcion-pantalla data-suscripcion-origen="<?= $h($origenSuscripcion) ?>" data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
+
+    <?php if ($intencionProfesional !== null): ?>
+    <aside class="suscripcion__intencion" role="status">
+        <div><strong>Elegiste el plan Profesional: actívalo ahora</strong><p><?= $h($textosTarifa[$cicloPreseleccionado]) ?></p></div>
+        <button type="button" class="suscripcion__abrir-renovar" data-pagar-intencion <?= empty($pagoDisponible) ? 'disabled' : '' ?>>Pagar con Wompi</button>
+        <form action="index.php?action=suscripcion_descartar_intencion" method="post"><?php Csrf::field(); ?><button type="submit" class="suscripcion__seguir-gratis">Seguir con el plan gratis por ahora</button></form>
+    </aside>
+    <?php endif; ?>
 
     <div class="suscripcion-pestanas" role="tablist" aria-label="Secciones de la suscripción" data-suscripcion-pestanas>
         <button type="button" role="tab" class="suscripcion-pestanas__pestana" id="suscripcionPestanaPlan" aria-controls="suscripcionPlan" aria-selected="true" data-suscripcion-pestana="plan">
@@ -83,7 +94,8 @@ $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['pre
                 <div class="suscripcion__accion">
                     <div class="suscripcion__accion-texto">
                         <p class="suscripcion__accion-titulo">Renovar el plan</p>
-                        <p class="suscripcion__ayuda"><?= $h($monto($profesional['precio_mensual'])) ?> al mes o <?= $h($monto($profesional['precio_anual'])) ?> al año<?= $anualConAhorro ? ' (paga 10, usa 12)' : '' ?></p>
+                        <p class="suscripcion__ayuda" data-tarifa-mensual data-sin-oferta="<?= $h(TarifaSuscripcion::textos($profesional, false)['mensual']) ?>"><?= $h($textosTarifa['mensual']) ?></p>
+                        <p class="suscripcion__ayuda"><?= $h($textosTarifa['anual']) ?></p>
                     </div>
                     <button type="button" class="suscripcion__abrir-renovar" data-abrir-dialogo="suscripcionRenovarDialogo" aria-haspopup="dialog"><i class="fas fa-credit-card" aria-hidden="true"></i>Pagar o renovar</button>
                 </div>
@@ -204,16 +216,19 @@ $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['pre
                 <fieldset class="suscripcion__ciclos">
                     <legend class="visualmente-oculto">Elige el periodo que vas a pagar</legend>
                     <label class="suscripcion__ciclo">
-                        <input type="radio" name="suscripcion_ciclo" value="mensual" checked data-total="<?= $h($monto($profesional['precio_mensual'])) ?>" data-unidad="COP / mes">
+                        <input type="radio" name="suscripcion_ciclo" value="mensual" <?= $cicloPreseleccionado === 'mensual' ? 'checked' : '' ?> data-total="<?= $h($monto($profesional['precio_mensual'])) ?>" data-unidad="COP / mes">
                         <span class="suscripcion__ciclo-nombre">Mensual</span>
                         <span class="suscripcion__ciclo-precio"><?= $h($monto($profesional['precio_mensual'])) ?></span>
                     </label>
                     <label class="suscripcion__ciclo">
-                        <input type="radio" name="suscripcion_ciclo" value="anual" data-total="<?= $h($monto($profesional['precio_anual'])) ?>" data-unidad="COP / año">
-                        <span class="suscripcion__ciclo-nombre">Anual<?php if ($anualConAhorro): ?> <span class="suscripcion__ahorro">paga 10, usa 12</span><?php endif; ?></span>
+                        <input type="radio" name="suscripcion_ciclo" value="anual" <?= $cicloPreseleccionado === 'anual' ? 'checked' : '' ?> data-total="<?= $h($monto($profesional['precio_anual'])) ?>" data-unidad="COP / año">
+                        <span class="suscripcion__ciclo-nombre">Anual<?php if ($anualConAhorro): ?> <span class="suscripcion__ahorro">2 meses gratis</span><?php endif; ?></span>
                         <span class="suscripcion__ciclo-precio"><?= $h($monto($profesional['precio_anual'])) ?></span>
                     </label>
                 </fieldset>
+                <?php if (!empty($ofertaLanzamientoDisponible)): ?>
+                <p class="suscripcion__ayuda" data-oferta-lanzamiento>Paga 1, lleva 2: solo tu primer pago mensual aprobado incluye otro mes gratis; no aplica al anual.</p>
+                <?php endif; ?>
                 <p class="suscripcion__total"><span>Total a pagar</span><span><strong data-suscripcion-total><?= $h($monto($profesional['precio_mensual'])) ?></strong> <span data-suscripcion-unidad>COP / mes</span></span></p>
                 <p class="suscripcion__ayuda">Un cambio de precio conserva los periodos ya comprados. Wompi se abre a pantalla completa y al terminar vuelves aquí.</p>
                 <p id="suscripcionMensaje" class="suscripcion__ayuda suscripcion__mensaje" role="status" aria-live="polite"><?= $h($mensajePago ?? 'Disponible pronto') ?></p>

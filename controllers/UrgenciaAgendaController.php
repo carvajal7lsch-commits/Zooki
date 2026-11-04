@@ -46,7 +46,7 @@ final class UrgenciaAgendaController
             $resultado = match ($accion) {
                 'ingresar' => $urgencias->ingresar($_POST),
                 'llegada' => $urgencias->acreditarLlegada($this->id('id_solicitud'),$clave),
-                'atender' => $urgencias->atender($this->id('id_solicitud'),$this->id('id_tipo_cita'),(string)($_POST['decision'] ?? ''),$clave),
+                'atender' => $urgencias->atender($this->id('id_solicitud'),isset($_POST['id_tipo_cita']) && $_POST['id_tipo_cita'] !== '' ? $this->id('id_tipo_cita') : null,(string)($_POST['decision'] ?? ''),$clave),
                 'ordenar' => $urgencias->reordenar($this->id('id_solicitud'),(string)($_POST['motivo'] ?? ''),$clave),
                 'revisar' => $urgencias->revisarContexto($this->id('id_solicitud'),(int)($_POST['version'] ?? -1),(string)($_POST['motivo'] ?? ''),$clave),
                 'conciliar' => (new ConciliacionAgenda($this->db))->resolver($this->id('id_ingreso'),$_POST),

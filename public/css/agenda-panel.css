@@ -1,0 +1,425 @@
+/* Panel lateral del veterinario; las tarjetas conservan sus estilos y acciones. */
+.agenda-panel__citas,
+.agenda-panel__pendientes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+.agenda-panel__citas[hidden],
+.agenda-panel__pendientes[hidden] {
+    display: none !important;
+}
+.agenda-panel__vistas {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--z-border);
+    background: var(--z-surface);
+}
+.agenda-panel__vistas button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.agenda-panel__conteo {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-size: .65rem;
+    font-weight: 700;
+}
+.agenda-panel__conteo[hidden] {
+    display: none;
+}
+.agenda-panel__vistas button:hover {
+    background: var(--z-bg-suave);
+    color: var(--z-primary);
+}
+.agenda-panel__vistas button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.agenda-panel__vistas button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 1px;
+}
+.agenda-pendientes__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px;
+}
+.agenda-pendientes__head > div {
+    flex: 1;
+    min-width: 0;
+}
+.agenda-pendientes__head h3 {
+    margin: 0 0 2px;
+    color: var(--z-text);
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+.agenda-pendientes__head p {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .7rem;
+    line-height: 1.35;
+}
+.agenda-pendientes__total {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font-size: .7rem;
+    font-weight: 700;
+}
+.agenda-pendientes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+.agenda-pendientes .agenda-herramientas__tabs {
+    flex: none;
+    gap: 0;
+    padding: 0 8px;
+}
+.agenda-pendientes .agenda-herramientas__tab {
+    flex: 1;
+    justify-content: center;
+    gap: 4px;
+    min-height: 36px;
+    padding: 0 2px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--z-text-muted);
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.agenda-pendientes .agenda-herramientas__tab > i {
+    display: none;
+}
+.agenda-pendientes .agenda-herramientas__tab:hover {
+    background: var(--z-bg-suave);
+}
+.agenda-pendientes .agenda-herramientas__tab[aria-selected="true"] {
+    border-bottom-color: var(--z-primary);
+    background: transparent;
+    color: var(--z-primary);
+}
+.agenda-pendientes .agenda-herramientas__tab[data-agenda-tab="urgencias"][aria-selected="true"] {
+    border-bottom-color: var(--z-danger);
+    color: var(--z-danger-dark);
+}
+.agenda-pendientes .agenda-conteo,
+.agenda-vet-movil .agenda-herramientas__tab .agenda-conteo {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
+    font-size: .65rem;
+    font-weight: 700;
+}
+.agenda-pendientes [data-agenda-tab="urgencias"] .agenda-conteo[data-con-pendientes="true"],
+.agenda-vet-movil [data-agenda-tab="urgencias"] .agenda-conteo[data-con-pendientes="true"] {
+    background: var(--z-danger);
+    color: var(--z-surface);
+}
+.agenda-pendientes .agenda-herramientas__cuerpo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+.agenda-pendientes .agenda-herramientas__panel {
+    gap: 12px;
+    padding: 14px 12px;
+}
+.agenda-pendientes .ah-head {
+    flex-wrap: wrap;
+}
+.agenda-pendientes .ah-head > div:first-child {
+    flex-basis: 100%;
+}
+.agenda-pendientes .ah-acciones {
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+.agenda-vet-movil .agenda-panel__vistas,
+.agenda-vet-movil .agenda-herramientas:has([data-agenda-tab="agenda"][aria-selected="true"]) > .agenda-pendientes__head {
+    display: none;
+}
+.agenda-toolbar__opciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+.agenda-toolbar__opciones .agenda-toolbar__filters {
+    margin-left: 0;
+}
+.agenda-toolbar__views {
+    flex: none;
+}
+.agenda-toolbar__rojo {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+.zk-btn.agenda-rojo-compacto {
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: .78rem;
+}
+#dialogoRojo .zk-dialogo__pie {
+    flex-wrap: wrap;
+}
+#dialogoRojoTitulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#dialogoRojoTitulo > i {
+    color: var(--z-danger);
+}
+#dialogoRojo .zk-dialogo__cerrar:hover,
+#dialogoRojo .zk-dialogo__cerrar:focus-visible {
+    color: var(--z-primary);
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+}
+#dialogoRojo .zk-btn--sec:not(:disabled):hover {
+    color: var(--z-primary);
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+}
+#dialogoRojo .zk-btn--peligro:not(:disabled):hover {
+    filter: brightness(.9);
+}
+#dialogoRojo .zk-dialogo__cuerpo {
+    display: grid;
+    gap: 14px;
+}
+.urgencia-rapida__excepcion {
+    display: grid;
+    gap: 12px;
+}
+.urgencia-rapida__motivos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.urgencia-rapida__motivos button {
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.urgencia-rapida__motivos button:hover,
+.urgencia-rapida__motivos button:focus-visible {
+    border-color: var(--z-primary);
+    outline: 2px solid var(--z-primary-borde);
+    outline-offset: 1px;
+}
+/* Referencia del dueño: tarjetas compactas solo en los cuatro módulos de Pendientes. */
+.agenda-herramientas--tarjetas .ah-tarjeta {
+    --ah-acento: var(--z-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 0;
+    padding: 12px 13px 10px;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: 16px;
+    background: var(--z-primary-soft);
+}
+.agenda-herramientas--tarjetas .ah-tarjeta--roja {
+    --ah-acento: var(--z-danger-dark);
+    border-color: var(--z-danger-borde);
+    background: var(--z-danger-soft);
+}
+.ah-tarjeta .ah-item__head {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+}
+.ah-tarjeta .ah-item__head > strong,
+.ah-tarjeta .ah-item__head > h3 {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--z-text);
+    font-size: .875rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ah-tarjeta .ah-nivel {
+    flex: none;
+    padding: 3px 8px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: .65rem;
+    font-weight: 700;
+}
+.ah-tarjeta .ah-nivel::before {
+    display: none;
+}
+.ah-tarjeta .ah-nivel[data-nivel="rojo"] {
+    background: var(--z-danger-borde);
+    color: var(--z-danger-dark);
+}
+.ah-tarjeta__hora {
+    flex: none;
+    max-width: 55%;
+    margin-left: auto;
+    overflow: hidden;
+    color: var(--z-text-muted);
+    font-size: .66rem;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ah-tarjeta .ah-tarjeta__resumen {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--z-text-secondary);
+    font-size: .8rem;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ah-tarjeta__acciones {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-width: 0;
+}
+.ah-tarjeta__acciones .ah-tarjeta__boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 6px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ah-acento);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    list-style: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.ah-tarjeta__acciones .ah-tarjeta__boton--principal {
+    padding-right: 12px;
+    padding-left: 12px;
+    background: var(--ah-acento);
+    color: var(--z-surface);
+}
+.ah-tarjeta__boton::-webkit-details-marker {
+    display: none;
+}
+.ah-tarjeta__acciones .ah-tarjeta__boton:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.ah-tarjeta__boton:focus-visible {
+    outline: 2px solid var(--ah-acento);
+    outline-offset: 2px;
+}
+.ah-tarjeta .ah-tarjeta__form-directo {
+    flex: 0 1 auto;
+    gap: 4px;
+    width: auto;
+    min-width: 0;
+}
+.ah-tarjeta__desplegable {
+    min-width: 0;
+}
+.ah-tarjeta__desplegable[open] {
+    flex-basis: 100%;
+}
+.ah-tarjeta__desplegable[open] > form {
+    margin-top: 10px;
+}
+.ah-tarjeta__desplegable .ah-item__form {
+    flex-direction: column;
+    align-items: stretch;
+}
+.ah-tarjeta__desplegable .ah-item__form label {
+    flex: none;
+}
+/* El flex-basis horizontal heredado se convertía en130/200px de alto al plegar la revisión. */
+.ah-tarjeta__desplegable .ah-item__form > select,
+.ah-tarjeta__desplegable .ah-item__form > input {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+}
+.ah-tarjeta__desplegable .ah-item__form > button {
+    align-self: flex-start;
+}
+.ah-tarjetas__nota {
+    margin: 0;
+    color: var(--z-text-muted);
+    font-size: .75rem;
+    line-height: 1.3;
+}
+@media (max-width: 767px) {
+    #dialogoRojo .zk-dialogo__pie > [type="submit"] {
+        flex-basis: 100%;
+        order: -1;
+    }
+}

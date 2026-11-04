@@ -7,6 +7,8 @@ final class ValidadorConocimiento
     public const PREDICADOS = ['sintoma_marcado', 'especie', 'raza', 'edad_meses', 'sexo', 'esterilizado', 'alerta_activa', 'inicio_episodio', 'minutos_desde_exposicion', 'exposicion', 'vacunacion', 'dias_desde_celo'];
     public const MOTORES = ['diagnosticos', 'prescripcion', 'triage'];
     public const NIVELES = ['rojo', 'naranja', 'amarillo', 'verde'];
+    public const GRUPOS_PAUTA = ['aine', 'corticoide', 'antipruriginoso', 'antiparasitario', 'antiemetico', 'analgesico_opioide', 'antifungico', 'antibiotico', 'antiulceroso', 'antitiroideo', 'hormona_tiroidea', 'anticonvulsivo', 'insulina', 'suplemento'];
+    public const ELECCIONES_PAUTA = ['control_prurito', 'antiprotozoario'];
     private const TIPOS = ['sintoma', 'diagnostico', 'farmaco', 'especie', 'raza', 'condicion', 'sustancia'];
     private const COMUNES = ['codigo', 'fuentes', 'estado_validacion', 'validacion'];
 
@@ -65,6 +67,7 @@ final class ValidadorConocimiento
                     self::exigir(($nodo['nivel_triage'] ?? null) === 'rojo', 'Una alarma universal siempre es roja.');
                 }
                 self::metadatos($nodo['metadatos'] ?? []);
+                self::exigir(!array_key_exists('plan', $nodo['metadatos'] ?? []) || $nodo['tipo'] === 'diagnostico', 'Solo un diagnóstico tiene plan.');
                 if (in_array($nodo['tipo'], ['especie', 'raza'], true)) {
                     $taxonomia = $nodo['taxonomia'] ?? null;
                     $campos = $nodo['tipo'] === 'raza' ? ['especie', 'raza'] : ['especie'];
@@ -80,13 +83,22 @@ final class ValidadorConocimiento
         $aristas = self::indexar($conjunto['aristas'], 'aristas.json');
         foreach ($aristas as $arista) {
             self::ubicado('aristas.json', $arista['codigo'], static function () use ($arista, $fuentes, $nodos): void {
-                self::elemento($arista, ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto', 'condiciones'], ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto'], $fuentes);
+                self::elemento($arista, ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto', 'condiciones', 'pauta'], ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto'], $fuentes);
                 self::referencia($arista['origen'], $nodos, 'origen');
                 self::referencia($arista['destino'], $nodos, 'destino');
                 self::opcion($arista['tipo_relacion'], ['sugiere', 'trata', 'toxico_para', 'alergia', 'interactua_con', 'contraindica', 'asociado']);
                 self::opcion($arista['signo'], ['positivo', 'negativo']);
                 self::peso($arista['peso'], 0, 1);
                 self::opcion($arista['efecto'], ['evidencia', 'bloqueo', 'advertencia']);
+                if ($arista['tipo_relacion'] === 'trata') {
+                    self::exigir($nodos[$arista['origen']]['tipo'] === 'diagnostico' && $nodos[$arista['destino']]['tipo'] === 'farmaco', 'Trata relaciona diagnóstico con fármaco.');
+                    self::exigir($arista['signo'] === 'positivo' && $arista['efecto'] === 'evidencia', 'Trata es evidencia positiva.');
+                    self::fundamentoClinico($arista);
+                    self::exigir(self::exigeEspecie($arista['condiciones'] ?? []), 'Trata exige condición de especie en cada alternativa.');
+                    self::pauta($arista['pauta'] ?? null);
+                } else {
+                    self::exigir(!array_key_exists('pauta', $arista), 'Solo trata admite pauta.');
+                }
                 if ($arista['efecto'] === 'bloqueo') {
                     self::exigir(in_array($arista['tipo_relacion'], ['toxico_para', 'alergia'], true) && $arista['signo'] === 'negativo', 'Bloqueo solo por toxicidad o alergia explícita.');
                     self::fundamentoClinico($arista);
@@ -243,7 +255,17 @@ final class ValidadorConocimiento
 
     private static function metadatos(mixed $metadatos): void
     {
-        self::campos($metadatos, ['cobertura', 'tamanio', 'braquicefalo'], []);
+        self::campos($metadatos, ['cobertura', 'tamanio', 'braquicefalo', 'plan'], []);
+        if (array_key_exists('plan', $metadatos)) {
+            self::campos($metadatos['plan'], ['examenes', 'recomendaciones'], ['examenes', 'recomendaciones']);
+            foreach (['examenes' => [8, 80], 'recomendaciones' => [6, 160]] as $campo => [$cantidad, $longitud]) {
+                self::lista($metadatos['plan'][$campo]);
+                self::exigir(count($metadatos['plan'][$campo]) <= $cantidad, 'Plan: demasiados ' . $campo . '.');
+                foreach ($metadatos['plan'][$campo] as $texto) {
+                    self::texto($texto, $longitud, $campo);
+                }
+            }
+        }
         if (isset($metadatos['cobertura'])) {
             self::campos($metadatos['cobertura'], self::MOTORES, []);
             foreach ($metadatos['cobertura'] as $estado) {
@@ -256,6 +278,49 @@ final class ValidadorConocimiento
         if (isset($metadatos['braquicefalo'])) {
             self::exigir(is_bool($metadatos['braquicefalo']), 'Braquicefalia debe ser booleana.');
         }
+    }
+
+    /** RN-212: cada rama aplicable debe restringir la especie, no solo nombrarla. */
+    private static function exigeEspecie(array $condicion): bool
+    {
+        if (($condicion['predicado'] ?? null) === 'especie') {
+            return true;
+        }
+        if (isset($condicion['todos'])) {
+            return in_array(true, array_map(self::exigeEspecie(...), $condicion['todos']), true);
+        }
+        if (isset($condicion['alguno']) && $condicion['alguno'] !== []) {
+            return !in_array(false, array_map(self::exigeEspecie(...), $condicion['alguno']), true);
+        }
+        return false;
+    }
+
+    private static function pauta(mixed $pauta): void
+    {
+        $campos = ['dosis_mg_kg', 'dosis_texto', 'via', 'frecuencia_horas', 'duracion_dias', 'indicacion'];
+        self::campos($pauta, [...$campos, 'grupo', 'grupo_eleccion'], $campos);
+        if (array_key_exists('grupo', $pauta)) {
+            self::opcion($pauta['grupo'], self::GRUPOS_PAUTA);
+        }
+        if (array_key_exists('grupo_eleccion', $pauta)) {
+            self::exigir(isset($pauta['grupo']), 'Un grupo de elección necesita clase farmacológica.');
+            self::opcion($pauta['grupo_eleccion'], self::ELECCIONES_PAUTA);
+        }
+        self::exigir(($pauta['dosis_mg_kg'] === null) !== ($pauta['dosis_texto'] === null), 'Pauta: exactamente una forma de dosis.');
+        if ($pauta['dosis_mg_kg'] !== null) {
+            self::campos($pauta['dosis_mg_kg'], ['minimo', 'maximo'], ['minimo', 'maximo']);
+            foreach ($pauta['dosis_mg_kg'] as $numero) {
+                self::exigir((is_int($numero) || is_float($numero)) && is_finite((float) $numero) && $numero > 0, 'Pauta: dosis positiva finita.');
+            }
+            self::exigir($pauta['dosis_mg_kg']['minimo'] <= $pauta['dosis_mg_kg']['maximo'], 'Pauta: rango invertido.');
+        } else {
+            self::texto($pauta['dosis_texto'], 100, 'dosis_texto');
+        }
+        self::opcion($pauta['via'], ['oral', 'subcutanea', 'intramuscular', 'intravenosa', 'topica', 'otica', 'oftalmica']);
+        foreach (['frecuencia_horas', 'duracion_dias'] as $campo) {
+            self::exigir($pauta[$campo] === null || (is_int($pauta[$campo]) && $pauta[$campo] > 0), 'Pauta: ' . $campo . ' debe ser entero positivo o null.');
+        }
+        self::texto($pauta['indicacion'], 160, 'indicacion');
     }
 
     private static function fundamentoClinico(array $elemento): void

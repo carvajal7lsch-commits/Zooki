@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/Turnstile.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/TarifaSuscripcion.php';
 
 final class RegistroClinicaController
 {
@@ -20,9 +21,17 @@ final class RegistroClinicaController
 
     public function formulario(): void
     {
+        $tarifasPublicas = TarifaSuscripcion::textos($this->registro->planProfesional(), true);
         // M0.1: resultado de un envío sin JavaScript (ver procesar()).
         $resultadoRegistro = $_SESSION['registro_clinica_resultado'] ?? null;
         unset($_SESSION['registro_clinica_resultado']);
+        $cicloProfesional = null;
+        try {
+            $cicloProfesional = EleccionPlanRegistro::ciclo($_GET);
+        } catch (InvalidArgumentException $error) {
+            http_response_code(422);
+            $resultadoRegistro = ['success' => false, 'message' => $error->getMessage()];
+        }
         require __DIR__ . '/../views/auth/registro_clinica.php';
     }
 
@@ -45,7 +54,14 @@ final class RegistroClinicaController
         $ajax = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
         if (!$ajax) {
             $_SESSION['registro_clinica_resultado'] = $resultado;
-            header('Location: index.php?action=registro_clinica');
+            $destino = 'index.php?action=registro_clinica';
+            try {
+                $ciclo = EleccionPlanRegistro::ciclo($_POST);
+                if ($ciclo !== null) $destino .= '&plan=profesional&ciclo=' . rawurlencode($ciclo);
+            } catch (InvalidArgumentException $error) {
+                // Una elección inválida se informa sin reflejar valores arbitrarios en la URL.
+            }
+            header('Location: ' . $destino);
             return;
         }
         http_response_code($codigo);

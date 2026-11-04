@@ -18,8 +18,8 @@ $lp_base_url  = $lp_scheme . '://' . $lp_host . rtrim(dirname($_SERVER['SCRIPT_N
 $lp_share_img = $lp_base_url . 'img/logo_conlema.png';
 
 $lp_title = 'Zooki | Software de gestion para clinicas veterinarias';
-$lp_desc  = 'Zooki digitaliza la historia clinica de cada mascota, ordena la agenda de tu clinica veterinaria, '
-          . 'automatiza los recordatorios de vacunacion y le da a cada propietario un portal para hacer seguimiento.';
+$lp_desc  = 'Zooki es el software para clínicas veterinarias con copiloto clínico: sugiere diagnósticos, '
+          . 'bloquea medicamentos tóxicos, calcula el triage y reacomoda la agenda sola. Empieza gratis.';
 ?>
 <!DOCTYPE html>
 <html lang="es-CO">
@@ -85,9 +85,23 @@ $lp_desc  = 'Zooki digitaliza la historia clinica de cada mascota, ordena la age
             "slogan": "Cuidamos a quienes amas",
             "areaServed": {
                 "@type": "Place",
-                "name": "Neiva, Huila, Colombia"
+                "name": "Florencia, Caquetá, Colombia"
             }
-        }
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "<?php echo htmlspecialchars($planGratuito['nombre'], ENT_QUOTES); ?>",
+                "price": "<?php echo (int) $planGratuito['precio_mensual']; ?>",
+                "priceCurrency": "COP"
+            },
+            {
+                "@type": "Offer",
+                "name": "<?php echo htmlspecialchars($planProfesional['nombre'], ENT_QUOTES); ?>",
+                "price": "<?php echo (int) $planProfesional['precio_mensual']; ?>",
+                "priceCurrency": "COP"
+            }
+        ]
     }
     </script>
 </head>
@@ -101,9 +115,8 @@ $lp_desc  = 'Zooki digitaliza la historia clinica de cada mascota, ordena la age
         <?php
         include __DIR__ . '/partials/hero.php';
         include __DIR__ . '/partials/problema.php';
-        include __DIR__ . '/partials/modulos.php';
-        include __DIR__ . '/partials/roles.php';
-        include __DIR__ . '/partials/pacientes.php';
+        include __DIR__ . '/partials/funciones.php';
+        include __DIR__ . '/partials/planes.php';
         include __DIR__ . '/partials/seguridad.php';
         include __DIR__ . '/partials/faq.php';
         ?>
@@ -111,6 +124,6 @@ $lp_desc  = 'Zooki digitaliza la historia clinica de cada mascota, ordena la age
 
     <?php include __DIR__ . '/partials/footer.php'; ?>
 
-    <script src="js/landing.js?v=<?php echo $lp_version; ?>"></script>
+    <script src="js/landing.js?v=<?php echo $lp_version; ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/landing.js'), 0, 12) ?>"></script>
 </body>
 </html>

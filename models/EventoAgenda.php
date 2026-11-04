@@ -2,6 +2,7 @@
 require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/IntervalosAgenda.php';
+require_once __DIR__ . '/../helpers/PresentacionEstimacionAgenda.php';
 
 /** B1/B1.1: causa durable, destinatario estable y contenido reconstruido antes de enviar. */
 final class EventoAgenda
@@ -35,7 +36,23 @@ final class EventoAgenda
         $avisos = new NotificacionInterna($this->db);
         $enlace = 'index.php?action=' . ($rol === Roles::ADMIN ? 'admin_citas' : 'vet_agenda');
         $mensaje = $solicitud ? 'Solicitud de agenda #' . $solicitud . '. Consulta la revisión en la agenda.' : 'Hay un cambio en la cita #' . $cita . '.';
+        $inmediata = false;
+        if ($tipo === 'REVISION_TRIAGE' && $solicitud !== null) {
+            $consulta = $this->db->prepare('SELECT s.contexto_triage,s.nivel_calculado,m.nombre FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_solicitud=? AND s.id_clinica=?');
+            $consulta->execute([$solicitud, $this->clinica]);
+            $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+            $contexto = json_decode((string) $fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR);
+            $inmediata = !empty($contexto['resultado']['revision_inmediata']);
+            // El número interno de la solicitud no le dice nada al veterinario: se nombra la mascota
+            // y el enlace abre Pendientes › Triage con esa solicitud (agenda-solicitudes.js).
+            $mensaje = $fila['nombre'] . ($fila['nivel_calculado'] ? ' · nivel ' . $fila['nivel_calculado'] : '') . '. Toca para revisarla en Pendientes › Triage.';
+            $enlace .= '&solicitud=' . $solicitud . '#triage';
+            if ($inmediata) {
+                $mensaje = 'Revisión inmediata. ' . $mensaje;
+            }
+        }
         $titulo = match ($tipo) {
+            'REVISION_TRIAGE' => $inmediata ? 'Revisión inmediata de triage' : 'Revisión de triage',
             'CITA_REASIGNADA' => 'Cambio de veterinario confirmado',
             'REPROGRAMAR_NECESARIO' => 'Cita pendiente de reprogramar',
             default => str_starts_with($tipo, 'PROPUESTA_REASIGNACION_') ? 'Propuesta de reasignación' : $tipo,
@@ -86,6 +103,18 @@ final class EventoAgenda
     private function ahora(): DateTimeImmutable
     {
         return $this->reloj ? ($this->reloj)() : new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
+    }
+
+    /** RN-429/RN-G02: misma causa validada que el correo; el reintento no duplica la campana. */
+    private function notificarEstimacion(array $evento): void
+    {
+        $enlace = 'index.php?action=portal_propietario&cita=' . (int) $evento['id_cita'] . '&evento_agenda=' . (int) $evento['id_evento'];
+        $q = $this->db->prepare("SELECT id FROM notificaciones_internas WHERE id_clinica=? AND id_usuario=? AND tipo='ESTIMACION_CITA' AND enlace=?");
+        $q->execute([$this->clinica, $evento['id_destinatario'], $enlace]);
+        if ($q->fetchColumn()) return;
+        $mensaje = PresentacionEstimacionAgenda::texto($evento);
+        $creada = (new NotificacionInterna($this->db))->crearParaUsuario($this->clinica, (int) $evento['id_destinatario'], 'ESTIMACION_CITA', 'Nueva hora estimada: ' . $evento['mascota_nombre'], $mensaje, $enlace, (int) $evento['id_cita']);
+        if (!$creada) throw new RuntimeException('No se pudo guardar la actualización de la cita.');
     }
 
     private function crear(string $tipo, ?int $cita, ?int $solicitud, int $version, ?int $usuario, ?int $rol, string $canal, ?string $discriminador = null): int
@@ -156,6 +185,7 @@ final class EventoAgenda
                 return [];
             }
             $this->db->prepare("UPDATE eventos_agenda SET estado='reclamado',reclamacion=?,fecha_reclamacion=CURRENT_TIMESTAMP,intentos=intentos+1 WHERE id_evento=? AND id_clinica=?")->execute([$reclamacion, $evento, $this->clinica]);
+            if ($e['tipo'] === 'ESTIMACION_CITA') $this->notificarEstimacion($e);
             $e['hora_pactada'] = $e['hora'];
             $e['hora'] = substr($e['hora_a_comunicar'] ?? $e['inicio_estimado'] ?? ($e['fecha'] . ' ' . $e['hora']), 11);
             return $e;

@@ -14,15 +14,17 @@ require_once __DIR__ . '/ModeloClinica.php';
  */
 class Panel extends ModeloClinica
 {
+    // HU-4.15: una ficha provisional no tiene propietario y debe conservar su cita en el Inicio.
     private const SELECT_CITA = "SELECT c.id_cita, c.fecha, c.hora, c.hora_fin, c.duracion_minutos, c.estado,
-                c.motivo, c.prioridad, c.hora_llegada, c.id_veterinario, c.id_mascota, m.nombre AS mascota, m.id_propietario,
+                c.motivo, c.prioridad, c.hora_llegada, c.id_veterinario, c.id_mascota,
+                COALESCE(NULLIF(TRIM(m.nombre), ''), 'Paciente por identificar') AS mascota, m.id_propietario,
                 m.fecha_nacimiento, m.url_foto,
                 e.nombre_especie AS especie, p.nombre_completo AS propietario,
                 v.nombre_completo AS veterinario, COALESCE(tc.nombre_tipo, 'Consulta') AS tipo
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
             LEFT JOIN especies e ON e.id_especie = m.id_especie
-            JOIN usuarios p ON p.id_usuario = m.id_propietario
+            LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
             JOIN usuarios v ON v.id_usuario = c.id_veterinario
             LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = c.id_tipo_cita
             WHERE c.id_clinica = ?";
@@ -264,7 +266,7 @@ class Panel extends ModeloClinica
 
     /**
      * RE-6.2.7: en espera = citas de hoy con la llegada registrada que aún no
-     * empiezan, más las llegadas sin reserva en espera presencial de hoy.
+     * empiezan; las solicitudes sin cita no forman parte de En espera.
      * $desde y $hasta son el inicio de hoy y de mañana: [desde, hasta).
      */
     public function contarEnEspera(string $hoy, string $desde, string $hasta): int
@@ -274,12 +276,7 @@ class Panel extends ModeloClinica
              WHERE id_clinica = ? AND fecha = ? AND estado IN ('pendiente', 'confirmada') AND hora_llegada IS NOT NULL",
             [$this->clinica(), $hoy]
         );
-        $sinReserva = $this->contar(
-            "SELECT COUNT(*) FROM solicitudes_agenda
-             WHERE id_clinica = ? AND estado = 'espera_presencial' AND fecha_llegada >= ? AND fecha_llegada < ?",
-            [$this->clinica(), $desde, $hasta]
-        );
-        return $citas + $sinReserva;
+        return $citas;
     }
 
     /**

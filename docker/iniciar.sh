@@ -5,7 +5,7 @@
 #    (scripts/migrar.php). Se niega si la base todavía tiene el esquema v1.
 # 2. Carga el conocimiento global únicamente si las migraciones terminaron bien.
 # 3. Reindexa la documentación en Algolia si los .md cambiaron
-#    (scripts/algolia_index.php --si-cambio; specs/buscador-documentacion.md, BD-1).
+#    (scripts/algolia_index.php --si-cambio).
 # 4. Arranca Apache, igual que la imagen php:8.2-apache por defecto.
 #
 # Si una migración o el indexado fallan, Apache arranca igual para no tumbar
