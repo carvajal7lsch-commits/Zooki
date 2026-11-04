@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Respuesta inmediata de agenda y cierre (2026-11-03, Codex):** estado y botones actualizados tras No asistió, Confirmar, Cancelar, resolver desde Sala y Reprogramar, sin esperar la sincronización; lecturas sin caché y bloqueo durante la petición. Finalizar Atención vuelve directamente a Agenda con el toast «Atención registrada», sin recibo modal; aviso de control pendiente conservado y guion de Rocco adaptado (RE-2.1.6/4.19.4).
+
 * **Reajuste visible del Grafo II (2026-11-03, Codex):** chips de retraso en Día/Semana/listas y detalle, con toast por lote sobre el umbral clínico y acceso a Día. Portal con recuadro de nueva hora y campana de ESTIMACION_CITA, publicada al validar el mismo evento de correo, sin duplicar reintentos ni alterar la ventana; correo legible con causa. Solo citas del propietario vigente, sin cambiar la cascada ni crear migraciones (RE-4.5.3/4.14.7/5.7.1–4).
 
 * **Agenda del veterinario y aviso de triage (2026-11-03, Claude Code):** elegir otro día, una cita o el «+» del calendario con Pendientes abierto lleva el panel a Citas con ese día, porque Pendientes es siempre de hoy. El aviso «Revisión de triage» nombra la mascota y su nivel en lugar del número interno de la solicitud y abre Pendientes › Triage con ella resaltada; si ya fue revisada, muestra Revisadas con el aviso. Misma2.3.0, sin migración.

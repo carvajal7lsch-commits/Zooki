@@ -44,6 +44,7 @@ Orden: **Agenda → Rocco (3 pasos) → Agenda (Mishi) → Mishi (2 pasos) → P
 El guion detecta Rocco completado en los datos reales del calendario para ofrecer el paso de Mishi; inicia su atención mediante el botón de la cita.
 Los autocompletados se escriben carácter por carácter y se eligen por código del catálogo.
 La tercera pulsación de Rocco sí guarda la consulta y completa su cita; es la única consulta que se guarda (decisión del dueño,2026-11-03).
+El regreso a Agenda es automático y muestra «Atención registrada» como toast, sin pulsar un recibo modal.
 Deja el próximo control sin solicitar para que ese cierre no genere una reserva adicional.
 El descarte aparece completo debajo de los medicamentos, con escudo, aviso rojo suave y Ver fuente; el guion resalta esa fila.
 Al navegar, Zooki puede pedir confirmar que dejas un formulario sin guardar; responde manualmente.

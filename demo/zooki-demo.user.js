@@ -332,9 +332,8 @@
             }
             // Decisión del dueño, 2026-11-03: Rocco es la única consulta que el guion guarda.
             if (document.querySelector('#atencionApp').dataset.consultaRegistrada !== '1') clic(document.querySelector('#btnFinalizarAtencion'));
-            const cierre = await esperar(() => document.querySelector('.consulta-cierre-dialogo[open]'), 'la confirmación real Atención registrada de Rocco');
-            const volver = [...cierre.querySelectorAll('button')].find(n => normalizar(n.textContent) === 'volver a la agenda');
-            clic(volver);
+            await esperar(() => document.querySelector('#atencionApp')?.dataset.consultaRegistrada === '1', 'la consulta de Rocco guardada por Zooki');
+            informar('Atención registrada. Zooki vuelve automáticamente a Agenda.');
         }
     }
 

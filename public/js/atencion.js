@@ -246,7 +246,7 @@
         if (!consultaRegistrada && consulta?.pasos && !consulta.pasos.validarPaso(2)) return;
 
         finalizando = true;
-        let destinoCierre = null;
+        let mensajeCierre = 'Atención registrada';
         textoBotonFinalizar(true);
 
         try {
@@ -269,7 +269,7 @@
                 app.dataset.consultaRegistrada = '1';
                 hayCambiosSinGuardar = false;
                 borrarBorrador();
-                if (window.ZookiCierreConsulta) destinoCierre = await window.ZookiCierreConsulta.mostrar(res, formConsulta);
+                if (res.control?.creado === false) mensajeCierre += '. Agenda el control desde Nueva cita.';
             } else {
                 // La consulta ya existía pero la cita quedó abierta (datos de
                 // antes de v1.9.0, cuando eran dos pasos): solo falta cerrarla.
@@ -281,8 +281,7 @@
                 }
             }
 
-            if (window.ZookiCierreConsulta) window.location.href = destinoCierre || 'index.php?action=vet_agenda';
-            else zookiRecargarConAviso('Atención registrada', 'success');
+            zookiRedirigirConAviso('index.php?action=vet_agenda', mensajeCierre, 'success');
         } catch (e) {
             console.error('finalizarAtencion', e);
             finalizando = false;

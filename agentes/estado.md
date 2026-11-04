@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Agenda y cierre de Atención — respuesta inmediata — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; No asistió/Confirmada/Cancelada actualizan el estado y los botones del detalle al guardar; bus común comunica calendario/Sala, lecturas sin caché y reprogramación actualizada sin esperar10 segundos; formularios en edición conservados.
+- Finalizar Atención vuelve automáticamente a Agenda con toast SweetAlert, sin recibo modal; conserva el aviso de control no agendado y el modal de Pacientes; userscript de Rocco y LEEME adaptados.
+- Chrome1366/390: No asistió incluso con lectura retenida, Sala, Reprogramar y guardado real de la interfaz con regreso/toast correctos, sin errores de consola; solo respuestas de prueba, sin suites ni base real.
+- Anexo en specs/pulido-interfaz.md y decisión en specs/M2-grafo-clinico.md; misma2.3.0, pendiente revisión visual del dueño y descargas al cierre, sin commit ni push.
+
 ### Grafo II — reajuste visible y aviso al propietario — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; chips de retraso en Día/Semana/listas y detalle legible; toast por lote de hoy sobre el umbral clínico, con acceso a Día y sin repetirse al sincronizar; cálculo de cascada conservado.

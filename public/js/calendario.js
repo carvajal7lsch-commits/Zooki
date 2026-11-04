@@ -318,7 +318,7 @@ async function cargarEventos(info, exito, fallo) {
     try {
         const inicio = info.startStr.split('T')[0];
         const fin = info.endStr.split('T')[0];
-        const res = await fetch(`index.php?action=listar_citas_ajax&inicio=${inicio}&fin=${fin}`);
+        const res = await fetch(`index.php?action=listar_citas_ajax&inicio=${inicio}&fin=${fin}`, { cache: 'no-store' });
         const datos = await res.json();
         anunciarReajusteAgenda(Array.isArray(datos) ? datos : []);
 
@@ -826,8 +826,15 @@ async function postCita(accion, datos) {
     const cuerpo = new URLSearchParams(datos);
     if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
     // B.9: el botón ya indica la reprogramación; el velo global tapaba el resultado.
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
-    return res.json();
+    const botones = datos.id_cita ? [...document.querySelectorAll('.agenda-detail [data-id]')].filter(boton => boton.dataset.id === String(datos.id_cita)) : [];
+    const anteriores = botones.map(boton => boton.disabled);
+    botones.forEach(boton => { boton.disabled = true; });
+    try {
+        const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
+        return await res.json();
+    } finally {
+        botones.forEach((boton, indice) => { if (boton.isConnected) boton.disabled = anteriores[indice]; });
+    }
 }
 
 async function iniciarAtencionCita(idCita) {
@@ -867,8 +874,8 @@ async function confirmarCita(idCita) {
             mostrarToast(r.message || 'No se pudo confirmar la cita.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita, estado: 'confirmada' });
         mostrarToast('Cita confirmada.', 'success');
-        calendarInstance.refetchEvents();
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'confirmacion');
     } catch (e) {
         console.error(e);
@@ -883,7 +890,7 @@ async function marcarNoAsistio(idCita) {
     try {
         const r = await postCita('marcar_no_asistio_ajax', { id_cita: idCita });
         mostrarToast(r.message || (r.success ? 'Inasistencia registrada.' : 'No se pudo marcar la inasistencia.'), r.success ? 'success' : 'error');
-        if (r.success) calendarInstance.refetchEvents();
+        if (r.success) actualizarAgendaTrasCambio({ idCita, estado: 'no_asistio' });
     } catch (e) {
         console.error(e);
         mostrarToast('No se pudo marcar la inasistencia.', 'error');
@@ -899,8 +906,8 @@ async function cancelarCita(idCita) {
             mostrarToast(r.message || 'No se pudo cancelar la cita.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita, estado: 'cancelada' });
         mostrarToast('Cita cancelada.', 'success');
-        calendarInstance.refetchEvents();
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'cancelacion');
     } catch (e) {
         console.error(e);
@@ -931,6 +938,7 @@ function reprogramarPorArrastre(info) {
             mostrarToast(r.message || 'El horario no está disponible para ese veterinario.', 'error');
             return;
         }
+        actualizarAgendaTrasCambio({ idCita: info.event.id });
         mostrarToast('Cita reprogramada.', 'success');
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'reprogramacion');
     }).catch(() => {
@@ -1628,7 +1636,7 @@ async function confirmarReprogramacion() {
         cerrarModalReprogramar();
         mostrarToast(`Cita reprogramada para el ${formatFecha(new Date(`${fecha}T12:00:00`), { day: 'numeric', month: 'long' })}, ${format12h(hora)}.`, 'success');
         seleccionarDia(new Date(`${fecha}T12:00:00`));
-        calendarInstance.refetchEvents();
+        actualizarAgendaTrasCambio({ idCita: _reprogramarCitaId });
         if (r.id_cita) enviarCorreoCita(r.id_cita, 'reprogramacion');
     } catch (e) {
         console.error('Error al reprogramar:', e);
@@ -1800,3 +1808,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('agenda:urgencia', () => calendarInstance?.refetchEvents());
+window.addEventListener('agenda:volver-hoy', () => {
+    calendarInstance?.today();
+    seleccionarDia(new Date());
+});
+window.addEventListener('agenda:actualizada', evento => {
+    const { idCita, estado } = evento.detail || {};
+    if (idCita && estado) calendarInstance?.getEventById(String(idCita))?.setExtendedProp('estado', estado);
+    refrescarPanel();
+    window.ZookiAgendaMovil?.actualizar();
+    calendarInstance?.refetchEvents();
+});

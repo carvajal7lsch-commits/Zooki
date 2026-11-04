@@ -149,7 +149,7 @@
                         }
                         await recargar();
                     }
-                    global.dispatchEvent(new Event('agenda:urgencia'));
+                    actualizarAgendaTrasCambio({ idCita: datos.id_cita, estado: accion === 'marcar_no_asistio_ajax' ? 'no_asistio' : undefined });
                 } catch (error) {
                     mensaje.textContent = error.message;
                 } finally {
@@ -225,7 +225,7 @@
         async function recargar(automatica = false) {
             const turno = ++lectura;
             try {
-                const r = await (await fetch('index.php?action=listar_llegadas_ajax')).json();
+                const r = await (await fetch('index.php?action=listar_llegadas_ajax', { cache: 'no-store' })).json();
                 if (turno !== lectura) return;
                 if (!r.success) throw new Error(r.message || 'No se pudo consultar.');
                 if (automatica && panelAgendaEnEdicion(raiz)) return;

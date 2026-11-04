@@ -1,5 +1,10 @@
 'use strict';
 
+/** Un cambio confirmado actualiza calendario y paneles; la sincronización periódica es respaldo. */
+function actualizarAgendaTrasCambio(detalle = {}) {
+    window.dispatchEvent(new CustomEvent('agenda:actualizada', { detail: detalle }));
+}
+
 // HU-4.13/14/15/19: refrescar sin sustituir formularios que el personal está editando.
 function panelAgendaEnEdicion(raiz) {
     return Boolean(raiz.querySelector('input:focus, select:focus, textarea:focus, details[open], form[data-agenda-editando]')) || Boolean(raiz.ownerDocument.querySelector('dialog[open]'));
@@ -26,6 +31,7 @@ function sincronizarPanelAgenda(raiz, cargar, ocupado = () => false) {
     }
     raiz.addEventListener('agenda:mostrar', actualizar);
     ventana.addEventListener('agenda:urgencia', actualizar);
+    ventana.addEventListener('agenda:actualizada', actualizar);
     documento.addEventListener('visibilitychange', actualizar);
     const temporizador = ventana.setInterval(actualizar, 10000);
     ventana.addEventListener('pagehide', () => ventana.clearInterval(temporizador), { once: true });

@@ -1,5 +1,21 @@
 # Pulido de interfaz — pendientes
 
+## Agenda y cierre de Atención — respuesta inmediata (2026-11-03)
+
+- Decisión del dueño: al marcar No asistió, resolver llegada o reprogramar, actualizar estado y acciones del detalle/calendario/Sala con la respuesta, sin esperar la sincronización de10 segundos (RN-406/408 y RE-4.19.4).
+- Finalizar Atención vuelve directamente a Agenda con el toast SweetAlert existente «Atención registrada»; sin recibo modal intermedio. Si falla la reserva del control, el aviso conserva que debe agendarlo desde Nueva cita.
+- Escribe Codex; solo frontend; preservar la confirmación de operaciones graves y el modal de consulta de Pacientes; adaptar el guion de Rocco al regreso automático; misma2.3.0 y verificación puntual en Chrome, sin suites.
+
+### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Cambio confirmado comunica calendario y paneles con agenda:actualizada; estado No asistió/Cancelada/Confirmada aplicado al detalle antes de releer, botones bloqueados durante la petición y lecturas de calendario/Sala sin caché.
+- Sala y reprogramación actualizan los datos al guardar; se conservan los formularios en edición, el día elegido y las confirmaciones existentes.
+- Finalizar Atención limpia el borrador y redirige directamente a Agenda con zookiRedirigirConAviso; toast SweetAlert real arriba a la derecha, sin llamar al recibo modal. Control sin reservar conserva aviso para Nueva cita; modal de Pacientes conservado.
+- Guion de Rocco adaptado: espera el guardado real y deja el regreso a la app; demo/LEEME.md actualizado.
+- Chrome1366×768/390×844: No asistió quita el botón aun reteniendo la lectura siguiente; Sala retira la acción resuelta y actualiza calendario; Reprogramar muestra10:00 en lugar de09:00; guardado de Atención vuelve con toast y sin crear recibo modal; sin errores de consola.
+- Sintaxis JS y diff correctos; sin suites, base manual ni cambios de endpoints; misma2.3.0, descargas al cierre del bloque según metodo§11, sin commit ni push.
+
 ## Detalle de cita — estimaciones legibles (2026-11-03)
 
 - Decisión del dueño, RE-4.5.3: Inicio estimado y Fin clínico estimado como hora de12 horas sin segundos; si el día difiere del pactado, conservar fecha legible.

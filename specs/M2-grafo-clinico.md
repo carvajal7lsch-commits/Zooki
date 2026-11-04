@@ -1,5 +1,10 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
+## Cierre de Atención — regreso automático (2026-11-03)
+
+- Decisión del dueño: tras guardar en Atención, volver automáticamente a Agenda con el toast SweetAlert «Atención registrada», sin recibo modal ni botón de regreso; si no se reservó el control, avisar que debe agendarlo desde Nueva cita.
+- Escribió Codex; entregada, pendiente de revisión; modal de Pacientes conservado y guion de Rocco adaptado; Chrome1366/390 sin errores de consola, sin suites ni base real; evidencia y anexo en specs/pulido-interfaz.md; misma2.3.0.
+
 > **Decisión vigente del dueño (2026-10-31):** sustituir la interpretación de frases de alertas por un campo principal con buscador: Alérgico/a a, Medicamento que toma o Condición; el veterinario selecciona un resultado y escribe los detalles aparte.
 > «No encuentro el nombre» conserva el nombre escrito y los detalles como aviso sin nodo; Otra alerta solo pide descripción.
 > La descripción no identifica ni invalida el concepto elegido; se retira el identificador de frases añadido durante los retoques.
