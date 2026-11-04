@@ -44,7 +44,9 @@
     }
 
     function pestana(nombre) {
-        const elegida = PESTANAS.includes(nombre) ? nombre : 'clinicas';
+        // La pestaña Demo solo existe con ZOOKI_DEMO_HABILITADA; apagada, se vuelve a Clínicas.
+        const demo = nombre === 'demo' && document.querySelector('[data-panel="demo"]');
+        const elegida = PESTANAS.includes(nombre) || demo ? nombre : 'clinicas';
         document.querySelectorAll('[data-pestana]').forEach(boton => {
             const activa = boton.dataset.pestana === elegida;
             boton.classList?.toggle('active', activa);

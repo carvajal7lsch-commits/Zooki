@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../config/App.php';
 require_once __DIR__ . '/../../helpers/ValidadorPlataforma.php';
 require_once __DIR__ . '/../../helpers/PresentacionPlataforma.php';
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-0.3 — Panel del super-administrador. M0.2: pestañas Clínicas /
  * Soporte / Seguridad con la cabecera, los filtros, la tarjeta y la tabla de
@@ -14,6 +15,7 @@ $v = $e(App::assetVersion());
 $p = PresentacionPlataforma::class;
 $contadores = $contadores ?? PresentacionPlataforma::contadores($casos, $ips);
 $plan = $plan ?? '';
+$demoHabilitada = $demoHabilitada ?? false;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -42,6 +44,10 @@ $plan = $plan ?? '';
     <script src="js/avisos.js?v=<?= $v ?>" defer></script>
     <script src="js/plataforma.js?v=<?= $v ?>" defer></script>
     <script src="js/pagos-plataforma.js?v=<?= $v ?>" defer></script>
+    <?php if ($demoHabilitada): ?>
+    <script src="js/password-policy.js?v=<?= $v ?>" defer></script>
+    <script src="js/demo-plataforma.js?v=<?= $v ?>" defer></script>
+    <?php endif; ?>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -57,6 +63,9 @@ $plan = $plan ?? '';
                 <button type="button" class="tab-btn active" role="tab" id="pestanaClinicas" aria-controls="panelClinicas" aria-selected="true" data-pestana="clinicas"><i class="bi bi-buildings" aria-hidden="true"></i><span>Clínicas</span><span class="plataforma-contador"><?= count($clinicas) ?></span></button>
                 <button type="button" class="tab-btn" role="tab" id="pestanaSoporte" aria-controls="panelSoporte" aria-selected="false" data-pestana="soporte"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Soporte</span><span class="plataforma-contador" data-contador-soporte><?= (int) $contadores['casos'] ?></span></button>
                 <button type="button" class="tab-btn" role="tab" id="pestanaSeguridad" aria-controls="panelSeguridad" aria-selected="false" data-pestana="seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Seguridad</span><span class="plataforma-contador" data-contador-seguridad data-alerta="<?= $contadores['ips'] > 0 ? '1' : '0' ?>"><?= (int) $contadores['ips'] ?></span></button>
+                <?php if ($demoHabilitada): ?>
+                <button type="button" class="tab-btn" role="tab" id="pestanaDemo" aria-controls="panelDemo" aria-selected="false" data-pestana="demo"><i class="bi bi-easel" aria-hidden="true"></i><span>Demo</span></button>
+                <?php endif; ?>
             </div>
             <button type="button" class="btn-modal-secondary plataforma-pagos-global" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Pagos sin clínica <span class="plataforma-contador" data-finanzas-conteo aria-label="Pendientes sin consultar">—</span></button>
         </div>
@@ -441,6 +450,7 @@ $plan = $plan ?? '';
             </div>
         </div>
     </div>
+    <?php if ($demoHabilitada) require __DIR__ . '/demo.php'; ?>
 </main>
 </div></div>
 <span id="paginaLista" hidden></span>

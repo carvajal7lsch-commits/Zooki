@@ -2,6 +2,7 @@
 require_once __DIR__ . '/Roles.php';
 require_once __DIR__ . '/Contexto.php';
 require_once __DIR__ . '/AccesoDenegado.php';
+require_once __DIR__ . '/InterruptorDemo.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 
 /**
@@ -110,6 +111,11 @@ class Security {
      * respuesta ni termina el proceso, para que se pueda probar.
      */
     public static function autorizar(string $action): void {
+        // Botón de demo (decisión del dueño, 2026-11-03): apagado, sus rutas no existen para nadie.
+        if (in_array($action, InterruptorDemo::ACCIONES, true) && !InterruptorDemo::habilitada()) {
+            throw new AccesoDenegado(404, 'Página no encontrada.');
+        }
+
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
             if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'activar_propietario', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -170,7 +176,8 @@ class Security {
             self::validarClinicaDeLaPeticion($actual);
         }
 
-        if (in_array($action, self::ACCIONES_PLATAFORMA, true) && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        $soloPost = in_array($action, self::ACCIONES_PLATAFORMA, true) || in_array($action, InterruptorDemo::ACCIONES, true);
+        if ($soloPost && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             throw new AccesoDenegado(403, 'La operación requiere POST.');
         }
         self::validateCsrf($action);
@@ -476,6 +483,9 @@ class Security {
         $matriz['plataforma_grafo'] = $plataforma;
         $matriz['obtener_grafo_conocimiento_ajax'] = $plataforma;
         foreach (self::ACCIONES_PLATAFORMA as $accion) {
+            $matriz[$accion] = $plataforma;
+        }
+        foreach (InterruptorDemo::ACCIONES as $accion) {
             $matriz[$accion] = $plataforma;
         }
 

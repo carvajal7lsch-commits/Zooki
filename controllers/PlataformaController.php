@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
 require_once __DIR__ . '/../helpers/ClienteWompiHttp.php';
+require_once __DIR__ . '/../helpers/InterruptorDemo.php';
 
 final class PlataformaController
 {
@@ -41,6 +42,7 @@ final class PlataformaController
         $casos = $this->modelo->casos();
         $ips = $this->modelo->ips();
         $contadores = PresentacionPlataforma::contadores($casos, $ips);
+        $demoHabilitada = InterruptorDemo::habilitada();
         require __DIR__ . '/../views/plataforma/inicio.php';
     }
 
