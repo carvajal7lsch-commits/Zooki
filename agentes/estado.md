@@ -6,7 +6,9 @@
 
 ## Ahora
 
-### M4 — Quitar Sala y desbloqueo de Atención — entregada, pendiente de revisión (2026-11-03)
+### M4 — Quitar Sala y desbloqueo de Atención — revisada: aprobada, revisión liviana (2026-11-03)
+
+- Revisión de Claude (2026-11-03): diff de `Cita.php` correcto (el servidor decide origen y llegada; solo el vet de la sesión, hoy y su clínica; auditado dentro de la reserva). Sin P1. Sigue el cierre de 2.3.0: push y CI verde (migraciones 19 y 20 incluidas), regenerar PDF/Word del portal, ensayo en zooki-pruebas (semilla demo + prueba manual corta) y luego PR a main, tag v2.3.0 y `ZOOKI_DEMO_HABILITADA=1` en producción hasta la sustentación.
 
 - Escribió Codex; revisa Claude; llegadas en cada cita propia de hoy y su detalle, con modal de resolución y ajuste solo presencial; Pendientes queda Rojos/Triage/Reasignar, sin sumar citas, sin enlaces a Sala ni borrar su backend/datos.
 - Atención sin cita abre Nueva cita «llegó ahora»; origen y llegada actual atómicos, auditados e idempotentes, validados por el servidor; rojo conserva Urgencias. RE-2.2.5 retirado y RE-6.2.7 cuenta solo citas con llegada sin iniciar; documentación y diagramas alineados.
