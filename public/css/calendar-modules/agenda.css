@@ -465,6 +465,25 @@
     border-top: 1px solid var(--cal-border-soft);
 }
 
+.agenda-detail__retraso {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--cal-primary-soft);
+    color: var(--cal-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.agenda-detail__retraso--alto {
+    background: var(--z-danger-soft);
+    color: var(--z-danger-dark);
+}
+
 .agenda-detail__secondary {
     display: flex;
     flex-wrap: wrap;

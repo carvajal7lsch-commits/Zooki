@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Calendario — estimaciones legibles en Detalle — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; Inicio/Fin clínico estimados en hora de12 horas sin segundos, fecha solo si cambia el día; chip bajo inicio desde5 minutos, azul hasta30 inclusive y rojo al superar30, calculado respecto a la hora pactada y redondeado.
+- Chrome con FullCalendar real, administrador/veterinario a1366/390: detalle abierto, ambas horas/chip visibles, umbrales y redondeo comprobados, sin errores de consola; sin suites ni base real.
+- Anexo en specs/pulido-interfaz.md; misma2.3.0; pendiente revisión visual del dueño y descargas de Historial al cierre del bloque según metodo§11, sin commit ni push.
+
 ### Demo — botón en el panel de plataforma — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Claude Code; pestaña Demo del super-administrador con crear (`--si`, fecha y clave), escena y borrar sobre `SemillaDemo`, sin shell; interruptor `ZOOKI_DEMO_HABILITADA` (0 en `.env.example`): apagado → sin pestaña y rutas 404.

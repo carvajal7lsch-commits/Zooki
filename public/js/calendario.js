@@ -123,6 +123,28 @@ function formatHora(date) {
     return date ? format12h(`${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`) : '';
 }
 
+function fechaEstimadaAgenda(valor) {
+    if (!valor) return null;
+    const fecha = new Date(String(valor).replace(' ', 'T'));
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function horaEstimadaAgenda(valor, fechaCita) {
+    const fecha = fechaEstimadaAgenda(valor);
+    if (!fecha) return '';
+    const hora = formatearHoraReserva(fecha.toTimeString().slice(0, 5));
+    return toLocalDateStr(fecha) === toLocalDateStr(fechaCita) ? hora : `${formatFecha(fecha, { day: 'numeric', month: 'long', year: 'numeric' })} · ${hora}`;
+}
+
+function chipRetrasoAgenda(valor, horaPactada) {
+    const inicio = fechaEstimadaAgenda(valor);
+    if (!inicio) return '';
+    // RE-4.5.3: comparar con la hora pactada, sin alterar la estimación de la cascada.
+    const minutos = (inicio.getTime() - horaPactada.getTime()) / 60000;
+    if (minutos < 5) return '';
+    return `<small class="agenda-detail__retraso${minutos > 30 ? ' agenda-detail__retraso--alto' : ''}">${Math.round(minutos)} min tarde por la cita anterior</small>`;
+}
+
 function minutosDe(hora) {
     const [h, m] = String(hora).split(':');
     return parseInt(h, 10) * 60 + (parseInt(m, 10) || 0);
@@ -698,8 +720,8 @@ function mostrarDetalleCita(eventId) {
         ['Veterinario', esCita ? p.veterinario : ''],
         ['Tipo', esCita ? (p.tipo_cita_nombre || 'Cita') : TIPOS_EVENTO[p.tipo]],
         ['Motivo', p.motivo],
-        ['Inicio estimado', p.inicio_estimado],
-        ['Fin clínico estimado', p.fin_estimado],
+        ['Inicio estimado', horaEstimadaAgenda(p.inicio_estimado, ev.start), esCita ? chipRetrasoAgenda(p.inicio_estimado, ev.start) : ''],
+        ['Fin clínico estimado', horaEstimadaAgenda(p.fin_estimado, ev.start)],
         ['Reajuste', p.estado_reajuste === 'pendiente_reprogramacion' ? 'Requiere reprogramar con el propietario' : p.estado_reajuste === 'pendiente_reasignacion' ? 'Esperando aceptación de otro veterinario' : p.estado_reajuste === 'pendiente_revision' ? 'Requiere revisión del personal' : '']
     ].filter(([, valor]) => valor);
 
@@ -714,7 +736,7 @@ function mostrarDetalleCita(eventId) {
     document.getElementById('agendaPanelBody').innerHTML = `
         <div class="agenda-detail">
             <dl class="agenda-detail__list">
-                ${filas.map(([k, v]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}
+                ${filas.map(([k, v, chip]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}${chip || ''}</dd></div>`).join('')}
             </dl>
             ${acciones}
         </div>`;

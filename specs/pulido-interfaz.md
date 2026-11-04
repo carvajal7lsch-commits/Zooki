@@ -1,5 +1,19 @@
 # Pulido de interfaz — pendientes
 
+## Detalle de cita — estimaciones legibles (2026-11-03)
+
+- Decisión del dueño, RE-4.5.3: Inicio estimado y Fin clínico estimado como hora de12 horas sin segundos; si el día difiere del pactado, conservar fecha legible.
+- Bajo Inicio estimado, chip «N min tarde por la cita anterior» calculado desde la hora pactada y redondeado; oculto con diferencia menor a5 minutos, azul suave hasta30 inclusive y rojo suave al superar30.
+- Escribe Codex; solo presentación del calendario compartido de administrador/veterinario, escritorio/celular; sin modificar el cálculo ni los datos de la cascada.
+
+### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño.
+- Estimaciones con formato «4:52 p. m.» y fecha solo si cambia el día; chip bajo Inicio estimado sin alterar el diseño ni la cascada; caché CSS renovada.
+- Apertura puntual en Chrome con FullCalendar real, administrador/veterinario a1366×768 y390×844: ambas horas legibles, chip visible, sin errores de consola ni excepciones.
+- Comprobados retrasos negativos, cero,4,9,5,22,4,30 y31 minutos; oculto bajo5, redondeo correcto, azul hasta30 y clase roja después; otro día conserva fecha.
+- Sintaxis JS y diff correctos; sin suites ni escrituras en base; misma2.3.0; PDF/Word de Historial al cierre del bloque según metodo§11, sin commit ni push.
+
 ## Calendario — panel inicial del día (2026-11-03)
 
 - Encargo del dueño: mostrar las citas de hoy automáticamente al entrar, conservando el día seleccionado y el diseño (RE-4.1.5).
