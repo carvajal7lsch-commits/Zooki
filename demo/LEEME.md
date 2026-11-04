@@ -17,11 +17,13 @@ El CSS del panel está aislado en un shadow DOM; no cambia hojas de estilo ni ar
 ## Preparar y presentar en cinco minutos
 
 Despliega primero el ajuste de escena y corre la semilla con los comandos de `specs/semilla-demo.md`.
-Ejecuta `--escena` minutos antes de presentar, de lunes a sábado entre 8:00 y 18:00.
+Sin entrar al servidor: pon `ZOOKI_DEMO_HABILITADA=1` en las variables del entorno, entra como super-administrador y usa Plataforma → pestaña **Demo**: «Crear o rehacer demo» (fecha y clave común), «Preparar escena ahora» y «Borrar demo».
+En producción se enciende antes de la sustentación y se apaga (vuelve a `0`) después; apagada, la pestaña y sus rutas no existen.
+Ejecuta `--escena` (o «Preparar escena ahora» en la pestaña Demo) minutos antes de presentar, de lunes a sábado entre 8:00 y 18:00.
 Rocco queda en curso desde H−35, con llegada anterior y duración 30; Mila queda completada.
 Mishi es la primera reserva después de Rocco, con llegada registrada y sin iniciar; las reservas y el sobrecupo posterior caben antes de las20:00.
 Simón no tiene una solicitud roja precargada.
-Las cuentas y sus claves las imprime `--si`; el userscript no inicia sesión ni cambia de cuenta.
+Las cuentas y sus claves las imprime `--si`; desde la pestaña Demo, las cuentas usan la clave que escribiste y el panel muestra sus correos, nunca la clave. El userscript no inicia sesión ni cambia de cuenta.
 
 **Shift+S** ejecuta un solo paso; **Shift+Q** reinicia el contador del escenario.
 También están los botones Siguiente/Reiniciar y el botón − para minimizar a un punto azul.

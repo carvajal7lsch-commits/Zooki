@@ -124,6 +124,23 @@ Se calcula desde la hora actual H, redondeada a 5 minutos:
 1. zooki-pruebas: desplegar la rama, entrar al contenedor desde Dokploy y correr `php scripts/migrar.php`, `php scripts/cargar_conocimiento.php`, `php scripts/semilla_demo.php --entorno=pruebas --si --clave=<clave>`.
 2. Revisar las pantallas.
 3. Producción: la víspera, lo mismo con `--entorno=produccion --dia=<día de la sustentación>`. Minutos antes de presentar: `php scripts/semilla_demo.php --entorno=produccion --escena`.
+4. Alternativa sin consola: con `ZOOKI_DEMO_HABILITADA=1`, Plataforma → pestaña Demo hace lo mismo (ver abajo). Después de la sustentación, volver a `0`.
+
+### Botón en el panel de plataforma (decisión del dueño, 2026-11-03)
+
+Para no entrar al VPS, el super-administrador tiene la pestaña **Demo** en Plataforma, con la tarjeta «Modo demo».
+Llama a la misma clase `SemillaDemo` que el script; no ejecuta nada por consola.
+
+- **Interruptor:** `ZOOKI_DEMO_HABILITADA=1` en las variables del entorno (Dokploy) o en `.env`. Ausente o en `0`, la pestaña no se dibuja y las tres rutas responden 404 a cualquiera.
+- **En producción se enciende antes de la sustentación y se apaga después** (de vuelta a `0` y redesplegar o reiniciar el servicio).
+- **Crear o rehacer demo** = `--si`: fecha (hoy por defecto) y una clave común para todas las cuentas. La clave es obligatoria: se valida al escribir con la política de contraseñas y el servidor la vuelve a validar, también contra los datos de cada persona de la demo.
+- **Preparar escena ahora** = `--escena`: muestra el día y la hora de la escena, los niveles del guion y los conteos.
+- **Borrar demo** = `--borrar`: pide confirmación con el modal de Zooki porque no se puede deshacer.
+- La respuesta muestra conteos, hora de la escena, cuentas (rol, clínica, correo) y el error tal cual lo da `SemillaDemo` (por ejemplo, fuera de horario o «Falta la demo; ejecuta primero --si»). Nunca muestra ni audita la clave; un error de base de datos se resume y queda en el registro del servidor.
+- Mientras corre, los tres botones quedan deshabilitados y el pulsado dice «Preparando…». En el servidor, la sesión se libera antes de empezar y el candado `GET_LOCK` de `SemillaDemo` rechaza una segunda ejecución con «Otra preparación de demo está en curso.».
+- Rutas `plataforma_demo_crear_ajax`, `plataforma_demo_escena_ajax` y `plataforma_demo_borrar_ajax`: solo POST con CSRF y solo el contexto de plataforma en la matriz de `helpers/Security.php`; administrador, veterinario y propietario reciben 403.
+- Cada ejecución deja una fila en `auditoria_sistema` (sin clínica): quién, cuándo, modo, día y resultado (`Modo demo: escena (ok)` o `(error)` con el motivo).
+- El script de consola sigue igual y es la vía de respaldo.
 
 ### Consola del contenedor
 
@@ -275,3 +292,22 @@ Semilla (`fe730c9`) **aprobada con corrección antes de producción**. Corrida r
 - Verificación: los cuatro casos de SemillaDemoTest comprobados; repetido solo el caso afectado de escena,1/1182 aserciones y nueve relojes08:00–18:00; recorrido Chrome CDP correcto en motor temporal zooki_test_base_v2, sin otras suites ni datos manuales.
 - Chrome: una consulta guardada (Rocco), Mishi iniciada sin guardar, cero reservas y una derivación de Simón; --escena recupera los conteos iniciales; sin excepciones JS. Descarte completo390×844/1366×768 y página de768px en escritorio; evidencia scratch/r/userscript/resultado.json y navegador.log.
 - Misma2.3.0, sin migraciones, motores ni conocimiento; instalación actualizada de Tampermonkey pendiente del dueño; descargas al cierre del bloque.
+
+## Anexo — Resultado: botón de demo en Plataforma (2026-11-03)
+
+- **Escribió Claude Code; entregada, pendiente de revisión.** Misma 2.3.0; sin migración.
+- Interruptor `helpers/InterruptorDemo.php` (`ZOOKI_DEMO_HABILITADA`, `.env.example` en 0); controlador `controllers/DemoPlataformaController.php` sobre `SemillaDemo`; lista blanca de la respuesta en `helpers/PresentacionDemo.php`; pestaña `views/plataforma/demo.php` y `public/js/demo-plataforma.js`.
+- `helpers/Security.php`: 404 antes de cualquier otra comprobación si está apagado; matriz solo plataforma; solo POST con CSRF.
+
+| Comprobación | Prueba |
+|---|---|
+| Apagado → 404, también sin sesión, y no ejecuta | `DemoPlataformaTest::testApagadoLasRutasNoExistenNiParaElSuperAdministrador` |
+| Admin, veterinario y propietario → 403 | `testEncendidoAdministradorVeterinarioYPropietarioReciben403` |
+| Super-administrador sin CSRF o sin POST → 403 | `testSuperAdministradorSinCsrfOSinPostRecibe403` |
+| Super-administrador con CSRF ejecuta la escena y queda auditado | `testSuperAdministradorConCsrfEjecutaLaEscenaYQuedaAuditada` |
+| Error de SemillaDemo tal cual y auditado | `testElErrorDeSemillaDemoSeMuestraTalCualYSeAudita` |
+| Clave validada; nunca en la respuesta ni en la auditoría | `testCrearValidaLaClaveYNuncaLaDevuelveNiLaAudita` |
+
+- Verificación: 6 pruebas / 39 aserciones; Security, Plataforma, PagosPlataforma, M021Gestionar y Suscripción en verde; JS M02Panel y E1Plataforma en verde. Pestaña abierta en Chrome a 1366 y 390 con respuesta simulada: validación de la clave en vivo, «Preparando…» con los tres botones deshabilitados, un solo envío ante doble clic, confirmación de borrar con el modal de Zooki, sin desborde horizontal ni errores de consola; con el interruptor en 0 no hay pestaña. Sin suites completas.
+- Pendiente: probar con MySQL real en zooki-pruebas (crear, escena y borrar) y aceptación del dueño.
+

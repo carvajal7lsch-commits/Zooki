@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Demo — botón en el panel de plataforma — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Claude Code; pestaña Demo del super-administrador con crear (`--si`, fecha y clave), escena y borrar sobre `SemillaDemo`, sin shell; interruptor `ZOOKI_DEMO_HABILITADA` (0 en `.env.example`): apagado → sin pestaña y rutas 404.
+- Rutas `plataforma_demo_*_ajax` solo plataforma, POST y CSRF; 403 al resto; auditoría por acción sin clave; respuesta en lista blanca; sesión liberada antes de correr para que el candado de SemillaDemo rechace el segundo clic.
+- Verificación: DemoPlataformaTest 6/39 y pruebas de Plataforma/Security relacionadas en verde; pestaña abierta en Chrome 1366/390 con respuesta simulada, sin errores de consola. Pendiente: ensayo real en zooki-pruebas con MySQL y apagar el interruptor en producción tras la sustentación. Anexo en `specs/semilla-demo.md`; misma2.3.0, sin commit ni push.
+
 ### M0-S — Profesional desde el registro y Calendario inicial — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; revisa Claude; intención Profesional mensual/anual validada y persistida; primer acceso administrador abre Suscripción una vez, sin cambiar Gratis; descarte con CSRF/auditoría y oferta de Inicio cerrable por clínica.

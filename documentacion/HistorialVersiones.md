@@ -8,6 +8,10 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Botón de demo en Plataforma (2026-11-03, Claude Code):** con `ZOOKI_DEMO_HABILITADA=1`, el super-administrador crea o rehace la demo, prepara la escena o la borra desde la pestaña Demo, con la misma clase `SemillaDemo` del script; apagado, la pestaña y sus rutas no existen (404). Solo plataforma con CSRF, candado contra doble ejecución, auditoría de cada acción y sin mostrar claves; misma2.3.0, sin migración.
+
+* **Estimaciones legibles en la cita (2026-11-03, Codex; RE-4.5.3):** horas sin fecha ni segundos cuando coinciden con el día pactado y chip de retraso desde5 minutos; azul hasta30 inclusive y rojo al superar30. Mismo detalle en administrador/veterinario y celular; sin cambiar la cascada.
+
 * **Profesional desde el registro (2026-11-03, Codex):** la portada conserva el ciclo elegido; el registro guarda la intención validada y activa siempre en Gratis. El primer acceso administrador abre Suscripción una vez, con pago Wompi o continuación gratis; Inicio ofrece la campaña vigente a clínicas sin pagos aprobados. Migración20 repetible, aislamiento y CSRF; HU-0.1/0.2/0.5 y diagrama de registro alineados, misma2.3.0.
 
 * **Calendario al entrar (2026-11-03, Codex):** el panel del día seleccionado se actualiza cuando FullCalendar incorpora las citas, sin exigir un clic para mostrar la actividad de hoy.
