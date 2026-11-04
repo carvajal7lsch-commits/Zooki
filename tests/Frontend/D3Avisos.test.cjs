@@ -24,7 +24,9 @@ async function cambiar(id, accion, actual) {
     const contexto = {
         CustomEvent: class { constructor(tipo, opciones) { this.type = tipo; this.detail = opciones.detail; } },
         document: {
-            addEventListener(tipo, callback) { callback(); },
+            addEventListener(tipo, callback) {
+                if (tipo === 'DOMContentLoaded') callback();
+            },
             querySelectorAll: selector => selector === '[data-password-accion]' ? [form] : [],
         },
         window: {
@@ -61,6 +63,43 @@ test('cambio obligatorio: el aviso viaja al dashboard y no demora la redirecció
     const pagina = await cambiar('changePasswordForm', 'cambiar_password_ajax', true);
     assert.deepEqual(pagina.destinos, [{ url: 'index.php?action=dashboard', mensaje: 'Contraseña actualizada.' }]);
 });
+
+for (const selector of ['[data-ojito]', '.toggle-password']) {
+    test(`el ojo ${selector} muestra y oculta campos creados o reemplazados después de cargar`, () => {
+        const escuchas = {};
+        let campo;
+        const documento = {
+            addEventListener(tipo, callback) { (escuchas[tipo] ||= []).push(callback); },
+            querySelectorAll: () => [],
+            getElementById: id => id === 'clave' ? campo : null,
+        };
+        vm.runInNewContext(codigo('public/js/cuenta-password.js'), { document: documento });
+        escuchas.DOMContentLoaded.forEach(callback => callback());
+        const atributos = {};
+        const boton = {
+            dataset: selector === '[data-ojito]' ? { ojito: 'clave' } : {},
+            parentElement: { querySelector: () => campo },
+            setAttribute: (nombre, valor) => { atributos[nombre] = valor; },
+        };
+        const pulsar = () => escuchas.click.forEach(callback => callback({
+            target: { closest: consulta => consulta.split(',').map(parte => parte.trim()).includes(selector) ? boton : null },
+        }));
+        // El clic en el icono llega al botón; también funciona tras renovar el formulario.
+        for (let reemplazo = 0; reemplazo < 2; reemplazo++) {
+            campo = { type: 'password', value: 'Valor ficticio' };
+            pulsar();
+            assert.equal(campo.type, 'text');
+            assert.equal(atributos['aria-pressed'], 'true');
+            pulsar();
+            assert.equal(campo.type, 'password');
+            assert.equal(atributos['aria-pressed'], 'false');
+            assert.equal(campo.value, 'Valor ficticio');
+        }
+        campo = null;
+        assert.doesNotThrow(pulsar, 'Una referencia a un campo retirado no rompe la pantalla.');
+        assert.doesNotThrow(() => escuchas.click.forEach(callback => callback({ target: { closest: () => null } })));
+    });
+}
 
 test('el toast de redirección se recupera una sola vez y conserva SweetAlert2 no bloqueante', () => {
     const almacen = new Map();

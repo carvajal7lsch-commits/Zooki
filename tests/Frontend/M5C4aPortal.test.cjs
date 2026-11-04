@@ -311,7 +311,6 @@ test('cada contraseña del Perfil tiene el ojito para verla, como en el login', 
         assert.match(vista, new RegExp(`id="${id}"[^>]*>\\s*<button type="button" class="portal-ojito" data-ojito="${id}"`), id);
     }
     assert.match(codigo('views/partials/cambios_identidad.php'), /\$enPortal \? '<button type="button" class="portal-ojito" data-ojito="' \. \$prefijo \. 'Clave"/);
-    assert.match(codigo('public/js/cuenta-password.js'), /querySelectorAll\('\[data-ojito\], \.toggle-password'\)/, 'Lo atiende el mismo código del login.');
     assert.match(codigo('public/css/portal/base.css'), /\.portal-ojito\[aria-pressed="true"\] \.portal-ojito__ocultar \{ display: inline; \}/);
 });
 
