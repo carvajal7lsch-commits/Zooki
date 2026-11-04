@@ -8,6 +8,8 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Reajuste visible del Grafo II (2026-11-03, Codex):** chips de retraso en Día/Semana/listas y detalle, con toast por lote sobre el umbral clínico y acceso a Día. Portal con recuadro de nueva hora y campana de ESTIMACION_CITA, publicada al validar el mismo evento de correo, sin duplicar reintentos ni alterar la ventana; correo legible con causa. Solo citas del propietario vigente, sin cambiar la cascada ni crear migraciones (RE-4.5.3/4.14.7/5.7.1–4).
+
 * **Botón de demo en Plataforma (2026-11-03, Claude Code):** con `ZOOKI_DEMO_HABILITADA=1`, el super-administrador crea o rehace la demo, prepara la escena o la borra desde la pestaña Demo, con la misma clase `SemillaDemo` del script; apagado, la pestaña y sus rutas no existen (404). Solo plataforma con CSRF, candado contra doble ejecución, auditoría de cada acción y sin mostrar claves; misma2.3.0, sin migración.
 
 * **Estimaciones legibles en la cita (2026-11-03, Codex; RE-4.5.3):** horas sin fecha ni segundos cuando coinciden con el día pactado y chip de retraso desde5 minutos; azul hasta30 inclusive y rojo al superar30. Mismo detalle en administrador/veterinario y celular; sin cambiar la cascada.

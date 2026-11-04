@@ -139,8 +139,11 @@ class CitaController
         return [
             'cambiable' => $this->citas->permiteCambio($cita),
             'id_cita' => (int) $cita['id_cita'],
+            'id_clinica' => (int) $cita['id_clinica'],
             'prioridad' => $cita['prioridad'],
             'inicio_estimado' => $cita['inicio_estimado'],
+            'fecha_ultimo_calculo' => $cita['fecha_ultimo_calculo'],
+            'umbral_aviso_min' => (int) $cita['umbral_aviso_min'],
             'fin_estimado' => $cita['fin_estimado'],
             'estado_reajuste' => $cita['estado_reajuste'],
             'motivo_reajuste' => $cita['motivo_reajuste'],

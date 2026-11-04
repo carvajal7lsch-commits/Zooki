@@ -284,6 +284,16 @@
     white-space: nowrap;
     font-weight: 400;
 }
+
+.agenda .fc-timeGridDay-view .agenda-cita-semanal {
+    height: 100%;
+    align-items: start;
+    flex-wrap: wrap;
+}
+
+.agenda .fc-timeGridDay-view .agenda-cita-semanal strong {
+    flex: 1 1 100%;
+}
 .agenda .fc-timeGridWeek-view .agenda-evento-seleccionado {
     border: 1px solid var(--cal-primary);
     border-left-width: 2px;

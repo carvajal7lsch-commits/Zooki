@@ -1115,7 +1115,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 - Al iniciar y completar se sella la hora real.
 - El sistema detecta cuando una atención excede su duración planificada.
-- Alerta o recalcula el corrimiento de las citas siguientes del veterinario.
+- Alerta o recalcula el corrimiento de las citas siguientes del veterinario. Día/Semana/lista móvil muestran +N min desde5 minutos y detalle con hora legible, azul hasta30 inclusive y rojo después. Un lote de hoy sobre el umbral de la clínica genera un toast con acceso a Día, sin repetirse en cada sincronización (decisión del dueño, 2026-11-03).
 
 **Reglas de negocio:** RN-401, RN-412 · **Dependencias:** HU-4.3
 
@@ -1575,20 +1575,20 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 3 pts | Deseable |
+| Media | Parcial (2.3.0) | 3 pts | Deseable |
 
 > Como propietario, quiero ver dentro del portal las notificaciones de mi mascota (recordatorios, confirmaciones, cambios de cita) para no depender solo del correo.
 
 **Criterios de aceptación:**
 
-- Veo un listado de mis notificaciones dentro del portal.
+- Veo una campana con listado de ESTIMACION_CITA, contador y acceso a mi cita; usa el mismo evento/umbral/ventana del correo, sin duplicarse al reintentar.
 - Hay un contador de no leídas.
 - Puedo marcarlas como leídas.
 - Solo veo las notificaciones que me corresponden.
 
 **Reglas de negocio:** RN-G02 · **Requisitos:** RF-5.6 · **Dependencias:** HU-5.1
 
-> _Nota: Función deseable propuesta (hoy el propietario solo recibe correo). En la v2.0 entra al alcance: el portal concentra los avisos de citas, recordatorios, cambios de agenda y escaneos del carnet._
+> _2.3.0: estimaciones de agenda implementadas por decisión del dueño, 2026-11-03. Los demás avisos de citas, recordatorios y escaneos del carnet siguen pendientes; esta entrega no los da por implementados._
 
 ### HU-5.8 — Registrar al propietario como identidad global
 

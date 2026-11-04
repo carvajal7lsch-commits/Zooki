@@ -1,0 +1,101 @@
+/* RE-5.7: campana y estimación con la identidad existente del portal. */
+.portal-avisos-barra {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+.portal-avisos {
+    position: relative;
+    z-index: 30;
+}
+.portal-avisos > summary {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--z-border);
+    border-radius: 50%;
+    background: var(--z-surface);
+    color: var(--z-primary);
+    cursor: pointer;
+    list-style: none;
+    font-size: 22px;
+}
+.portal-avisos > summary::-webkit-details-marker {
+    display: none;
+}
+.portal-avisos > summary:hover {
+    background: var(--z-primary-soft);
+}
+.portal-avisos > summary span {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    padding: 2px 4px;
+    border-radius: 20px;
+    background: var(--z-primary);
+    color: white;
+    font-size: 11px;
+    text-align: center;
+}
+.portal-avisos [hidden] {
+    display: none;
+}
+.portal-avisos__panel {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    width: min(360px, calc(100vw - 32px));
+    max-height: 65dvh;
+    overflow-y: auto;
+    border: 1px solid var(--z-border);
+    border-radius: 16px;
+    background: var(--z-surface);
+    box-shadow: 0 10px 30px #0F172A1A;
+}
+.portal-avisos__panel header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 16px;
+    border-bottom: 1px solid var(--z-border);
+}
+.portal-avisos__item {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--z-border);
+    background: var(--z-surface);
+    color: var(--z-text);
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+.portal-avisos__item--nuevo,
+.portal-avisos__item:hover {
+    background: var(--z-primary-soft);
+}
+.portal-avisos__item span {
+    color: var(--z-text-muted);
+}
+.portal-cita__texto .portal-cita__reajuste,
+.portal-list-body .portal-cita__reajuste,
+.cita-info .portal-cita__reajuste {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}

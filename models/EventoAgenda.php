@@ -2,6 +2,7 @@
 require_once __DIR__ . '/NotificacionInterna.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/IntervalosAgenda.php';
+require_once __DIR__ . '/../helpers/PresentacionEstimacionAgenda.php';
 
 /** B1/B1.1: causa durable, destinatario estable y contenido reconstruido antes de enviar. */
 final class EventoAgenda
@@ -99,6 +100,18 @@ final class EventoAgenda
         return $this->reloj ? ($this->reloj)() : new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
     }
 
+    /** RN-429/RN-G02: misma causa validada que el correo; el reintento no duplica la campana. */
+    private function notificarEstimacion(array $evento): void
+    {
+        $enlace = 'index.php?action=portal_propietario&cita=' . (int) $evento['id_cita'] . '&evento_agenda=' . (int) $evento['id_evento'];
+        $q = $this->db->prepare("SELECT id FROM notificaciones_internas WHERE id_clinica=? AND id_usuario=? AND tipo='ESTIMACION_CITA' AND enlace=?");
+        $q->execute([$this->clinica, $evento['id_destinatario'], $enlace]);
+        if ($q->fetchColumn()) return;
+        $mensaje = PresentacionEstimacionAgenda::texto($evento);
+        $creada = (new NotificacionInterna($this->db))->crearParaUsuario($this->clinica, (int) $evento['id_destinatario'], 'ESTIMACION_CITA', 'Nueva hora estimada: ' . $evento['mascota_nombre'], $mensaje, $enlace, (int) $evento['id_cita']);
+        if (!$creada) throw new RuntimeException('No se pudo guardar la actualización de la cita.');
+    }
+
     private function crear(string $tipo, ?int $cita, ?int $solicitud, int $version, ?int $usuario, ?int $rol, string $canal, ?string $discriminador = null): int
     {
         if (!$this->db->inTransaction()) {
@@ -167,6 +180,7 @@ final class EventoAgenda
                 return [];
             }
             $this->db->prepare("UPDATE eventos_agenda SET estado='reclamado',reclamacion=?,fecha_reclamacion=CURRENT_TIMESTAMP,intentos=intentos+1 WHERE id_evento=? AND id_clinica=?")->execute([$reclamacion, $evento, $this->clinica]);
+            if ($e['tipo'] === 'ESTIMACION_CITA') $this->notificarEstimacion($e);
             $e['hora_pactada'] = $e['hora'];
             $e['hora'] = substr($e['hora_a_comunicar'] ?? $e['inicio_estimado'] ?? ($e['fecha'] . ' ' . $e['hora']), 11);
             return $e;

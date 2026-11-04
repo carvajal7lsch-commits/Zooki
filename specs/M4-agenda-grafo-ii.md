@@ -1,5 +1,25 @@
 # M4 — Agenda inteligente y Grafo II
 
+## Decisión del dueño — reajuste visible (2026-11-03)
+
+- RE-4.5.3/4.14.7 y RE-5.7.1–4: chips de retraso desde5 minutos en Día/Semana/lista móvil y detalle legible; azul hasta30 inclusive y rojo después, sin cambiar el cálculo de la cascada.
+- El veterinario recibe un toast por lote de estimaciones de hoy que supera el umbral de su clínica, con acceso a Día; el mismo lote no se anuncia en las sincronizaciones posteriores.
+- Portal: recuadro legible en su cita cuando supera el umbral; campana con ESTIMACION_CITA del mismo evento de correo y la misma ventana, solo para el propietario vigente y con acceso a su cita.
+- La campana se publica al reclamar el evento validado para despacho, dentro de la misma unidad de agenda, sin esperar SMTP; reintentar ese evento no repite el aviso ni consume otra ventana.
+- Escribe Codex; misma2.3.0; solo una prueba PHP nueva de notificación al propietario y apertura de pantallas/consola, sin suites ni cambios de motores.
+
+### Anexo — Resultado del reajuste visible
+
+- Escribió Codex; entregada, pendiente de revisión de Claude (arquitecto) y del dueño.
+- RE-4.5.3: chips +N min en Día/Semana/listas, detalle legible con minutos; azul desde5 hasta30 inclusive y rojo después; no cambia la cascada.
+- Toast del veterinario sobre el umbral clínico, por huella del lote de hoy con sello de cálculo, conservada en la sesión del navegador; Ver Día y sincronización de lectura cada10 segundos sin repetir el lote.
+- RE-4.14.7/5.7.1–4: misma causa ESTIMACION_CITA para correo/campana, creada al reclamar el evento legitimado, antes de SMTP; idempotencia por evento bajo coordinador y ventana original conservada.
+- Portal: recuadro completo y horas legibles en tarjeta/detalle; campana con contador/lectura y acceso autorizado a su cita; no expone avisos de otros propietarios ni de sus roles de personal.
+- `EstimacionPropietarioTest`:1 prueba/25 aserciones en SQLite; umbral, ventana exacta, reintento, enlace, correo legible, lectura y aislamiento incluidos; sin SMTP real.
+- Chrome con vistas reales y fixtures efímeros: administrador/veterinario y Portal a1366×768/390×844, Día/Semana/lista/detalle, campana y acceso correctos, sin errores de consola; portal sin desborde horizontal.
+- Dos lotes distintos producen dos toasts; repetir la lectura no agrega avisos; chip móvil con colores calculados correctos y toast dentro de la ventana.
+- RN/HU/RE/Modelos/Historial alineados; diagrama renderizado con27 nodos; descargas al cierre del bloque según metodo§11; misma2.3.0, sin migración, suites completas, base manual, commit ni push.
+
 ## Decisiones del dueño — Sala y revisión de triage (2026-11-02)
 
 - Escribe Codex; revisa Claude; alcance aprobado por el dueño durante la revisión del CI, dentro de2.3.0.

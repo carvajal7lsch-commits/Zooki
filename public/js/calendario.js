@@ -27,6 +27,7 @@ let calendarInstance = null;
 let _selectedDate = null;
 let _cargando = true;
 let _panel = { modo: 'dia', eventoId: null };
+const reajustesAnunciados = new Set();
 
 // ═══════════════════════════════════════
 // Utilidades
@@ -136,13 +137,54 @@ function horaEstimadaAgenda(valor, fechaCita) {
     return toLocalDateStr(fecha) === toLocalDateStr(fechaCita) ? hora : `${formatFecha(fecha, { day: 'numeric', month: 'long', year: 'numeric' })} · ${hora}`;
 }
 
-function chipRetrasoAgenda(valor, horaPactada) {
+function minutosRetrasoAgenda(valor, horaPactada) {
     const inicio = fechaEstimadaAgenda(valor);
-    if (!inicio) return '';
+    return inicio ? (inicio.getTime() - horaPactada.getTime()) / 60000 : 0;
+}
+
+function chipRetrasoAgenda(valor, horaPactada, compacto = false) {
     // RE-4.5.3: comparar con la hora pactada, sin alterar la estimación de la cascada.
-    const minutos = (inicio.getTime() - horaPactada.getTime()) / 60000;
+    const minutos = minutosRetrasoAgenda(valor, horaPactada);
     if (minutos < 5) return '';
-    return `<small class="agenda-detail__retraso${minutos > 30 ? ' agenda-detail__retraso--alto' : ''}">${Math.round(minutos)} min tarde por la cita anterior</small>`;
+    const texto = compacto ? `+${Math.round(minutos)} min` : `${Math.round(minutos)} min tarde por la cita anterior`;
+    return `<small class="agenda-detail__retraso${compacto ? ' agenda-retraso--compacto' : ''}${minutos > 30 ? ' agenda-detail__retraso--alto' : ''}">${texto}</small>`;
+}
+
+function anunciarReajusteAgenda(datos) {
+    if (!isUsuarioVeterinario()) return;
+    const hoy = toLocalDateStr(new Date());
+    const corridas = datos.filter(cita => {
+        if ((cita.tipo || 'cita') !== 'cita' || cita.fecha !== hoy || !['pendiente', 'confirmada'].includes(cita.estado)) return false;
+        if (Number(cita.id_veterinario) !== Number(getUsuarioId()) || !Number.isFinite(Number(cita.umbral_aviso_min))) return false;
+        const pactada = new Date(cita.fecha + 'T' + cita.hora);
+        return minutosRetrasoAgenda(cita.inicio_estimado, pactada) > Number(cita.umbral_aviso_min);
+    });
+    if (!corridas.length) return;
+    const huella = JSON.stringify(corridas.map(cita => [cita.id_cita, cita.fecha_ultimo_calculo, cita.inicio_estimado]).sort((a, b) => a[0] - b[0]));
+    const clave = `zooki_reajuste_${corridas[0].id_clinica}_${getUsuarioId()}_${hoy}`;
+    try {
+        for (const anterior of JSON.parse(sessionStorage.getItem(clave) || '[]')) reajustesAnunciados.add(anterior);
+    } catch (error) {
+        // El aviso sigue siendo único durante esta página si el almacenamiento no está disponible.
+    }
+    if (reajustesAnunciados.has(huella)) return;
+    reajustesAnunciados.add(huella);
+    try {
+        sessionStorage.setItem(clave, JSON.stringify([...reajustesAnunciados].slice(-100)));
+    } catch (error) {
+        // No impedir la consulta de agenda por una restricción del navegador.
+    }
+    mostrarToast(`La agenda se reajustó: ${corridas.length} ${corridas.length === 1 ? 'cita se corrió' : 'citas se corrieron'}`, 'info');
+    const enlace = document.createElement('button');
+    enlace.type = 'button';
+    enlace.className = 'cal-toast__dia';
+    enlace.textContent = 'Ver Día';
+    enlace.addEventListener('click', () => {
+        calendarInstance.changeView('timeGridDay', hoy);
+        seleccionarDia(new Date());
+        document.getElementById('calToast')?.remove();
+    });
+    document.getElementById('calToast')?.append(enlace);
 }
 
 function minutosDe(hora) {
@@ -278,6 +320,7 @@ async function cargarEventos(info, exito, fallo) {
         const fin = info.endStr.split('T')[0];
         const res = await fetch(`index.php?action=listar_citas_ajax&inicio=${inicio}&fin=${fin}`);
         const datos = await res.json();
+        anunciarReajusteAgenda(Array.isArray(datos) ? datos : []);
 
         exito((Array.isArray(datos) ? datos : []).map(e => {
             const tipo = e.tipo || 'cita';
@@ -357,6 +400,11 @@ function contenidoCitaSemanal(info) {
     const tipo = info.event.extendedProps.tipo_cita_nombre || TIPOS_EVENTO[info.event.extendedProps.tipo];
     detalle.textContent = [hora, tipo].filter(Boolean).join(' · ');
     fila.append(nombre, detalle);
+    if (info.event.extendedProps.tipo === 'cita') {
+        const chip = document.createElement('template');
+        chip.innerHTML = chipRetrasoAgenda(info.event.extendedProps.inicio_estimado, info.event.start, true);
+        fila.append(chip.content);
+    }
     return { domNodes: [fila] };
 }
 
@@ -409,6 +457,7 @@ function iniciarCalendario() {
         scrollTime: '07:00:00',
         views: {
             dayGridMonth: { displayEventTime: false },
+            timeGridDay: { ...horarioVisibleSemana(), eventContent: contenidoCitaSemanal },
             timeGridWeek: {
                 ...horarioVisibleSemana(),
                 eventContent: contenidoCitaSemanal,
@@ -618,6 +667,7 @@ function itemPanel(ev) {
             <span class="agenda-item__main">
                 <span class="agenda-item__name">${esc(p.mascota_nombre || ev.title)}</span>
                 <span class="agenda-item__sub">${esc(sub)}</span>
+                ${esCita ? chipRetrasoAgenda(p.inicio_estimado, ev.start, true) : ''}
             </span>
             ${pill}
         </button>`;
@@ -736,7 +786,7 @@ function mostrarDetalleCita(eventId) {
     document.getElementById('agendaPanelBody').innerHTML = `
         <div class="agenda-detail">
             <dl class="agenda-detail__list">
-                ${filas.map(([k, v, chip]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}${chip || ''}</dd></div>`).join('')}
+                ${filas.map(([k, v, chip]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}${chip ? ' · ' + chip : ''}</dd></div>`).join('')}
             </dl>
             ${acciones}
         </div>`;
@@ -1737,6 +1787,7 @@ document.addEventListener('DOMContentLoaded', () => {
     conectarBuscadorMascota();
     abrirAgendarDesdeEnlace();
     iniciarCalendario();
+    sincronizarPanelAgenda(document.querySelector('.agenda'), async () => calendarInstance.refetchEvents(), () => _cargando);
 });
 
 window.addEventListener('agenda:urgencia', () => calendarInstance?.refetchEvents());

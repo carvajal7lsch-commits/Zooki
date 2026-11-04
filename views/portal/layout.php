@@ -42,8 +42,8 @@ $iniciales = $iniciales ?: 'U';
     <?php // M5 C2: los componentes de Usuarios (tarjetas mini, etiquetas, pestañas), con los tokens del portal. ?>
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= $v ?>">
-    <?php foreach (['base', 'navegacion', 'componentes', 'inicio', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
-    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>">
+    <?php foreach (['base', 'navegacion', 'componentes', 'inicio', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios', 'avisos'] as $modulo): ?>
+    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/portal/' . $modulo . '.css'), 0, 12) ?>">
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
@@ -97,6 +97,15 @@ $iniciales = $iniciales ?: 'U';
     </aside>
 
     <main class="portal-main" id="contenido">
+        <div class="portal-avisos-barra">
+            <details class="portal-avisos" data-portal-avisos>
+                <summary aria-label="Notificaciones" title="Notificaciones"><i class="ri-notification-3-line" aria-hidden="true"></i><span data-portal-avisos-conteo hidden>0</span></summary>
+                <section class="portal-avisos__panel" aria-label="Notificaciones">
+                    <header><strong>Notificaciones</strong><button type="button" class="portal-boton-texto" data-portal-avisos-leer>Marcar todas leídas</button></header>
+                    <div data-portal-avisos-lista aria-live="polite">Cargando notificaciones…</div>
+                </section>
+            </details>
+        </div>
         <?php include $view; ?>
     </main>
 </div>
@@ -138,7 +147,8 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/combobox.js?v=<?= $v ?>"></script>
 <script src="js/consulta-sintomas.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/consulta-sintomas.js'), 0, 12) ?>"></script>
 <script src="js/triage-agenda.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/triage-agenda.js'), 0, 12) ?>"></script>
-<script src="js/portal.js?v=<?= $v ?>"></script>
+<script src="js/portal.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/portal.js'), 0, 12) ?>"></script>
+<script src="js/portal-notificaciones.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/portal-notificaciones.js'), 0, 12) ?>"></script>
 <script src="js/carnet.js?v=<?= $v ?>"></script>
 <script src="js/portal-movil.js?v=<?= $v ?>"></script>
 <script src="js/portal-reprogramar.js?v=<?= $v ?>"></script>

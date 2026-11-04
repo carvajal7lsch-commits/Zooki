@@ -657,7 +657,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.5.1 | El sistema debe sellar la hora real al iniciar y al completar la atención. | Funcional | Quedan registradas las horas reales de inicio y fin. | Alta |
 | RE-4.5.2 | El sistema debe detectar exceso activo respecto del fin nominal vigente, durante la atención y al finalizar. | Cálculo | Con inicio real 09:20 y servicio completo 30, nominal 09:50; una pausa 09:10–09:30 para inicio 09:00 y servicio 30 desplaza nominal a 09:50, sin cambiar sellos. No reiniciar el nominal en cada recálculo. | Alta |
-| RE-4.5.3 | El sistema debe recalcular con política M, separando horas pactadas, estimadas y reales. | Cálculo | Durante atención el margen único no se regenera. Al completar a las 10:00, el extremo queda a las 10:00, aunque el nominal más margen sea posterior; el sobrante permite reservas y recupera retrasos de la cascada sin adelantar pactadas. Avanzar reloj tras completar no altera el resultado. | Alta |
+| RE-4.5.3 | El sistema debe recalcular con política M, separando horas pactadas, estimadas y reales. | Cálculo | Durante atención el margen único no se regenera. Al completar a las 10:00, el extremo queda a las 10:00, aunque el nominal más margen sea posterior; el sobrante permite reservas y recupera retrasos de la cascada sin adelantar pactadas. Avanzar reloj tras completar no altera el resultado. Día/Semana/lista móvil y detalle muestran retrasos desde5 minutos, redondeados; azul hasta30 inclusive y rojo después, con horas legibles. El veterinario ve un toast por lote recalculado de hoy sobre el umbral clínico, con acceso a Día; repetir su sincronización no lo duplica. | Alta |
 
 **Reglas de negocio:** RN-401, RN-412
 
@@ -760,7 +760,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-4.14.4 | Solo el veterinario destino debe poder aceptar una reasignación en vivo pendiente y vigente. | Restricción | Antes del límite y con hueco aún compatible, aceptación cambia cita/propuesta/evento en una transacción; admin, otro vet o clínica ajena reciben 403. Una propuesta no aparta el hueco mientras espera. | Alta |
 | RE-4.14.5 | Sin veterinario disponible, la cita debe reprogramarse con el propietario; los cambios se notifican y auditan. | Funcional | Se ofrece reprogramar; notificación y auditoría. | Media |
 | RE-4.14.6 | El destino debe responder dentro del plazo configurado; rechazo o vencimiento prueban siguiente candidato compatible. | Funcional | Vigencia [fecha, fecha_limite): en el límite ya venció. Dos conexiones aceptando/venciendo dejan una sola transición; un hueco perdido no mueve la cita y, sin candidato, queda pendiente de reprogramar. | Alta |
-| RE-4.14.7 | Los cambios de hora estimada deben avisarse solo al superar el umbral acumulado y como máximo una vez cada 30 minutos por cita; la reasignación y la reprogramación se avisan siempre. | Restricción | Diez recálculos de 3 minutos en una hora generan como máximo dos avisos. | Media |
+| RE-4.14.7 | Los cambios de hora estimada deben avisarse solo al superar el umbral acumulado y como máximo una vez cada 30 minutos por cita; la reasignación y la reprogramación se avisan siempre. | Restricción | Diez recálculos de 3 minutos en una hora generan como máximo dos avisos. Cada ESTIMACION_CITA validado para despacho publica una campana del propietario y un correo con hora pactada/estimada legibles y causa; reintentar el mismo evento no duplica la campana. El portal muestra el recuadro si el retraso respecto a la pactada supera el umbral de esa clínica. | Media |
 
 **Reglas de negocio:** RN-412, RN-413, RN-415, RN-428, RN-429
 
@@ -901,10 +901,10 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-5.7.1 | El sistema debe mostrar al propietario un listado de sus notificaciones en el portal. | Funcional | El propietario ve sus notificaciones en el portal. | Media |
+| RE-5.7.1 | El sistema debe mostrar al propietario un listado de sus notificaciones en el portal. | Funcional | La campana lista ESTIMACION_CITA y permite abrir su cita por el enlace, también en celular; los demás tipos de aviso siguen pendientes. | Media |
 | RE-5.7.2 | El sistema debe mostrar un contador de no leídas. | Funcional | Hay un contador de no leídas. | Media |
-| RE-5.7.3 | El sistema debe permitir marcarlas como leídas. | Funcional | Puede marcar como leídas. | Baja |
-| RE-5.7.4 | El sistema debe mostrar solo las notificaciones del propietario. | Seguridad | El propietario A no ve las notificaciones del propietario B ni pidiéndolas por URL (403). | Alta |
+| RE-5.7.3 | El sistema debe permitir marcarlas como leídas. | Funcional | Puede marcar una o todas sus estimaciones como leídas, mediante POST con CSRF; el contador se actualiza. | Baja |
+| RE-5.7.4 | El sistema debe mostrar solo las notificaciones del propietario. | Seguridad | El propietario A no ve las notificaciones del propietario B ni pidiéndolas por URL (403); el portal global solo incluye ESTIMACION_CITA dirigidas a su usuario y cuya mascota sigue siendo suya, sin mezclar avisos de sus roles de personal. | Alta |
 
 **Reglas de negocio:** RN-G02
 

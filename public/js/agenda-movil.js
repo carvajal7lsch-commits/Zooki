@@ -90,6 +90,11 @@
             }
             const contenido = nodo('span', '', 'agenda-movil__paciente');
             contenido.append(nodo('strong', p.mascota_nombre || ev.title), nodo('small', [p.tipo_cita_nombre || TIPOS_EVENTO[p.tipo] || 'Consulta', p.propietario_nombre].filter(Boolean).join(' · ')));
+            if (p.tipo === 'cita') {
+                const chipRetraso = document.createElement('template');
+                chipRetraso.innerHTML = chipRetrasoAgenda(p.inicio_estimado, ev.start, true);
+                contenido.append(chipRetraso.content);
+            }
             const chip = nodo('span', p.tipo === 'cita' ? ESTADOS_CITA[p.estado] || p.estado : TIPOS_EVENTO[p.tipo], 'estado-pill');
             if (p.tipo === 'cita') chip.dataset.estado = p.estado;
             else chip.dataset.tipo = p.tipo;

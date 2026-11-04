@@ -1,5 +1,11 @@
 # M5 — Portal multi-clínica y vínculos
 
+## Decisión del dueño — estimaciones y campana (2026-11-03)
+
+- HU-5.7 parcial: solo ESTIMACION_CITA; campana con contador y lectura individual/todas, acceso a cita propia y recuadro con hora pactada/nueva legibles sobre el umbral clínico.
+- El portal global filtra por destinatario y propiedad vigente de la mascota, sin mezclar avisos de los roles de personal; rutas y CSRF existentes.
+- Publicación desde el mismo evento validado del correo, sin duplicar reintentos ni cambiar su ventana; alcance, evidencia y Anexo — Resultado en specs/M4-agenda-grafo-ii.md; los demás tipos de notificación siguen pendientes.
+
 ## Carnet QR — reapertura para v2.0.0 (2026-10-23)
 
 M4 cerrado y alpha.5 publicada, según confirmación del dueño. A fue aprobada por Claude con tres ajustes para B. El encargo vigente es **solo Carnet B**, en `release/v2.0.0`; escribe Codex y revisa Claude (arquitecto). B prepara la versión 2.0.0 y agrega la migración 11 para contar accesos públicos, conservando los datos existentes. Modelos §12.5 refleja los recorridos privado y público. El despliegue lo hace el dueño tras la revisión.

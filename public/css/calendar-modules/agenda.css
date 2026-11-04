@@ -484,6 +484,50 @@
     color: var(--z-danger-dark);
 }
 
+.agenda-detail__row .agenda-detail__retraso {
+    display: inline-block;
+}
+
+.agenda-retraso--compacto {
+    flex: none;
+    display: inline-block;
+    margin: 0;
+    padding: 1px 5px;
+    white-space: nowrap;
+    font-size: 10px;
+    line-height: 16px;
+}
+
+.agenda-cita-semanal .agenda-retraso--compacto {
+    flex: none;
+}
+
+.agenda-movil__paciente .agenda-retraso--compacto {
+    align-self: flex-start;
+    color: var(--cal-primary);
+    font-size: 10px;
+    overflow: visible;
+}
+
+.agenda-movil__paciente .agenda-detail__retraso--alto {
+    color: var(--z-danger-dark);
+}
+
+.cal-toast__dia {
+    border: 0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: var(--cal-primary-soft);
+    color: var(--cal-primary);
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.cal-toast__dia:hover {
+    background: #DBEAFE;
+}
+
 .agenda-detail__secondary {
     display: flex;
     flex-wrap: wrap;
@@ -510,7 +554,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: 380px;
+    max-width: min(380px, calc(100vw - 32px));
+    box-sizing: border-box;
     padding: 12px 16px;
     border-radius: 12px;
     background: #0F172A;

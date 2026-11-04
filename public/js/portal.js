@@ -658,7 +658,7 @@ async function verDetalle(id, opciones = {}) {
                     <div class="portal-list-body">
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
-                        ${c.inicio_estimado ? `<p>Inicio estimado: ${escapeHtml(c.inicio_estimado)}</p>` : ''}
+                        ${c.aviso_estimacion ? `<p class="portal-cita__reajuste">${escapeHtml(c.aviso_estimacion)}</p>` : ''}
                         ${c.estado_reajuste === 'pendiente_reprogramacion' ? '<p>Contacta a la clínica o elige Reprogramar para consultar alternativas.</p>' : ''}
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
                         <div class="card-tags-mini">${etiquetaClinica(c.clinica_nombre)}${badgeEstado(c.estado)}</div>
@@ -2011,6 +2011,9 @@ async function mostrarDetalleCita(idCita) {
         document.getElementById('detCitaMascota').textContent = cita.nombre_mascota;
         document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario} · ${cita.clinica}`;
         document.getElementById('detCitaFechaHora').textContent = `${formatFecha(cita.fecha)} · ${cita.hora.substring(0, 5)}`;
+        const avisoEstimacion = document.getElementById('detCitaEstimacion');
+        avisoEstimacion.textContent = cita.aviso_estimacion || '';
+        avisoEstimacion.hidden = !cita.aviso_estimacion;
 
         // Rellenar Badge de Estado
         const badge = document.getElementById('detCitaEstado');

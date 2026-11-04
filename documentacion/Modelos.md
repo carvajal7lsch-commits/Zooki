@@ -398,8 +398,12 @@ flowchart TD
   MOV --> SIEM["Reasignacion/reprogramacion siempre genera su aviso propio"]
   REP --> SIEM
   SIEM --> DES
-  EVT --> DES["Tras commit: reclamar con identidad/contacto/version vigentes; transportar sin SQL abierto"]
-  DES --> ENT{"Entrega confirmada?"}
+  EVT --> DES["Tras commit: reclamar con identidad/contacto/version vigentes"]
+  DES --> BELL_EST{"Evento ESTIMACION_CITA?"}
+  BELL_EST -- Si --> PUBLICAR_EST["En la unidad de agenda: campana para propietario vigente<br/>Mismo evento y ventana; reintento no duplica; enlace a su cita"]
+  BELL_EST -- No --> SMTP_EST["Transportar correo sin SQL abierto"]
+  PUBLICAR_EST --> SMTP_EST
+  SMTP_EST --> ENT{"Entrega confirmada?"}
   ENT -- Si --> BASE["Guardar hora comunicada y ventana de estimacion bajo coordinador"]
   ENT -- "Resultado incierto" --> INC["Estado durable incierto; sin reenvio automatico"]
   BASE --> FIN

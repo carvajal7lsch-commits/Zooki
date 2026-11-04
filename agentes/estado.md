@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Grafo II — reajuste visible y aviso al propietario — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; chips de retraso en Día/Semana/listas y detalle legible; toast por lote de hoy sobre el umbral clínico, con acceso a Día y sin repetirse al sincronizar; cálculo de cascada conservado.
+- Portal con recuadro y campana ESTIMACION_CITA del mismo evento validado del correo, antes de SMTP, con ventana/idempotencia y acceso solo a citas del propietario vigente; correo legible con causa, sin migración.
+- Una prueba PHP nueva/25 aserciones SQLite correcta; Chrome1366/390 en ambos roles y Portal sin errores de consola; dos recálculos/dos toasts y sincronizaciones sin duplicados; sintaxis/diff y diagrama correctos.
+- Anexo en specs/M4-agenda-grafo-ii.md y alcance parcial de HU-5.7 en specs/M5-portal-multiclinica.md; RN/HU/RE/Modelos/Historial actualizados; descargas al cierre del bloque según metodo§11; misma2.3.0, pendiente revisión del dueño/Claude, sin suites completas, base manual, commit ni push.
+
 ### Calendario — estimaciones legibles en Detalle — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; Inicio/Fin clínico estimados en hora de12 horas sin segundos, fecha solo si cambia el día; chip bajo inicio desde5 minutos, azul hasta30 inclusive y rojo al superar30, calculado respecto a la hora pactada y redondeado.
