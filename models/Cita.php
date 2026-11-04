@@ -89,6 +89,27 @@ class Cita extends ModeloClinica
         return $this->registrarResultado($datos, 'verde');
     }
 
+    /** RE-2.2.1/4: el navegador solicita el modo; solo el servidor acredita origen y presencia. */
+    public function validarModoLlegada(array $datos): bool
+    {
+        $modo = $datos['modo_llegada'] ?? '';
+        if ($modo === '') return false;
+        if ($modo !== 'ahora') throw new InvalidArgumentException('Modo de llegada no válido.');
+        if (Contexto::rolActivo() !== Roles::VETERINARIO || (int) ($datos['id_veterinario'] ?? 0) !== Contexto::idUsuario()) {
+            $this->denegarAcceso('citas', null, 'Solo el veterinario de la sesión registra la llegada sin reserva.');
+        }
+        if (isset($datos['id_clinica']) && (string) $datos['id_clinica'] !== (string) $this->clinica()) {
+            $this->denegarAcceso('citas', null, 'La llegada pertenece a otra clínica.');
+        }
+        if (($datos['fecha'] ?? '') !== $this->ahora()->format('Y-m-d')) throw new InvalidArgumentException('Llegó ahora solo admite citas de hoy.');
+        return true;
+    }
+
+    private function ahora(): DateTimeImmutable
+    {
+        return $this->reloj ? ($this->reloj)() : new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
+    }
+
     public function coordinarReserva(array $datos, callable $accion): mixed
     {
         try {
@@ -125,6 +146,7 @@ class Cita extends ModeloClinica
 
     private function registrarResultado(array $datos, string $prioridad, bool $sobrecupo = false): array
     {
+        $this->validarModoLlegada($datos);
         if (!in_array($prioridad, ['verde', 'amarillo', 'naranja', 'rojo'], true)) {
             throw new InvalidArgumentException('Prioridad clínica no válida.');
         }
@@ -161,11 +183,14 @@ class Cita extends ModeloClinica
                         $this->exigirDisponibilidad($idVeterinario, $idMascota, $fecha, $hora, $duracion, $margen, null);
                     }
 
+                    $llegoAhora = $this->validarModoLlegada($datos);
+                    $origen = $llegoAhora ? 'llegada_sin_reserva' : 'reserva';
+                    $llegada = $llegoAhora ? $this->ahora()->format('Y-m-d H:i:s') : null;
                     $sql = "INSERT INTO citas
                         (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
                          duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado,
-                         origen,duracion_activa_objetivo_segundos,politica_temporal)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reserva', ?, 'M')";
+                         origen,hora_llegada,duracion_activa_objetivo_segundos,politica_temporal)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'M')";
                     $parametros = [
                         $clinica,
                         $idMascota,
@@ -180,13 +205,17 @@ class Cita extends ModeloClinica
                         $prioridad,
                         (int) $sobrecupo,
                         $datos['estado'] ?? 'confirmada',
+                        $origen,
+                        $llegada,
                         $duracion * 60,
                     ];
                     $this->ejecutarReserva($sql, $parametros);
                     $id = (int) $this->conn->lastInsertId();
                     $propietario = (int) $this->getById($id)['id_propietario'];
                     $propia = $propietario === $idVeterinario;
-                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'INSERT', 'citas', $id, null, ['fecha' => $fecha, 'prioridad' => $prioridad, 'id_propietario' => $propietario, 'rol_activo' => Contexto::rolActivo()], 'Cita registrada con verificación del plan (RE-0.4.1, RN-420)' . ($propia ? '; propietario y veterinario coinciden (RN-G18)' : ''), $clinica)) {
+                    $registro = ['fecha' => $fecha, 'prioridad' => $prioridad, 'id_propietario' => $propietario, 'rol_activo' => Contexto::rolActivo()];
+                    if ($llegoAhora) $registro += ['origen' => $origen, 'hora_llegada' => $llegada];
+                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'INSERT', 'citas', $id, null, $registro, 'Cita registrada con verificación del plan (RE-0.4.1, RN-420)' . ($propia ? '; propietario y veterinario coinciden (RN-G18)' : ''), $clinica)) {
                         throw new RuntimeException('No se pudo auditar la cita.');
                     }
                     return $id;

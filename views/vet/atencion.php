@@ -115,8 +115,8 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                 <?php elseif ($abierta && !empty($inicioRequiereSala)): ?>
                     <div class="atencion__aviso">
                         <i class="fas fa-clock" aria-hidden="true"></i>
-                        <span>La cita superó la tolerancia de llegada. Resuélvela desde Sala: siguiente hueco, reprogramar o «No asistió».</span>
-                        <a class="atencion__btn atencion__btn--primario" href="index.php?action=vet_agenda&amp;resolver_llegada=<?= (int)$cita['id_cita'] ?>#llegadas">Ir a Sala</a>
+                        <span>La cita superó la tolerancia de llegada. Resuélvela desde su cita en Agenda: siguiente hueco, reprogramar o «No asistió».</span>
+                        <a class="atencion__btn atencion__btn--primario" href="index.php?action=vet_agenda&amp;llegada_cita=<?= (int)$cita['id_cita'] ?>">Resolver llegada</a>
                     </div>
                 <?php elseif ($abierta): ?>
                     <div class="atencion__aviso">

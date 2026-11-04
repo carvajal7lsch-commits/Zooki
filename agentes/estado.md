@@ -6,6 +6,15 @@
 
 ## Ahora
 
+### M4 — Quitar Sala y desbloqueo de Atención — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; revisa Claude; llegadas en cada cita propia de hoy y su detalle, con modal de resolución y ajuste solo presencial; Pendientes queda Rojos/Triage/Reasignar, sin sumar citas, sin enlaces a Sala ni borrar su backend/datos.
+- Atención sin cita abre Nueva cita «llegó ahora»; origen y llegada actual atómicos, auditados e idempotentes, validados por el servidor; rojo conserva Urgencias. RE-2.2.5 retirado y RE-6.2.7 cuenta solo citas con llegada sin iniciar; documentación y diagramas alineados.
+- Bloqueo reportado apenas abrir Atención: un borrador incompleto abría un editor invisible dentro del paso oculto; se pospone hasta verlo, conserva el borrador y renueva la referencia del script.
+- Solo13 pruebas PHP/91 aserciones SQLite y32 JS consolidadas correctas; Chrome1366/390 en pantallas tocadas y clic real en Atención, sin errores; Mermaid132 nodos, sintaxis/diff correctos. Anexos en M4 y M2; misma2.3.0, sin suites completas, base manual, commit/push.
+- Pendientes: revisión de Claude/dueño; suites y PDF/Word al cierre del bloque según metodo§11; no se inició otra subetapa.
+
+
 ### Agenda y cierre de Atención — respuesta inmediata — entregada, pendiente de revisión (2026-11-03)
 
 - Escribió Codex; No asistió/Confirmada/Cancelada actualizan el estado y los botones del detalle al guardar; bus común comunica calendario/Sala, lecturas sin caché y reprogramación actualizada sin esperar10 segundos; formularios en edición conservados.

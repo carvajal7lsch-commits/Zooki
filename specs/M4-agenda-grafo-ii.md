@@ -1,5 +1,32 @@
 # M4 — Agenda inteligente y Grafo II
 
+## Decisión del dueño — quitar Sala (2026-11-03)
+
+**Estado: entregada, pendiente de revisión de Claude (arquitecto) y del dueño.**
+
+- Sala repite el panel Citas y confunde: «Llegadas sin reserva» lista triages que el veterinario calculó en Nueva cita y dejó sin reservar (solicitudes abiertas sin cita, que no son de nadie); «Espera presencial» es una cola sin cita que no se usa: quien llega sin cita saca una cita y espera con ella.
+- Se retira la pestaña Sala de Pendientes (escritorio y móvil). Las acciones de llegada de las citas de hoy (Registrar llegada, Resolver llegada en su modal, No asistió tras la tolerancia y Ajustar nivel solo con llegada) pasan a la cita en el panel Citas y en su detalle, con las mismas reglas (RN-426, RN-408, RE-4.19.x).
+- Lo que llevaba a Sala (Resolver en Sala del calendario, Ir a Sala de Atención, Inicio del veterinario tras registrar una llegada fuera de tolerancia) abre esa cita en Citas con Resolver llegada.
+- «Atención sin cita» abre Nueva cita para hoy en modo «llegó ahora»: la cita se crea con origen llegada sin reserva y la llegada registrada en la misma operación (conserva RE-2.2.4). Sin hueco: naranja con sobrecupo, verde o amarillo con otro horario u otro veterinario, rojo por Urgencias. Ya no existe cola de espera sin cita.
+- Las solicitudes abiertas sin cita no se muestran ni se borran. El servidor de la espera presencial queda sin acceso desde la interfaz (no se elimina en 2.3.0). El historial de reclasificaciones se consulta en Auditoría.
+- Escribe Codex; misma 2.3.0.
+- Precisión confirmada por el dueño durante la ejecución: se retiran las listas de Sala «Llegadas sin reserva» y «Espera presencial», sin borrar sus datos; se conservan los casos que requieren revisión en Triage y los rojos en Urgencias. No se cambia su filtrado.
+
+
+### Anexo — Resultado de quitar Sala
+
+- Escribió Codex; entregada, pendiente de revisión de Claude (arquitecto) y del dueño; misma2.3.0.
+- RE-4.19.1/3/4, RN-426: sin pestaña ni conteo de Sala; cada cita propia de hoy ofrece llegada/ausencia/resolución/ajuste según presencia y tolerancia; decisiones en el modal existente y actualización inmediata.
+- `llegadas-cita.js` reutiliza los formularios y decisiones anteriores; sin duplicar botones anidados ni lógica de espera; datos/métodos/rutas antiguos conservados. Triage y Rojos mantienen su filtrado aprobado.
+- RE-2.2.1/4, RN-208: Inicio abre Nueva cita «llegó ahora»; servidor valida hoy/rol/veterinario/clínica/disponibilidad, guarda origen y llegada actual en la transacción auditada e idempotente; rojo conserva derivación.
+- RE-2.2.5 retirado sin borrar datos ni renumerar; matriz y conteos distinguen472 identificados,471 vigentes y1 retirado. RE-6.2.7 cuenta únicamente citas de hoy con llegada sin iniciar; sin rediseñar administrador.
+- PHP dirigido: `LlegadaSinReservaTest`4/17 y `InicioAdministradorTest`9/74 correctos, SQLite en memoria; doble envío, rollback, contexto, rojo y conteo incluidos.
+- JS dirigido:32 casos consolidados correctos de los8 archivos afectados, con el contador móvil adaptado. Sin suites completas ni omisiones nuevas.
+- Chrome1366×768/390×844: Agenda Citas/Pendientes, llegada/ajuste en modal, enlace directo sin acreditar presencia, Inicio, Atención tardía y Nueva cita «llegó ahora», sin excepciones/consola; fixtures temporales sin base manual.
+- Enlaces antiguos a #llegadas retirados; flujo de Modelos§3/§4 renderizado (132 nodos); sintaxis y diff verificados. Descargas PDF/Word al cierre del bloque según metodo§11.
+- Corrección urgente adicional pedida por el dueño: Atención quedaba inerte apenas abría un borrador con tratamiento incompleto; editor nativo pospuesto hasta que su paso esté visible, conservando el borrador. Regresión Chrome con clic real y foco comprobada; anexo en M2.
+- Pendientes: revisión visual del dueño y de Claude; suites completas/CI al cierre del bloque, descargas del portal; sin migración, commit ni push.
+
 ## Decisión del dueño — reajuste visible (2026-11-03)
 
 - RE-4.5.3/4.14.7 y RE-5.7.1–4: chips de retraso desde5 minutos en Día/Semana/lista móvil y detalle legible; azul hasta30 inclusive y rojo después, sin cambiar el cálculo de la cascada.

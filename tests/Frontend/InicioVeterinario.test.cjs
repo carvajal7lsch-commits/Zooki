@@ -123,7 +123,7 @@ test('«Registrar llegada» usa la acción de Llegadas; pasada la tolerancia lle
     i.llegada.disabled = false;
     tocar(i.llegada);
     await esperar();
-    assert.equal(i.contexto.location.href, 'index.php?action=vet_agenda#llegadas');
+    assert.equal(i.contexto.location.href, 'index.php?action=vet_agenda&llegada_cita=7');
 });
 
 test('las próximas dosis se abren y se cierran en su ventana; una foto que no está muestra iniciales', () => {
@@ -151,10 +151,10 @@ test('RN-407: el botón de esperar se habilita al llegar su hora', () => {
 test('la agenda abre la pestaña que pide el hash del Inicio', () => {
     const { iniciarHerramientasAgenda } = require(path.join(RAIZ, 'public/js/agenda-herramientas.js'));
     const documento = crearDocumento();
-    documento.defaultView = { location: { hash: '#llegadas' } };
+    documento.defaultView = { location: { hash: '#reasignaciones' } };
     const raiz = colgar(documento.raiz, 'section', { agendaHerramientas: '' });
     raiz.scrollIntoView = () => { raiz.desplazada = true; };
-    const pestanas = ['triage', 'llegadas', 'reasignaciones'].map((clave, n) => {
+    const pestanas = ['triage', 'reasignaciones', 'urgencias'].map((clave, n) => {
         const tab = colgar(raiz, 'button', { agendaTab: clave }, { tabIndex: n ? -1 : 0 });
         tab.setAttribute('aria-selected', n ? 'false' : 'true');
         tab.setAttribute('aria-controls', 'panel-' + clave);
@@ -207,7 +207,7 @@ test('el Inicio no usa estilos ni scripts en línea, carga su hoja propia y ya n
     assert.doesNotMatch(layout, /vet_consultas|consultas\.js|panel-vet\.js/);
     assert.doesNotMatch(leer('public/index.php'), /case "vet_consultas"/);
     assert.ok(!fs.existsSync(path.join(RAIZ, 'views/vet/consultas.php')));
-    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda#llegadas"/, 'HU-2.2: la atención sin cita se registra como llegada');
+    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda&amp;agendar=[^"\n]+&amp;modo_llegada=ahora"/, 'HU-2.2: la atención sin cita se registra como llegada');
     // HU-6.2: el esqueleto de escritorio lo comparten los dos Inicios.
     const comun = leer('public/css/inicio-comun.css');
     assert.match(comun, /grid-template-columns: minmax\(0, 2fr\) minmax\(0, 1\.05fr\) minmax\(0, 0\.95fr\);/);

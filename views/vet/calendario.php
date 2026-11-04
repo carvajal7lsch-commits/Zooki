@@ -243,6 +243,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<?php require __DIR__ . '/../partials/llegadas_agenda.php'; ?>
 <script src="js/triage-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/triage-agenda.js'), 0, 12) ?>"></script>
 <script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/agenda-panel.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/agenda-panel.js'), 0, 12) ?>"></script>

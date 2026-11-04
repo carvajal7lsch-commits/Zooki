@@ -124,7 +124,7 @@
 }
 .ah-item--fila { flex-direction: row; align-items: center; flex-wrap: wrap; }
 /* Pendientes de otro día (decisión del dueño, 2026-11-03): Sala y Rojos solo existen hoy. */
-[data-otro-dia="true"] :is(#agenda-panel-llegadas, #agenda-panel-urgencias) > :not(.ah-solo-hoy) { display: none; }
+[data-otro-dia="true"] #agenda-panel-urgencias > :not(.ah-solo-hoy) { display: none; }
 .ah-volver-hoy { margin-top: 6px; padding: 4px 10px; border: 1px solid var(--z-primary, #2563EB); border-radius: 8px; background: transparent; color: var(--z-primary, #2563EB); font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
 .ah-volver-hoy:hover { background: var(--z-primary-soft, #DBEAFE); }
 /* La solicitud que abrió el aviso de la campana se distingue de las demás. */

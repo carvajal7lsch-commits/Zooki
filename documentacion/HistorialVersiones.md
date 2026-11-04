@@ -8,6 +8,10 @@
 
 ### Versión 2.3.0 (Actual)
 
+* **Quitar Sala (2026-11-03, Codex):** llegadas en la propia cita de hoy del veterinario, con Resolver llegada en modal y actualización inmediata; Pendientes conserva Rojos, Triage y Reasignar. Atención sin cita abre Nueva cita «llegó ahora», con origen/presencia atómicos, auditados e idempotentes; espera sin cita fuera de la interfaz, backend y datos conservados (RE-2.2.1/4, RE-4.19.1/3/4, RE-6.2.7; RE-2.2.5 retirado).
+
+* **Atención desbloqueada al recuperar borrador (2026-11-03, Codex; RE-2.1.7):** el editor de un tratamiento incompleto solo abre si su paso está visible, evitando un diálogo invisible que impedía cualquier clic al entrar. Conserva campos y borrador.
+
 * **Respuesta inmediata de agenda y cierre (2026-11-03, Codex):** estado y botones actualizados tras No asistió, Confirmar, Cancelar, resolver desde Sala y Reprogramar, sin esperar la sincronización; lecturas sin caché y bloqueo durante la petición. Finalizar Atención vuelve directamente a Agenda con el toast «Atención registrada», sin recibo modal; aviso de control pendiente conservado y guion de Rocco adaptado (RE-2.1.6/4.19.4).
 
 * **Reajuste visible del Grafo II (2026-11-03, Codex):** chips de retraso en Día/Semana/listas y detalle, con toast por lote sobre el umbral clínico y acceso a Día. Portal con recuadro de nueva hora y campana de ESTIMACION_CITA, publicada al validar el mismo evento de correo, sin duplicar reintentos ni alterar la ventana; correo legible con causa. Solo citas del propietario vigente, sin cambiar la cascada ni crear migraciones (RE-4.5.3/4.14.7/5.7.1–4).

@@ -1,6 +1,5 @@
 <?php
-// D: las herramientas de agenda (triage, reasignaciones, urgencias, llegadas) en un solo bloque con pestañas,
-// en vez de cuatro secciones sueltas debajo del calendario. Cada panel conserva sus data-* y su JS.
+// RE-4.19: Pendientes conserva triage, reasignaciones y urgencias; las llegadas van en Citas.
 require_once __DIR__ . '/../../config/App.php';
 $esVetHerramientas = Contexto::rolActivo() === Roles::VETERINARIO;
 // R: admin integra las herramientas en su hoja; el calendario del vet conserva su estructura.
@@ -12,12 +11,11 @@ if (!empty($agendaAdminIntegrada) && !$esVetHerramientas) {
 }
 $pestanasAgenda = ['triage' => ['Triage', 'fas fa-stethoscope']];
 if ($esVetHerramientas) {
-    $pestanasAgenda['llegadas'] = ['Llegadas', 'fas fa-door-open'];
     $pestanasAgenda['reasignaciones'] = ['Reasignaciones', 'fas fa-exchange-alt'];
 }
 $pestanasAgenda['urgencias'] = ['Urgencias', 'fas fa-exclamation-triangle'];
 if ($esVetHerramientas) {
-    $pestanasAgenda = ['urgencias' => ['Rojos', 'fas fa-exclamation-triangle'], 'triage' => ['Triage', 'fas fa-stethoscope'], 'llegadas' => ['Sala', 'fas fa-door-open'], 'reasignaciones' => ['Reasignar', 'fas fa-exchange-alt']];
+    $pestanasAgenda = ['urgencias' => ['Rojos', 'fas fa-exclamation-triangle'], 'triage' => ['Triage', 'fas fa-stethoscope'], 'reasignaciones' => ['Reasignar', 'fas fa-exchange-alt']];
 }
 ?>
 <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -42,7 +40,6 @@ if ($esVetHerramientas) {
     </div>
     <div class="agenda-herramientas__cuerpo">
         <?php require __DIR__ . '/solicitudes_agenda.php'; ?>
-        <?php require __DIR__ . '/llegadas_agenda.php'; ?>
         <?php require __DIR__ . '/reasignaciones_agenda.php'; ?>
         <?php require __DIR__ . '/urgencias_agenda.php'; ?>
     </div>

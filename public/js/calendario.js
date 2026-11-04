@@ -489,6 +489,7 @@ function iniciarCalendario() {
             // El lote ya está en FullCalendar: loading puede terminar antes de que getEvents lo publique.
             refrescarPanel();
             window.ZookiAgendaMovil?.actualizar();
+            window.ZookiLlegadasCita?.enfocar();
         },
         loading: cargando => {
             _cargando = cargando;
@@ -670,7 +671,7 @@ function itemPanel(ev) {
         ? `<span class="estado-pill" data-estado="${esc(p.estado)}">${esc(ESTADOS_CITA[p.estado] || p.estado)}</span>`
         : `<span class="estado-pill" data-tipo="${esc(p.tipo)}">${esc(TIPOS_EVENTO[p.tipo] || p.tipo)}</span>`;
 
-    return `
+    const fila = `
         <button type="button" class="agenda-item" data-accion="detalle" data-id="${esc(ev.id)}">
             <span class="agenda-item__time">${esc(formatHora(ev.start))}</span>
             <span class="agenda-item__main">
@@ -680,6 +681,8 @@ function itemPanel(ev) {
             </span>
             ${pill}
         </button>`;
+    const llegadas = window.ZookiLlegadasCita?.botones(ev) || '';
+    return llegadas ? `<div>${fila}${llegadas}</div>` : fila;
 }
 
 function llegadaCitaTardia(ev, ahora = new Date()) {
@@ -690,13 +693,10 @@ function llegadaCitaTardia(ev, ahora = new Date()) {
     return llegada.getTime() > ev.start.getTime() + minutos * 60000;
 }
 
-function irASalaCita(idCita) {
+function resolverLlegadaCita(idCita) {
     const detalle = document.getElementById('agendaDetalleMovil');
     if (detalle?.open) detalle.close();
-    document.querySelector('[data-agenda-vista="pendientes"]')?.click();
-    const pestana = document.querySelector('[data-agenda-tab="llegadas"]');
-    pestana?.click();
-    pestana?.focus();
+    document.querySelector('[data-agenda-vista="citas"]')?.click();
     document.dispatchEvent(new CustomEvent('agenda:resolver-llegada', { detail: { idCita } }));
 }
 
@@ -722,18 +722,18 @@ function mostrarDetalleCita(eventId) {
     // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora.
     const iniciaDesde = new Date(ev.start.getTime() - MINUTOS_ANTES_DE_INICIAR * 60000);
     const enDiaDeInicio = esSuCita && abierta && esHoy(ev.start);
-    const requiereSala = enDiaDeInicio && llegadaCitaTardia(ev);
-    const puedeIniciar = enDiaDeInicio && !requiereSala && new Date() >= iniciaDesde;
+    const requiereResolverLlegada = enDiaDeInicio && llegadaCitaTardia(ev);
+    const puedeIniciar = enDiaDeInicio && !requiereResolverLlegada && new Date() >= iniciaDesde;
     const esperaInicio = enDiaDeInicio && new Date() < iniciaDesde;
     // RN-409: una atención abierta se completa registrando su consulta
     const puedeContinuar = esSuCita && enAtencion;
-    const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
+    const puedeNoAsistio = enDiaDeInicio && !p.hora_llegada && llegadaCitaTardia(ev);
     const puedeConfirmar = gestiona && estado === 'pendiente' && !pasada;
     const puedeReprogramar = gestiona && abierta && !pasada && cambioPermitidoCalendario(ev.start, p);
 
     // Una sola acción principal, según el estado; el resto, secundarias.
     const primaria = puedeIniciar ? ['iniciar', 'fa-play', 'Iniciar atención']
-        : requiereSala ? ['sala', 'fa-door-open', 'Resolver en Sala']
+        : requiereResolverLlegada ? ['resolver_llegada', 'fa-door-open', 'Resolver llegada']
         : esperaInicio ? ['esperar', 'fa-clock', `Disponible desde las ${formatHora(iniciaDesde)}`]
         : puedeContinuar ? ['continuar', 'fa-stethoscope', estado === 'sin_cerrar' ? 'Registrar consulta' : 'Continuar atención']
         : puedeConfirmar ? ['confirmar', 'fa-check', 'Confirmar cita']
@@ -798,6 +798,7 @@ function mostrarDetalleCita(eventId) {
                 ${filas.map(([k, v, chip]) => `<div class="agenda-detail__row"><dt>${k}</dt><dd>${esc(v)}${chip ? ' · ' + chip : ''}</dd></div>`).join('')}
             </dl>
             ${acciones}
+            ${window.ZookiLlegadasCita?.botones(ev, ['no_asistio', ...(requiereResolverLlegada ? ['resolver'] : [])]) || ''}
         </div>`;
 }
 
@@ -810,7 +811,7 @@ function manejarClicPanel(e) {
         case 'detalle': mostrarDetalleCita(id); break;
         case 'volver': renderPanelDia(); break;
         case 'iniciar': iniciarAtencionCita(id); break;
-        case 'sala': irASalaCita(id); break;
+        case 'resolver_llegada': resolverLlegadaCita(id); break;
         case 'continuar': continuarAtencionCita(id); break;
         case 'confirmar': confirmarCita(id); break;
         case 'reprogramar': abrirModalReprogramar(id); break;
@@ -842,7 +843,7 @@ async function iniciarAtencionCita(idCita) {
         const r = await postCita('iniciar_cita_ajax', { id_cita: idCita });
         if (!r.success) {
             if (r.campo === 'llegada') {
-                irASalaCita(idCita);
+                resolverLlegadaCita(idCita);
                 return;
             }
             mostrarToast(r.message || 'No se pudo iniciar la atención.', 'error');
@@ -1143,12 +1144,13 @@ function abrirCitaModal(date, opciones = {}) {
     comandosC3.registrar_cita_ajax.reiniciar();
     if (!date || (diaNoReservable(date) && !opciones.control)) return;
     const fecha = inicioDelDia(date);
+    _modoLlegadaCita = opciones.llegoAhora === true;
     const esVet = isUsuarioVeterinario();
 
     val('modal_fecha', toLocalDateStr(fecha));
     document.getElementById('citaModalFechaLabel').textContent =
         capitalizar(formatFecha(fecha, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })) +
-        (esVet ? ' · Tu agenda' : '');
+        (esVet ? ' · Tu agenda' : '') + (_modoLlegadaCita ? ' · Llegó ahora' : '');
 
     limpiarMascotaSeleccionada();
     ['modal_tipo_cita', 'modal_duracion_minutos', 'modal_motivo', 'modal_hora'].forEach(id => val(id, ''));
@@ -1182,10 +1184,13 @@ function closeCitaModal() {
 // HU-6.1 (RE-6.1.9): «+ Agendar» en un hueco del Inicio abre este mismo modal en ese día
 // (?agendar=AAAA-MM-DD&hora=HH:MM) y, cuando aparecen los horarios, marca esa hora si sigue libre.
 let _horaPreferidaCita = null;
+let _modoLlegadaCita = false;
 
 async function abrirAgendarDesdeEnlace() {
     const parametros = new URLSearchParams(window.location.search);
     const control = parametros.has('control_mascota');
+    const llegoAhora = parametros.get('modo_llegada') === 'ahora';
+    parametros.delete('modo_llegada');
     const mascota = parametros.get('control_mascota');
     if (control && parametros.get('control_veterinario') !== String(getUsuarioId())) return;
     const fecha = parametros.get(control ? 'control_fecha' : 'agendar') || '';
@@ -1197,7 +1202,7 @@ async function abrirAgendarDesdeEnlace() {
     // Al recargar la agenda no se vuelve a abrir el modal.
     window.history.replaceState(null, '', `${window.location.pathname}?${parametros}${window.location.hash}`);
     const [anio, mes, dia] = fecha.split('-').map(Number);
-    abrirCitaModal(new Date(anio, mes - 1, dia), { control });
+    abrirCitaModal(new Date(anio, mes - 1, dia), { control, llegoAhora });
     _horaPreferidaCita = /^\d{2}:\d{2}$/.test(hora) ? hora : null;
     if (!control) return;
     try {
@@ -1463,7 +1468,8 @@ async function crearCitaModal(e) {
         fecha: val('modal_fecha'),
         hora: val('modal_hora'),
         motivo: val('modal_motivo'),
-        id_tipo_cita: val('modal_tipo_cita')
+        id_tipo_cita: val('modal_tipo_cita'),
+        ...(_modoLlegadaCita ? { modo_llegada: 'ahora' } : {})
     };
 
     enviosC3.reserva = true;

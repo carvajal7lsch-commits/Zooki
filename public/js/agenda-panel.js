@@ -15,7 +15,7 @@
         rojo.classList.add('agenda-rojo-compacto');
         const marca = document.createComment('Herramientas fuera de la agenda móvil');
         herramientas.before(marca);
-        const orden = ['urgencias', 'triage', 'llegadas', 'reasignaciones'];
+        const orden = ['urgencias', 'triage', 'reasignaciones'];
         const conteos = Object.fromEntries(orden.map(clave => [clave, 0]));
         const pestanaPedida = orden.find(clave => global.location.hash === '#' + clave);
         let vista = pestanaPedida ? 'pendientes' : 'citas';
@@ -25,8 +25,8 @@
         let dia = global.ZookiAgendaDia || hoy();
         const titulo = herramientas.querySelector('[data-agenda-pendientes-titulo]');
         const volverHoy = herramientas.querySelector('[data-agenda-volver-hoy]');
-        // Sala y Rojos solo existen hoy: en otro día se dice en vez de mostrar lo de hoy.
-        const avisosSoloHoy = [['llegadas', 'Sala'], ['urgencias', 'Rojos']].map(([clave, nombre]) => {
+        // Rojos solo existe hoy: en otro día se dice en vez de mostrar lo de hoy.
+        const avisosSoloHoy = [['urgencias', 'Rojos']].map(([clave, nombre]) => {
             const panel = herramientas.querySelector('#agenda-panel-' + clave);
             const nota = document.createElement('p');
             nota.className = 'ah-estado ah-solo-hoy';
@@ -81,7 +81,6 @@
             if (herramientas.querySelector('[data-solicitudes-filtro]').value === '0') {
                 conteos.triage = cantidad('[data-solicitudes-lista] > article');
             }
-            conteos.llegadas = otroDia() ? 0 : cantidad('[data-llegadas-citas] > article, [data-llegadas-solicitudes] > article, [data-llegadas-espera] > article');
             conteos.reasignaciones = cantidad('[data-reasignaciones-lista] > article');
             conteos.urgencias = otroDia() ? 0 : cantidad('[data-rojos-lista] > article, [data-ingresos-lista] [data-conciliar-identidad]');
             for (const clave of orden) {
@@ -142,7 +141,7 @@
                 if (!movil) destino.append(herramientas);
                 if (movil) marcaRojo.after(rojo);
                 else destinoRojo.append(rojo);
-                // Un enlace directo a Sala expresa una elección; el conteo de otra bandeja no la sustituye.
+                // Un enlace directo a Pendientes expresa una elección; el conteo de otra bandeja no la sustituye.
                 mostrarVista(vista, !pestanaPedida);
                 actualizarConteos();
             }

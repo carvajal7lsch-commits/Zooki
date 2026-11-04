@@ -456,28 +456,6 @@
     align-items:center
 }
 
-.agenda-vet-movil [data-llegadas-citas]>.ah-item,.agenda-vet-movil [data-llegadas-solicitudes]>.ah-item,.agenda-vet-movil [data-llegadas-espera]>.ah-item {
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
-    align-items:center;
-    gap:4px 8px
-}
-
-.agenda-vet-movil [data-llegadas-citas] .ah-item__head,.agenda-vet-movil [data-llegadas-solicitudes] .ah-item__head,.agenda-vet-movil [data-llegadas-espera] .ah-item__head {
-    grid-column:1;
-    grid-row:1
-}
-
-.agenda-vet-movil [data-llegadas-citas] .ah-item__meta {
-    grid-column:1
-}
-
-.agenda-vet-movil [data-llegadas-citas] .ah-item>form,.agenda-vet-movil [data-llegadas-solicitudes] .ah-item>form {
-    grid-column:2;
-    grid-row:1 / span 2;
-    width:auto
-}
-
 .agenda-vet-movil .ah-mini,.agenda-vet-movil .ah-decisiones {
     grid-column:1 / -1
 }

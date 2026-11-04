@@ -266,7 +266,7 @@ class Panel extends ModeloClinica
 
     /**
      * RE-6.2.7: en espera = citas de hoy con la llegada registrada que aún no
-     * empiezan, más las llegadas sin reserva en espera presencial de hoy.
+     * empiezan; las solicitudes sin cita no forman parte de En espera.
      * $desde y $hasta son el inicio de hoy y de mañana: [desde, hasta).
      */
     public function contarEnEspera(string $hoy, string $desde, string $hasta): int
@@ -276,12 +276,7 @@ class Panel extends ModeloClinica
              WHERE id_clinica = ? AND fecha = ? AND estado IN ('pendiente', 'confirmada') AND hora_llegada IS NOT NULL",
             [$this->clinica(), $hoy]
         );
-        $sinReserva = $this->contar(
-            "SELECT COUNT(*) FROM solicitudes_agenda
-             WHERE id_clinica = ? AND estado = 'espera_presencial' AND fecha_llegada >= ? AND fecha_llegada < ?",
-            [$this->clinica(), $desde, $hasta]
-        );
-        return $citas + $sinReserva;
+        return $citas;
     }
 
     /**

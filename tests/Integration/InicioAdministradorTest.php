@@ -78,7 +78,7 @@ class InicioAdministradorTest extends TestCase
         $sur = $this->panel('10:00');
         $this->assertSame(['Diego Sur'], array_column($sur['agenda']['columnas'], 'nombre'));
         $this->assertSame(['Toby'], $this->mascotasDeLaAgenda($sur));
-        $this->assertSame(2, $sur['en_espera'], 'Toby llegó y una llegada sin reserva espera');
+        $this->assertSame(1, $sur['en_espera'], 'RE-6.2.7: Toby llegó; una solicitud sin cita no cuenta como paciente en espera');
         $this->assertSame(1, $sur['urgencias']);
         $this->assertCount(1, $sur['ausencias_por_aprobar']);
         $this->assertCount(1, $sur['propuestas_por_aprobar']);

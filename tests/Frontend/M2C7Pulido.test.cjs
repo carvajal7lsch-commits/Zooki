@@ -120,7 +120,7 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
     const { contexto } = medical();
     assert.equal(typeof contexto.openNewConsultationFlow, 'undefined');
     assert.doesNotMatch(leer('public/css/consulta-clinica.css'), /paciente-resultado/);
-    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda#llegadas"/);
+    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda&amp;agendar=[^"\n]+&amp;modo_llegada=ahora"/);
 });
 
 test('6. «Vincular mascota de un cliente» abre la búsqueda del propietario con el mismo flujo', () => {

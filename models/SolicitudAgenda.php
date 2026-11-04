@@ -299,12 +299,13 @@ final class SolicitudAgenda extends ModeloClinica
 
     public function reservar(array $datos): array
     {
+        $this->conMismoAlcance(new Cita($this->conn, $this->reloj))->validarModoLlegada($datos);
         $fila = $this->obtener((int) ($datos['id_solicitud'] ?? 0));
         $entrada = json_decode($fila['contexto_triage'], true, 512, JSON_THROW_ON_ERROR)['entrada'];
         $this->autorizar($entrada, true);
         return $this->unidad($entrada, function () use ($fila, $entrada, $datos): array {
             $this->autorizar($entrada, true);
-            $comando = array_intersect_key($datos, array_flip(['id_solicitud','id_mascota','id_veterinario','id_tipo_cita','fecha','hora','motivo']));
+            $comando = array_intersect_key($datos, array_flip(['id_solicitud','id_mascota','id_veterinario','id_tipo_cita','fecha','hora','motivo','modo_llegada']));
             $operacion = $this->conMismoAlcance(new OperacionAgenda($this->conn));
             if (!$operacion->tieneResultado('confirmar_agenda', $datos['clave_operacion'] ?? null) && ($datos['ignore_warning'] ?? '') !== '1') {
                 $actual = $this->vigente((int) $fila['id_solicitud'], $datos);
@@ -358,7 +359,7 @@ final class SolicitudAgenda extends ModeloClinica
                 if (Contexto::rolActivo() === Roles::PROPIETARIO) {
                     $this->conMismoAlcance(new Mascota($this->conn))->vincular((int) $entrada['id_mascota'], (int) Contexto::idUsuario());
                 }
-                $id = $citas->registrarClasificada($entrada + ['hora' => $hora, 'motivo' => $motivo, 'estado' => 'confirmada'], $nivel, $sobrecupo);
+                $id = $citas->registrarClasificada($entrada + ['hora' => $hora, 'motivo' => $motivo, 'estado' => 'confirmada', 'modo_llegada' => $datos['modo_llegada'] ?? ''], $nivel, $sobrecupo);
                 $this->conn->prepare('UPDATE citas SET contexto_triage=?,prioridad_calculada=?,motivo_ajuste_prioridad=?,id_bloque=? WHERE id_cita=? AND id_clinica=?')
                     ->execute([$actual['contexto_triage'], $actual['nivel_calculado'], $actual['motivo_revision'], $bloque, $id, $this->clinica()]);
                 if ($nivel === 'naranja') {

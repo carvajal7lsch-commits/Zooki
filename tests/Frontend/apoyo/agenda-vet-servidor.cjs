@@ -63,6 +63,11 @@ async function servidorAgendaVet({ iconos = true, triage = null, contextoAgenda 
                 req.on('data', parte => { cuerpo += parte; });
                 req.on('end', () => {
                     llamadas.push({ accion, cuerpo });
+                    if (accion === 'registrar_llegada_ajax') {
+                        const dato = cuerpo.match(/name="id_cita"\r\n\r\n(\d+)/)?.[1] || new URLSearchParams(cuerpo).get('id_cita');
+                        const cita = citas.find(c => String(c.id_cita) === dato);
+                        if (cita) cita.hora_llegada = fecha(0) + ' 10:30:00';
+                    }
                     const respuesta = accion === 'registrar_llegada_ajax' ? { success: true, message: 'Llegada registrada', resultado: { opciones: { segundos_restantes: 1200, dentro_tolerancia: true, reducida: true, otro_veterinario: [] } } } : accion === 'calcular_triage_ajax' ? (triage ?? { success: true, id_solicitud: 123, huella: 'huella-calculo', reservable: true, nivel: 'amarillo' }) : { success: true, message: 'Guardado simulado' };
                     const enviar = () => res.end(JSON.stringify(respuesta));
                     if (retener) pendientes.push(enviar);

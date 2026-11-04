@@ -28,8 +28,8 @@ async function tab(nav, clave) {
 test('Agenda móvil: pestañas, conteos, misma fuente y filtros, semana cruzando mes y hoja del mes', { skip: !buscarChrome() }, async () => {
     await conAgenda(async (nav, servidor) => {
         const inicial = await nav.evaluar(`({ claves: Array.from(document.querySelectorAll('[data-agenda-tab]'), n => n.dataset.agendaTab), conteos: Array.from(document.querySelectorAll('[data-agenda-conteo]'), n => n.textContent), filas: Array.from(document.querySelectorAll('[data-agenda-dia-lista] [data-agenda-evento]'), n => n.dataset.agendaEvento), fuente: calendarInstance.getEvents().map(e => e.id), puntos: Array.from(document.querySelectorAll('.agenda-prioridad'), n => n.dataset.nivel), dias: document.querySelectorAll('[data-inicio-semana-fecha]').length })`);
-        assert.deepEqual(inicial.claves, ['agenda', 'urgencias', 'triage', 'llegadas', 'reasignaciones']);
-        assert.deepEqual(inicial.conteos, ['6', '1', '1', '3', '1']);
+        assert.deepEqual(inicial.claves, ['agenda', 'urgencias', 'triage', 'reasignaciones']);
+        assert.deepEqual(inicial.conteos, ['6', '1', '1', '1']);
         assert.deepEqual(inicial.filas, inicial.fuente);
         assert.deepEqual(inicial.puntos, ['naranja', 'amarillo']);
         assert.equal(inicial.dias, 7);
@@ -77,8 +77,8 @@ test('Agenda móvil: revisión conserva huella y POST; llegadas y reasignaciones
         assert.equal(datos.get('nivel'), 'amarillo');
         assert.equal(datos.get('motivo'), 'Paciente estable tras valoración');
         assert.match(datos.get('clave_operacion'), /^[a-f0-9]{64}$/);
-        await tab(nav, 'llegadas');
-        await nav.evaluar(`document.querySelector('[data-llegadas-citas] form [type="submit"]').click()`);
+        await tab(nav, 'agenda');
+        await nav.evaluar(`document.querySelector('[data-agenda-dia-lista] [data-llegada-cita="3"][data-llegada-accion="registrar"]').click()`);
         await nav.esperar("document.querySelector('.llegada-dialogo[open] .ah-decisiones') !== null");
         assert.ok(servidor.llamadas.some(l => l.accion === 'registrar_llegada_ajax' && /id_cita[\s\S]*3/.test(l.cuerpo) && l.cuerpo.includes('csrf_token')));
         await nav.evaluar(`document.querySelector('.llegada-dialogo .ah-decisiones form [type="submit"]').click()`);
@@ -143,7 +143,7 @@ test('RNF-16: Agenda y hojas sin desborde a 360/390; composición de tableta/esc
         for (const width of [360, 390, 820, 1366]) {
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height: width === 820 ? 1180 : 844, deviceScaleFactor: 1, mobile: width < 768 });
             await dejarPintar(nav);
-            for (const clave of ['agenda', 'triage', 'llegadas', 'reasignaciones', 'urgencias']) {
+            for (const clave of ['agenda', 'triage', 'reasignaciones', 'urgencias']) {
                 if (width >= 768 && clave === 'agenda') continue;
                 await tab(nav, clave);
                 assert.equal(await nav.evaluar('document.documentElement.scrollWidth <= innerWidth'), true, width + '/' + clave);

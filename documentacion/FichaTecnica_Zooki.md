@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE, 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
+> **Actualización 2.3.0 preparada (2026-10-30):** Atención en3 pasos y próximo control, 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN y65 tablas; migraciones15/16/17 repetibles. Escribe Codex; revisa Claude. Producción se confirma al desplegar.
 
 
 > **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
@@ -22,7 +22,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.3.0 preparada, pendiente de revisión de Claude e integración/despliegue**: triage provisional y vacunación desde registros; correcciones de horario, mascotas, cirugía, selección por nivel y plazo de cambios; Atención en3 pasos con borrador y control posterior al commit clínico. 96 HU, 472 RE, 128 RN, 65 tablas. Conserva D8/D10 pendientes antes de dinero real y validación veterinaria del conocimiento. |
+| Estado actual | **2.3.0 preparada, pendiente de revisión de Claude e integración/despliegue**: triage provisional y vacunación desde registros; correcciones de horario, mascotas, cirugía, selección por nivel y plazo de cambios; Atención en3 pasos con borrador y control posterior al commit clínico. 96 HU, 472 RE identificados (471 vigentes y 1 retirado), 128 RN, 65 tablas. Conserva D8/D10 pendientes antes de dinero real y validación veterinaria del conocimiento. |
 | Versión del documento | 3.6 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -132,7 +132,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (128 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (472 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (128 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (472 RE identificados (471 vigentes y 1 retirado)) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos

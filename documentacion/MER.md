@@ -1019,7 +1019,7 @@ Identidad estable de franja original/fecha que no se multiplica al restar ausenc
 
 ### solicitudes_agenda — esquema preparado B2, flujo pendiente
 
-Una sola entidad para captura/revisión, derivación remota y espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5, RE-2.11.5, RE-4.15.1/2/3.
+Una sola entidad para captura/revisión, derivación remota y registros anteriores de espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5 retirado de la interfaz por decisión del dueño del 2026-11-03: se conservan datos, métodos y rutas sin acceso desde Sala, sin cambio de esquema. RE-2.11.5, RE-4.15.1/2/3 conservan Triage y Rojos.
 
 | Campo | Tipo de referencia |
 |---|---|

@@ -163,7 +163,7 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
 
         <div class="inicio-lado">
             <!-- HU-2.2: la atención sin cita se registra como llegada en la agenda -->
-            <a class="inicio-tile inicio-sincita" href="index.php?action=vet_agenda#llegadas">
+            <a class="inicio-tile inicio-sincita" href="index.php?action=vet_agenda&amp;agendar=<?= $e($panel['hoy']) ?>&amp;modo_llegada=ahora">
                 <span class="inicio-sincita__cuarto" aria-hidden="true"></span>
                 <img class="inicio-sincita__mascota" src="img/cachorro-negro.png" alt="" decoding="async">
                 <span class="inicio-sincita__icono" aria-hidden="true"><i class="fas fa-plus"></i></span>

@@ -31,6 +31,9 @@ function presentar(estado, llegada = '', hoy = true) {
     }
     const contexto = vm.createContext({
         Date: Reloj,
+        window: {},
+        horaEstimadaAgenda: () => '',
+        chipRetrasoAgenda: () => '',
         document: { getElementById: id => elementos[id] },
         calendarInstance: { getEventById: () => ev },
         MINUTOS_ANTES_DE_INICIAR: 15,
@@ -51,15 +54,15 @@ function presentar(estado, llegada = '', hoy = true) {
     return elementos.agendaPanelBody.innerHTML;
 }
 
-test('la reserva tardía ofrece Sala y una atención antigua conserva Registrar consulta', () => {
-    assert.match(presentar('confirmada'), /data-accion="sala"/);
+test('la reserva tardía ofrece Resolver llegada y una atención antigua conserva Registrar consulta', () => {
+    assert.match(presentar('confirmada'), /data-accion="resolver_llegada"/);
     assert.doesNotMatch(presentar('confirmada'), /data-accion="iniciar"/);
     assert.match(presentar('confirmada', '2030-01-07 09:08:00'), /data-accion="iniciar"/);
     assert.match(presentar('sin_cerrar', '', false), /Registrar consulta/);
-    assert.doesNotMatch(presentar('sin_cerrar', '', false), /data-accion="sala"|data-accion="iniciar"/);
+    assert.doesNotMatch(presentar('sin_cerrar', '', false), /data-accion="resolver_llegada"|data-accion="iniciar"/);
 });
 
-test('Ir a Sala cierra la hoja móvil y enfoca el caso sin registrar presencia automáticamente', () => {
+test('Resolver llegada cierra la hoja móvil y enfoca el caso sin registrar presencia automáticamente', () => {
     const pasos = [];
     const contexto = vm.createContext({
         document: {
@@ -74,19 +77,19 @@ test('Ir a Sala cierra la hoja móvil y enfoca el caso sin registrar presencia a
         },
     });
     vm.runInContext(reglas, contexto);
-    contexto.irASalaCita('31');
-    assert.deepEqual(pasos, ['cerrar detalle', '[data-agenda-vista="pendientes"]', '[data-agenda-tab="llegadas"]', 'enfocar pestaña', '31']);
+    contexto.resolverLlegadaCita('31');
+    assert.deepEqual(pasos, ['cerrar detalle', '[data-agenda-vista="citas"]', '31']);
 });
 
-test('el enlace directo conserva Sala aunque haya pendientes en otras bandejas', { skip: !buscarChrome() }, async () => {
+test('el enlace directo abre Resolver llegada en Citas sin acreditar presencia', { skip: !buscarChrome() }, async () => {
     const servidor = await servidorAgendaVet();
     const nav = await abrirChrome(buscarChrome());
     try {
         for (const [width, height] of [[1366, 768], [390, 844]]) {
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 768 });
-            await nav.enviar('Page.navigate', { url: servidor.url + '?resolver_llegada=3#llegadas' });
-            await nav.esperar("document.querySelector('[data-agenda-tab=llegadas]')?.getAttribute('aria-selected')==='true' && document.querySelector('[data-llegadas-aviso]')?.textContent.includes('Resuelve esta cita')");
-            assert.equal(await nav.evaluar("Boolean(document.querySelector('[data-llegada-cita=\"3\"]').getClientRects().length)"), true);
+            await nav.enviar('Page.navigate', { url: servidor.url + '?llegada_cita=3' });
+            await nav.esperar("document.querySelector('.llegada-dialogo[open]')?.textContent.includes('Registrar llegada')");
+            assert.equal(servidor.llamadas.filter(l => l.accion === 'registrar_llegada_ajax').length, 0, 'Abrir no marca presencia');
             assert.deepEqual(nav.errores, []);
         }
     } finally {

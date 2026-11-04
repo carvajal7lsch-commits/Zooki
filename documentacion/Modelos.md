@@ -166,7 +166,7 @@ flowchart TD
   IAT -- Si --> IAN["No asistio automatico: auditar, liberar espacio y recalcular cascada"]
   IAN --> ZF
   IAT -- "No: puede esperar en el hueco" --> TAR
-  TAR -- Si --> SAL["Sala: registrar llegada y abrir modal con siguiente horario o reprogramar; ajustar nivel solo si llego; no iniciar desde otro acceso (RN-426)"]
+  TAR -- Si --> SAL["Panel Citas, propia cita de hoy: registrar llegada y abrir Resolver llegada en modal con siguiente horario o reprogramar; ajustar nivel solo si llego; no iniciar desde otro acceso (RN-426)"]
   SAL --> ZF
   TAR -- No --> D[Iniciar atencion y sellar hora_inicio_real]
   D --> CTX
@@ -290,18 +290,19 @@ flowchart TD
 ## 4. Proceso de negocio — Agendamiento y llegada sin reserva
 
 **Decisión del dueño (2026-11-02):** Otro síntoma exige describir lo observado, conservándolo en el contexto sin interpretar el texto para el cálculo; el motor mantiene su nivel provisional y alarmas.
-Sala no ofrece reclasificar a quien no ha llegado; registrar presencia abre las decisiones en un modal y no inicia la atención.
+El panel Citas ofrece Registrar llegada en cada cita de hoy del veterinario, No asistió solo tras la tolerancia sin presencia y Ajustar nivel solo con presencia; registrar presencia abre las decisiones en un modal y no inicia la atención.
 
 Solo propietario y veterinario crean citas; el administrador conserva gestión administrativa autorizada, sin crear ni atender.
 La misma disponibilidad de servidor valida sugerencias, reserva y cambios: clínica ∩ veterinario, menos cierres, ausencias efectivas y ocupación, por duración+margen, en intervalos [inicio,fin).
 No se promete atención ni se pausa por un cálculo rojo remoto.
-Las solicitudes no urgentes en espera se ordenan amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud ascendentes; al asignar se revalida capacidad completa, sin sobrecupo.
+Decisión del dueño (2026-11-03): Atención sin cita abre Nueva cita para hoy en modo «llegó ahora»; al reservar se guardan origen y llegada actual en la misma transacción auditada e idempotente, validados por el servidor. Sin hueco, verde/amarillo elige otro horario o veterinario; no hay cola sin cita en la interfaz. Pendientes conserva Rojos, Triage y Reasignar; los datos y métodos anteriores de espera se conservan sin acceso desde Sala.
 
 ```mermaid
 flowchart TD
   A([Agendar o registrar llegada]) --> R{"Veterinario o propietario en contexto legitimo?"}
   R -- No --> DEN[/"403; admin no crea citas"/]
   R -- Si --> CAP["Mascota propia/vinculada, marcas y tiempos; vacunacion declarada o registros globales; sin registros desconocida; ultimo peso visible para tamano canino; nota fuera del calculo"]
+  LLA["Atencion sin cita: Nueva cita hoy, modo llego ahora"] --> NUE
   NUE["Abrir Nueva cita"] --> JOR{"Jornada aprobada del veterinario?"}
   JOR -- No --> SIN["Aún no tienes horario aprobado: propón tu horario en Mi perfil; portal excluye ese vet"]
   JOR -- Si --> CAP
@@ -328,11 +329,9 @@ flowchart TD
   NIV -- Verde --> EL["Todos los horarios libres del dia; elige cualquiera; primero Recomendado"]
   PRI --> HAY{Hay hueco?}
   EL --> HAY
-  HAY -- No --> LLEG{Llegada presencial?}
-  LLEG -- Si --> ESP["Espera: amarillo antes de verde; dentro del color llegada fisica/id_solicitud; alternativas y revalidacion antes de cita/consulta"]
-  LLEG -- No --> OTRO[/"Otra fecha o rango"/]
+  HAY -- No --> OTRO[/"Otro horario o veterinario compatible; sin cola sin cita"/]
   HAY -- Si --> TX
-  ORD --> TX[["Transaccion: recursos estables, lecturas vigentes, reserva y vinculos, sintomas, auditoria y evento"]]
+  ORD --> TX[["Transaccion: recursos estables, lecturas vigentes, reserva y vinculos, sintomas, auditoria y evento; llego ahora solo vet propio/hoy/clinica activa: origen y llegada actual atomicos"]]
   TX --> OK{Confirmada?}
   OK -- No --> DISP
   OK -- Si --> RES["Cita unica con tipo/duracion/margen/nivel/origen; llegada conserva origen"]
@@ -1689,7 +1688,7 @@ flowchart TD
   A["Cancelar o reprogramar; sesion, contexto, CSRF y clave"] --> P{"Permiso vigente sobre cita propia/asignada?"}
   P -- No --> DEN["Denegar sin datos ajenos"]
   P -- Si --> TX["Coordinador: clinica, usuarios, mascota; releer cita y parametros"]
-  TX --> EX{"Admin, urgencia o decision clinica de Llegadas con presencia?"}
+  TX --> EX{"Admin, urgencia o decision clinica de llegada desde Citas con presencia?"}
   EX -- Si --> VAL
   EX -- No --> N{"N=0 o faltan al menos N minutos desde ahora a hora pactada?"}
   N -- No --> ERR["Sin cambios; portal muestra Ya no se puede cambiar: comunícate con la clínica; vet oculta acciones"]

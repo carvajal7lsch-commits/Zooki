@@ -99,7 +99,13 @@
             if (p.tipo === 'cita') chip.dataset.estado = p.estado;
             else chip.dataset.tipo = p.tipo;
             fila.append(hora, contenido, chip);
-            lista.append(fila);
+            const acciones = global.ZookiLlegadasCita?.botones(ev) || '';
+            if (acciones) {
+                const envoltura = nodo('div', '', '');
+                envoltura.append(fila);
+                envoltura.insertAdjacentHTML('beforeend', acciones);
+                lista.append(envoltura);
+            } else lista.append(fila);
         });
         const filtrado = ['cita', 'vacunacion', 'desparasitacion'].some(tipo => !FilterManager.isActive(tipo));
         raiz.querySelector('[data-agenda-filtros-activos]').hidden = !filtrado;
@@ -161,7 +167,6 @@
         const lista = herramientas.querySelector('[data-solicitudes-lista]');
         if (!global.ZookiPanelAgenda) {
             if (herramientas.querySelector('[data-solicitudes-filtro]').value === '0') conteo('triage', lista.querySelectorAll('.ah-item').length);
-            conteo('llegadas', herramientas.querySelectorAll('[data-llegadas-citas] > article, [data-llegadas-solicitudes] > article, [data-llegadas-espera] > article').length);
             conteo('reasignaciones', herramientas.querySelectorAll('[data-reasignaciones-lista] > article').length);
             conteo('urgencias', herramientas.querySelectorAll('[data-rojos-lista] > article, [data-ingresos-lista] > article').length);
         }

@@ -674,19 +674,19 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
-- El acceso «Atención sin cita» registra llegada y crea una cita antes de iniciar toda nueva atención; la consulta se enlaza a ella con origen «llegada sin reserva», sin duplicarla si ya tiene cita activa.
-- Sin hueco, verdes/amarillos esperan o reciben próximo espacio/otro veterinario compatible de la clínica, sin sobrecupo automático ni consulta hasta crear su cita. La espera se ordena amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud; se revalida capacidad antes de asignar. Rojo sigue HU-4.15.
+- El acceso «Atención sin cita» abre Nueva cita para hoy en modo «llegó ahora»; el servidor crea cita y llegada actual en una sola operación auditada, solo para el veterinario de la sesión en la clínica activa; la consulta se enlaza a ella con origen «llegada sin reserva», sin duplicarla si ya tiene cita activa.
+- Sin hueco, verdes/amarillos eligen otro horario u otro veterinario compatible desde Nueva cita, sin cola sin cita ni sobrecupo automático. Naranja conserva su sobrecupo y rojo sigue HU-4.15. RE-2.2.5 queda retirado por decisión del dueño del 2026-11-03; los datos previos y sus métodos de servidor no se borran.
 - El historial distingue el origen aunque exista cita; históricos NULL conservan «Sin cita». Doble envío no duplica cita/consulta; motivo/diagnóstico y HC de primera consulta se conservan.
 
 - El flujo normal es por cita: desde el calendario se inicia la atención y la consulta queda ligada a la cita (HU-4.3, HU-4.5).
-- En el Inicio del veterinario, «Atención sin cita» lleva a Agenda → Llegadas, donde se registra la llegada/cita del paciente (HU-1.3) antes de iniciar la consulta.
-- La pestaña Llegadas explica que registrar la llegada no inicia la atención y que un rojo se recibe por Urgencias.
+- En el Inicio del veterinario, «Atención sin cita» abre Nueva cita para hoy en modo «llegó ahora», con búsqueda del paciente (HU-1.3); al guardar, la cita queda en el panel Citas con su llegada registrada, antes de iniciar la consulta.
+- Registrar llegada en la propia cita no inicia la atención; un rojo se recibe por Urgencias. Pendientes queda con Rojos, Triage y Reasignar, sin sumar citas a su contador.
 - Se exigen los mismos datos que en HU-2.1 (motivo y diagnóstico) y, si es su primera consulta, se asigna el número de historia clínica (RN-102).
 - El origen de llegada y los históricos sin cita se distinguen en el historial (Pacientes y Atención).
 
 **Reglas de negocio:** RN-102, RN-203, RN-208, RN-411, RN-415 · **Dependencias:** HU-1.3, HU-2.1
 
-> _Nota (decisión del dueño, 2026-10-22): «Consultas médicas» se retiró y el acceso «Atención sin cita» pasó al Inicio (HU-6.1). Sigue llevando a Llegadas, como ya hacía, así que no cambia lo que se guarda; el buscador modal que no se usaba se retiró._
+> _Nota (decisión del dueño, 2026-10-22): «Consultas médicas» se retiró y el acceso «Atención sin cita» pasó al Inicio (HU-6.1). Desde la decisión del 2026-11-03 abre Nueva cita en modo «llegó ahora», conservando el origen; el buscador modal que no se usaba se retiró._
 
 ### HU-2.3 — Adjuntar archivos clínicos
 
@@ -1045,7 +1045,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 **Criterios de aceptación:**
 
-- RN-430: propietario/veterinario cambian solo con al menos N minutos de anticipación a la hora pactada original. Exacto N permite; N=0 desactiva. Portal muestra «Ya no se puede cambiar: comunícate con la clínica»; veterinario oculta acciones. Administrador cancela con motivo auditado. Se conservan excepciones clínicas de Llegadas, urgencias y cascada.
+- RN-430: propietario/veterinario cambian solo con al menos N minutos de anticipación a la hora pactada original. Exacto N permite; N=0 desactiva. Portal muestra «Ya no se puede cambiar: comunícate con la clínica»; veterinario oculta acciones. Administrador cancela con motivo auditado. Se conservan excepciones clínicas de llegada desde Citas, urgencias y cascada.
 
 - Se puede cancelar o cambiar la fecha/hora de una cita pendiente o confirmada, a un momento que no haya pasado.
 - El veterinario gestiona sus propias citas; el administrador, cualquiera, y puede reasignar el veterinario.
@@ -1432,10 +1432,10 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - El personal registra la hora de llegada del propietario.
 - Dentro de la tolerancia configurada (por defecto, 10 minutos, incluido el límite exacto), el veterinario elige atender completo con cascada o reprogramar; la reducción de duración solo se permite si la elige expresamente y cabe, y puede elegir otro veterinario compatible.
 - Pasada la tolerancia y sin llegada ni inicio, la reserva espera durante el hueco y se marca «no asistió» al llegar la hora del siguiente turno del mismo veterinario o al cierre de jornada, según RN-408.
-- Una llegada registrada durante el hueco se resuelve en un modal de Sala: siguiente horario libre o reprogramar; Ajustar nivel solo aparece si el paciente llegó.
+- Una llegada registrada durante el hueco se resuelve en un modal desde la propia cita de hoy en el panel Citas: siguiente horario libre o reprogramar; Ajustar nivel solo aparece si el paciente llegó.
 - En todos los casos la agenda se recalcula y la decisión queda en auditoría.
 
-**Decisión del dueño (2026-11-02):** Una reserva sin llegada puede esperar durante el hueco hasta el siguiente turno del mismo veterinario o el cierre; tras la tolerancia se aplica la inasistencia automática de RN-408. Sala muestra Ajustar nivel solo con llegada registrada y resuelve las decisiones de llegada en un modal.
+**Decisión del dueño (2026-11-02):** Una reserva sin llegada puede esperar durante el hueco hasta el siguiente turno del mismo veterinario o el cierre; tras la tolerancia se aplica la inasistencia automática de RN-408. El panel Citas muestra Ajustar nivel solo con llegada registrada y resuelve las decisiones de llegada en un modal.
 
 **Reglas de negocio:** RN-426, RN-408, RN-412 · **Requisitos:** RF-4.14 · **Dependencias:** HU-4.14, HU-4.7
 

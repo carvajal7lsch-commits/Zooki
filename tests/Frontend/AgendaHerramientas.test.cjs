@@ -39,7 +39,7 @@ function dom(claves) {
 
 test('pestañas muestran un solo panel, avisan al mostrarse y navegan con flechas', () => {
     global.CustomEvent = class { constructor(type) { this.type = type; } };
-    const d = dom(['triage', 'llegadas', 'urgencias']);
+    const d = dom(['triage', 'reasignaciones', 'urgencias']);
     iniciarHerramientasAgenda({ querySelectorAll: () => [d.raiz] });
     assert.deepEqual(d.eventos, [['triage', 'agenda:mostrar']]);
     d.tabs[2].oyentes.click();
@@ -52,8 +52,8 @@ test('pestañas muestran un solo panel, avisan al mostrarse y navegan con flecha
     assert.ok(prevenido);
     assert.equal(d.paneles['#agenda-panel-triage'].hidden, false);
     assert.ok(d.tabs[0].enfocada);
-    activarPanelAgenda(d.raiz, 'llegadas', false);
-    assert.deepEqual(d.eventos.at(-1), ['llegadas', 'agenda:mostrar']);
+    activarPanelAgenda(d.raiz, 'reasignaciones', false);
+    assert.deepEqual(d.eventos.at(-1), ['reasignaciones', 'agenda:mostrar']);
 });
 
 test('las vistas de herramientas no llevan estilos ni eventos en línea', () => {

@@ -69,7 +69,7 @@ function iniciarHerramientasAgenda(documento) {
                 activarPanelAgenda(raiz, siguiente.dataset.agendaTab, true);
             });
         });
-        // HU-6.1: el Inicio enlaza a una pestaña por su hash (#llegadas, #triage, #reasignaciones).
+        // HU-6.1: los avisos enlazan a Pendientes por su hash (#triage, #reasignaciones).
         const pedida = tabs.find((tab) => '#' + tab.dataset.agendaTab === (documento.defaultView?.location?.hash || ''));
         const inicial = pedida || tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0];
         if (inicial) activarPanelAgenda(raiz, inicial.dataset.agendaTab, false);
