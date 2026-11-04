@@ -1,15 +1,33 @@
 /* RE-5.7: campana y estimación con la identidad existente del portal. */
 .portal-avisos-barra {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 12px;
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+}
+.portal-main,
+.portal-cabecera,
+.pet-detail__cabecera {
+    position: relative;
+}
+.portal-cabecera:not(.home-bienvenida) > div:not(.portal-avisos-barra) {
+    min-width: 0;
+    padding-right: 54px;
+}
+.pet-detail__cabecera {
+    padding-right: 54px;
+}
+.home-bienvenida__saludo .portal-cabecera__titulo,
+.home-bienvenida__saludo .home-bienvenida__fecha {
+    padding-right: 54px;
 }
 .portal-avisos {
-    position: relative;
-    z-index: 30;
+    position: static;
 }
 .portal-avisos > summary {
-    position: relative;
+    position: absolute;
+    top: 0;
+    right: var(--portal-campana-derecha, 0px);
     display: grid;
     place-items: center;
     width: 42px;
@@ -21,6 +39,7 @@
     cursor: pointer;
     list-style: none;
     font-size: 22px;
+    pointer-events: auto;
 }
 .portal-avisos > summary::-webkit-details-marker {
     display: none;
@@ -54,6 +73,37 @@
     border-radius: 16px;
     background: var(--z-surface);
     box-shadow: 0 10px 30px #0F172A1A;
+    pointer-events: auto;
+}
+/* El desplegable conserva el extremo de la cabecera; solo la campana evita el collage. */
+@media (min-width: 1024px) {
+    .home-bienvenida {
+        --portal-campana-derecha: calc(170px + 112px + 20px + 12px);
+    }
+    .home-bienvenida .portal-avisos > summary {
+        top: calc(50% + 8px);
+        transform: translateY(-50%);
+    }
+    .home-bienvenida .portal-avisos__panel {
+        top: calc(50% + 35px);
+    }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .home-bienvenida {
+        --portal-campana-derecha: calc(90px + 64px + 16px + 8px);
+    }
+}
+@media (max-width: 767px) {
+    .home-bienvenida {
+        --portal-campana-derecha: calc(104px + 8px + 8px);
+    }
+    .home-bienvenida .portal-avisos > summary {
+        top: calc(50% + 8px);
+        transform: translateY(-50%);
+    }
+    .home-bienvenida .portal-avisos__panel {
+        top: calc(50% + 35px);
+    }
 }
 .portal-avisos__panel header {
     display: flex;

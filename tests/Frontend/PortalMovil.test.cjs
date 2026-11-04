@@ -212,3 +212,49 @@ test('Cita con reajuste: conserva la explicación completa sin partir la hora ni
         }
     },{reajuste:true});
 });
+
+test('Campana en cabeceras a390/820/1366: no agrega fila, evita controles y abre su panel', { skip:!buscarChrome() }, async()=>{
+    await conPortal(async(nav,servidor)=>{
+        for(const width of [390,820,1366]) {
+            await entrar(nav,servidor.url,width);
+            for(const vista of ['home','citas','clinicas','account','pet-detail']) {
+                if(vista==='pet-detail') await nav.evaluar('verDetalle(1,{historial:false})');
+                else await nav.evaluar(`switchTab('${vista}',{historial:false})`);
+                await pintar(nav);
+                const estado=await nav.evaluar(`(()=>{
+                    const barra=document.querySelector('.portal-avisos-barra');
+                    const cabecera=barra.parentElement;
+                    const summary=barra.querySelector('summary');
+                    const campana=summary.getBoundingClientRect();
+                    const solapa=r=>r.width>0&&r.height>0&&r.left<campana.right&&r.right>campana.left&&r.top<campana.bottom&&r.bottom>campana.top;
+                    const controles=[...cabecera.querySelectorAll('button,a,.home-bienvenida__cruz,.home-bienvenida__perro')].filter(n=>!barra.contains(n)&&solapa(n.getBoundingClientRect())).map(n=>n.className);
+                    const textos=[];
+                    const recorrido=document.createTreeWalker(cabecera,NodeFilter.SHOW_TEXT);
+                    while(recorrido.nextNode()) {
+                        const texto=recorrido.currentNode;
+                        if(!texto.textContent.trim()||barra.contains(texto)) continue;
+                        const rango=document.createRange();
+                        rango.selectNodeContents(texto);
+                        if([...rango.getClientRects()].some(solapa)) textos.push(texto.textContent.trim());
+                    }
+                    const x=campana.x+campana.width/2;
+                    const y=campana.y+campana.height/2;
+                    return {pantalla:barra.closest('.app-screen').id,fueraFlujo:getComputedStyle(barra).position==='absolute',controles,textos,x,y,clic:summary.contains(document.elementFromPoint(x,y)),pagina:document.scrollingElement.scrollHeight,ventana:innerHeight};
+                })()`);
+                assert.equal(estado.pantalla,'screen-'+vista,width+'/'+vista);
+                assert.equal(estado.fueraFlujo,true);
+                assert.deepEqual(estado.controles,[],width+'/'+vista+' sin controles tapados');
+                assert.deepEqual(estado.textos,[],width+'/'+vista+' sin texto tapado');
+                assert.equal(estado.clic,true,width+'/'+vista+' campana visible y accesible');
+                if(width===820&&vista==='home') assert.ok(estado.pagina<=estado.ventana,'Inicio de tableta sin scroll añadido');
+                await nav.enviar('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:estado.x,y:estado.y});
+                await nav.enviar('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:estado.x,y:estado.y});
+                await nav.esperar("document.querySelector('[data-portal-avisos]').open");
+                const panel=await nav.evaluar(`(()=>{const r=document.querySelector('.portal-avisos__panel').getBoundingClientRect();const b=document.querySelector('.portal-avisos>summary').getBoundingClientRect();return {izquierda:r.left,derecha:r.right,arriba:r.top,finCampana:b.bottom,ancho:innerWidth}})()`);
+                assert.ok(panel.izquierda>=0&&panel.derecha<=panel.ancho,width+'/'+vista+' panel dentro del ancho');
+                assert.ok(panel.arriba>=panel.finCampana,width+'/'+vista+' panel debajo de la campana');
+                await nav.evaluar("document.querySelector('[data-portal-avisos]').open=false");
+            }
+        }
+    });
+});

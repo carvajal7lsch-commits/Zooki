@@ -285,10 +285,18 @@ function marcarNavegacion(tabId) {
     });
 }
 
+/** RE-5.7: un único componente, en la cabecera activa y fuera del flujo de la página. */
+function ubicarCampanaPortal(pantalla = document.querySelector('.app-screen.active')) {
+    const barra = document.querySelector('.portal-avisos-barra');
+    const cabecera = pantalla?.querySelector('.portal-cabecera, .pet-detail__cabecera');
+    if (barra && cabecera && barra.parentElement !== cabecera) cabecera.append(barra);
+}
+
 function mostrarPantalla(id) {
     document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
     const pantalla = document.getElementById(id);
     if (pantalla) pantalla.classList.add('active');
+    ubicarCampanaPortal(pantalla);
     window.scrollTo({ top: 0 });
 }
 
@@ -335,6 +343,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    ubicarCampanaPortal();
     const retornoCarnet = document.getElementById('portalRetornoCarnet');
     if (retornoCarnet) {
         const id = Number(retornoCarnet.dataset.mascota);

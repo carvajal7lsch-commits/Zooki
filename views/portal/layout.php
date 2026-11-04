@@ -97,6 +97,7 @@ $iniciales = $iniciales ?: 'U';
     </aside>
 
     <main class="portal-main" id="contenido">
+        <?php include $view; ?>
         <div class="portal-avisos-barra">
             <details class="portal-avisos" data-portal-avisos>
                 <summary aria-label="Notificaciones" title="Notificaciones"><i class="ri-notification-3-line" aria-hidden="true"></i><span data-portal-avisos-conteo hidden>0</span></summary>
@@ -106,7 +107,6 @@ $iniciales = $iniciales ?: 'U';
                 </section>
             </details>
         </div>
-        <?php include $view; ?>
     </main>
 </div>
 
