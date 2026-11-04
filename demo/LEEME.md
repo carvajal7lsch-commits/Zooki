@@ -1,6 +1,5 @@
 # Guion de navegador para la sustentación
 
-Escribió Codex; revisa Claude (arquitecto).
 El archivo `zooki-demo.user.js` vive fuera de `public/` y se instala solo en el navegador del presentador.
 No contiene claves, no simula respuestas y no se publica como parte de la aplicación.
 
@@ -16,7 +15,7 @@ El CSS del panel está aislado en un shadow DOM; no cambia hojas de estilo ni ar
 
 ## Preparar y presentar en cinco minutos
 
-Despliega primero el ajuste de escena y corre la semilla con los comandos de `specs/semilla-demo.md`.
+Despliega primero esta versión; la semilla se crea desde la pestaña Demo o por consola con `php scripts/semilla_demo.php --si`.
 Sin entrar al servidor: pon `ZOOKI_DEMO_HABILITADA=1` en las variables del entorno, entra como super-administrador y usa Plataforma → pestaña **Demo**: «Crear o rehacer demo» (fecha y clave común), «Preparar escena ahora» y «Borrar demo».
 En producción se enciende antes de la sustentación y se apaga (vuelve a `0`) después; apagada, la pestaña y sus rutas no existen.
 Ejecuta `--escena` (o «Preparar escena ahora» en la pestaña Demo) minutos antes de presentar, de lunes a sábado entre 8:00 y 18:00.
@@ -66,7 +65,7 @@ Para repetirla, rehace `--escena` y usa una pestaña nueva; `--si` también elim
 
 ## Verificación automatizada
 
-`tests/Frontend/ZookiDemo.test.cjs` ejecuta este mismo archivo en Chrome headless por CDP, a 1366×768 y 390×844.
+`tests/Frontend/ZookiDemo.navegador.cjs` ejecuta este mismo archivo en Chrome headless por CDP, a 1366×768 y 390×844.
 El servidor del arnés usa `localhost:31300` e inyecta el archivo completo; los `@match` de instalación conservan los tres destinos pedidos, incluido `localhost:3000`.
 Usa MySQL/MariaDB temporal con `zooki_test_base_v2`, controladores/vistas/motores reales y reloj inyectado en lunes para poder ensayar sin alterar el reloj del sistema.
 El arnés rechaza reservas y mutaciones ajenas al guion: solo permite registrar la consulta de Rocco e iniciar la cita de Mishi, además de evaluar a Simón.
