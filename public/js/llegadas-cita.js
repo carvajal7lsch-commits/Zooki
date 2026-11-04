@@ -92,16 +92,49 @@
             let valido = true;
             form.querySelectorAll('[name]').forEach(nodo => {
                 if (nodo.disabled) return;
-                const valor = nodo.name === 'motivo' && form.obtenerMotivo ? form.obtenerMotivo() : nodo.value;
-                const error = errorCampo(nodo.name, valor, nodo.required);
+                const motivoCombinado = nodo.name === 'motivo' && typeof form.obtenerMotivo === 'function';
+                const valor = motivoCombinado ? form.obtenerMotivo() : nodo.value;
+                const error = motivoCombinado && !valor
+                    ? 'Elige un motivo de revisión o escribe un detalle.'
+                    : errorCampo(nodo.name, valor, motivoCombinado || nodo.required);
                 const salida = form.querySelector(`[data-error-campo="${nodo.name}"]`);
                 // El error se muestra cuando el campo ya se tocó o se intentó enviar, no al aparecer.
                 if (salida) salida.textContent = nodo.dataset.tocado === '1' || form.dataset.intento === '1' ? error : '';
                 nodo.setAttribute('aria-invalid', error ? 'true' : 'false');
+                nodo.setCustomValidity(error);
                 valido = valido && !error;
             });
             form.querySelector('[type="submit"]').disabled = escribiendo || !valido;
             return valido;
+        }
+
+        function selectorNivel(form) {
+            const bloque = texto(form, 'fieldset', '');
+            bloque.className = 'llegada-nivel';
+            texto(bloque, 'legend', 'Nivel');
+            const nivel = document.createElement('select');
+            nivel.name = 'nivel';
+            nivel.required = true;
+            nivel.hidden = true;
+            texto(nivel, 'option', 'Elige').value = '';
+            bloque.append(nivel);
+            const opciones = texto(bloque, 'div', '');
+            opciones.className = 'llegada-niveles';
+            Object.entries(NIVELES).forEach(([valor, etiqueta]) => {
+                texto(nivel, 'option', etiqueta).value = valor;
+                const boton = texto(opciones, 'button', etiqueta);
+                boton.type = 'button';
+                boton.dataset.llegadaNivel = valor;
+                boton.setAttribute('aria-pressed', 'false');
+                boton.addEventListener('click', () => {
+                    nivel.value = valor;
+                    opciones.querySelectorAll('button').forEach(otro => otro.setAttribute('aria-pressed', String(otro === boton)));
+                    nivel.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            });
+            const error = texto(bloque, 'span', '');
+            error.dataset.errorCampo = 'nivel';
+            error.setAttribute('aria-live', 'polite');
         }
 
         function formulario(padre, titulo, accion, datos, construir = () => {}, despues = null, secundario = false) {
@@ -250,9 +283,11 @@
             const cita = desdeEvento(calendarInstance.getEventById(id));
             abrirLlegada(cita, 'Ajustar nivel', cuerpo => {
                 formulario(cuerpo, 'Guardar nivel', 'ajustar', { id_cita: id }, form => {
-                    campo(form, 'nivel', 'Nivel', ['verde', 'amarillo', 'naranja', 'rojo'].map(n => [n, NIVELES[n]]));
+                    selectorNivel(form);
                     const motivo = campo(form, 'motivo', 'Motivo de revisión');
                     form.obtenerMotivo = global.ZookiMotivosRevision?.crear(motivo) || (() => motivo.value.trim());
+                    // RE-4.18: el motivo rápido es suficiente; el detalle es opcional.
+                    motivo.required = false;
                 });
             });
         });

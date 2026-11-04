@@ -9,6 +9,59 @@ const reglas = fuente.slice(fuente.indexOf('function llegadaCitaTardia('), fuent
 const detalle = fuente.slice(fuente.indexOf('function mostrarDetalleCita('), fuente.indexOf('function manejarClicPanel('));
 const inicio = new Date('2030-01-07T09:00:00');
 
+test('Ajustar nivel: motivo rápido sin detalle valida y envía la elección', { skip: !buscarChrome() }, async () => {
+    const servidor = await servidorAgendaVet();
+    servidor.citas[2].estado = 'confirmada';
+    servidor.citas[2].hora_llegada = servidor.citas[2].fecha + ' 10:00:00';
+    const nav = await abrirChrome(buscarChrome());
+    try {
+        await nav.enviar('Page.navigate', { url: servidor.url });
+        await nav.esperar('document.readyState === "complete" && typeof calendarInstance !== "undefined" && calendarInstance?.getEvents().length > 0');
+        await nav.evaluar('seleccionarDia(new Date()); document.querySelector(\'[data-llegada-accion="ajustar"]\').click();');
+        const seleccion = await nav.evaluar(`(() => {
+            const form = document.querySelector('.llegada-dialogo[open] form');
+            const motivo = form.elements.motivo;
+            const guardar = form.querySelector('[type="submit"]');
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            const sinMotivo = guardar.disabled;
+            const niveles = [...form.querySelectorAll('[data-llegada-nivel]')].map(boton => {
+                boton.click();
+                return { valor: form.elements.nivel.value, elegidos: form.querySelectorAll('[data-llegada-nivel][aria-pressed="true"]').length };
+            });
+            const rapido = form.querySelector('.motivos-revision button');
+            rapido.click();
+            const conRapido = !guardar.disabled && motivo.value === '' && !motivo.required && motivo.validationMessage === '' && form.querySelector('[data-error-campo="motivo"]').textContent === '';
+            rapido.click();
+            const sinEleccion = guardar.disabled;
+            motivo.value = 'Evaluación veterinaria';
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            const soloDetalle = !guardar.disabled;
+            motivo.value = '';
+            motivo.dispatchEvent(new Event('input', { bubbles: true }));
+            rapido.click();
+            form.querySelector('[data-llegada-nivel="naranja"]').click();
+            guardar.click();
+            return { sinMotivo, niveles, conRapido, sinEleccion, soloDetalle };
+        })()`);
+        assert.deepEqual(seleccion, {
+            sinMotivo: true,
+            niveles: ['verde', 'amarillo', 'naranja', 'rojo'].map(valor => ({ valor, elegidos: 1 })),
+            conRapido: true,
+            sinEleccion: true,
+            soloDetalle: true,
+        });
+        await nav.esperar('!document.querySelector(".llegada-dialogo[open]")');
+        const envio = servidor.llamadas.filter(llamada => llamada.accion === 'ajustar_llegada_ajax');
+        assert.equal(envio.length, 1);
+        assert.match(envio[0].cuerpo, /name="nivel"\r\n\r\nnaranja/);
+        assert.match(envio[0].cuerpo, /name="motivo"\r\n\r\nValoración clínica realizada/);
+        assert.deepEqual(nav.errores, []);
+    } finally {
+        await nav.cerrar();
+        await servidor.cerrar();
+    }
+});
+
 test('Calendario usa la tolerancia de clínica y la llegada real, con límite inclusivo', () => {
     const contexto = vm.createContext({ Date });
     vm.runInContext(reglas, contexto);

@@ -518,3 +518,54 @@
     color: var(--z-danger);
     font-size: .75rem;
 }
+
+.llegada-dialogo .llegada-nivel {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.llegada-dialogo .llegada-nivel legend {
+    padding: 0;
+    margin-bottom: 6px;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--z-text-secondary);
+}
+.llegada-niveles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-bg-light);
+}
+.llegada-niveles button {
+    min-width: 0;
+    min-height: 40px;
+    padding: 6px 4px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.llegada-niveles button:hover {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.llegada-niveles button[aria-pressed="true"] {
+    border-color: var(--z-primary);
+    background: var(--z-surface);
+    color: var(--z-primary);
+}
+.llegada-niveles button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 1px;
+}
