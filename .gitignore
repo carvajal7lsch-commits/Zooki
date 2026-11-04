@@ -142,3 +142,10 @@ documentacion/legal/
 
 # Salidas sueltas de sesiones con agentes (no son parte del repositorio)
 Claude outputs/
+
+# Método de trabajo con agentes y planes internos: solo en el equipo local
+AGENTS.md
+CLAUDE.md
+.claude/
+agentes/
+specs/

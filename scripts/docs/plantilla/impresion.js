@@ -1,6 +1,6 @@
 // Arma el documento para imprimir con el formato de la plantilla de documentos
 // del proyecto: portada, ficha del documento, contenido, encabezado y pie en
-// cada hoja, y rótulos APA 7 en tablas y figuras (specs/exportar-documentos.md).
+// cada hoja, y rótulos APA 7 en tablas y figuras.
 // Lo abre scripts/docs/exportar.mjs en Chrome sin interfaz, espera
 // window.__zooki.listo e imprime a PDF con el motor de impresión de Chrome,
 // que repite el encabezado de las tablas y respeta break-after: avoid.

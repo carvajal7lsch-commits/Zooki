@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../../helpers/DocsIndex.php';
 
 /**
- * Registros del buscador de la documentación (specs/buscador-documentacion.md, BD-3 y BD-4).
+ * Registros del buscador de la documentación.
  */
 class DocsIndexTest extends TestCase
 {

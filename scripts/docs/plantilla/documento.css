@@ -2,7 +2,7 @@
    del proyecto (Arial, portada con líneas dobles, ficha del documento,
    encabezado con logo, título y página, y tablas con cuadrícula), con los
    rótulos de tablas y figuras de APA 7. Lo pagina el motor de impresión de
-   Chrome; ver specs/exportar-documentos.md (EX-2 a EX-10). */
+   Chrome. */
 
 :root {
     --fuente: Arial, Helvetica, "Liberation Sans", sans-serif;

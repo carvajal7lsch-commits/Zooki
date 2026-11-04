@@ -413,7 +413,7 @@ switch ($action) {
         (new PlataformaController())->modificar($action);
         break;
 
-    // Botón de demo del super-administrador (specs/semilla-demo.md); Security responde 404 si está apagado.
+    // Botón de demo del super-administrador; Security responde 404 si está apagado.
     case "plataforma_demo_crear_ajax":
     case "plataforma_demo_escena_ajax":
     case "plataforma_demo_borrar_ajax":

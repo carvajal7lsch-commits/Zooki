@@ -11,7 +11,7 @@
  *
  * El contenedor corre la segunda forma en cada arranque (docker/iniciar.sh),
  * así el índice sigue a la documentación desplegada sin que nadie se acuerde
- * de reindexar (specs/buscador-documentacion.md, BD-1).
+ * de reindexar.
  *
  * Se usa la API REST directamente con cURL (ya disponible en el proyecto)
  * en lugar del SDK de Algolia, para no sumar dependencias de composer por

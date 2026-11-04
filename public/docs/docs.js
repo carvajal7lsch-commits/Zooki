@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         roi:       'Zooki-PresupuestoROI'
     };
 
-    // ── Ver y descargar el documento abierto (specs/descargas-documentacion.md) ──
+    // ── Ver y descargar el documento abierto ──
     // Los archivos se sirven estáticos desde ./descargas/<id>.(pdf|docx).
     // El botón vive en la barra superior y no dentro del documento, para que
     // no se pierda al hacer scroll (DD-1).
@@ -1162,7 +1162,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
 
         // Sin resultados en Algolia también se prueba el buscador local: lee
         // los .md actuales, así que encuentra lo que el índice aún no tiene
-        // (BD-2, specs/buscador-documentacion.md).
+        // (BD-2).
         if (groups === null || groups.length === 0) {
             const locales = searchLocally(query);
             if (groups === null || locales.length > 0) {

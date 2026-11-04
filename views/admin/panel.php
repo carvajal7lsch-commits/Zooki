@@ -1,8 +1,8 @@
 <?php
 /**
  * Inicio del administrador: la operación de la clínica activa (HU-6.2,
- * RE-6.2.1 a RE-6.2.13, RE-6.4.1). Diseño aprobado por el dueño:
- * specs/referencias/inicio-administrador.dc.html. Los datos llegan de
+ * RE-6.2.1 a RE-6.2.13, RE-6.4.1). Diseño aprobado por el dueño.
+ * Los datos llegan de
  * PanelController::datosAdministrador() en $panel; el día de hoy y el mes en
  * curso vienen pintados del servidor, sin esperar al AJAX.
  */

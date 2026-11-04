@@ -1,7 +1,7 @@
 <?php
 /**
  * Inicio del veterinario en la clínica activa (HU-6.1, RE-6.1.1 a RE-6.1.12).
- * Diseño aprobado por el dueño: specs/referencias/inicio-veterinario.dc.html.
+ * Diseño aprobado por el dueño.
  * Los datos llegan de PanelController::datosVeterinario() en $panel; el día de
  * hoy y el mes en curso vienen pintados del servidor, sin esperar al AJAX.
  */

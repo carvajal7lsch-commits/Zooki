@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
  * Recibe del enrutador $personal, $invitaciones y $propietarios
  * (UsuarioController), ya acotados a la clínica del contexto. D2.2: las
  * invitaciones pendientes muestran lo que escribió el administrador. C9.1: mismo diseño que la v1.12.0
- * (specs/referencias/usuarios-*-v1.png) con los datos y las reglas de la v2.
+ * con los datos y las reglas de la v2.
  * El comportamiento está en js/usuarios.js; los datos viajan en data-*.
  */
 require_once __DIR__ . '/../../helpers/Roles.php';
@@ -312,7 +312,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 
 <?php require __DIR__ . '/partials/acciones_usuario_movil.php'; ?>
 <!-- Alta y edición de personal y edición de clientes. D2.1: diseño de v1.12.0
-     (modalUsuarioGestion, specs/referencias/usuarios-modal-editar-v1.png) con las
+     (modalUsuarioGestion) con las
      reglas v2: alta por invitación de 72 horas e identidad compartida de C1.7.
      D2.2: como en producción, el cliente usa este mismo modal con el rol oculto. -->
 <div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">
