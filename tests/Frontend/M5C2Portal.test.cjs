@@ -28,6 +28,7 @@ function elemento(datos = {}) {
         setAttribute(clave, valor) { this.atributos[clave] = String(valor); },
         removeAttribute(clave) { delete this.atributos[clave]; },
         querySelectorAll(selector) { return (datos.consultas || {})[selector] || []; },
+        querySelector(selector) { return ((datos.consultas || {})[selector] || [])[0] || null; },
         tieneClase: (c) => clases.has(c),
     };
 }
