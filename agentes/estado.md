@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Plataforma — pestañas, Demo y Seguridad — entregada, pendiente de revisión (2026-11-03)
+
+- Escribió Codex; hover redondeado azul y línea activa conservada; Demo explícita en navegación/enlace, con caché de JS/CSS renovada y disponibilidad del servidor respetada.
+- IP bloqueada: etiqueta fuera de la columna del icono, datos largos sin superposición y acciones bajo el texto en celular; solo frontend del super-administrador.
+- Anexo en specs/pulido-interfaz.md; revisión de código/diff, sin suites ni pruebas por instrucción expresa del dueño; pendiente su revisión visual, misma2.3.0, sin commit/push.
+
+
 ### M4 — Quitar Sala y desbloqueo de Atención — revisada: aprobada, revisión liviana (2026-11-03)
 
 - Revisión de Claude (2026-11-03): diff de `Cita.php` correcto (el servidor decide origen y llegada; solo el vet de la sesión, hoy y su clínica; auditado dentro de la reserva). Sin P1. Sigue el cierre de 2.3.0: push y CI verde (migraciones 19 y 20 incluidas), regenerar PDF/Word del portal, ensayo en zooki-pruebas (semilla demo + prueba manual corta) y luego PR a main, tag v2.3.0 y `ZOOKI_DEMO_HABILITADA=1` en producción hasta la sustentación.

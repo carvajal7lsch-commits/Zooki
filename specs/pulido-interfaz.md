@@ -1427,3 +1427,18 @@ A390×844 la ficha móvil sigue abriendo y permite pasar a Reprogramar; sin guar
 - Elegir otro día en el calendario no cambia de vista: quien está en Pendientes se queda en Pendientes; quien está en Citas ve las citas de ese día. Abrir una cita sigue llevando a Citas, donde vive su detalle.
 - Hoy, Pendientes muestra todo lo pendiente, como antes. Otro día: «Pendientes del 5 de noviembre», solo Triage y Reasignar de las citas de ese día (por `entrada.fecha` e `inicio_propuesto`), Sala y Rojos con «solo existe hoy», conteos de ese día y botón «Volver a hoy». Sin cambios de servidor; en el celular Pendientes no cambia.
 - Escribió Claude Code; `agenda-panel.js`, `calendario.js`, `agenda-solicitudes.js`, `reasignaciones-agenda.js`, `agenda_herramientas.php` y `agenda-herramientas.css`. Comprobado en Chrome a 1366 (hoy, otro día con y sin pendientes, Sala, Volver a hoy) sin excepciones; 48 pruebas JS de la agenda en verde. Entregada, pendiente de revisión.
+
+
+### Plataforma — pestañas, Demo y Seguridad (2026-11-03)
+
+- Decisión del dueño: corregir únicamente el hover de las pestañas, la apertura de Demo y la superposición de textos en Seguridad/IP bloqueadas, para escritorio y celular; conservar los componentes y el resto del panel (HU-0.3).
+- No ejecutar suites ni pruebas; el dueño revisa visualmente y aprueba.
+
+#### Anexo — Resultado
+
+- Escribió Codex; entregada, pendiente de revisión del dueño; misma2.3.0.
+- Pestañas con hover azul suave redondeado, foco existente y línea activa conservada; tamaños adaptados al celular.
+- Demo incluida explícitamente en la navegación y en el enlace #demo, solo si el servidor dibuja su panel; referencia de JS/CSS renovada por hash para evitar versiones anteriores en caché. No se ejecutó ninguna operación de demo.
+- Seguridad: etiqueta de fin del bloqueo junto a la IP, fuera de la columna del icono de44px; correos/clínicas largos con salto de línea, espacio entre filas y acciones debajo en celular.
+- Verificación: lectura del código y diff; sin suites, pruebas ni recorrido de navegador por instrucción del dueño. Pendiente revisión visual de Clínicas/Soporte/Seguridad/Demo y tarjeta con IP bloqueada.
+- Sin cambios de servidor, datos, permisos, interruptor de demo ni versión; sin commit ni push.

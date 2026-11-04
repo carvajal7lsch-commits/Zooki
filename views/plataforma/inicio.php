@@ -38,11 +38,11 @@ $demoHabilitada = $demoHabilitada ?? false;
     <link rel="stylesheet" href="css/contexto.css?v=<?= $v ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/plataforma.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/plataforma.css?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/css/plataforma.css'), 0, 12) ?>">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="js/interacciones.js?v=<?= $v ?>" defer></script>
     <script src="js/avisos.js?v=<?= $v ?>" defer></script>
-    <script src="js/plataforma.js?v=<?= $v ?>" defer></script>
+    <script src="js/plataforma.js?v=<?= $v ?>&amp;r=<?= substr(hash_file('sha256', __DIR__ . '/../../public/js/plataforma.js'), 0, 12) ?>" defer></script>
     <script src="js/pagos-plataforma.js?v=<?= $v ?>" defer></script>
     <?php if ($demoHabilitada): ?>
     <script src="js/password-policy.js?v=<?= $v ?>" defer></script>
@@ -262,10 +262,12 @@ $demoHabilitada = $demoHabilitada ?? false;
             <article class="person-card plataforma-tarjeta">
                 <div class="card-header-mini">
                     <span class="avatar-mini avatar-iniciales plataforma-icono-tarjeta" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
-                    <span class="tag-mini plataforma-estado plataforma-estado--activa"><i class="bi bi-clock" aria-hidden="true"></i> Hasta las <?= $e(date('H:i', strtotime((string) $ip['bloqueado_hasta']) ?: time())) ?></span>
                 </div>
                 <div class="card-body-mini">
-                    <h3 class="card-title-mini"><?= $e($ip['ip']) ?></h3>
+                    <div class="plataforma-seguridad__titulo">
+                        <h3 class="card-title-mini" title="<?= $e($ip['ip']) ?>"><?= $e($ip['ip']) ?></h3>
+                        <span class="tag-mini plataforma-estado plataforma-estado--activa"><i class="bi bi-clock" aria-hidden="true"></i> Hasta las <?= $e(date('H:i', strtotime((string) $ip['bloqueado_hasta']) ?: time())) ?></span>
+                    </div>
                     <div class="card-contact-mini">
                         <span class="contact-text-mini"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Fallos desde las <?= $e(date('H:i', strtotime((string) $ip['primer_intento']) ?: time())) ?></span>
                         <?php foreach ($ip['cuentas'] as $cuenta): ?>
