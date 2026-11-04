@@ -1618,20 +1618,68 @@
     outline-offset: 2px;
 }
 
-/* Modo demo (decisión del dueño, 2026-11-03): una tarjeta ancha con tres acciones. */
+/* Modo demo: aprovechar el ancho permite ver las tres acciones sin recortar su contenido. */
 .plataforma-demo {
     grid-column: 1 / -1;
-    max-width: 720px;
-    margin-top: 0.75rem;
+    max-width: none;
+    margin-top: 0;
     cursor: default;
+}
+.plataforma-demo__acciones {
+    display: grid;
+    gap: 0.85rem 1.5rem;
+    margin-top: 0.5rem;
 }
 .plataforma-demo__form {
     padding-top: 0.85rem;
     border-top: 1px solid var(--z-bg-light);
     justify-items: start;
+    align-content: start;
+    gap: 0.65rem;
+    min-width: 0;
 }
 .plataforma-demo__form .input-group {
     width: 100%;
+}
+.plataforma-demo__form [data-error-campo]:empty {
+    display: none;
+}
+.plataforma-demo__clave {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+}
+.plataforma-demo__form .plataforma-demo__clave input {
+    padding-right: 3rem;
+}
+.plataforma-demo__ver-clave {
+    position: absolute;
+    top: 50%;
+    right: 0.4rem;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+}
+.plataforma-demo__ver-clave[aria-pressed="false"] .bi-eye-slash,
+.plataforma-demo__ver-clave[aria-pressed="true"] .bi-eye {
+    display: none;
+}
+@media (min-width: 1024px) {
+    .plataforma-demo__acciones {
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    }
+    .plataforma-demo__form[data-demo-accion="plataforma_demo_crear_ajax"] {
+        grid-row: span 2;
+    }
 }
 .plataforma-demo__titulo {
     margin: 0;

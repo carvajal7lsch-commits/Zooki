@@ -35,13 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    document.querySelectorAll('[data-ojito], .toggle-password').forEach(boton => {
-        boton.addEventListener('click', () => {
-            const campo = boton.dataset.ojito ? document.getElementById(boton.dataset.ojito) : boton.parentElement.querySelector('input');
-            if (!campo) return;
-            const visible = campo.type === 'password';
-            campo.type = visible ? 'text' : 'password';
-            boton.setAttribute('aria-pressed', String(visible));
-        });
+    // El panel de plataforma reemplaza sus formularios al actualizarse.
+    document.addEventListener('click', evento => {
+        const boton = evento.target.closest('[data-ojito], .toggle-password');
+        if (!boton) return;
+        const campo = boton.dataset.ojito ? document.getElementById(boton.dataset.ojito) : boton.parentElement.querySelector('input');
+        if (!campo) return;
+        const visible = campo.type === 'password';
+        campo.type = visible ? 'text' : 'password';
+        boton.setAttribute('aria-pressed', String(visible));
     });
 });

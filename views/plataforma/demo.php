@@ -14,8 +14,9 @@ $hoy = (new DateTimeImmutable('today', new DateTimeZone('America/Bogota')))->for
             </div>
             <div class="card-body-mini">
                 <h3 class="card-title-mini">Modo demo</h3>
-                <p class="plataforma-tarjeta__texto">Las mismas operaciones de <code>scripts/semilla_demo.php</code>, sin entrar al servidor. Solo tocan las cinco clínicas y las cuentas de la demo.</p>
+                <p class="plataforma-tarjeta__texto">Prepara los datos y la agenda para la demostración. Solo se modifican las cinco clínicas y las cuentas de la demo.</p>
 
+                <div class="plataforma-demo__acciones">
                 <form class="plataforma-form plataforma-demo__form" data-demo-accion="plataforma_demo_crear_ajax" novalidate>
                     <?php Csrf::field(); ?>
                     <h4 class="plataforma-demo__titulo">Crear o rehacer demo</h4>
@@ -23,10 +24,14 @@ $hoy = (new DateTimeImmutable('today', new DateTimeZone('America/Bogota')))->for
                         <input type="date" name="dia" value="<?= $e($hoy) ?>" required data-demo-dia>
                         <small data-error-campo role="status"></small>
                     </label>
-                    <label class="input-group">Clave para todas las cuentas
-                        <input type="password" name="clave" required autocomplete="new-password" placeholder="Mínimo 8, con mayúscula, minúscula y número" <?= ValidadorCuenta::atributosHtml('password') ?> data-demo-clave>
+                    <div class="input-group">
+                        <label for="demoClave">Clave para todas las cuentas</label>
+                        <div class="plataforma-demo__clave">
+                            <input type="password" id="demoClave" name="clave" required autocomplete="new-password" placeholder="Mínimo 8, con mayúscula, minúscula y número" <?= ValidadorCuenta::atributosHtml('password') ?> data-demo-clave>
+                            <button type="button" class="plataforma-demo__ver-clave" data-ojito="demoClave" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false" aria-controls="demoClave"><i class="bi bi-eye" aria-hidden="true"></i><i class="bi bi-eye-slash" aria-hidden="true"></i></button>
+                        </div>
                         <small data-error-campo role="status"></small>
-                    </label>
+                    </div>
                     <button type="submit" class="plataforma-boton-mini plataforma-boton-mini--principal" data-demo-boton><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <span>Crear o rehacer demo</span></button>
                 </form>
 
@@ -42,6 +47,7 @@ $hoy = (new DateTimeImmutable('today', new DateTimeZone('America/Bogota')))->for
                     <h4 class="plataforma-demo__titulo">Borrar demo</h4>
                     <button type="submit" class="plataforma-boton-mini plataforma-demo__borrar" data-demo-boton><i class="bi bi-trash3" aria-hidden="true"></i> <span>Borrar demo</span></button>
                 </form>
+                </div>
 
                 <div class="plataforma-demo__resultado" data-demo-resultado role="status" aria-live="polite"></div>
             </div>

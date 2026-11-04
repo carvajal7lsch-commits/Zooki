@@ -4,7 +4,7 @@
  * Mientras una corre, los tres botones quedan deshabilitados; el servidor
  * también rechaza una segunda ejecución con su candado.
  * La clave se valida al escribir con la misma política del servidor
- * (password-policy.js, espejo de PoliticaPassword) y nunca se muestra.
+ * (password-policy.js, espejo de PoliticaPassword) y no se devuelve en los resultados.
  */
 (function () {
     'use strict';
@@ -18,7 +18,7 @@
     function aviso(campo, mensaje) {
         campo.setCustomValidity(mensaje);
         campo.setAttribute('aria-invalid', String(mensaje !== ''));
-        const salida = campo.closest('label')?.querySelector('[data-error-campo]');
+        const salida = campo.closest('.input-group')?.querySelector('[data-error-campo]');
         if (salida) salida.textContent = mensaje;
         return mensaje === '';
     }

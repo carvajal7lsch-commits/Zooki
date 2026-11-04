@@ -46,6 +46,7 @@ $demoHabilitada = $demoHabilitada ?? false;
     <script src="js/pagos-plataforma.js?v=<?= $v ?>" defer></script>
     <?php if ($demoHabilitada): ?>
     <script src="js/password-policy.js?v=<?= $v ?>" defer></script>
+    <script src="js/cuenta-password.js?v=<?= $v ?>" defer></script>
     <script src="js/demo-plataforma.js?v=<?= $v ?>" defer></script>
     <?php endif; ?>
 </head>
