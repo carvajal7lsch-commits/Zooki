@@ -7,7 +7,7 @@ const { createServer } = require('node:http');
 const { execFileSync } = require('node:child_process');
 const { abrirChrome, buscarChrome } = require('./apoyo/chrome-cdp.cjs');
 
-test('Borrador incompleto en Evaluación: clic real habilitado y editor visible al abrir Diagnóstico', { skip: !buscarChrome() }, async () => {
+test('Borrador en Atención: sin bloqueo invisible, editor visible y salida con modal del sistema', { skip: !buscarChrome() }, async () => {
     const raiz = path.resolve(__dirname, '../..');
     let html = execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', ['tests/Frontend/apoyo/c81-vistas.php', 'vet_atencion'], { cwd: raiz, encoding: 'utf8' });
     const carpeta = path.join(raiz, 'scratch/r/userscript/dependencias');
@@ -59,12 +59,28 @@ test('Borrador incompleto en Evaluación: clic real habilitado y editor visible 
             await nav.enviar('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...punto });
             assert.equal(await nav.evaluar('document.activeElement.name'), 'motivo');
             assert.equal(await nav.evaluar(`document.querySelector('[data-tratamiento-campo=medicamento]').value`), 'Tratamiento recuperado');
+            await nav.evaluar(`(()=>{const motivo=document.querySelector('[name=motivo]');motivo.value='Consulta pendiente de finalizar';motivo.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.atencion__volver').click()})()`);
+            await nav.esperar(`document.querySelector('.zooki-confirmacion[role], .zooki-confirmacion [role="alertdialog"]') !== null`);
+            await nav.evaluar(`Promise.all(document.querySelector('.zooki-confirmacion').getAnimations({subtree:true}).map(animacion=>animacion.finished.catch(()=>{}))).then(()=>true)`);
+            assert.equal(await nav.evaluar(`document.querySelector('.zooki-confirmacion__titulo').textContent`), '¿Salir de Atención?');
+            assert.equal(await nav.evaluar(`new URL(location.href).searchParams.get('action')`), 'vet_atencion');
+            assert.equal(await nav.evaluar(`JSON.parse(localStorage.getItem('zooki_atencion_borrador_1_2_5')).campos.motivo`), 'Consulta pendiente de finalizar');
+            assert.equal(await nav.evaluar(`(()=>{const salida=new Event('beforeunload',{cancelable:true});window.dispatchEvent(salida);return salida.defaultPrevented})()`), false, 'Recargar/cerrar ya no dispara el aviso nativo');
+            const cajaModal=await nav.evaluar(`(()=>{const r=document.querySelector('.zooki-confirmacion__panel').getBoundingClientRect();return {izquierda:r.left,derecha:r.right,arriba:r.top,abajo:r.bottom}})()`);
+            assert.ok(cajaModal.izquierda>=0&&cajaModal.derecha<=width&&cajaModal.arriba>=0&&cajaModal.abajo<=(width===390?844:768),'El modal cabe: '+width+' '+JSON.stringify(cajaModal));
+            await nav.evaluar(`document.querySelector('.zooki-confirmacion .btn-modal-secondary').click()`);
+            assert.equal(await nav.evaluar(`document.querySelector('.zooki-confirmacion')`), null);
+            assert.equal(await nav.evaluar(`new URL(location.href).searchParams.get('action')`), 'vet_atencion');
             if (width === 1366) {
                 await nav.evaluar(`document.querySelector('[data-consulta-ir="1"]').click()`);
                 await nav.esperar(`document.querySelector('.atencion-editor[open]')?.getBoundingClientRect().width > 0`);
                 assert.equal(await nav.evaluar(`document.activeElement.closest('.atencion-editor') !== null`), true);
             }
         }
+        await nav.evaluar(`document.querySelector('.atencion__volver').click()`);
+        await nav.esperar(`document.querySelector('.zooki-confirmacion .btn-modal-primary') !== null`);
+        await nav.evaluar(`document.querySelector('.zooki-confirmacion .btn-modal-primary').click()`);
+        await nav.esperar(`new URL(location.href).searchParams.get('action')==='vet_agenda'`);
         assert.deepEqual(nav.errores, []);
     } finally {
         await nav.cerrar();

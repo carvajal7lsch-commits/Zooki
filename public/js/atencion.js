@@ -25,6 +25,7 @@
 
     let hayCambiosSinGuardar = false;
     let finalizando = false;
+    let confirmandoSalida = false;
     // M2 C5a: síntomas, diagnósticos sugeridos y avisos junto al campo, los mismos del modal.
     let consulta = null;
 
@@ -378,6 +379,34 @@
         if (boton) boton.addEventListener('click', () => { hayCambiosSinGuardar = true; });
     }
 
+    /** RE-2.1.7: salir desde la app usa su modal; el borrador no completa la atención. */
+    async function confirmarSalida(evento) {
+        if (!hayCambiosSinGuardar || finalizando || evento.defaultPrevented || evento.button !== 0) return;
+        if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+        const enlace = evento.target.closest?.('a[href]');
+        if (!enlace || enlace.hasAttribute('download') || (enlace.target && enlace.target !== '_self')) return;
+        if (enlace.getAttribute('href').trim().startsWith('#')) return;
+        const destino = new URL(enlace.href, location.href);
+        if (!['http:', 'https:'].includes(destino.protocol)) return;
+        if (destino.origin === location.origin && destino.pathname === location.pathname && destino.search === location.search && destino.hash) return;
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        if (confirmandoSalida) return;
+        confirmandoSalida = true;
+        try {
+            consulta?.pasos?.guardar();
+            const adjuntos = [...(formConsulta?.querySelectorAll('[type="file"]') || [])].some(campo => campo.files.length > 0);
+            const descripcion = 'La atención seguirá abierta; salir no registra la consulta.'
+                + (adjuntos ? ' Tendrás que volver a elegir los archivos adjuntos.' : '');
+            if (!(await zookiConfirmarCorto('¿Salir de Atención?', 'Salir de Atención', [], 'Seguir atendiendo', descripcion))) return;
+            consulta?.pasos?.guardar();
+            hayCambiosSinGuardar = false;
+            window.location.assign(destino.href);
+        } finally {
+            confirmandoSalida = false;
+        }
+    }
+
     // ── Arranque ────────────────────────────────────────────────────────
     function iniciar() {
         const foto = document.getElementById('atencionFoto');
@@ -436,12 +465,8 @@
             exito: 'Desparasitación registrada',
         }));
 
-        window.addEventListener('beforeunload', (e) => {
-            if (hayCambiosSinGuardar && !finalizando) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
+        // El navegador no admite modales personalizados al recargar/cerrar; consulta-pasos conserva el borrador.
+        document.addEventListener('click', confirmarSalida, true);
     }
 
     document.addEventListener('DOMContentLoaded', iniciar);
